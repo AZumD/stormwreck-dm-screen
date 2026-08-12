@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Section editor add/delete test</title>
+  <style>
+    body { font-family: Consolas, monospace; padding: 1.5rem; background: #121820; color: #ebe6dc; }
+    .pass { color: #8bc49a; }
+    .fail { color: #e8a098; }
+  </style>
+</head>
+<body>
+  <h1>Section editor test</h1>
+  <pre id="out">Running…</pre>
+  <script src="../js/core/editor.js"></script>
+  <script>
+    (function () {
+      const out = document.getElementById("out");
+      const lines = [];
+      function log(ok, msg) {
+        lines.push((ok ? "PASS" : "FAIL") + ": " + msg);
+      }
+
+      const base = [
+        { id: "a", chapter: "intro", title: "A", content: "<p>A</p>" },
+        { id: "b", chapter: "intro", title: "B", content: "<p>B</p>" },
+        { id: "c", chapter: "ch-1", title: "C", content: "<p>C</p>" }
+      ];
+
+      localStorage.removeItem("test-section-edits");
+      localStorage.removeItem("test-section-structure");
+
+      let sections = SectionEditor.getSections("test", base);
+      log(sections.length === 3, "base sections = 3");
+
+      const created = SectionEditor.addSection("test", {
+        chapter: "intro",
+        afterId: "a",
+        title: "Inserted",
+        content: "<p>New</p>"
+      });
+      sections = SectionEditor.getSections("test", base);
+      const ids = sections.map((s) => s.id);
+      log(ids.indexOf(created.id) === ids.indexOf("a") + 1, "inserts after target");
+      log(SectionEditor.isCustomSection("test", created.id), "marks custom");
+
+      SectionEditor.deleteSection("test", "b", base);
+      sections = SectionEditor.getSections("test", base);
+      log(!sections.some((s) => s.id === "b"), "soft-deletes booklet passage");
+      log(SectionEditor.getDeletedIds("test").includes("b"), "tracks deleted id");
+
+      SectionEditor.deleteSection("test", created.id, base);
+      sections = SectionEditor.getSections("test", base);
+      log(!sections.some((s) => s.id === created.id), "hard-deletes custom");
+
+      SectionEditor.restoreAllDeleted("test");
+      sections = SectionEditor.getSections("test", base);
+      log(sections.some((s) => s.id === "b"), "restores booklet passage");
+
+      out.textContent = lines.join("\n");
+      out.className = lines.some((l) => l.startsWith("FAIL")) ? "fail" : "pass";
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+/**
+ * Validates sidebar/map layout wiring and CSS rules.
+ * Run: node test/validate-layout.js
+ */
+
+const fs = require("fs");
+const path = require("path");
+
+const root = path.join(__dirname, "..");
+let failed = 0;
+
+function fail(msg) {
+  console.error("FAIL:", msg);
+  failed++;
+}
+
+function pass(msg) {
+  console.log("OK:", msg);
+}
+
+const appJs = fs.readFileSync(path.join(root, "js/campaign-app.js"), "utf8");
+const layoutJs = fs.readFileSync(path.join(root, "js/core/layout-panels.js"), "utf8");
+const mapJs = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
+const css = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
+const html = fs.readFileSync(path.join(root, "campaigns/stormwreck-isle/index.html"), "utf8");
+
+if (!html.includes("layout-panels.js")) fail("campaign HTML missing layout-panels.js");
+else pass("layout-panels.js included in campaign page");
+
+if (!layoutJs.includes("document.addEventListener(\"click\", handleClick)"))
+  fail("layout-panels.js missing delegated click handler");
+else pass("layout-panels uses delegated click handling");
+
+if (!layoutJs.includes("app.style.setProperty(\"--nav-col\""))
+  fail("layout-panels.js missing inline nav column updates");
+else pass("layout-panels sets --nav-col on .app");
+
+if (!layoutJs.includes("MAP_EXPANDED_WIDTH"))
+  fail("layout-panels.js missing expanded map width");
+else pass("layout-panels defines expanded map width");
+
+if (appJs.includes("function initSidebar")) fail("campaign-app.js still owns sidebar init");
+else pass("sidebar init moved out of campaign-app.js");
+
+if (mapJs.includes("setPanelCollapsed")) fail("map-panel.js still owns collapse logic");
+else pass("map collapse moved out of map-panel.js");
+
+if (!css.includes("grid-template-columns: var(--nav-col"))
+  fail("CSS missing grid layout with nav column variable");
+else pass("CSS uses grid columns for layout");
+
+if (!css.includes("body[data-nav-collapsed=\"true\"]"))
+  fail("CSS missing data-attribute nav collapse fallback");
+else pass("CSS has data-attribute collapse fallback");
+
+if (failed) {
+  console.error(`\n${failed} check(s) failed.`);
+  process.exit(1);
+}
+
+console.log("\nAll layout checks passed.");

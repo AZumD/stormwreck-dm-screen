@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entity links test</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { padding: 2rem; max-width: 640px; margin: 0 auto; }
+    #status { margin: 1rem 0; padding: 1rem; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; }
+    .pass { color: #8bc49a; }
+    .fail { color: #e8a098; }
+  </style>
+</head>
+<body class="campaign-page">
+  <h1>Entity links test</h1>
+  <p>Hover and click the link below. Tooltip + modal should appear.</p>
+  <div id="sample" class="content"></div>
+  <pre id="status">Running checks…</pre>
+
+  <div id="entity-tooltip" class="entity-tooltip hidden" role="tooltip"></div>
+  <dialog id="entity-modal" class="entity-modal">
+    <div class="modal-header">
+      <h2 id="modal-title"></h2>
+      <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </dialog>
+
+  <script src="../js/i18n/en.js"></script>
+  <script src="../js/core/parser.js"></script>
+  <script src="../js/core/catalogue/store.js"></script>
+  <script src="../js/core/catalogue/configs.js"></script>
+  <script src="../js/catalogue-seeds/stormwreck-isle.js"></script>
+  <script src="../js/core/entity-registry.js"></script>
+  <script src="../js/core/entity-ui.js"></script>
+  <script>
+    (function () {
+      const status = document.getElementById("status");
+      const lines = [];
+
+      function log(ok, msg) {
+        lines.push((ok ? "PASS" : "FAIL") + ": " + msg);
+      }
+
+      const entities = EntityRegistry.getAll();
+      const count = Object.keys(entities).length;
+      log(count > 0, "ENTITIES loaded (" + count + " entries)");
+      log(!!entities.runara, "runara resolves from catalogue");
+      log(!!entities["stormwreck-isle"], "stormwreck-isle location resolves");
+
+      const html = ContentParser.parseContent(
+        "<p>Test link: @npc:runara|Elder Runara and @location:dragons-rest|Dragon's Rest.</p>",
+        entities
+      );
+      document.getElementById("sample").innerHTML = html;
+
+      const link = document.querySelector(".entity-link");
+      log(!!link, "parser produced .entity-link button");
+      log(link?.dataset?.id === "runara", "link data-id is runara");
+
+      status.textContent = lines.join("\n");
+      status.className = lines.some((l) => l.startsWith("FAIL")) ? "fail" : "pass";
+    })();
+  </script>
+</body>
+</html>

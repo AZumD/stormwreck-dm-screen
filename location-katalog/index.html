@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Location Catalogue — DM Library</title>
+  <link rel="stylesheet" href="../css/catalogue.css">
+</head>
+<body class="landing-page landing-subpage catalogue-page">
+  <div class="landing-atmosphere" aria-hidden="true"></div>
+
+  <div class="landing">
+    <header class="landing-header landing-header--compact">
+      <a class="back-link" href="../index.html">← DM Library</a>
+      <h1 id="cat-title">Location Catalogue</h1>
+      <p class="lead" id="cat-subtitle">Places, maps, inhabitants, and campaign links.</p>
+      <div class="header-rule" aria-hidden="true"></div>
+    </header>
+
+    <div class="catalogue-shell">
+      <aside class="catalogue-sidebar" aria-label="Entry list">
+        <div class="catalogue-sidebar__tools">
+          <input type="search" id="cat-search" class="cat-search" placeholder="Search locations…">
+          <button type="button" id="cat-new" class="cat-new-btn">New location</button>
+        </div>
+        <div id="cat-list" class="cat-list"></div>
+      </aside>
+
+      <main class="catalogue-editor" id="cat-editor" aria-label="Entry editor"></main>
+    </div>
+
+    <footer class="landing-footer">
+      <p>Local storage · no login · just for you</p>
+    </footer>
+  </div>
+
+  <script src="../js/core/catalogue/store.js"></script>
+  <script src="../js/core/catalogue/images.js"></script>
+  <script src="../js/core/catalogue/configs.js"></script>
+  <script src="../js/catalogue-seeds/stormwreck-isle.js"></script>
+  <script src="../js/core/catalogue/app.js"></script>
+  <script>CatalogueApp.init("location");</script>
+</body>
+</html>

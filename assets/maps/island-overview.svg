@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Stormwreck Isle overview">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a2838"/>
+      <stop offset="100%" stop-color="#0f1824"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a3a4a"/>
+      <stop offset="100%" stop-color="#1e2d3a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#sea)"/>
+  <path d="M120 80 Q200 40 280 70 Q320 120 300 180 Q250 240 180 250 Q100 240 80 170 Q70 120 120 80 Z" fill="url(#land)" stroke="#4a6070" stroke-width="1.5"/>
+  <path d="M180 60 L200 30 L220 60" fill="none" stroke="#c4a035" stroke-width="1" opacity="0.4"/>
+  <text x="200" y="165" text-anchor="middle" fill="#8a9bb0" font-family="Georgia, serif" font-size="11" opacity="0.6">Stormwreck Isle</text>
+</svg>
