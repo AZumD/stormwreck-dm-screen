@@ -831,6 +831,309 @@ body[data-nav-collapsed="true"] .sidebar {
   color: var(--text-muted);
 }
 
+/* ── Scene state ─────────────────────────────────────── */
+.scene-state {
+  margin: -0.35rem 0 1.1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(10, 14, 20, 0.35);
+}
+
+.scene-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.scene-status-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.55rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.scene-status-btn:hover,
+.scene-status-btn:focus-visible {
+  color: var(--text);
+  border-color: var(--border-strong);
+  outline: none;
+}
+
+.scene-status-btn.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.scene-notes-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.scene-notes-label span {
+  display: block;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scene-notes {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.45rem 0.55rem;
+  background: rgba(10, 14, 20, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.scene-notes:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+.adventure-section.scene-current {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.85rem;
+}
+
+.adventure-section.scene-completed {
+  opacity: 0.82;
+}
+
+.adventure-section.scene-completed .section-title::after,
+.adventure-section.scene-skipped .section-title::after {
+  font-family: var(--font-sans, inherit);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 0.55rem;
+  vertical-align: middle;
+}
+
+.adventure-section.scene-completed .section-title::after {
+  content: "done";
+}
+
+.adventure-section.scene-skipped .section-title::after {
+  content: "skipped";
+  opacity: 0.8;
+}
+
+.adventure-section.scene-skipped {
+  opacity: 0.7;
+}
+
+.nav-btn.nav-scene--current {
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+.nav-btn.nav-scene--completed {
+  opacity: 0.55;
+}
+
+.nav-btn.nav-scene--skipped {
+  opacity: 0.45;
+  font-style: italic;
+}
+
+/* ── NPC campaign memory ─────────────────────────────── */
+.npc-memory {
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.npc-memory__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.npc-memory__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+
+.npc-memory__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.npc-memory__btn {
+  font-size: 0.78rem;
+  padding: 0.28rem 0.55rem;
+}
+
+.npc-memory__summary {
+  margin: 0 0 0.25rem;
+  color: var(--text);
+}
+
+.npc-memory__meta,
+.npc-memory__empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.npc-memory__notes,
+.npc-memory__flags {
+  margin: 0.55rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.npc-memory__flag {
+  color: var(--accent-dim);
+}
+
+.npc-memory-form,
+.interaction-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.npc-memory-form label,
+.interaction-form label {
+  display: grid;
+  gap: 0.28rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.npc-memory-form input,
+.npc-memory-form select,
+.npc-memory-form textarea,
+.interaction-form input,
+.interaction-form select,
+.interaction-form textarea,
+.history-filters select {
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  background: rgba(10, 14, 20, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;
+}
+
+.npc-memory-form .hint,
+.interaction-form .hint {
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.interaction-form__npc {
+  margin: 0;
+}
+
+/* ── History / timeline ──────────────────────────────── */
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: end;
+  margin: 1rem 0 1.35rem;
+}
+
+.history-filters label {
+  display: grid;
+  gap: 0.28rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.history-session {
+  margin-bottom: 1.75rem;
+}
+
+.history-session__title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 0 0 0.75rem;
+  color: var(--accent-dim);
+  letter-spacing: 0.04em;
+}
+
+.history-entry {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-entry:last-child {
+  border-bottom: none;
+}
+
+.history-entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.history-link {
+  appearance: none;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.history-link:hover,
+.history-link:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.history-sep {
+  opacity: 0.5;
+}
+
+.history-entry__text {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.history-manual {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
 /* ── Checklist ───────────────────────────────────────── */
 .checklist-group {
   margin-bottom: 1.75rem;

@@ -7,7 +7,14 @@ Main controller for a campaign DM screen: nav, continuous scroll document, panel
 `js/campaign-app.js`
 
 ## Depends on
-`ContentParser`, `SectionEditor`, `EntityUI`, `EntityRegistry`, `MapPanel`, `LayoutPanels`, campaign `ADVENTURE` / `MAPS` / `PARTY`, `I18N`
+`ContentParser`, `SectionEditor`, `EntityUI`, `EntityRegistry`, `CampaignState`, `CampaignStateUI`, `MapPanel`, `LayoutPanels`, campaign `ADVENTURE` / `MAPS` / `PARTY`, `I18N`
+
+## Campaign play state
+- Scene status/notes via `CampaignStateUI` chrome on each section
+- **Current scene** toolbar jumps to the saved current section
+- On load: URL hash wins; otherwise restores current scene
+- Session → **History** panel for timeline entries
+- NPC modals gain campaign memory through `EntityUI.addModalEnricher`
 
 ## Edit mode
 - Toggle persists via `SectionEditor.setEditMode`

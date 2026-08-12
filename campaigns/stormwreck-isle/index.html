@@ -44,6 +44,7 @@
         <h2>Session</h2>
         <ul class="nav-list">
           <li><button type="button" class="nav-btn" data-view="notes">Session Notes</button></li>
+          <li><button type="button" class="nav-btn" data-view="history">History</button></li>
           <li><button type="button" class="nav-btn" data-view="checklist">Progress</button></li>
         </ul>
       </nav>
@@ -61,6 +62,7 @@
           <span class="map-panel-toggle__icon" aria-hidden="true"></span>
           <span class="map-panel-toggle__label">Map</span>
         </button>
+        <button type="button" id="current-scene-btn" class="toolbar-btn" title="Jump to current scene">Current scene</button>
         <span class="session-badge" id="session-badge">Session 1</span>
       </div>
       <p id="format-help" class="format-help-bar hidden">@npc:id|Name · &lt;b&gt;bold&lt;/b&gt; · {{read-aloud}}…{{/read-aloud}} · {{dm-note}}…{{/dm-note}}</p>
@@ -135,6 +137,14 @@
     <div class="modal-body" id="search-results"></div>
   </dialog>
 
+  <dialog id="interaction-dialog" class="entity-modal">
+    <div class="modal-header">
+      <h2 id="interaction-dialog-title">Log interaction</h2>
+      <button type="button" class="modal-close" id="interaction-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="interaction-dialog-body"></div>
+  </dialog>
+
   <div id="media-bar" class="media-bar" aria-hidden="true">
     <div class="media-bar__main">
       <span class="media-bar__badge" aria-hidden="true"></span>
@@ -161,6 +171,8 @@
   <script src="../../js/catalogue-seeds/stormwreck-isle.js"></script>
   <script src="../../js/core/entity-registry.js"></script>
   <script src="../../js/core/entity-ui.js"></script>
+  <script src="../../js/core/campaign-state.js"></script>
+  <script src="../../js/core/campaign-state-ui.js"></script>
   <script src="../../js/core/media-bar.js"></script>
   <script src="../../js/campaigns/stormwreck-isle/adventure.js"></script>
   <script src="../../js/campaigns/stormwreck-isle/maps.js"></script>

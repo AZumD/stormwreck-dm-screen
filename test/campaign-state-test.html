@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CampaignState behavior test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1.5rem; background: #111; color: #eee; }
+    .ok { color: #8f8; }
+    .fail { color: #f88; }
+  </style>
+</head>
+<body>
+  <h1>CampaignState behavior</h1>
+  <pre id="out"></pre>
+  <script src="../js/core/campaign-state.js"></script>
+  <script>
+    const out = document.getElementById("out");
+    let failed = 0;
+    const lines = [];
+    function pass(msg) { lines.push("OK: " + msg); }
+    function fail(msg) { failed++; lines.push("FAIL: " + msg); }
+
+    localStorage.removeItem("test-campaign-campaign-state");
+    localStorage.removeItem("other-campaign-campaign-state");
+
+    CampaignState.init("test-campaign");
+    CampaignState.setSceneStatus("meeting", "current");
+    CampaignState.setSceneNotes("meeting", "Players arrive hungry.");
+    if (CampaignState.getCurrentSceneId() !== "meeting") fail("current scene not set");
+    else pass("sets current scene");
+
+    CampaignState.setSceneStatus("later", "current");
+    if (CampaignState.getSceneState("meeting").status !== "completed") fail("previous current not demoted");
+    else pass("demotes previous current");
+    if (CampaignState.getCurrentSceneId() !== "later") fail("new current missing");
+    else pass("single current scene");
+
+    CampaignState.updateNpcMemory("tarak", {
+      attitude: "Friendly",
+      mood: "Guarded",
+      lastSeenLocation: "dragons-rest",
+      lastSeenSession: 2,
+      notes: ["Knows about dreams"],
+      flags: ["Has not revealed secret"]
+    });
+    const mem = CampaignState.getNpcMemory("tarak");
+    if (mem.attitude !== "Friendly" || mem.mood !== "Guarded") fail("npc memory fields");
+    else pass("npc memory stored");
+
+    CampaignState.logInteraction({
+      entityId: "tarak",
+      session: 2,
+      locationId: "dragons-rest",
+      sceneId: "npc-tarak-varnoth",
+      text: "Asked about tattoos. Tarak became guarded.",
+      attitude: "Indifferent",
+      mood: "Guarded"
+    });
+
+    const tl = CampaignState.getTimeline({ type: "interaction" });
+    if (!tl.length || !tl[0].text.includes("tattoos")) fail("timeline interaction missing");
+    else pass("timeline interaction logged");
+
+    const mem2 = CampaignState.getNpcMemory("tarak");
+    if (mem2.attitude !== "Indifferent") fail("interaction did not update attitude");
+    else pass("interaction updates memory");
+    if (!mem2.notes.some((n) => n.includes("tattoos"))) fail("interaction note not appended");
+    else pass("interaction appended to notes");
+
+    CampaignState.init("other-campaign");
+    if (CampaignState.getCurrentSceneId()) fail("other campaign contaminated");
+    else pass("campaign namespaces isolated");
+
+    lines.push("");
+    lines.push(failed ? failed + " check(s) failed." : "All campaign-state behavior checks passed.");
+    out.textContent = lines.join("\n");
+    out.className = failed ? "fail" : "ok";
+    document.title = failed ? "FAIL campaign-state" : "PASS campaign-state";
+  </script>
+</body>
+</html>

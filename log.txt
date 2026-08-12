@@ -5,3 +5,4 @@
 [2026-08-12] Fixed catalogue image uploads (save-before-rerender, compress, quota errors). See js/core/catalogue/app.js
 [2026-08-12] Catalogue images moved to IndexedDB (fixes false “too large” on ~2MB photos). See js/core/catalogue/images.js
 [2026-08-12] Map panel hydrates location images from IndexedDB; raised compress caps; docs/tests updated. See js/core/map-panel.js
+[2026-08-12] Added generic campaign scene state, NPC memory, and timeline/history. See js/core/campaign-state.js, js/core/campaign-state-ui.js

@@ -11,6 +11,7 @@ window.EntityUI = (function () {
   let t;
   let globalHandlersBound = false;
   let modalUiBound = false;
+  const modalEnrichers = [];
 
   function init(options) {
     tooltipEl = options.tooltip;
@@ -192,12 +193,23 @@ window.EntityUI = (function () {
 
     if (entity.details) body += markdownLite(entity.details);
     modalBodyEl.innerHTML = body;
+    modalEnrichers.forEach((fn) => {
+      try {
+        fn(entity, modalBodyEl, modalEl);
+      } catch (err) {
+        console.warn("EntityUI modal enricher failed:", err);
+      }
+    });
     try {
       modalEl.showModal();
     } catch {
       modalEl.setAttribute("open", "");
     }
     hideTooltip();
+  }
+
+  function addModalEnricher(fn) {
+    if (typeof fn === "function" && !modalEnrichers.includes(fn)) modalEnrichers.push(fn);
   }
 
   function openPartyModal(member) {
@@ -238,6 +250,7 @@ window.EntityUI = (function () {
 
   return {
     init,
+    addModalEnricher,
     showTooltipForEntity,
     showTooltipForParty,
     showTooltipForPin,

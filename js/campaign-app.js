@@ -88,6 +88,28 @@
       modalBody: modalBody
     });
 
+    if (window.CampaignState) CampaignState.init(campaignId);
+    if (window.CampaignStateUI) {
+      CampaignStateUI.init({
+        campaignId,
+        api: {
+          jumpToSection,
+          getSessionNumber,
+          getSections,
+          getSectionTitle: (id) => {
+            const section = getSectionById(id);
+            return section ? getSectionData(section).title : id;
+          },
+          onSceneStateChange: () => {
+            CampaignStateUI.applyNavSceneClasses();
+          },
+          refreshHistoryPanel: () => {
+            if (activeView.type === "panel" && activeView.id === "history") renderPanel("history");
+          }
+        }
+      });
+    }
+
     buildNav();
     renderScrollDocument();
     bindEvents();
@@ -95,6 +117,7 @@
     setupScrollSpy();
     syncEditModeUI();
     MapPanel.init(campaignId);
+    restoreInitialScene();
 
     window.addEventListener("focus", async () => {
       if (window.CatalogueImages) {
@@ -141,6 +164,10 @@
         btn.type = "button";
         btn.className = "nav-btn nav-scene";
         btn.dataset.section = section.id;
+        if (window.CampaignStateUI) {
+          const navCls = CampaignStateUI.navStatusClass(section.id).trim();
+          if (navCls) btn.className += ` ${navCls}`;
+        }
         const mark = data.isCustom ? " +" : data.isEdited ? " •" : "";
         btn.textContent = data.title + mark;
         btn.addEventListener("click", () => jumpToSection(section.id));
@@ -193,11 +220,12 @@
         ].join(" ");
 
         html += `
-          <section class="adventure-section${data.isEdited || data.isCustom ? " is-edited" : ""}${data.isCustom ? " is-custom" : ""}" id="section-${section.id}" data-section="${section.id}">
+          <section class="adventure-section${data.isEdited || data.isCustom ? " is-edited" : ""}${data.isCustom ? " is-custom" : ""}${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
             <div class="section-header">
               <h1 class="section-title">${escapeHtml(data.title)} ${badges}</h1>
               ${sectionActionsHtml(section, data)}
             </div>
+            ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id) : ""}
             <div class="section-body" data-body="${section.id}">
               ${parseContent(data.content, getEntities())}
             </div>
@@ -218,6 +246,7 @@
 
     scrollDocument.innerHTML = html;
     bindDocumentEditControls();
+    if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(scrollDocument);
   }
 
   function bindDocumentEditControls() {
@@ -432,6 +461,12 @@
         panelView.innerHTML = renderNotesView();
         bindNotesEvents();
         break;
+      case "history":
+        panelView.innerHTML = window.CampaignStateUI
+          ? CampaignStateUI.renderHistoryPanel()
+          : `<h1>History</h1><p class="empty-state">Campaign state unavailable.</p>`;
+        if (window.CampaignStateUI) CampaignStateUI.bindHistoryPanel(panelView);
+        break;
       case "checklist":
         panelView.innerHTML = renderChecklistView();
         bindChecklistEvents();
@@ -526,9 +561,21 @@
       const id = location.hash.replace("#", "");
       if (id && activeView.type === "scroll") jumpToSection(id);
     });
+  }
 
+  /** Hash wins; otherwise restore saved current scene after first paint */
+  function restoreInitialScene() {
     const initialHash = location.hash.replace("#", "");
-    if (initialHash) requestAnimationFrame(() => jumpToSection(initialHash));
+    requestAnimationFrame(() => {
+      if (initialHash) {
+        jumpToSection(initialHash);
+        return;
+      }
+      const current = window.CampaignState?.getCurrentSceneId?.();
+      if (current && document.getElementById(`section-${current}`)) {
+        jumpToSection(current);
+      }
+    });
   }
 
   function snippet(text, q) {

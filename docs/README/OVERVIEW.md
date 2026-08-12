@@ -7,6 +7,11 @@ Personal local DM Library for **Dragons of Stormwreck Isle**.
 - Campaign screen (`campaigns/stormwreck-isle/`) — continuous adventure scroll, map rail, session tools
 - Catalogues — PC / NPC / Item / Monster / Location (metadata in localStorage; images in IndexedDB)
 
+## Campaign play state
+- **Scene state** — unseen / current / completed / skipped + per-scene notes (`{campaignId}-campaign-state`)
+- **NPC memory** — attitude, mood, last seen, notes, flags (separate from catalogue)
+- **History** — structured timeline entries; Session Notes remain freeform
+
 ## Campaign editing
 - **Edit mode** edits passage title/body
 - **Add passage** inserts custom sections under a chapter
@@ -32,6 +37,8 @@ PC, NPC, Monster, and Item catalogues support a **portrait** image upload (Index
 | `js/core/media-bar.js` | Sticky YouTube ambience bar |
 | `js/core/entity-ui.js` | Tooltips + modals |
 | `js/core/entity-registry.js` | Catalogue → `ENTITIES` |
+| `js/core/campaign-state.js` | Scene / NPC memory / timeline persistence |
+| `js/core/campaign-state-ui.js` | Scene chrome, memory modal, history panel |
 | `js/core/map-panel.js` | Map images, pins, drag positions |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | IndexedDB image blobs |
@@ -44,8 +51,9 @@ Run with Node when available:
 - `test/validate-entity-registry.js`
 - `test/validate-catalogues.js`
 - `test/validate-catalogue-images.js`
+- `test/validate-campaign-state.js`
 - `test/validate-layout.js`
 - `test/validate-maps.js`
 - `test/validate-maps-media.js`
 
-Browser smoke: `test/entity-links-test.html`, `test/section-editor-test.html`
+Browser smoke: `test/entity-links-test.html`, `test/section-editor-test.html`, `test/campaign-state-test.html`
