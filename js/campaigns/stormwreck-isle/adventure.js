@@ -1,6 +1,6 @@
 /**
  * Dragons of Stormwreck Isle — adventure content
- * Sections render as one continuous scroll document.
+ * Sections are playable scenes (optional entities + connections metadata).
  *
  * Formatting:
  *   @npc:runara|Elder Runara
@@ -106,13 +106,25 @@ const ADVENTURE = {
       id: "drowned-sailors",
       chapter: "ch-1",
       title: "Drowned Sailors",
+      scene: {
+        locationId: "dragons-rest",
+        entities: [
+          { id: "zombie", quantity: 2, note: "Both begin in the surf." },
+          { id: "undead-fortitude", note: "Radiant damage or crits bypass it." },
+          { id: "runara", note: "May arrive if the party is defeated." }
+        ],
+        connections: [
+          { sceneId: "inhabitants", label: "Climb toward Dragon's Rest" },
+          { sceneId: "welcome", label: "Back to the landing" }
+        ]
+      },
       content: `
         {{read-aloud}}
         As you're about to leave the beach and start your climb, you hear splashing and a wet, gurgling moan behind you. Three figures shambling up from the water's edge, about thirty feet away. They're dressed as sailors, but their skin is gray and they look drowned. Sea water drools from their slack mouths as they lurch toward you.
         {{/read-aloud}}
         <p>Three @monster:zombie|zombies from a recent shipwreck. Fight or leave them — they can't catch the party up the path.</p>
         {{dm-note}}
-        <b>Undead Fortitude:</b> Radiant damage or crits bypass it. DC 10 Intelligence to recall this.
+        <b>Undead Fortitude:</b> Radiant damage or crits bypass it. DC 10 Intelligence to recall this — or see @feature:undead-fortitude|Undead Fortitude.
 
         <b>Runara's Aid:</b> If the zombies win, the party wakes in the temple. @npc:runara|Runara arrived just in time.
         {{/dm-note}}
@@ -122,6 +134,15 @@ const ADVENTURE = {
       id: "inhabitants",
       chapter: "ch-1",
       title: "Meeting the Inhabitants",
+      scene: {
+        locationId: "dragons-rest",
+        entities: [{ id: "runara" }, { id: "myla" }],
+        connections: [
+          { sceneId: "npc-runara", label: "Speak with Elder Runara" },
+          { sceneId: "cloister-quests", label: "Hear about quests" },
+          { sceneId: "drowned-sailors", label: "Back down to the beach" }
+        ]
+      },
       content: `
         {{read-aloud}}
         Your arrival draws the attention of the entire population — mostly kobolds. They eye you curiously while a couple of humans watch from a distance. No one carries a visible weapon. One kobold pipes up: "What's your name?" — and suddenly questions pour in.
@@ -193,6 +214,10 @@ const ADVENTURE = {
       title: "Travel to Seagrow Caves",
       content: `
         <p>Reach @location:seagrow-caves|Seagrow Caves by rowboat (5 miles, ~3 hr 20 min) or walk the coast (7 miles, ~2 hr 20 min).</p>
+        {{dm-note}}
+        A successful @skill:nature|Nature check reveals that the animals are avoiding this part of the shore.
+        A druid may have useful options here through @feature:wild-shape|Wild Shape.
+        {{/dm-note}}
         {{read-aloud}}
         A cliff of dark gray stone towers two hundred feet above the crashing waves. A swirling slick of colors dances on the water's surface, emanating from the cave.
         {{/read-aloud}}

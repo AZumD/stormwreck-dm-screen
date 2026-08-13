@@ -80,7 +80,8 @@ CS.logInteraction({
   sceneId: "npc-tarak-varnoth",
   text: "Asked about tattoos. Tarak became guarded.",
   attitude: "Indifferent",
-  mood: "Guarded"
+  mood: "Guarded",
+  addToNotes: true
 });
 
 const tl = CS.getTimeline({ type: "interaction" });
@@ -92,6 +93,15 @@ if (mem2.attitude !== "Indifferent") fail("interaction did not update attitude")
 else pass("interaction updates memory");
 if (!mem2.notes.some((n) => n.includes("tattoos"))) fail("interaction note not appended");
 else pass("interaction appended to memory notes");
+
+CS.logInteraction({
+  entityId: "tarak",
+  session: 2,
+  text: "Timeline only — should not clone into notes"
+});
+const mem3 = CS.getNpcMemory("tarak");
+if (mem3.notes.some((n) => n.includes("Timeline only"))) fail("default-off notes still appended");
+else pass("addToNotes defaults off");
 
 const raw = JSON.parse(localStorage.getItem("test-campaign-campaign-state"));
 if (!raw.scenes || !raw.npcMemory || !raw.timeline) fail("persisted shape incomplete");

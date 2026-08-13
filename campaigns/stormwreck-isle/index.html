@@ -27,7 +27,7 @@
       </header>
 
       <nav class="nav-section">
-        <h2>Adventure</h2>
+        <h2>Scenes</h2>
         <ul id="section-nav" class="nav-list"></ul>
       </nav>
 
@@ -56,8 +56,15 @@
           <span class="sidebar-toggle__icon" aria-hidden="true"></span>
           <span class="sidebar-toggle__label">Navigation</span>
         </button>
-        <input type="search" id="search" class="search" placeholder="Search adventure…" autocomplete="off">
+        <div class="catalogue-search" id="catalogue-search">
+          <input type="search" id="search" class="search" placeholder="Search catalogues…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogue-search-results">
+          <ul id="catalogue-search-results" class="catalogue-search__results hidden" role="listbox" hidden></ul>
+        </div>
         <button type="button" id="edit-mode-toggle" class="toolbar-btn" aria-pressed="false">Edit mode</button>
+        <div class="view-mode-toggle" role="group" aria-label="Campaign view">
+          <button type="button" id="view-mode-play" class="toolbar-btn view-mode-btn is-active" aria-pressed="true">Play</button>
+          <button type="button" id="view-mode-document" class="toolbar-btn view-mode-btn" aria-pressed="false">Document</button>
+        </div>
         <button type="button" id="map-panel-toggle" class="toolbar-btn map-panel-toggle" aria-label="Show map" aria-expanded="false" aria-controls="map-panel">
           <span class="map-panel-toggle__icon" aria-hidden="true"></span>
           <span class="map-panel-toggle__label">Map</span>
@@ -68,7 +75,8 @@
       <p id="format-help" class="format-help-bar hidden">@npc:id|Name · &lt;b&gt;bold&lt;/b&gt; · {{read-aloud}}…{{/read-aloud}} · {{dm-note}}…{{/dm-note}}</p>
 
       <div class="main-scroll">
-        <article class="content scroll-document" id="scroll-document"></article>
+        <article class="content play-view" id="play-view" aria-label="Scene play view"></article>
+        <article class="content scroll-document hidden" id="scroll-document" aria-label="Document reference view"></article>
         <article class="content panel-view hidden" id="panel-view"></article>
       </div>
     </main>
@@ -111,6 +119,14 @@
     </aside>
   </div>
 
+  <dialog id="party-dialog" class="map-pin-dialog">
+    <div class="modal-header">
+      <h2 id="party-dialog-title">Add to party</h2>
+      <button type="button" class="modal-close" id="party-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="party-dialog-body"></div>
+  </dialog>
+
   <dialog id="map-pin-dialog" class="map-pin-dialog">
     <div class="modal-header">
       <h2 id="map-pin-dialog-title">Add to map</h2>
@@ -135,6 +151,22 @@
       <button type="button" class="modal-close" id="search-close" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body" id="search-results"></div>
+  </dialog>
+
+  <dialog id="scene-entity-dialog" class="map-pin-dialog">
+    <div class="modal-header">
+      <h2 id="scene-entity-dialog-title">Add to scene</h2>
+      <button type="button" class="modal-close" id="scene-entity-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="scene-entity-dialog-body"></div>
+  </dialog>
+
+  <dialog id="scene-connection-dialog" class="map-pin-dialog">
+    <div class="modal-header">
+      <h2 id="scene-connection-dialog-title">Add connection</h2>
+      <button type="button" class="modal-close" id="scene-connection-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="scene-connection-dialog-body"></div>
   </dialog>
 
   <dialog id="interaction-dialog" class="entity-modal">
@@ -163,16 +195,24 @@
   </div>
 
   <script src="../../js/i18n/en.js"></script>
+  <script src="../../js/core/catalogue/types.js"></script>
   <script src="../../js/core/parser.js"></script>
   <script src="../../js/core/editor.js"></script>
   <script src="../../js/core/catalogue/store.js"></script>
   <script src="../../js/core/catalogue/images.js"></script>
   <script src="../../js/core/catalogue/configs.js"></script>
   <script src="../../js/catalogue-seeds/stormwreck-isle.js"></script>
+  <script src="../../js/catalogue-seeds/core-rules.js"></script>
+  <script src="../../js/catalogue-seeds/core-spells.js"></script>
+  <script src="../../js/catalogue-seeds/core-skills.js"></script>
+  <script src="../../js/catalogue-seeds/core-features.js"></script>
   <script src="../../js/core/entity-registry.js"></script>
   <script src="../../js/core/entity-ui.js"></script>
   <script src="../../js/core/campaign-state.js"></script>
   <script src="../../js/core/campaign-state-ui.js"></script>
+  <script src="../../js/core/scene-meta.js"></script>
+  <script src="../../js/core/scene-ui.js"></script>
+  <script src="../../js/core/party.js"></script>
   <script src="../../js/core/media-bar.js"></script>
   <script src="../../js/campaigns/stormwreck-isle/adventure.js"></script>
   <script src="../../js/campaigns/stormwreck-isle/maps.js"></script>

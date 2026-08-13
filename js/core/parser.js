@@ -2,8 +2,19 @@
 window.ContentParser = (function () {
   "use strict";
 
-  const BRACKET_LINK_RE = /\[\[(npc|monster|location|item):([\w-]+)(?:\|([^\]]+))?\]\]/g;
-  const AT_LINK_RE = /@(npc|monster|location|item):([\w-]+)(?:\|([^@]+?))?(?=[\s,.;:!?)<\]]|$)/g;
+  function linkAlternation() {
+    if (window.CatalogueTypes?.linkAlternation) return CatalogueTypes.linkAlternation();
+    return "npc|monster|location|item|pc|race|class|spell|skill|feature";
+  }
+
+  function bracketLinkRe() {
+    return new RegExp(`\\[\\[(${linkAlternation()}):([\\w-]+)(?:\\|([^\\]]+))?\\]\\]`, "g");
+  }
+
+  function atLinkRe() {
+    return new RegExp(`@(${linkAlternation()}):([\\w-]+)(?:\\|([^@]+?))?(?=[\\s,.;:!?)<\\]]|$)`, "g");
+  }
+
   const YOUTUBE_RE = /\{\{youtube:([^}|]+)(?:\|([^}]+))?\}\}/gi;
 
   function escapeHtml(str) {
@@ -41,14 +52,14 @@ window.ContentParser = (function () {
   }
 
   function linkButton(type, id, label, entities) {
-    const entity = entities[id];
+    const entity = entities[id] || (window.EntityRegistry?.resolve?.(id) ?? null);
     const display = label || (entity ? entity.name : id);
     return `<button type="button" class="entity-link" data-type="${type}" data-id="${id}">${escapeHtml(display)}</button>`;
   }
 
   function replaceLinks(html, entities) {
-    html = html.replace(BRACKET_LINK_RE, (_, type, id, label) => linkButton(type, id, label, entities));
-    html = html.replace(AT_LINK_RE, (_, type, id, label) => linkButton(type, id, label, entities));
+    html = html.replace(bracketLinkRe(), (_, type, id, label) => linkButton(type, id, label, entities));
+    html = html.replace(atLinkRe(), (_, type, id, label) => linkButton(type, id, label, entities));
     return html;
   }
 
@@ -64,11 +75,32 @@ window.ContentParser = (function () {
       `<div class="dm-note"><span class="dm-note-label">${window.I18N?.dmNote || "DM Note"}</span>${inlineFormat(text.trim(), registry)}</div>`
     );
 
+    html = html.replace(/\{\{collapse(?::([^}]*))?\}\}([\s\S]*?)\{\{\/collapse\}\}/g, (_, title, text) => {
+      const label = String(title || "").trim() || window.I18N?.collapseDefaultTitle || "Details";
+      return `<details class="collapse-block"><summary class="collapse-block__summary">${escapeHtml(label)}</summary><div class="collapse-block__body">${inlineFormat(String(text || "").trim(), registry)}</div></details>`;
+    });
+
     html = replaceYouTube(html);
     html = replaceLinks(html, registry);
     html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html = preserveLineBreaks(html);
 
     return html;
+  }
+
+  /**
+   * Keep author line breaks without requiring <br> or blank-line markdown.
+   * Whitespace between HTML tags (template indentation) is collapsed so existing
+   * booklet markup does not sprout extra breaks.
+   */
+  function preserveLineBreaks(html) {
+    let out = String(html ?? "");
+    out = out.replace(/>[ \t]*\r?\n[ \t]*</g, "><");
+    out = out.replace(/^\s+/, "").replace(/\s+$/, "");
+    out = out.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    out = out.replace(/\n\n+/g, "<br><br>");
+    out = out.replace(/\n/g, "<br>");
+    return out;
   }
 
   /** Format single-line / inline snippets inside blocks */
@@ -80,6 +112,9 @@ window.ContentParser = (function () {
     html = html.replace(/&lt;strong&gt;(.+?)&lt;\/strong&gt;/g, "<strong>$1</strong>");
     html = html.replace(/&lt;em&gt;(.+?)&lt;\/em&gt;/g, "<em>$1</em>");
     html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    html = html.replace(/\n\n+/g, "<br><br>");
+    html = html.replace(/\n/g, "<br>");
     return html;
   }
 
@@ -99,11 +134,16 @@ window.ContentParser = (function () {
   }
 
   function stripTags(html) {
+    const types = linkAlternation();
     return html
       .replace(/\{\{youtube:[^}]+\}\}/gi, " ")
+      .replace(/\{\{\/?read-aloud\}\}/gi, " ")
+      .replace(/\{\{\/?dm-note\}\}/gi, " ")
+      .replace(/\{\{collapse(?::[^}]*)?\}\}/gi, " ")
+      .replace(/\{\{\/collapse\}\}/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/\[\[[^\]]+\]\]/g, " ")
-      .replace(/@(npc|monster|location|item):[\w-]+(?:\|[^\s@<]+)?/g, " ");
+      .replace(new RegExp(`@(${types}):[\\w-]+(?:\\|[^\\s@<]+)?`, "g"), " ");
   }
 
   return {
@@ -114,8 +154,14 @@ window.ContentParser = (function () {
     replaceLinks,
     replaceYouTube,
     extractYouTubeId,
-    BRACKET_LINK_RE,
-    AT_LINK_RE,
-    YOUTUBE_RE
+    preserveLineBreaks,
+    get AT_LINK_RE() {
+      return atLinkRe();
+    },
+    get BRACKET_LINK_RE() {
+      return bracketLinkRe();
+    },
+    YOUTUBE_RE,
+    linkAlternation
   };
 })();

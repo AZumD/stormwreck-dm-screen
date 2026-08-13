@@ -47,7 +47,7 @@ for (const type of ["pc", "npc", "item", "monster"]) {
   // simpler: count id: "portrait" occurrences - should be 4
 }
 const portraitFields = (configs.match(/id: "portrait"/g) || []).length;
-if (portraitFields < 4) fail(`expected >=4 portrait fields, got ${portraitFields}`);
+if (portraitFields < 7) fail(`expected >=7 portrait fields, got ${portraitFields}`);
 else pass(`catalogue configs have ${portraitFields} portrait fields`);
 
 if (!catApp.includes("kind === \"portrait\"") && !catApp.includes('kind === "portrait"')) {

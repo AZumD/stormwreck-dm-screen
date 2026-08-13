@@ -1,23 +1,27 @@
 /**
- * Campaign DM screen — continuous scroll, panels, inline editing
+ * Campaign DM screen — scene play view + document reference + panels
  */
 (function () {
   "use strict";
 
-  const { parseContent, markdownLite, stripTags, escapeHtml } = ContentParser;
+  const { parseContent, markdownLite, escapeHtml } = ContentParser;
   const t = window.I18N;
   const campaignId = ADVENTURE.meta?.id || "stormwreck-isle";
 
   const STORAGE_KEYS = {
     notes: `${campaignId}-notes`,
     checklist: `${campaignId}-checklist`,
-    session: `${campaignId}-session`
+    session: `${campaignId}-session`,
+    viewMode: `${campaignId}-view-mode`
   };
 
   const sectionNav = document.getElementById("section-nav");
+  const playView = document.getElementById("play-view");
   const scrollDocument = document.getElementById("scroll-document");
   const panelView = document.getElementById("panel-view");
   const searchInput = document.getElementById("search");
+  const catalogueSearch = document.getElementById("catalogue-search");
+  const catalogueSearchResults = document.getElementById("catalogue-search-results");
   const tooltip = document.getElementById("entity-tooltip");
   const entityModal = document.getElementById("entity-modal");
   const modalTitle = document.getElementById("modal-title");
@@ -27,10 +31,35 @@
   const sessionBadge = document.getElementById("session-badge");
   const editModeToggle = document.getElementById("edit-mode-toggle");
   const formatHelp = document.getElementById("format-help");
+  const viewModePlayBtn = document.getElementById("view-mode-play");
+  const viewModeDocumentBtn = document.getElementById("view-mode-document");
 
-  let activeView = { type: "scroll" };
+  /** @type {{ type: "play"|"document"|"panel", id?: string }} */
+  let activeView = { type: "play" };
+  let focusedSceneId = null;
   let scrollSpyObserver = null;
   let editingSectionId = null;
+  let catalogueSearchTimer = null;
+  let catalogueSearchHits = [];
+  let catalogueSearchActive = -1;
+
+  function loadViewMode() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.viewMode);
+      if (saved === "document" || saved === "play") return saved;
+    } catch {
+      /* ignore */
+    }
+    return "play";
+  }
+
+  function saveViewMode(mode) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.viewMode, mode);
+    } catch {
+      /* ignore */
+    }
+  }
 
   function getSections() {
     return SectionEditor.getSections(campaignId, ADVENTURE.sections);
@@ -38,6 +67,14 @@
 
   function getSectionById(sectionId) {
     return getSections().find((s) => s.id === sectionId) || null;
+  }
+
+  function getSectionBase(sectionId) {
+    return (
+      (ADVENTURE.sections || []).find((s) => s.id === sectionId) ||
+      SectionEditor.getSections(campaignId, ADVENTURE.sections).find((s) => s.id === sectionId) ||
+      null
+    );
   }
 
   function getSectionData(section) {
@@ -54,9 +91,23 @@
 
   function refreshDocument(focusSectionId) {
     buildNav();
-    renderScrollDocument();
-    setupScrollSpy();
-    if (focusSectionId) jumpToSection(focusSectionId);
+    const id = focusSectionId || focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
+    if (activeView.type === "panel") {
+      renderPanel(activeView.id);
+      return;
+    }
+    if (loadViewMode() === "document" || activeView.type === "document") {
+      renderScrollDocument();
+      setupScrollSpy();
+      if (id) {
+        const el = document.getElementById(`section-${id}`);
+        if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    } else {
+      renderPlayScene(id);
+    }
+    if (id) history.replaceState(null, "", `#${id}`);
+    updateNavActive();
   }
 
   function init() {
@@ -89,6 +140,27 @@
     });
 
     if (window.CampaignState) CampaignState.init(campaignId);
+    if (window.PartyRoster) PartyRoster.init();
+    if (window.SceneUI) {
+      SceneUI.init({
+        campaignId,
+        api: {
+          jumpToSection,
+          getSections,
+          getSectionTitle: (id) => {
+            const section = getSectionById(id);
+            return section ? getSectionData(section).title : id;
+          },
+          getSectionBase,
+          onSceneMetaChange: (sceneId) => {
+            if (activeView.type === "play") renderPlayScene(sceneId || focusedSceneId);
+            else if (activeView.type === "document") renderScrollDocument();
+            buildNav();
+            updateNavActive();
+          }
+        }
+      });
+    }
     if (window.CampaignStateUI) {
       CampaignStateUI.init({
         campaignId,
@@ -102,6 +174,7 @@
           },
           onSceneStateChange: () => {
             CampaignStateUI.applyNavSceneClasses();
+            if (activeView.type === "play" && focusedSceneId) renderPlayScene(focusedSceneId);
           },
           refreshHistoryPanel: () => {
             if (activeView.type === "panel" && activeView.id === "history") renderPanel("history");
@@ -111,10 +184,9 @@
     }
 
     buildNav();
-    renderScrollDocument();
     bindEvents();
+    bindViewModeControls();
     loadSessionBadge();
-    setupScrollSpy();
     syncEditModeUI();
     MapPanel.init(campaignId);
     restoreInitialScene();
@@ -122,7 +194,18 @@
     window.addEventListener("focus", async () => {
       if (window.CatalogueImages) {
         try {
-          await CatalogueImages.preload(["pc", "npc", "item", "monster", "location"]);
+          await CatalogueImages.preload([
+            "pc",
+            "npc",
+            "item",
+            "monster",
+            "location",
+            "race",
+            "class",
+            "spell",
+            "skill",
+            "feature"
+          ]);
         } catch {
           /* ignore */
         }
@@ -134,9 +217,12 @@
           /* ignore */
         }
       }
+      if (window.PartyRoster) PartyRoster.refresh();
       if (window.MapPanel?.refresh) MapPanel.refresh();
       if (activeView.type === "panel") {
         renderPanel(activeView.id);
+      } else if (activeView.type === "play") {
+        renderPlayScene(focusedSceneId);
       } else {
         renderScrollDocument();
         setupScrollSpy();
@@ -229,6 +315,7 @@
             <div class="section-body" data-body="${section.id}">
               ${parseContent(data.content, getEntities())}
             </div>
+            ${window.SceneUI ? SceneUI.sceneExtrasHtml(section.id) : ""}
             <div class="section-editor hidden" data-editor="${section.id}"></div>
           </section>
           ${addPassageControlsHtml(section.chapter, section.id)}`;
@@ -247,20 +334,71 @@
     scrollDocument.innerHTML = html;
     bindDocumentEditControls();
     if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(scrollDocument);
+    if (window.SceneUI) SceneUI.bind(scrollDocument);
+  }
+
+  function renderPlayScene(sceneId) {
+    if (!playView) return;
+    const sections = getSections();
+    const id = sceneId || focusedSceneId || sections[0]?.id;
+    const section = getSectionById(id);
+    if (!section) {
+      playView.innerHTML = `<p class="empty-state">No scenes yet.</p>`;
+      return;
+    }
+
+    focusedSceneId = section.id;
+    activeView = { type: "play", id: section.id };
+    editingSectionId = null;
+
+    const data = getSectionData(section);
+    const chapter = ADVENTURE.chapters.find((c) => c.id === section.chapter);
+    const badges = [
+      data.isCustom ? `<span class="edited-badge">${t.customBadge || "custom"}</span>` : "",
+      data.isEdited ? `<span class="edited-badge">${t.editedBadge || "edited"}</span>` : ""
+    ].join(" ");
+
+    playView.innerHTML = `
+      <section class="adventure-section play-scene${data.isEdited || data.isCustom ? " is-edited" : ""}${data.isCustom ? " is-custom" : ""}${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
+        ${chapter ? `<p class="play-scene__chapter">${escapeHtml(chapter.title)}</p>` : ""}
+        <div class="section-header">
+          <h1 class="section-title">${escapeHtml(data.title)} ${badges}</h1>
+          ${sectionActionsHtml(section, data)}
+        </div>
+        ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id) : ""}
+        <div class="section-body" data-body="${section.id}">
+          ${parseContent(data.content, getEntities())}
+        </div>
+        ${window.SceneUI ? SceneUI.sceneExtrasHtml(section.id) : ""}
+        <div class="section-editor hidden" data-editor="${section.id}"></div>
+      </section>`;
+
+    playView.classList.remove("hidden");
+    scrollDocument.classList.add("hidden");
+    panelView.classList.add("hidden");
+    if (scrollSpyObserver) scrollSpyObserver.disconnect();
+
+    bindDocumentEditControls();
+    if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(playView);
+    if (window.SceneUI) SceneUI.bind(playView);
+    updateNavActive();
   }
 
   function bindDocumentEditControls() {
-    scrollDocument.querySelectorAll(".section-edit-btn").forEach((btn) => {
-      btn.addEventListener("click", () => openSectionEditor(btn.dataset.edit));
-    });
+    const roots = [playView, scrollDocument].filter(Boolean);
+    roots.forEach((root) => {
+      root.querySelectorAll(".section-edit-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openSectionEditor(btn.dataset.edit));
+      });
 
-    scrollDocument.querySelectorAll(".section-delete-btn").forEach((btn) => {
-      btn.addEventListener("click", () => deletePassage(btn.dataset.delete));
-    });
+      root.querySelectorAll(".section-delete-btn").forEach((btn) => {
+        btn.addEventListener("click", () => deletePassage(btn.dataset.delete));
+      });
 
-    scrollDocument.querySelectorAll(".add-passage-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        addPassage(btn.dataset.addChapter, btn.dataset.after || null);
+      root.querySelectorAll(".add-passage-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          addPassage(btn.dataset.addChapter, btn.dataset.after || null);
+        });
       });
     });
 
@@ -315,8 +453,8 @@
     if (!section) return;
 
     const data = getSectionData(section);
-    const host = scrollDocument.querySelector(`[data-editor="${sectionId}"]`);
-    const body = scrollDocument.querySelector(`[data-body="${sectionId}"]`);
+    const host = document.querySelector(`[data-editor="${sectionId}"]`);
+    const body = document.querySelector(`[data-body="${sectionId}"]`);
     if (!host || !body) return;
 
     const isCustom = SectionEditor.isCustomSection(campaignId, sectionId);
@@ -331,12 +469,28 @@
       <label class="editor-label">${t.passageTitleLabel || "Title"}</label>
       <input type="text" class="editor-title" value="${escapeHtml(data.title)}">
       <label class="editor-label">${t.passageContentLabel || "Content"}</label>
+      <div class="editor-toolbar" role="toolbar" aria-label="${escapeHtml(t.editorToolbar || "Formatting")}">
+        <button type="button" class="editor-tool" data-wrap="read-aloud" title="${escapeHtml(t.wrapReadAloudHint || "Wrap selection as read-aloud")}">${escapeHtml(t.wrapReadAloud || "Read aloud")}</button>
+        <button type="button" class="editor-tool" data-wrap="dm-note" title="${escapeHtml(t.wrapDmNoteHint || "Wrap selection as DM note")}">${escapeHtml(t.wrapDmNote || "DM note")}</button>
+        <button type="button" class="editor-tool" data-wrap="collapse" title="${escapeHtml(t.wrapCollapseHint || "Wrap selection in a collapsible block")}">${escapeHtml(t.wrapCollapse || "Collapse")}</button>
+        <button type="button" class="editor-tool" data-wrap="bold" title="${escapeHtml(t.wrapBoldHint || "Bold selection")}">${escapeHtml(t.wrapBold || "Bold")}</button>
+        <span class="editor-toolbar__sep" aria-hidden="true"></span>
+        <button type="button" class="editor-tool" data-link="npc" title="@npc:id|Name">NPC</button>
+        <button type="button" class="editor-tool" data-link="monster" title="@monster:id|Name">Monster</button>
+        <button type="button" class="editor-tool" data-link="location" title="@location:id|Name">Location</button>
+        <button type="button" class="editor-tool" data-link="item" title="@item:id|Name">Item</button>
+        <button type="button" class="editor-tool" data-link="skill" title="@skill:id|Name">Skill</button>
+        <button type="button" class="editor-tool" data-link="feature" title="@feature:id|Name">Feature</button>
+        <button type="button" class="editor-tool" data-link="class" title="@class:id|Name">Class</button>
+        <button type="button" class="editor-tool" data-link="race" title="@race:id|Name">Race</button>
+        <span class="editor-toolbar__sep" aria-hidden="true"></span>
+        <button type="button" class="editor-tool" data-insert-youtube="${sectionId}">${escapeHtml(t.insertYoutube || "YouTube")}</button>
+      </div>
       <textarea class="editor-content" rows="14">${escapeHtml(data.content.trim())}</textarea>
       <p class="format-hint">${t.formatHelp}</p>
       <div class="editor-actions">
         <button type="button" class="btn btn-primary" data-save="${sectionId}">${t.saveSection}</button>
         <button type="button" class="btn" data-cancel="${sectionId}">${t.cancelEdit}</button>
-        <button type="button" class="btn" data-insert-youtube="${sectionId}">${t.insertYoutube || "Insert YouTube"}</button>
         ${resetBtn}
         <button type="button" class="btn btn-danger" data-delete-inline="${sectionId}">${t.deleteSection}</button>
       </div>`;
@@ -346,9 +500,110 @@
     const resetEl = host.querySelector(`[data-reset="${sectionId}"]`);
     if (resetEl) resetEl.addEventListener("click", () => resetSectionEditor(sectionId));
     host.querySelector(`[data-delete-inline="${sectionId}"]`).addEventListener("click", () => deletePassage(sectionId));
-    host.querySelector(`[data-insert-youtube="${sectionId}"]`).addEventListener("click", () => insertYoutubeSnippet(host));
+    bindEditorToolbar(host);
 
-    host.querySelector(".editor-title").focus();
+    host.querySelector(".editor-content")?.focus();
+  }
+
+  function getEditorTextarea(host) {
+    return host.querySelector(".editor-content");
+  }
+
+  /** Keep textarea selection when clicking toolbar buttons */
+  function bindEditorToolbar(host) {
+    const toolbar = host.querySelector(".editor-toolbar");
+    if (!toolbar) return;
+
+    toolbar.addEventListener("mousedown", (e) => {
+      if (e.target.closest("button")) e.preventDefault();
+    });
+
+    toolbar.querySelectorAll("[data-wrap]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const kind = btn.dataset.wrap;
+        if (kind === "read-aloud") {
+          wrapEditorSelection(host, "{{read-aloud}}\n", "\n{{/read-aloud}}", {
+            placeholder: t.readAloudPlaceholder || "Read-aloud text…"
+          });
+        } else if (kind === "dm-note") {
+          wrapEditorSelection(host, "{{dm-note}}\n", "\n{{/dm-note}}", {
+            placeholder: t.dmNotePlaceholder || "DM note…"
+          });
+        } else if (kind === "collapse") {
+          const titlePrompt = prompt(
+            t.collapseTitlePrompt || "Title shown when collapsed:",
+            t.collapseDefaultTitle || "Details"
+          );
+          if (titlePrompt == null) return;
+          const title = titlePrompt.trim().replace(/\}/g, "") || t.collapseDefaultTitle || "Details";
+          wrapEditorSelection(host, `{{collapse:${title}}}\n`, "\n{{/collapse}}", {
+            placeholder: t.collapsePlaceholder || "Hidden details…"
+          });
+        } else if (kind === "bold") {
+          wrapEditorSelection(host, "<b>", "</b>", { placeholder: t.boldPlaceholder || "bold" });
+        }
+      });
+    });
+
+    toolbar.querySelectorAll("[data-link]").forEach((btn) => {
+      btn.addEventListener("click", () => insertEntityLinkSnippet(host, btn.dataset.link));
+    });
+
+    toolbar.querySelector("[data-insert-youtube]")?.addEventListener("click", () => insertYoutubeSnippet(host));
+  }
+
+  function replaceEditorRange(textarea, start, end, text, selectInner) {
+    const before = textarea.value.slice(0, start);
+    const after = textarea.value.slice(end);
+    textarea.value = before + text + after;
+    textarea.focus();
+    if (selectInner && selectInner.length) {
+      const innerStart = start + selectInner.prefixLength;
+      textarea.setSelectionRange(innerStart, innerStart + selectInner.length);
+    } else {
+      const cursor = start + text.length;
+      textarea.setSelectionRange(cursor, cursor);
+    }
+  }
+
+  function wrapEditorSelection(host, openTag, closeTag, opts = {}) {
+    const textarea = getEditorTextarea(host);
+    if (!textarea) return;
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? start;
+    const selected = textarea.value.slice(start, end);
+    const inner = selected || opts.placeholder || "";
+    const text = `${openTag}${inner}${closeTag}`;
+    replaceEditorRange(textarea, start, end, text, {
+      prefixLength: openTag.length,
+      length: inner.length
+    });
+  }
+
+  function insertEntityLinkSnippet(host, type) {
+    const textarea = getEditorTextarea(host);
+    if (!textarea) return;
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? start;
+    const selected = textarea.value.slice(start, end).trim();
+
+    const typeLabel = t.typeLabels?.[type] || type;
+    const id = prompt(
+      (t.entityLinkIdPrompt || "Catalogue link id for {type}:").replace("{type}", typeLabel),
+      ""
+    );
+    if (id == null || !String(id).trim()) return;
+
+    let label = selected;
+    if (!label) {
+      const typed = prompt(t.entityLinkLabelPrompt || "Display name (optional):", "");
+      if (typed == null) return;
+      label = typed.trim();
+    }
+
+    const cleanId = String(id).trim();
+    const snippet = label ? `@${type}:${cleanId}|${label}` : `@${type}:${cleanId}`;
+    replaceEditorRange(textarea, start, end, snippet, null);
   }
 
   function insertYoutubeSnippet(host) {
@@ -360,7 +615,7 @@
     const snippet = label
       ? `{{youtube:${url.trim()}|${label}}}`
       : `{{youtube:${url.trim()}}}`;
-    const textarea = host.querySelector(".editor-content");
+    const textarea = getEditorTextarea(host);
     if (!textarea) return;
     const start = textarea.selectionStart ?? textarea.value.length;
     const end = textarea.selectionEnd ?? start;
@@ -368,15 +623,13 @@
     const after = textarea.value.slice(end);
     const padBefore = before && !/\n$/.test(before) ? "\n" : "";
     const padAfter = after && !/^\n/.test(after) ? "\n" : "";
-    textarea.value = `${before}${padBefore}${snippet}${padAfter}${after}`;
-    textarea.focus();
-    const cursor = (before + padBefore + snippet).length;
-    textarea.setSelectionRange(cursor, cursor);
+    const text = `${padBefore}${snippet}${padAfter}`;
+    replaceEditorRange(textarea, start, end, text, null);
   }
 
   function closeSectionEditor(sectionId, saved) {
-    const host = scrollDocument.querySelector(`[data-editor="${sectionId}"]`);
-    const body = scrollDocument.querySelector(`[data-body="${sectionId}"]`);
+    const host = document.querySelector(`[data-editor="${sectionId}"]`);
+    const body = document.querySelector(`[data-body="${sectionId}"]`);
     if (host) {
       host.classList.add("hidden");
       host.innerHTML = "";
@@ -387,7 +640,7 @@
   }
 
   function saveSectionEditor(sectionId) {
-    const host = scrollDocument.querySelector(`[data-editor="${sectionId}"]`);
+    const host = document.querySelector(`[data-editor="${sectionId}"]`);
     if (!host) return;
     const title = host.querySelector(".editor-title").value.trim() || t.newPassageDefaultTitle;
     const content = host.querySelector(".editor-content").value;
@@ -421,24 +674,60 @@
   }
 
   function jumpToSection(id) {
-    showScrollView();
-    const el = document.getElementById(`section-${id}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      history.replaceState(null, "", `#${id}`);
+    focusedSceneId = id;
+    history.replaceState(null, "", `#${id}`);
+    const mode = loadViewMode();
+    if (mode === "document") {
+      showDocumentView();
+      const el = document.getElementById(`section-${id}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      renderPlayScene(id);
     }
+    updateNavActive();
   }
 
-  function showScrollView() {
-    activeView = { type: "scroll" };
+  function syncViewModeButtons() {
+    const mode = loadViewMode();
+    viewModePlayBtn?.classList.toggle("is-active", mode === "play");
+    viewModeDocumentBtn?.classList.toggle("is-active", mode === "document");
+    viewModePlayBtn?.setAttribute("aria-pressed", mode === "play" ? "true" : "false");
+    viewModeDocumentBtn?.setAttribute("aria-pressed", mode === "document" ? "true" : "false");
+  }
+
+  function bindViewModeControls() {
+    viewModePlayBtn?.addEventListener("click", () => {
+      saveViewMode("play");
+      syncViewModeButtons();
+      jumpToSection(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
+    });
+    viewModeDocumentBtn?.addEventListener("click", () => {
+      saveViewMode("document");
+      syncViewModeButtons();
+      jumpToSection(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
+    });
+    syncViewModeButtons();
+  }
+
+  function showDocumentView() {
+    activeView = { type: "document" };
+    if (playView) playView.classList.add("hidden");
     scrollDocument.classList.remove("hidden");
     panelView.classList.add("hidden");
+    renderScrollDocument();
     updateNavActive();
     setupScrollSpy();
   }
 
+  function showScrollView() {
+    /* Back-compat alias: return to the saved view mode */
+    if (loadViewMode() === "document") showDocumentView();
+    else renderPlayScene(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
+  }
+
   function showPanelView(view) {
     activeView = { type: "panel", id: view };
+    if (playView) playView.classList.add("hidden");
     scrollDocument.classList.add("hidden");
     panelView.classList.remove("hidden");
     if (scrollSpyObserver) scrollSpyObserver.disconnect();
@@ -526,8 +815,8 @@
   function updateNavActive() {
     document.querySelectorAll(".nav-btn").forEach((btn) => btn.classList.remove("active"));
 
-    if (activeView.type === "scroll") {
-      const hash = location.hash.replace("#", "");
+    if (activeView.type === "play" || activeView.type === "document") {
+      const hash = focusedSceneId || location.hash.replace("#", "");
       if (hash) highlightNavSection(hash);
     } else {
       const btn = document.querySelector(`.nav-btn[data-view="${activeView.id}"]`);
@@ -542,24 +831,166 @@
 
     if (editModeToggle) editModeToggle.addEventListener("click", toggleEditMode);
 
-    document.getElementById("modal-close").addEventListener("click", () => entityModal.close());
-    document.getElementById("search-close").addEventListener("click", () => searchModal.close());
+    document.getElementById("modal-close")?.addEventListener("click", () => entityModal.close());
+    document.getElementById("search-close")?.addEventListener("click", () => searchModal?.close());
     entityModal.addEventListener("click", (e) => {
       if (e.target === entityModal) entityModal.close();
     });
 
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") runSearch(searchInput.value.trim());
-    });
+    bindCatalogueSearch();
 
     const bindEntityEvents = (root) => EntityUI.bindEntityLinks(root);
 
+    if (playView) bindEntityEvents(playView);
     bindEntityEvents(scrollDocument);
     bindEntityEvents(panelView);
 
     window.addEventListener("hashchange", () => {
       const id = location.hash.replace("#", "");
-      if (id && activeView.type === "scroll") jumpToSection(id);
+      if (id && (activeView.type === "play" || activeView.type === "document")) jumpToSection(id);
+    });
+  }
+
+  function hideCatalogueSearch() {
+    if (!catalogueSearchResults) return;
+    catalogueSearchResults.classList.add("hidden");
+    catalogueSearchResults.hidden = true;
+    catalogueSearchResults.innerHTML = "";
+    catalogueSearchHits = [];
+    catalogueSearchActive = -1;
+    searchInput?.setAttribute("aria-expanded", "false");
+  }
+
+  function rankCatalogueMatch(entity, q) {
+    const name = (entity.name || "").toLowerCase();
+    if (name === q) return 0;
+    if (name.startsWith(q)) return 1;
+    if (name.includes(q)) return 2;
+    return 3;
+  }
+
+  function findCatalogueMatches(query) {
+    const q = query.trim().toLowerCase();
+    if (q.length < 1) return [];
+    const entities = Object.values(getEntities());
+    return entities
+      .map((entity) => {
+        const hay = [entity.name, entity.summary, entity.details, ...(entity.tags || [])]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return null;
+        return { entity, rank: rankCatalogueMatch(entity, q) };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.rank - b.rank || a.entity.name.localeCompare(b.entity.name))
+      .slice(0, 12)
+      .map((hit) => hit.entity);
+  }
+
+  function renderCatalogueSearch(query) {
+    if (!catalogueSearchResults) return;
+    const q = query.trim();
+    if (!q) {
+      hideCatalogueSearch();
+      return;
+    }
+
+    catalogueSearchHits = findCatalogueMatches(q);
+    catalogueSearchActive = catalogueSearchHits.length ? 0 : -1;
+
+    if (!catalogueSearchHits.length) {
+      catalogueSearchResults.innerHTML = `<li class="catalogue-search__empty" role="option">${escapeHtml(t.searchNoResults)} “${escapeHtml(q)}”</li>`;
+    } else {
+      catalogueSearchResults.innerHTML = catalogueSearchHits
+        .map((entity, i) => {
+          const type = t.typeLabels?.[entity.type] || entity.type;
+          const active = i === catalogueSearchActive ? " is-active" : "";
+          return `
+            <li class="catalogue-search__item${active}" role="option" data-idx="${i}" data-id="${escapeHtml(entity.id)}" aria-selected="${i === catalogueSearchActive ? "true" : "false"}">
+              <span class="catalogue-search__type">${escapeHtml(type)}</span>
+              <span class="catalogue-search__name">${escapeHtml(entity.name)}</span>
+              <span class="catalogue-search__meta">${escapeHtml(entity.summary || "")}</span>
+            </li>`;
+        })
+        .join("");
+    }
+
+    catalogueSearchResults.classList.remove("hidden");
+    catalogueSearchResults.hidden = false;
+    searchInput.setAttribute("aria-expanded", "true");
+
+    catalogueSearchResults.querySelectorAll(".catalogue-search__item[data-id]").forEach((el) => {
+      el.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        openCatalogueSearchResult(Number(el.dataset.idx));
+      });
+    });
+  }
+
+  function highlightCatalogueSearchActive() {
+    if (!catalogueSearchResults) return;
+    catalogueSearchResults.querySelectorAll(".catalogue-search__item").forEach((el, i) => {
+      const on = i === catalogueSearchActive;
+      el.classList.toggle("is-active", on);
+      el.setAttribute("aria-selected", on ? "true" : "false");
+      if (on) el.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  function openCatalogueSearchResult(idx) {
+    const entity = catalogueSearchHits[idx];
+    if (!entity) return;
+    hideCatalogueSearch();
+    searchInput.value = "";
+    EntityUI.openModal(entity.id);
+  }
+
+  function bindCatalogueSearch() {
+    if (!searchInput || !catalogueSearchResults) return;
+    if (t.searchCataloguesPlaceholder) searchInput.placeholder = t.searchCataloguesPlaceholder;
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(catalogueSearchTimer);
+      catalogueSearchTimer = setTimeout(() => renderCatalogueSearch(searchInput.value), 120);
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        hideCatalogueSearch();
+        searchInput.blur();
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        if (!catalogueSearchHits.length) renderCatalogueSearch(searchInput.value);
+        if (!catalogueSearchHits.length) return;
+        e.preventDefault();
+        catalogueSearchActive = (catalogueSearchActive + 1) % catalogueSearchHits.length;
+        highlightCatalogueSearchActive();
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        if (!catalogueSearchHits.length) return;
+        e.preventDefault();
+        catalogueSearchActive =
+          (catalogueSearchActive - 1 + catalogueSearchHits.length) % catalogueSearchHits.length;
+        highlightCatalogueSearchActive();
+        return;
+      }
+      if (e.key === "Enter") {
+        if (catalogueSearchActive >= 0 && catalogueSearchHits[catalogueSearchActive]) {
+          e.preventDefault();
+          openCatalogueSearchResult(catalogueSearchActive);
+        }
+      }
+    });
+
+    searchInput.addEventListener("blur", () => {
+      setTimeout(() => hideCatalogueSearch(), 120);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!catalogueSearch?.contains(e.target)) hideCatalogueSearch();
     });
   }
 
@@ -572,17 +1003,13 @@
         return;
       }
       const current = window.CampaignState?.getCurrentSceneId?.();
-      if (current && document.getElementById(`section-${current}`)) {
+      if (current && getSectionById(current)) {
         jumpToSection(current);
+        return;
       }
+      const first = getSections()[0]?.id;
+      if (first) jumpToSection(first);
     });
-  }
-
-  function snippet(text, q) {
-    const idx = text.indexOf(q);
-    if (idx === -1) return text.slice(0, 120);
-    const start = Math.max(0, idx - 40);
-    return (start > 0 ? "…" : "") + text.slice(start, start + 120) + "…";
   }
 
   function renderNotesView() {
@@ -677,68 +1104,6 @@
         input.closest(".checklist-item").classList.toggle("done", input.checked);
       });
     });
-  }
-
-  function runSearch(query) {
-    if (!query) return;
-    const q = query.toLowerCase();
-    const results = [];
-
-    getSections().forEach((section) => {
-      const data = getSectionData(section);
-      const text = stripTags(data.content + " " + data.title).toLowerCase();
-      if (text.includes(q)) {
-        results.push({
-          type: t.typeLabels.section,
-          title: data.title,
-          snippet: snippet(text, q),
-          action: () => {
-            searchModal.close();
-            jumpToSection(section.id);
-          }
-        });
-      }
-    });
-
-    const entities = getEntities();
-    Object.values(entities).forEach((entity) => {
-      const hay = [entity.name, entity.summary, entity.details, ...(entity.tags || [])]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      if (hay.includes(q)) {
-        results.push({
-          type: t.typeLabels[entity.type] || entity.type,
-          title: entity.name,
-          snippet: entity.summary || "",
-          action: () => {
-            searchModal.close();
-            EntityUI.openModal(entity.id);
-          }
-        });
-      }
-    });
-
-    if (!results.length) {
-      searchResults.innerHTML = `<p class="empty-state">${t.searchNoResults} "${escapeHtml(query)}"</p>`;
-    } else {
-      searchResults.innerHTML = results
-        .map(
-          (r, i) => `
-          <div class="search-result" data-idx="${i}">
-            <div class="search-result-type">${escapeHtml(r.type)}</div>
-            <strong>${escapeHtml(r.title)}</strong>
-            <div class="search-result-snippet">${escapeHtml(r.snippet)}</div>
-          </div>`
-        )
-        .join("");
-
-      searchResults.querySelectorAll(".search-result").forEach((el, i) => {
-        el.addEventListener("click", results[i].action);
-      });
-    }
-
-    searchModal.showModal();
   }
 
   if (document.readyState === "loading") {

@@ -20,6 +20,9 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 
 Drag moves pins; click (without drag) opens the entity/party modal.
 
+## Party
+Roster UI is owned by `PartyRoster` (`js/core/party.js`). Map panel calls it to render/refresh. PC map pins come from party members with type `pc` that have saved positions.
+
 ## Zoom
 - Mouse wheel over the map zooms toward the cursor (no on-map chrome)
 - When zoomed in, drag empty map area to pan

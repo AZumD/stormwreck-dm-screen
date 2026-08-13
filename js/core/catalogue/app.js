@@ -1,4 +1,4 @@
-/** Shared catalogue UI — list + form editor */
+/** Shared catalogue UI — list + wiki view + form editor */
 window.CatalogueApp = (function () {
   "use strict";
 
@@ -6,6 +6,7 @@ window.CatalogueApp = (function () {
   /* data-URL string length caps — IndexedDB can hold much more than localStorage */
   const MAX_PORTRAIT_CHARS = 12 * 1024 * 1024;
   const MAX_MAP_CHARS = 20 * 1024 * 1024;
+  const ABILITY_IDS = new Set(["str", "dex", "con", "int", "wis", "cha"]);
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -31,7 +32,182 @@ window.CatalogueApp = (function () {
     if (config.type === "item") return [entry.itemType, entry.rarity].filter(Boolean).join(" · ") || "Item";
     if (config.type === "monster") return [entry.size, entry.creatureType, entry.cr ? `CR ${entry.cr}` : ""].filter(Boolean).join(" · ") || "Monster";
     if (config.type === "location") return entry.featuredIn?.[0] ? `Featured in ${entry.featuredIn[0]}` : "Location";
+    if (config.type === "race") return [entry.size, entry.speed].filter(Boolean).join(" · ") || "Race";
+    if (config.type === "class") return [entry.hitDie, entry.primaryAbility].filter(Boolean).join(" · ") || "Class";
+    if (config.type === "skill") return entry.defaultAbility || entry.summary?.slice(0, 60) || "Skill";
+    if (config.type === "feature") {
+      return [entry.featureType, entry.levelPrerequisite ? `Lv ${entry.levelPrerequisite}` : ""].filter(Boolean).join(" · ") || "Feature";
+    }
+    if (config.type === "spell") {
+      const lvl = entry.level === "0" || String(entry.level).toLowerCase() === "cantrip" ? "Cantrip" : `Lv ${entry.level}`;
+      return [lvl, entry.school].filter(Boolean).join(" · ") || "Spell";
+    }
     return "";
+  }
+
+  function formatWikiText(text) {
+    if (window.ContentParser?.markdownLite) {
+      return ContentParser.markdownLite(String(text ?? ""));
+    }
+    let html = escapeHtml(String(text ?? ""));
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    return html
+      .split(/\n\n+/)
+      .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+      .join("");
+  }
+
+  /** Parse stored refs: @type:id|Label | type:id | bare id (with field.refType) */
+  function parseEntityRef(raw, defaultType) {
+    const text = String(raw || "").trim();
+    if (!text) return null;
+    const at = text.match(/^@([\w-]+):([\w-]+)(?:\|(.+))?$/);
+    if (at) return { type: at[1], id: at[2], label: (at[3] || "").trim() };
+    const typed = text.match(/^([\w-]+):([\w-]+)(?:\|(.+))?$/);
+    if (typed) return { type: typed[1], id: typed[2], label: (typed[3] || "").trim() };
+    if (defaultType) return { type: defaultType, id: text, label: "" };
+    return { type: "", id: text, label: "" };
+  }
+
+  function resolveRefLabel(ref) {
+    if (ref.label) return ref.label;
+    if (window.EntityRegistry?.resolve) {
+      const entity = EntityRegistry.resolve(ref.id);
+      if (entity?.name) return entity.name;
+    }
+    return ref.id;
+  }
+
+  function renderEntityRefHtml(raw, defaultType) {
+    const ref = parseEntityRef(raw, defaultType);
+    if (!ref) return escapeHtml(String(raw || ""));
+    if (ref.type) {
+      const label = resolveRefLabel(ref);
+      return `<button type="button" class="entity-link" data-type="${escapeHtml(ref.type)}" data-id="${escapeHtml(ref.id)}">${escapeHtml(label)}</button>`;
+    }
+    return escapeHtml(ref.id);
+  }
+
+  function isEmptyFieldValue(value, field) {
+    if (field.type === "checkbox") return !value;
+    if (field.type === "list") return !Array.isArray(value) || !value.filter(Boolean).length;
+    if (field.type === "image") return !value;
+    return value === undefined || value === null || String(value).trim() === "";
+  }
+
+  function renderWikiFieldValue(field, value) {
+    if (field.type === "image") {
+      const isPortrait = field.kind === "portrait" || field.id === "portrait";
+      const cls = isPortrait ? "cat-wiki__media cat-wiki__media--portrait" : "cat-wiki__media cat-wiki__media--map";
+      return `<img class="${cls}" src="${value}" alt="${escapeHtml(field.label || "")}">`;
+    }
+    if (field.type === "list") {
+      const items = (Array.isArray(value) ? value : []).filter(Boolean);
+      return `<ul class="cat-wiki__list">${items
+        .map((i) => `<li>${field.refType ? renderEntityRefHtml(i, field.refType) : escapeHtml(i)}</li>`)
+        .join("")}</ul>`;
+    }
+    if (field.type === "checkbox") {
+      return `<span class="cat-wiki__flag">Yes</span>`;
+    }
+    if (ABILITY_IDS.has(field.id)) {
+      const m = mod(value);
+      return `<span class="cat-wiki__score">${escapeHtml(String(value))}${
+        m ? ` <span class="cat-wiki__mod">(${escapeHtml(m)})</span>` : ""
+      }</span>`;
+    }
+    if (field.type === "textarea") {
+      return `<div class="cat-wiki__prose">${formatWikiText(value)}</div>`;
+    }
+    if (field.refType || (typeof value === "string" && value.includes("@"))) {
+      return `<div class="cat-wiki__value">${renderEntityRefHtml(value, field.refType)}</div>`;
+    }
+    return `<div class="cat-wiki__value">${escapeHtml(String(value))}</div>`;
+  }
+
+  function renderWikiAbilityStrip(fields, entry) {
+    const cells = fields
+      .filter((f) => !isEmptyFieldValue(entry[f.id], f))
+      .map(
+        (f) => `
+        <div class="cat-wiki__ability">
+          <span class="cat-wiki__ability-label">${escapeHtml(f.label)}</span>
+          ${renderWikiFieldValue(f, entry[f.id])}
+        </div>`
+      )
+      .join("");
+    return cells ? `<div class="cat-wiki__abilities">${cells}</div>` : "";
+  }
+
+  function renderWikiView(entry, config) {
+    const skipIds = new Set(["name"]);
+    const heroSrc = entry.portrait || entry.mapImage || "";
+    if (entry.portrait) skipIds.add("portrait");
+    else if (entry.mapImage) skipIds.add("mapImage");
+
+    const summaryText = entry.summary && String(entry.summary).trim() ? String(entry.summary).trim() : "";
+    if (summaryText) skipIds.add("summary");
+
+    const hero = heroSrc
+      ? `<div class="cat-wiki__hero">
+          <img class="cat-wiki__hero-img${entry.portrait ? " cat-wiki__hero-img--portrait" : " cat-wiki__hero-img--map"}"
+            src="${heroSrc}" alt="">
+        </div>`
+      : "";
+
+    const sections = config.sections
+      .map((section) => {
+        const visible = section.fields.filter((f) => !skipIds.has(f.id) && !isEmptyFieldValue(entry[f.id], f));
+        if (!visible.length) return "";
+
+        const allAbilities = visible.every((f) => ABILITY_IDS.has(f.id));
+        const body = allAbilities
+          ? renderWikiAbilityStrip(visible, entry)
+          : `<dl class="cat-wiki__fields">
+              ${visible
+                .map(
+                  (f) => `
+                <div class="cat-wiki__field cat-wiki__field--${f.grid || "full"}">
+                  <dt>${escapeHtml(f.label)}</dt>
+                  <dd>${renderWikiFieldValue(f, entry[f.id])}</dd>
+                </div>`
+                )
+                .join("")}
+            </dl>`;
+
+        return `
+          <section class="cat-wiki__section">
+            <h3 class="cat-wiki__section-title">${escapeHtml(section.title)}</h3>
+            ${body}
+          </section>`;
+      })
+      .filter(Boolean)
+      .join("");
+
+    const meta = listSummary(entry, config);
+    const lede = summaryText ? `<p class="cat-wiki__lede">${escapeHtml(summaryText)}</p>` : "";
+
+    return `
+      <article class="cat-wiki" data-entry-id="${escapeHtml(entry.id)}">
+        <header class="cat-wiki__header">
+          <div class="cat-wiki__header-main">
+            ${hero}
+            <div class="cat-wiki__intro">
+              ${meta ? `<p class="cat-wiki__kicker">${escapeHtml(meta)}</p>` : ""}
+              <h2 class="cat-wiki__title">${escapeHtml(entry.name || "Untitled")}</h2>
+              ${lede}
+            </div>
+          </div>
+          <div class="cat-wiki__actions">
+            <button type="button" class="cat-btn" data-action="edit">Edit</button>
+            <button type="button" class="cat-btn cat-btn--danger" data-action="delete">Delete</button>
+          </div>
+        </header>
+        <div class="cat-wiki__body">
+          ${sections || `<p class="cat-wiki__empty">No details yet. Click Edit to fill this entry in.</p>`}
+        </div>
+      </article>`;
   }
 
   function readForm(root, config) {
@@ -133,6 +309,25 @@ window.CatalogueApp = (function () {
         </div>`;
     }
 
+    if (field.type === "select") {
+      const options = Array.isArray(field.options) ? field.options : [];
+      const current = value ?? "";
+      const opts = options
+        .map((opt) => {
+          const selected = String(opt) === String(current) ? " selected" : "";
+          return `<option value="${escapeHtml(opt)}"${selected}>${escapeHtml(opt)}</option>`;
+        })
+        .join("");
+      return `
+        <div class="${gridClass}">
+          <label for="field-${field.id}">${escapeHtml(field.label)}</label>
+          <select id="field-${field.id}" name="${field.id}">
+            ${current && !options.includes(current) ? `<option value="${escapeHtml(current)}" selected>${escapeHtml(current)}</option>` : ""}
+            ${opts}
+          </select>
+        </div>`;
+    }
+
     if (field.type === "textarea") {
       return `
         <div class="${gridClass}">
@@ -173,7 +368,10 @@ window.CatalogueApp = (function () {
       <form class="cat-form" data-entry-id="${escapeHtml(entry.id)}" autocomplete="off">
         <div class="cat-form__toolbar">
           <div class="cat-form__status" id="save-status">Saved locally</div>
-          <button type="button" class="cat-btn cat-btn--danger" data-action="delete">Delete</button>
+          <div class="cat-form__actions">
+            <button type="button" class="cat-btn" data-action="done">Done</button>
+            <button type="button" class="cat-btn cat-btn--danger" data-action="delete">Delete</button>
+          </div>
         </div>
         ${sections}
       </form>`;
@@ -298,7 +496,25 @@ window.CatalogueApp = (function () {
         : CatalogueStore.list(type);
       return list.filter((e) => {
         if (!q) return true;
-        const hay = [e.name, e.role, e.summary, e.itemType, e.creatureType, e.class]
+        const hay = [
+          e.name,
+          e.role,
+          e.summary,
+          e.itemType,
+          e.creatureType,
+          e.class,
+          e.size,
+          e.hitDie,
+          e.primaryAbility,
+          e.source,
+          e.school,
+          e.level,
+          e.classes,
+          e.defaultAbility,
+          e.featureType,
+          e.grantedBy,
+          ...(Array.isArray(e.tags) ? e.tags : [])
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -345,7 +561,28 @@ window.CatalogueApp = (function () {
       });
     }
 
-    function renderEditor(id) {
+    function bindWikiEvents(article) {
+      article.querySelector("[data-action='edit']")?.addEventListener("click", () => {
+        renderEditor(activeId, { mode: "edit" });
+      });
+
+      article.querySelector("[data-action='delete']")?.addEventListener("click", () => {
+        const name = article.querySelector(".cat-wiki__title")?.textContent || "this entry";
+        if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+        clearTimeout(saveTimer);
+        try {
+          CatalogueStore.remove(type, article.dataset.entryId);
+        } catch {
+          alert("Could not delete this entry.");
+          return;
+        }
+        activeId = null;
+        renderEditor(null);
+      });
+    }
+
+    function renderEditor(id, options = {}) {
+      const mode = options.mode || "view";
       activeId = id;
       if (!id) {
         imageCache = {};
@@ -362,10 +599,16 @@ window.CatalogueApp = (function () {
       }
       if (window.CatalogueImages) entry = CatalogueImages.hydrate(type, entry);
 
-      editorEl.innerHTML = renderForm(entry, config);
-      const form = editorEl.querySelector(".cat-form");
-      hydrateImageFields(form, entry);
-      bindFormEvents(form);
+      if (mode === "edit") {
+        editorEl.innerHTML = renderForm(entry, config);
+        const form = editorEl.querySelector(".cat-form");
+        hydrateImageFields(form, entry);
+        bindFormEvents(form);
+      } else {
+        imageCache = {};
+        editorEl.innerHTML = renderWikiView(entry, config);
+        bindWikiEvents(editorEl.querySelector(".cat-wiki"));
+      }
       renderList();
     }
 
@@ -447,6 +690,12 @@ window.CatalogueApp = (function () {
         scheduleSave();
       });
 
+      form.querySelector("[data-action='done']")?.addEventListener("click", async () => {
+        clearTimeout(saveTimer);
+        await saveCurrent(form);
+        renderEditor(activeId, { mode: "view" });
+      });
+
       form.querySelector("[data-action='delete']")?.addEventListener("click", () => {
         const name = form.querySelector('[name="name"]')?.value || "this entry";
         if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -513,7 +762,7 @@ window.CatalogueApp = (function () {
               : merged;
             CatalogueStore.upsert(type, toStore);
             setStatus("Saved locally");
-            renderEditor(activeId);
+            renderEditor(activeId, { mode: "edit" });
           } catch (err) {
             const hydrated = window.CatalogueImages
               ? CatalogueImages.hydrate(type, CatalogueStore.get(type, form.dataset.entryId) || {})
@@ -560,7 +809,7 @@ window.CatalogueApp = (function () {
               : merged;
             CatalogueStore.upsert(type, toStore);
             setStatus("Saved locally");
-            renderEditor(activeId);
+            renderEditor(activeId, { mode: "edit" });
           } catch {
             setStatus("Save failed");
             alert("Could not remove the image.");
@@ -598,16 +847,16 @@ window.CatalogueApp = (function () {
         alert("Could not create a new entry (storage may be full).");
         return;
       }
-      renderEditor(entry.id);
+      renderEditor(entry.id, { mode: "edit" });
     });
 
-    listEl?.addEventListener("click", (e) => {
+    listEl?.addEventListener("click", async (e) => {
       const btn = e.target.closest(".cat-list-item");
       if (!btn) return;
       clearTimeout(saveTimer);
       const form = editorEl.querySelector(".cat-form");
-      if (form && activeId) saveCurrent(form);
-      renderEditor(btn.dataset.id);
+      if (form && activeId) await saveCurrent(form);
+      renderEditor(btn.dataset.id, { mode: "view" });
     });
 
     searchEl?.addEventListener("input", renderList);

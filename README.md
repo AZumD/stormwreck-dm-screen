@@ -52,11 +52,16 @@ From the landing page, open any global catalogue. Entries auto-save to localStor
 |-----------|----------|
 | **PC** | Character sheet (abilities, combat, skills), equipment, active campaign, location, backstory & notes |
 | **NPC** | Stats, personality, equipment, campaign placement, backstory & notes |
+| **Race** | Size, speed, ASI, traits, languages, senses |
+| **Class** | Hit die, proficiencies, features, spellcasting, subclasses |
+| **Spells** | Level, school, casting details, components, effects |
 | **Items** | Type, rarity, value, attunement, properties |
 | **Monsters** | Full stat block fields, traits, actions, legendary actions |
 | **Locations** | Map upload, description, NPCs/monsters/items of interest, featured campaigns |
 
 **Stormwreck Isle seeds:** NPC, Monster, Item, and Location catalogues auto-import booklet entries on first open. Existing entries are kept; only missing IDs are added.
+
+**Core rules seeds:** Race and Class catalogues auto-import 9 ancestries and 12 classes on first open (`js/catalogue-seeds/core-rules.js`). Spell catalogue imports a starter set of common spells (`js/catalogue-seeds/core-spells.js`).
 
 Location maps are stored in your browser (max ~2 MB per image).
 
@@ -65,7 +70,7 @@ Location maps are stored in your browser (max ~2 MB per image).
 ```
 index.html                              Landing page
 campaigns/stormwreck-isle/index.html    Campaign DM screen
-pc-katalog/ … location-katalog/         Global catalogues
+pc-katalog/ … class-katalog/ … location-katalog/   Global catalogues
 js/core/entity-registry.js              Builds ENTITIES from catalogues on campaign page
 js/core/catalogue/                        Shared catalogue engine
 js/campaigns/stormwreck-isle/adventure.js   Default section text

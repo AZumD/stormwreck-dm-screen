@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Parser line-break test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1.5rem; background: #111; color: #eee; }
+    .ok { color: #8f8; }
+    .fail { color: #f88; }
+  </style>
+</head>
+<body>
+  <h1>Parser line breaks</h1>
+  <pre id="out"></pre>
+  <script src="../js/i18n/en.js"></script>
+  <script src="../js/core/parser.js"></script>
+  <script>
+    const out = document.getElementById("out");
+    let failed = 0;
+    const lines = [];
+    function pass(msg) { lines.push("OK: " + msg); }
+    function fail(msg) { failed++; lines.push("FAIL: " + msg); }
+
+    const { parseContent } = ContentParser;
+
+    const plain = parseContent("Line one\nLine two\n\nNew block");
+    if (!plain.includes("Line one<br>Line two") || !plain.includes("<br><br>New block")) fail("plain breaks");
+    else pass("plain line breaks");
+
+    const html = parseContent("  <p>Alpha</p>\n  <p>Beta</p>  ");
+    if (html.includes("<br>") || !html.includes("<p>Alpha</p><p>Beta</p>")) fail("html collapse: " + html);
+    else pass("HTML inter-tag newlines collapsed");
+
+    const note = parseContent("{{dm-note}}First\nSecond{{/dm-note}}");
+    if (!note.includes("First<br>Second")) fail("dm-note breaks");
+    else pass("dm-note line breaks");
+
+    const collapse = parseContent("{{collapse:If the players lose}}\nThey wake at the cloister.\n{{/collapse}}");
+    if (!collapse.includes("<details") || !collapse.includes("If the players lose") || !collapse.includes("cloister")) {
+      fail("collapse block missing: " + collapse);
+    } else {
+      pass("collapse block renders details/summary");
+    }
+
+    lines.push("");
+    lines.push(failed ? failed + " failed" : "All parser checks passed.");
+    out.textContent = lines.join("\n");
+    out.className = failed ? "fail" : "ok";
+    document.title = failed ? "FAIL parser" : "PASS parser";
+  </script>
+</body>
+</html>

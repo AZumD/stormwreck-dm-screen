@@ -6,3 +6,16 @@
 [2026-08-12] Catalogue images moved to IndexedDB (fixes false “too large” on ~2MB photos). See js/core/catalogue/images.js
 [2026-08-12] Map panel hydrates location images from IndexedDB; raised compress caps; docs/tests updated. See js/core/map-panel.js
 [2026-08-12] Added generic campaign scene state, NPC memory, and timeline/history. See js/core/campaign-state.js, js/core/campaign-state-ui.js
+[2026-08-12] Added Race and Class catalogues on the landing page. See race-katalog/, class-katalog/, js/core/catalogue/configs.js
+[2026-08-12] Fixed MAPS object inferLocationId; interaction notes optional (default off); History entity picker multi-type. See js/core/campaign-state-ui.js
+[2026-08-12] Seeded Race (9) and Class (12) catalogues via core-rules.js. See js/catalogue-seeds/core-rules.js
+[2026-08-12] Added Spell catalogue + core-spells starter seeds. See spell-katalog/, js/catalogue-seeds/core-spells.js
+[2026-08-12] Adventure parseContent preserves author line breaks without extra markup. See js/core/parser.js
+[2026-08-12] Toolbar search is catalogue dropdown (all types) opening entity modals. See js/campaign-app.js, js/core/entity-registry.js
+[2026-08-12] Passage editor toolbar wraps selection (read-aloud, DM note, bold, entity links). See js/campaign-app.js
+[2026-08-12] Added {{collapse:Title}} expandable scene blocks + editor toolbar button. See js/core/parser.js
+[2026-08-12] Catalogue entries open as wiki read views; Edit / Done toggle form mode. See js/core/catalogue/app.js, css/catalogue.css
+[2026-08-12] Landing catalogues moved to sidebar; race/class/spell portraits; party add/remove from catalogues. See index.html, js/core/party.js
+[2026-08-12] Added Skill + Feature catalogues; declarative CatalogueTypes; class/race refs; @skill/@feature links. See js/core/catalogue/types.js, core-skills.js, core-features.js
+[2026-08-13] Scene-oriented Play view with At this scene cast + connections (SceneMeta). See js/core/scene-meta.js, js/core/scene-ui.js, js/campaign-app.js
+[2026-08-13] SceneMeta uses nested section.scene defaults, first-class locationId, entity type inferred from EntityRegistry. See js/core/scene-meta.js, js/core/scene-ui.js

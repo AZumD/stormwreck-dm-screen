@@ -2,11 +2,17 @@
 window.EntityRegistry = (function () {
   "use strict";
 
-  const TYPE_MAP = {
+  const TYPE_MAP = window.CatalogueTypes?.typeMap?.() || {
     npc: "npc",
     monster: "monster",
     item: "item",
-    location: "location"
+    location: "location",
+    pc: "pc",
+    race: "race",
+    class: "class",
+    spell: "spell",
+    skill: "skill",
+    feature: "feature"
   };
 
   /** Adventure @ link ids → catalogue entry ids (explicit overrides) */
@@ -35,6 +41,9 @@ window.EntityRegistry = (function () {
     "clifftop-observatory": "sw-clifftop-observatory"
   };
 
+  const ID_PREFIX_RE =
+    /^(?:skill|feature|race|class|spell|pc|item|monster|npc|location)-(.+)$/;
+
   function asArray(value) {
     if (Array.isArray(value)) return value.filter(Boolean);
     if (typeof value === "string" && value.trim()) return [value.trim()];
@@ -52,13 +61,19 @@ window.EntityRegistry = (function () {
       npcs: asArray(entry.npcs),
       monsters: asArray(entry.monsters),
       itemsOfInterest: asArray(entry.itemsOfInterest),
-      featuredIn: asArray(entry.featuredIn)
+      featuredIn: asArray(entry.featuredIn),
+      subclasses: asArray(entry.subclasses),
+      featureRefs: asArray(entry.featureRefs),
+      skillRefs: asArray(entry.skillRefs),
+      tags: asArray(entry.tags)
     };
   }
 
   function linkId(entry) {
     if (entry.linkId) return entry.linkId;
     if (entry.id?.startsWith("sw-")) return entry.id.slice(3);
+    const prefixed = String(entry.id || "").match(ID_PREFIX_RE);
+    if (prefixed) return prefixed[1];
     return entry.id;
   }
 
@@ -72,6 +87,11 @@ window.EntityRegistry = (function () {
 
   function joinBlocks(parts) {
     return parts.filter(Boolean).join("\n\n");
+  }
+
+  function refsBlock(label, refs) {
+    if (!refs?.length) return "";
+    return `**${label}:**\n${refs.map((r) => `- ${r}`).join("\n")}`;
   }
 
   function npcToEntity(entry) {
@@ -198,12 +218,203 @@ window.EntityRegistry = (function () {
     };
   }
 
+  function pcToEntity(entry) {
+    const id = linkId(entry);
+    const bits = [entry.class, entry.level ? `Level ${entry.level}` : "", entry.race].filter(Boolean);
+    const details = joinBlocks([
+      entry.featuresSpells && `**Features & spells:**\n${entry.featuresSpells}`,
+      entry.equipment.length && `**Equipment:**\n${entry.equipment.map((i) => `- ${i}`).join("\n")}`,
+      entry.backstory && `**Backstory:**\n${entry.backstory}`,
+      entry.notes && `**Notes:**\n${entry.notes}`
+    ]);
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "pc",
+      name: asString(entry.name) || id,
+      summary: bits.join(" · ") || asString(entry.playerName),
+      portrait: asString(entry.portrait),
+      stats: pickStats({
+        Class: entry.class,
+        Level: entry.level,
+        Race: entry.race,
+        AC: entry.ac,
+        HP: entry.hpMax ? `${entry.hpCurrent ?? "—"}/${entry.hpMax}` : entry.hpCurrent,
+        Speed: entry.speed,
+        Campaign: entry.activeCampaign,
+        Location: entry.location
+      }),
+      details,
+      tags: [entry.class, entry.race, entry.activeCampaign].filter(Boolean)
+    };
+  }
+
+  function raceToEntity(entry) {
+    const id = linkId(entry);
+    const details = joinBlocks([
+      entry.summary,
+      entry.abilityScoreIncrease && `**Ability scores:** ${entry.abilityScoreIncrease}`,
+      refsBlock("Features", entry.featureRefs),
+      entry.traits && `**Traits:**\n${entry.traits}`,
+      entry.languages && `**Languages:** ${entry.languages}`,
+      entry.senses && `**Senses:** ${entry.senses}`,
+      entry.notes && `**Notes:**\n${entry.notes}`
+    ]);
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "race",
+      name: asString(entry.name) || id,
+      summary: [entry.size, entry.speed].filter(Boolean).join(" · ") || asString(entry.summary).slice(0, 120),
+      portrait: asString(entry.portrait),
+      stats: pickStats({
+        Size: entry.size,
+        Speed: entry.speed,
+        Source: entry.source
+      }),
+      details,
+      tags: [entry.size, entry.source].filter(Boolean)
+    };
+  }
+
+  function classToEntity(entry) {
+    const id = linkId(entry);
+    const details = joinBlocks([
+      entry.summary,
+      refsBlock("Skill options", entry.skillRefs),
+      entry.skillChoices && `**Skill choices:** ${entry.skillChoices}`,
+      refsBlock("Features", entry.featureRefs),
+      entry.features && `**Features by level:**\n${entry.features}`,
+      entry.spellcasting && `**Spellcasting:**\n${entry.spellcasting}`,
+      entry.subclasses?.length && `**Subclasses:**\n${entry.subclasses.map((s) => `- ${s}`).join("\n")}`,
+      entry.notes && `**Notes:**\n${entry.notes}`
+    ]);
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "class",
+      name: asString(entry.name) || id,
+      summary: [entry.hitDie, entry.primaryAbility].filter(Boolean).join(" · ") || asString(entry.summary).slice(0, 120),
+      portrait: asString(entry.portrait),
+      stats: pickStats({
+        "Hit die": entry.hitDie,
+        "Primary ability": entry.primaryAbility,
+        Saves: entry.savingThrows,
+        Source: entry.source
+      }),
+      details,
+      tags: [entry.hitDie, entry.primaryAbility, entry.source].filter(Boolean)
+    };
+  }
+
+  function spellToEntity(entry) {
+    const id = linkId(entry);
+    const levelLabel =
+      entry.level === "0" || String(entry.level).toLowerCase() === "cantrip"
+        ? "Cantrip"
+        : asString(entry.level);
+    const details = joinBlocks([
+      entry.summary,
+      entry.description && `**Effect:**\n${entry.description}`,
+      entry.higherLevels && `**At higher levels:**\n${entry.higherLevels}`,
+      entry.notes && `**Notes:**\n${entry.notes}`
+    ]);
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "spell",
+      name: asString(entry.name) || id,
+      summary: [levelLabel !== "Cantrip" ? `Level ${levelLabel}` : "Cantrip", entry.school]
+        .filter(Boolean)
+        .join(" · "),
+      portrait: asString(entry.portrait),
+      stats: pickStats({
+        Level: levelLabel,
+        School: entry.school,
+        Casting: entry.castingTime,
+        Range: entry.range,
+        Components: entry.components,
+        Duration: entry.duration,
+        Classes: entry.classes,
+        Ritual: entry.ritual ? "Yes" : "",
+        Concentration: entry.concentration ? "Yes" : ""
+      }),
+      details,
+      tags: [levelLabel, entry.school, entry.classes, entry.source].filter(Boolean)
+    };
+  }
+
+  function skillToEntity(entry) {
+    const id = linkId(entry);
+    const details = joinBlocks([
+      entry.description,
+      entry.typicalUses && `**Typical uses:**\n${entry.typicalUses}`,
+      entry.exampleChecks && `**Example checks:**\n${entry.exampleChecks}`,
+      entry.notes && `**Personal notes:**\n${entry.notes}`,
+      entry.tags?.length && `**Tags:** ${entry.tags.join(", ")}`
+    ]);
+    const sourceLine = [entry.source, entry.page ? `p. ${entry.page}` : ""].filter(Boolean).join(", ");
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "skill",
+      name: asString(entry.name) || id,
+      summary: asString(entry.summary || entry.description).slice(0, 140),
+      stats: pickStats({
+        "Default ability": entry.defaultAbility,
+        Source: sourceLine
+      }),
+      details,
+      tags: [...asArray(entry.tags), entry.defaultAbility, entry.source].filter(Boolean)
+    };
+  }
+
+  function featureToEntity(entry) {
+    const id = linkId(entry);
+    const details = joinBlocks([
+      entry.grantedBy && `**Granted by:** ${entry.grantedBy}`,
+      entry.description,
+      entry.usesRecharge && `**Uses / recharge:** ${entry.usesRecharge}`,
+      entry.notes && `**Personal notes:**\n${entry.notes}`,
+      entry.tags?.length && `**Tags:** ${entry.tags.join(", ")}`
+    ]);
+    const sourceLine = [entry.source, entry.page ? `p. ${entry.page}` : ""].filter(Boolean).join(", ");
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "feature",
+      name: asString(entry.name) || id,
+      summary: asString(entry.summary || entry.description).slice(0, 140),
+      stats: pickStats({
+        Type: entry.featureType,
+        Level: entry.levelPrerequisite,
+        Source: sourceLine
+      }),
+      details,
+      tags: [...asArray(entry.tags), entry.featureType, entry.source].filter(Boolean)
+    };
+  }
+
   const CONVERTERS = {
     npc: npcToEntity,
     monster: monsterToEntity,
     item: itemToEntity,
-    location: locationToEntity
+    location: locationToEntity,
+    pc: pcToEntity,
+    race: raceToEntity,
+    class: classToEntity,
+    spell: spellToEntity,
+    skill: skillToEntity,
+    feature: featureToEntity
   };
+
+  /** Register or replace a converter for a catalogue type (future types). */
+  function register(type, converter) {
+    if (!type || typeof converter !== "function") return false;
+    CONVERTERS[type] = converter;
+    TYPE_MAP[type] = TYPE_MAP[type] || type;
+    return true;
+  }
 
   const entriesByCatalogueId = new Map();
 
@@ -334,5 +545,5 @@ window.EntityRegistry = (function () {
 
   build();
 
-  return { build, resolve, getAll, byType, linkId };
+  return { build, resolve, getAll, byType, linkId, register, TYPE_MAP, CONVERTERS };
 })();

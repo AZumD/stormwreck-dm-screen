@@ -7,13 +7,18 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-const types = ["pc", "npc", "item", "monster", "location"];
+const types = ["pc", "npc", "item", "monster", "location", "race", "class", "spell", "skill", "feature"];
 const folders = {
   pc: "pc-katalog",
   npc: "npc-katalog",
   item: "item-katalog",
   monster: "monster-katalog",
-  location: "location-katalog"
+  location: "location-katalog",
+  race: "race-katalog",
+  class: "class-katalog",
+  spell: "spell-katalog",
+  skill: "skill-katalog",
+  feature: "feature-katalog"
 };
 
 let failed = 0;
@@ -59,9 +64,18 @@ else pass("store key pattern");
 if (!appCode.includes("CatalogueStore")) fail("app.js missing store usage");
 else pass("app.js uses CatalogueStore");
 
-if (!landing.includes("pc-katalog") || !landing.includes("location-katalog"))
+if (!appCode.includes("renderWikiView") || !appCode.includes('data-action="edit"')) {
+  fail("app.js missing wiki read view");
+} else {
+  pass("app.js wiki read view");
+}
+
+if (!landing.includes("pc-katalog") || !landing.includes("location-katalog") || !landing.includes("race-katalog") || !landing.includes("class-katalog") || !landing.includes("spell-katalog") || !landing.includes("skill-katalog") || !landing.includes("feature-katalog"))
   fail("landing page missing catalogue links");
 else pass("landing page links to catalogues");
+
+if (!landing.includes("landing-sidebar")) fail("landing missing catalogue sidebar");
+else pass("landing catalogue sidebar");
 
 if (!fs.existsSync(path.join(root, "css/catalogue.css"))) fail("catalogue.css missing");
 else pass("catalogue.css exists");
@@ -71,6 +85,71 @@ else pass("store mergeSeeds");
 
 if (!seedsCode.includes("CatalogueSeeds")) fail("stormwreck seeds missing");
 else pass("stormwreck seed file");
+
+const coreSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-rules.js"), "utf8");
+if (!coreSeeds.includes("CatalogueSeeds.race") || !coreSeeds.includes("CatalogueSeeds.class")) {
+  fail("core-rules seeds missing race/class");
+} else {
+  pass("core-rules race/class seeds");
+}
+["race-dwarf", "race-human", "class-fighter", "class-wizard"].forEach((id) => {
+  if (!coreSeeds.includes(id)) fail(`core-rules missing ${id}`);
+  else pass(`seed ${id}`);
+});
+
+const raceHtml = fs.readFileSync(path.join(root, "race-katalog/index.html"), "utf8");
+const classHtml = fs.readFileSync(path.join(root, "class-katalog/index.html"), "utf8");
+if (!raceHtml.includes("core-rules.js")) fail("race-katalog missing core-rules seeds");
+else pass("race-katalog loads core-rules");
+if (!classHtml.includes("core-rules.js")) fail("class-katalog missing core-rules seeds");
+else pass("class-katalog loads core-rules");
+
+const spellSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-spells.js"), "utf8");
+const spellHtml = fs.readFileSync(path.join(root, "spell-katalog/index.html"), "utf8");
+if (!spellSeeds.includes("CatalogueSeeds.spell") || !spellSeeds.includes("spell-fireball")) {
+  fail("core-spells seeds incomplete");
+} else {
+  pass("core-spells seed file");
+}
+if (!spellHtml.includes("core-spells.js")) fail("spell-katalog missing core-spells");
+else pass("spell-katalog loads core-spells");
+
+const skillSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-skills.js"), "utf8");
+const featureSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-features.js"), "utf8");
+const skillHtml = fs.readFileSync(path.join(root, "skill-katalog/index.html"), "utf8");
+const featureHtml = fs.readFileSync(path.join(root, "feature-katalog/index.html"), "utf8");
+if (!skillSeeds.includes("CatalogueSeeds.skill") || !skillSeeds.includes("skill-nature")) {
+  fail("core-skills seeds incomplete");
+} else {
+  pass("core-skills seed file");
+}
+if (!featureSeeds.includes("CatalogueSeeds.feature") || !featureSeeds.includes("feature-wild-shape")) {
+  fail("core-features seeds incomplete");
+} else {
+  pass("core-features seed file");
+}
+if (!skillHtml.includes("core-skills.js")) fail("skill-katalog missing core-skills");
+else pass("skill-katalog loads core-skills");
+if (!featureHtml.includes("core-features.js")) fail("feature-katalog missing core-features");
+else pass("feature-katalog loads core-features");
+
+if (!coreSeeds.includes("featureRefs") || !coreSeeds.includes("@feature:wild-shape")) {
+  fail("core-rules missing feature references on classes/races");
+} else {
+  pass("core-rules references features");
+}
+if (!coreSeeds.includes("skillRefs") || !coreSeeds.includes("@skill:nature")) {
+  fail("core-rules missing skill references on classes");
+} else {
+  pass("core-rules references skills");
+}
+
+const typesJs = fs.readFileSync(path.join(root, "js/core/catalogue/types.js"), "utf8");
+if (!typesJs.includes("CatalogueTypes") || !typesJs.includes("linkAlternation")) {
+  fail("catalogue types registry missing");
+} else {
+  pass("CatalogueTypes declarative registry");
+}
 
 if (!seedsCode.includes("sw-runara") || !seedsCode.includes("sw-sparkrender"))
   fail("seeds missing key Stormwreck entries");

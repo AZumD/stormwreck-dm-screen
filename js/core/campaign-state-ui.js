@@ -98,24 +98,39 @@ window.CampaignStateUI = (function () {
     return opts.join("");
   }
 
-  function npcOptionsHtml(selected) {
-    const npcs = window.EntityRegistry?.byType?.("npc") || [];
+  function entityOptionsHtml(selected) {
+    const types = [
+      { key: "npc", label: t().typeLabels?.npc || "NPC" },
+      { key: "monster", label: t().typeLabels?.monster || "Monster" },
+      { key: "item", label: t().typeLabels?.item || "Item" },
+      { key: "location", label: t().typeLabels?.location || "Location" }
+    ];
     const opts = [`<option value="">${escapeHtml(t().noneOption || "—")}</option>`];
-    npcs
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach((n) => {
-        const sel = n.id === selected ? " selected" : "";
-        opts.push(`<option value="${escapeHtml(n.id)}"${sel}>${escapeHtml(n.name)}</option>`);
+    types.forEach(({ key, label }) => {
+      const entities = (window.EntityRegistry?.byType?.(key) || [])
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (!entities.length) return;
+      opts.push(`<optgroup label="${escapeHtml(label)}">`);
+      entities.forEach((e) => {
+        const sel = e.id === selected ? " selected" : "";
+        opts.push(`<option value="${escapeHtml(e.id)}"${sel}>${escapeHtml(e.name)}</option>`);
       });
+      opts.push("</optgroup>");
+    });
     return opts.join("");
   }
 
   function inferLocationId() {
     try {
       const mapId = localStorage.getItem(`${campaignId}-active-map`);
-      const maps = window.MAPS || [];
-      const map = maps.find((m) => m.id === mapId) || maps[0];
+      const registry = window.MAPS;
+      let map = null;
+      if (registry && typeof registry === "object" && !Array.isArray(registry)) {
+        map = (mapId && registry[mapId]) || Object.values(registry)[0] || null;
+      } else if (Array.isArray(registry)) {
+        map = registry.find((m) => m.id === mapId) || registry[0] || null;
+      }
       if (map?.locationId) {
         const loc = window.EntityRegistry?.resolve?.(map.locationId);
         return loc?.id || map.locationId;
@@ -376,6 +391,10 @@ window.CampaignStateUI = (function () {
         <label>${escapeHtml(t().moodLabel || "Mood")}
           <input type="text" list="mood-suggestions" name="mood" value="${escapeHtml(mem.mood)}" placeholder="${escapeHtml(mem.mood || "Guarded")}">
         </label>
+        <label class="interaction-form__check">
+          <input type="checkbox" name="addToNotes" value="1">
+          <span>${escapeHtml(t().addToMemoryNotes || "Also add this text to NPC memory notes")}</span>
+        </label>
         <datalist id="attitude-suggestions">${ATTITUDE_SUGGESTIONS.map((a) => `<option value="${a}">`).join("")}</datalist>
         <datalist id="mood-suggestions">${MOOD_SUGGESTIONS.map((a) => `<option value="${a}">`).join("")}</datalist>
         <div class="editor-actions">
@@ -399,7 +418,7 @@ window.CampaignStateUI = (function () {
         text,
         attitude: String(data.get("attitude") || "").trim(),
         mood: String(data.get("mood") || "").trim(),
-        addToNotes: true
+        addToNotes: data.get("addToNotes") === "1"
       });
       dialogEl.close();
       if (window.EntityUI?.openModal) EntityUI.openModal(pendingEntityId);
@@ -530,8 +549,8 @@ window.CampaignStateUI = (function () {
         <label>${escapeHtml(t().locationLabel || "Location")}
           <select name="locationId">${locationOptionsHtml(inferLocationId())}</select>
         </label>
-        <label>${escapeHtml(t().entityLabel || "NPC / entity")}
-          <select name="entityId">${npcOptionsHtml("")}</select>
+        <label>${escapeHtml(t().entityLabel || "Entity")}
+          <select name="entityId">${entityOptionsHtml("")}</select>
         </label>
         <label>${escapeHtml(t().entryType || "Type")}
           <select name="type">

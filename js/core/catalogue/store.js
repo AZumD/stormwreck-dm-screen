@@ -66,15 +66,40 @@ window.CatalogueStore = (function () {
     }
   }
 
-  /** Add seed entries whose ids are not already present */
+  /** Add seed entries whose ids are not already present; fill empty ref fields from seeds */
   function mergeSeeds(type, seeds) {
     if (!Array.isArray(seeds) || !seeds.length) return 0;
     const entries = loadAll(type);
-    const ids = new Set(entries.map((e) => e.id));
-    const added = seeds.filter((s) => s.id && !ids.has(s.id));
-    if (!added.length) return 0;
-    saveAll(type, [...entries, ...added.map((e) => ({ ...e, updatedAt: Date.now() }))]);
-    return added.length;
+    const byId = new Map(entries.map((e) => [e.id, { ...e }]));
+    let changed = 0;
+
+    seeds.forEach((seed) => {
+      if (!seed?.id) return;
+      if (!byId.has(seed.id)) {
+        byId.set(seed.id, { ...seed, updatedAt: Date.now() });
+        changed += 1;
+        return;
+      }
+      const existing = byId.get(seed.id);
+      let patched = false;
+      ["featureRefs", "skillRefs", "tags"].forEach((key) => {
+        const seedVal = seed[key];
+        const cur = existing[key];
+        const empty = cur == null || (Array.isArray(cur) ? !cur.length : String(cur).trim() === "");
+        if (empty && seedVal != null && !(Array.isArray(seedVal) && !seedVal.length)) {
+          existing[key] = Array.isArray(seedVal) ? seedVal.slice() : seedVal;
+          patched = true;
+        }
+      });
+      if (patched) {
+        existing.updatedAt = Date.now();
+        changed += 1;
+      }
+    });
+
+    if (!changed) return 0;
+    saveAll(type, [...byId.values()]);
+    return changed;
   }
 
   return { list, get, upsert, remove, generateId, loadAll, mergeSeeds, saveAll };

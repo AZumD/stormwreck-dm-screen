@@ -67,6 +67,29 @@ else pass("css styles add-passage controls");
 if (!css.includes(".section-delete-btn")) fail("css missing delete button styles");
 else pass("css styles delete buttons");
 
+if (!app.includes("bindEditorToolbar") || !app.includes("wrapEditorSelection") || !app.includes("insertEntityLinkSnippet")) {
+  fail("campaign-app missing editor wrap/link toolbar helpers");
+} else {
+  pass("campaign-app editor toolbar helpers");
+}
+
+if (!app.includes('data-wrap="read-aloud"') || !app.includes('data-link="npc"')) {
+  fail("campaign-app missing editor toolbar markup");
+} else {
+  pass("campaign-app editor toolbar markup");
+}
+
+if (!app.includes('data-wrap="collapse"') || !app.includes("{{collapse:")) {
+  fail("campaign-app missing collapse toolbar support");
+} else {
+  pass("campaign-app collapse wrap tool");
+}
+
+if (!css.includes(".editor-toolbar") || !css.includes(".editor-tool")) {
+  fail("css missing editor toolbar styles");
+} else {
+  pass("css styles editor toolbar");
+}
 /* Logic smoke test with a fake localStorage */
 const store = {};
 const localStorageMock = {

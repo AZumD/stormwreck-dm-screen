@@ -16,6 +16,6 @@ UI for scene chrome, NPC campaign memory, log-interaction dialog, and History pa
 | Sidebar nav | Subtle current / completed / skipped classes |
 | Toolbar **Current scene** | Jump + hash update via `jumpToSection` |
 | NPC modal | Campaign memory block via `EntityUI.addModalEnricher` |
-| Session → History | Timeline list, filters, manual entry |
+| Session → History | Timeline list, filters, manual entry (entity picker: NPC/monster/item/location) |
 
 Campaign-specific story facts never live here — only generic campaign-state UX.

@@ -1,7 +1,7 @@
 # IMAGES.js
 
 ## Purpose
-Stores catalogue portrait / map image bytes in **IndexedDB** so photos are not limited by localStorage’s ~5 MB cap.
+Stores catalogue portrait / map image bytes in **IndexedDB** so photos are not limited by localStorage’s ~5 MB cap. Used for PC/NPC/Item/Monster/Race/Class/Spell portraits and Location maps.
 
 ## File
 `js/core/catalogue/images.js` → `window.CatalogueImages`

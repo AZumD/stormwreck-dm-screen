@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Catalogue — DM Library</title>
+  <link rel="stylesheet" href="../css/catalogue.css">
+</head>
+<body class="landing-page landing-subpage catalogue-page">
+  <div class="landing-atmosphere" aria-hidden="true"></div>
+
+  <div class="landing">
+    <header class="landing-header landing-header--compact">
+      <a class="back-link" href="../index.html">← DM Library</a>
+      <h1 id="cat-title">Class Catalogue</h1>
+      <p class="lead" id="cat-subtitle">Classes with hit dice, proficiencies, and features.</p>
+      <div class="header-rule" aria-hidden="true"></div>
+    </header>
+
+    <div class="catalogue-shell">
+      <aside class="catalogue-sidebar" aria-label="Entry list">
+        <div class="catalogue-sidebar__tools">
+          <input type="search" id="cat-search" class="cat-search" placeholder="Search classes…">
+          <button type="button" id="cat-new" class="cat-new-btn">New class</button>
+        </div>
+        <div id="cat-list" class="cat-list"></div>
+      </aside>
+
+      <main class="catalogue-editor" id="cat-editor" aria-label="Catalogue entry"></main>
+    </div>
+
+    <footer class="landing-footer">
+      <p>Local storage · no login · just for you</p>
+    </footer>
+  </div>
+
+  <div id="entity-tooltip" class="entity-tooltip hidden" role="tooltip"></div>
+  <dialog id="entity-modal" class="entity-modal">
+    <div class="modal-header">
+      <h2 id="modal-title"></h2>
+      <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </dialog>
+
+  <script src="../js/i18n/en.js"></script>
+  <script src="../js/core/catalogue/types.js"></script>
+  <script src="../js/core/catalogue/store.js"></script>
+  <script src="../js/core/catalogue/images.js"></script>
+  <script src="../js/core/catalogue/configs.js"></script>
+  <script src="../js/catalogue-seeds/core-skills.js"></script>
+  <script src="../js/catalogue-seeds/core-features.js"></script>
+  <script src="../js/catalogue-seeds/core-rules.js"></script>
+  <script src="../js/core/parser.js"></script>
+  <script src="../js/core/entity-registry.js"></script>
+  <script src="../js/core/entity-ui.js"></script>
+  <script src="../js/core/catalogue/app.js"></script>
+  <script>CatalogueApp.init("class");</script>
+</body>
+</html>

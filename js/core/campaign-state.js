@@ -20,8 +20,16 @@ window.CampaignState = (function () {
       version: VERSION,
       scenes: {},
       npcMemory: {},
-      timeline: []
+      timeline: [],
+      party: []
     };
+  }
+
+  function normalizePartyMember(raw) {
+    const type = raw?.type === "npc" ? "npc" : raw?.type === "pc" ? "pc" : "";
+    const id = String(raw?.id || "").trim();
+    if (!type || !id) return null;
+    return { type, id };
   }
 
   function normalizeScene(raw) {
@@ -91,11 +99,15 @@ window.CampaignState = (function () {
       const timeline = Array.isArray(parsed.timeline)
         ? parsed.timeline.map(normalizeTimelineEntry).filter(Boolean)
         : [];
+      const party = Array.isArray(parsed.party)
+        ? parsed.party.map(normalizePartyMember).filter(Boolean)
+        : [];
       return {
         version: VERSION,
         scenes,
         npcMemory,
-        timeline
+        timeline,
+        party
       };
     } catch {
       return emptyState();
@@ -350,13 +362,53 @@ window.CampaignState = (function () {
     if (locationId) memPatch.lastSeenLocation = locationId;
     if (attitude) memPatch.attitude = attitude;
     if (mood) memPatch.mood = mood;
-    if (p.addToNotes !== false) {
+    if (p.addToNotes === true) {
       const mem = getNpcMemory(entityId);
       memPatch.notes = [...mem.notes, text];
     }
     updateNpcMemory(entityId, memPatch);
 
     return entry;
+  }
+
+  /* ── Party roster ───────────────────────────────────── */
+
+  function partyMemberKey(member) {
+    return `${member.type}:${member.id}`;
+  }
+
+  function getParty() {
+    ensure();
+    return (cache.party || []).map(normalizePartyMember).filter(Boolean);
+  }
+
+  function addPartyMember(type, id) {
+    ensure();
+    const member = normalizePartyMember({ type, id });
+    if (!member) return getParty();
+    const key = partyMemberKey(member);
+    if (cache.party.some((m) => partyMemberKey(m) === key)) return getParty();
+    cache.party.push(member);
+    persist();
+    return getParty();
+  }
+
+  function removePartyMember(type, id) {
+    ensure();
+    const member = normalizePartyMember({ type, id });
+    if (!member) return getParty();
+    const key = partyMemberKey(member);
+    const before = cache.party.length;
+    cache.party = cache.party.filter((m) => partyMemberKey(m) !== key);
+    if (cache.party.length !== before) persist();
+    return getParty();
+  }
+
+  function isInParty(type, id) {
+    const member = normalizePartyMember({ type, id });
+    if (!member) return false;
+    const key = partyMemberKey(member);
+    return getParty().some((m) => partyMemberKey(m) === key);
   }
 
   return {
@@ -381,6 +433,11 @@ window.CampaignState = (function () {
     updateTimelineEntry,
     deleteTimelineEntry,
     logInteraction,
-    memoryKey
+    memoryKey,
+    getParty,
+    addPartyMember,
+    removePartyMember,
+    isInParty,
+    partyMemberKey
   };
 })();

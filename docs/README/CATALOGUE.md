@@ -1,21 +1,49 @@
 # CATALOGUE
 
 ## Purpose
-Shared catalogue engine for PC / NPC / Item / Monster / Location entries.
+Shared catalogue engine for PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location entries.
 
 ## Files
+- `js/core/catalogue/types.js` — declarative type list (linkable types for `@` links)
 - `js/core/catalogue/store.js` — localStorage CRUD
 - `js/core/catalogue/images.js` — IndexedDB image blobs
 - `js/core/catalogue/configs.js` — field schemas
-- `js/core/catalogue/app.js` — list + form UI
+- `js/core/catalogue/app.js` — list + wiki view + form editor
+
+## Browse vs edit
+Selecting a list entry opens a **wiki-style read view** (title, summary, sections, portrait/map).
+- **Edit** switches to the existing form (autosave unchanged)
+- **Done** returns to the wiki view
+- **New …** creates an entry and opens edit mode immediately
+
+Empty fields are omitted from the wiki body so pages stay readable.
+
+List fields with `refType` (e.g. `feature`, `skill`) render as clickable entity links when the page loads EntityRegistry + EntityUI.
+
+## Skills & Features
+| Type | Role |
+|------|------|
+| **Skill** | Ability checks, typical uses, source/page, tags |
+| **Feature** | Reusable abilities (class / subclass / species / background / feat / other) |
+
+Classes and races store **references** (`featureRefs`, `skillRefs`, and `@feature:` / `@skill:` text) rather than duplicating full rules.
 
 ## Image fields
 | Field | Catalogues | Notes |
 |-------|------------|-------|
-| `portrait` | PC, NPC, Item, Monster | Auto-resized; shown in campaign tooltips/modals |
+| `portrait` | PC, NPC, Item, Monster, Race, Class, Spell | Auto-resized; shown in campaign tooltips/modals / wiki hero |
 | `mapImage` | Location | Auto-resized; drives campaign map panel |
 
 Uploads go to **IndexedDB** (much larger than localStorage). Entry metadata stays in `catalogue-{type}` localStorage; image bytes are keyed separately.
+
+## Seeds
+| File | Types |
+|------|-------|
+| `js/catalogue-seeds/stormwreck-isle.js` | npc, monster, item, location |
+| `js/catalogue-seeds/core-rules.js` | race, class |
+| `js/catalogue-seeds/core-spells.js` | spell |
+| `js/catalogue-seeds/core-skills.js` | skill |
+| `js/catalogue-seeds/core-features.js` | feature |
 
 Source files up to 25 MB are accepted and lightly JPEG-compressed (portraits ≤1800px, maps ≤3200px). Legacy images previously stuck in localStorage are migrated automatically on catalogue open.
 
@@ -24,3 +52,4 @@ Source files up to 25 MB are accepted and lightly JPEG-compressed (portraits ≤
 - Entry JSON only keeps an `__idb__` marker, so localStorage stays small
 - Quota / size failures show an alert instead of failing silently
 - Search no longer stringifies whole entries (including huge images)
+- `mergeSeeds` adds missing ids and fills empty `featureRefs` / `skillRefs` / `tags` from seeds without overwriting filled user data

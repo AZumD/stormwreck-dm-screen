@@ -54,7 +54,8 @@
       sceneId: "npc-tarak-varnoth",
       text: "Asked about tattoos. Tarak became guarded.",
       attitude: "Indifferent",
-      mood: "Guarded"
+      mood: "Guarded",
+      addToNotes: true
     });
 
     const tl = CampaignState.getTimeline({ type: "interaction" });
@@ -66,6 +67,16 @@
     else pass("interaction updates memory");
     if (!mem2.notes.some((n) => n.includes("tattoos"))) fail("interaction note not appended");
     else pass("interaction appended to notes");
+
+    CampaignState.logInteraction({
+      entityId: "tarak",
+      session: 2,
+      text: "Timeline only — should not clone into notes",
+      addToNotes: false
+    });
+    const mem3 = CampaignState.getNpcMemory("tarak");
+    if (mem3.notes.some((n) => n.includes("Timeline only"))) fail("default-off notes still appended");
+    else pass("addToNotes false skips memory notes");
 
     CampaignState.init("other-campaign");
     if (CampaignState.getCurrentSceneId()) fail("other campaign contaminated");

@@ -98,9 +98,10 @@ window.EntityUI = (function () {
   }
 
   function buildPartyTooltipHtml(member) {
+    const kind = member.memberType === "npc" ? "NPC" : "PC";
     return `
       <div class="tooltip-title">${escapeHtml(member.name)}</div>
-      <div class="tooltip-meta">PC · ${escapeHtml(member.class || "")}</div>
+      <div class="tooltip-meta">${kind} · ${escapeHtml(member.class || "")}</div>
       <div class="tooltip-stat">HP ${escapeHtml(member.hp || "?")} · AC ${escapeHtml(String(member.ac ?? "?"))}</div>
       <div class="tooltip-meta" style="margin-top:0.5rem">${t.clickForDetails || "Click for full details"}</div>`;
   }

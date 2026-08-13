@@ -34,13 +34,13 @@ if (!state.includes("window.CampaignState") || !state.includes("logInteraction")
   pass("CampaignState API present");
 }
 
-if (!state.includes("-campaign-state") || !state.includes("npcMemory") || !state.includes("timeline")) {
+if (!state.includes("-campaign-state") || !state.includes("npcMemory") || !state.includes("timeline") || !state.includes("party")) {
   fail("campaign-state storage shape incomplete");
 } else {
   pass("namespaced storage shape");
 }
 
-["getSceneState", "setSceneStatus", "getNpcMemory", "addTimelineEntry"].forEach((fn) => {
+["getSceneState", "setSceneStatus", "getNpcMemory", "addTimelineEntry", "getParty", "addPartyMember", "removePartyMember"].forEach((fn) => {
   if (!state.includes(fn)) fail(`missing ${fn}`);
   else pass(fn);
 });
@@ -49,6 +49,24 @@ if (!ui.includes("sceneChromeHtml") || !ui.includes("renderHistoryPanel") || !ui
   fail("campaign-state-ui missing UI surfaces");
 } else {
   pass("CampaignStateUI surfaces");
+}
+
+if (!ui.includes("Object.values(registry)") && !ui.includes("!Array.isArray(registry)")) {
+  fail("inferLocationId may not support object-shaped MAPS");
+} else {
+  pass("inferLocationId supports object MAPS");
+}
+
+if (!ui.includes("entityOptionsHtml") || !ui.includes('"monster"') || !ui.includes('"item"')) {
+  fail("History entity picker missing multi-type options");
+} else {
+  pass("History entity picker covers registry types");
+}
+
+if (!ui.includes('name="addToNotes"') || !state.includes("addToNotes === true")) {
+  fail("optional addToNotes wiring missing");
+} else {
+  pass("interaction addToNotes optional (default off)");
 }
 
 if (!entityUi.includes("addModalEnricher")) fail("EntityUI missing enricher hook");

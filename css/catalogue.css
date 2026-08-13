@@ -179,6 +179,251 @@
   font-style: italic;
 }
 
+/* ── Wiki (read) view ────────────────────────────────── */
+.cat-wiki {
+  padding: 1.25rem 1.5rem 2rem;
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
+}
+
+.cat-wiki__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.cat-wiki__header-main {
+  display: flex;
+  gap: 1.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.cat-wiki__hero {
+  flex-shrink: 0;
+}
+
+.cat-wiki__hero-img--portrait {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--landing-border);
+  background: var(--bg-deep);
+}
+
+.cat-wiki__hero-img--map {
+  width: 180px;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--landing-border);
+  background: var(--bg-deep);
+}
+
+.cat-wiki__intro {
+  min-width: 0;
+}
+
+.cat-wiki__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--landing-gold);
+}
+
+.cat-wiki__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--landing-text);
+}
+
+.cat-wiki__lede {
+  margin: 0.65rem 0 0;
+  color: var(--landing-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.cat-wiki__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.cat-wiki__section {
+  margin-bottom: 1.5rem;
+}
+
+.cat-wiki__section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+}
+
+.cat-wiki__fields {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.85rem 1rem;
+  margin: 0;
+}
+
+.cat-wiki__field {
+  grid-column: span 12;
+}
+
+.cat-wiki__field--half {
+  grid-column: span 6;
+}
+
+.cat-wiki__field--third {
+  grid-column: span 4;
+}
+
+.cat-wiki__field--quarter {
+  grid-column: span 3;
+}
+
+.cat-wiki__field--sixth {
+  grid-column: span 2;
+}
+
+.cat-wiki__field dt {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+}
+
+.cat-wiki__field dd {
+  margin: 0;
+  color: var(--landing-text);
+  line-height: 1.45;
+}
+
+.cat-wiki__value {
+  font-size: 0.95rem;
+}
+
+.cat-wiki__prose {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.cat-wiki__prose p {
+  margin: 0 0 0.65rem;
+}
+
+.cat-wiki__prose p:last-child {
+  margin-bottom: 0;
+}
+
+.cat-wiki__list {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.cat-wiki__list li {
+  margin-bottom: 0.25rem;
+}
+
+.cat-wiki__abilities {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.cat-wiki__ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.65rem 0.35rem;
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.cat-wiki__ability-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--landing-muted);
+}
+
+.cat-wiki__score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.cat-wiki__mod {
+  font-weight: 500;
+  color: var(--landing-gold);
+  font-size: 0.85em;
+}
+
+.cat-wiki__media {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--landing-border);
+}
+
+.cat-wiki__media--portrait {
+  width: min(220px, 100%);
+}
+
+.cat-wiki__media--map {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: var(--bg-deep);
+}
+
+.cat-wiki__flag {
+  color: var(--landing-gold);
+  font-weight: 600;
+}
+
+.cat-wiki__empty {
+  margin: 0;
+  color: var(--landing-muted);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .cat-wiki__header {
+    flex-direction: column;
+  }
+
+  .cat-wiki__header-main {
+    flex-direction: column;
+  }
+
+  .cat-wiki__field--half,
+  .cat-wiki__field--third,
+  .cat-wiki__field--quarter,
+  .cat-wiki__field--sixth {
+    grid-column: span 12;
+  }
+
+  .cat-wiki__abilities {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 /* ── Form ────────────────────────────────────────────── */
 .cat-form {
   padding: 1.25rem 1.5rem 2rem;
@@ -194,6 +439,12 @@
   margin-bottom: 1.25rem;
   padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--landing-border);
+}
+
+.cat-form__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 .cat-form__status {
@@ -244,7 +495,8 @@
 
 .cat-field input[type="text"],
 .cat-field input[type="number"],
-.cat-field textarea {
+.cat-field textarea,
+.cat-field select {
   width: 100%;
   padding: 0.55rem 0.7rem;
   background: var(--bg-deep);
@@ -256,8 +508,14 @@
   resize: vertical;
 }
 
+.cat-field select {
+  resize: none;
+  cursor: pointer;
+}
+
 .cat-field input:focus,
-.cat-field textarea:focus {
+.cat-field textarea:focus,
+.cat-field select:focus {
   outline: none;
   border-color: rgba(196, 160, 53, 0.5);
 }

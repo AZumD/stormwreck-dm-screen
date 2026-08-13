@@ -406,6 +406,7 @@ window.MapPanel = (function () {
       const partySaved = loadPartyPositions(campaignId);
 
       const pcPins = (window.PARTY || [])
+        .filter((m) => m.memberType !== "npc")
         .map((m) => {
           const override = partySaved[m.id];
           const mapId = override?.mapId ?? m.mapId;
@@ -512,6 +513,7 @@ window.MapPanel = (function () {
     function listChoices(pinType) {
       if (pinType === "pc") {
         return (window.PARTY || [])
+          .filter((m) => m.memberType !== "npc")
           .map((m) => ({
             id: m.id,
             name: m.name,
@@ -760,13 +762,19 @@ window.MapPanel = (function () {
 
     rebuildMapSelect();
     renderMap();
-    renderParty(partyList);
+    if (window.PartyRoster) PartyRoster.render(partyList);
+    else renderParty(partyList);
 
     activeInstance = {
       refresh() {
         rebuildMapSelect();
         renderMap();
-        renderParty(partyList);
+        if (window.PartyRoster) {
+          PartyRoster.syncWindowParty();
+          PartyRoster.render(partyList);
+        } else {
+          renderParty(partyList);
+        }
       }
     };
   }
@@ -776,8 +784,12 @@ window.MapPanel = (function () {
   }
 
   function renderParty(container) {
+    if (window.PartyRoster) {
+      PartyRoster.render(container);
+      return;
+    }
     if (!container || !window.PARTY?.length) {
-      if (container) container.innerHTML = `<p class="party-empty">Add PCs in party.js</p>`;
+      if (container) container.innerHTML = `<p class="party-empty">Add PCs from the party panel</p>`;
       return;
     }
 

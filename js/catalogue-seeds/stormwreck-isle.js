@@ -2,7 +2,7 @@
  * Stormwreck Isle — default NPC, monster, item & location catalogue entries from the booklet.
  * Merged into localStorage on first load (missing IDs only).
  */
-window.CatalogueSeeds = {
+window.CatalogueSeeds = Object.assign(window.CatalogueSeeds || {}, {
   npc: [
     {
       id: "sw-runara",
@@ -680,4 +680,4 @@ window.CatalogueSeeds = {
       notes: "Requires moonstone key from Runara. Party should complete Ch 2 and Ch 3 first.\n\nHelp Mek & Minn vs stirges → friendly kobolds may fetch key.\n\nFinale: fight, negotiate, or creative solutions with Sparkrender."
     }
   ]
-};
+});

@@ -35,6 +35,38 @@ else pass("campaign loads catalogue store");
 if (!campaignHtml.includes("stormwreck-isle.js")) fail("campaign missing catalogue seeds");
 else pass("campaign loads catalogue seeds");
 
+if (!campaignHtml.includes("core-rules.js") || !campaignHtml.includes("core-spells.js")) {
+  fail("campaign missing core race/class/spell seeds");
+} else {
+  pass("campaign loads core-rules + core-spells");
+}
+
+if (!campaignHtml.includes("core-skills.js") || !campaignHtml.includes("core-features.js")) {
+  fail("campaign missing skill/feature seeds");
+} else {
+  pass("campaign loads core-skills + core-features");
+}
+
+if (!campaignHtml.includes("catalogue/types.js")) fail("campaign missing CatalogueTypes");
+else pass("campaign loads CatalogueTypes");
+
+if (!campaignHtml.includes("catalogue-search-results") || !campaignHtml.includes("Search catalogues")) {
+  fail("campaign missing catalogue search UI");
+} else {
+  pass("campaign catalogue search markup");
+}
+
+if (!registry.includes("skillToEntity") || !registry.includes("featureToEntity") || !registry.includes("function register")) {
+  fail("entity-registry missing skill/feature converters or register()");
+} else {
+  pass("entity-registry converts skill/feature + register()");
+}
+
+if (!registry.includes("spellToEntity") || !registry.includes("raceToEntity")) {
+  fail("entity-registry missing race/spell converters");
+} else {
+  pass("entity-registry converts race/class/spell/pc");
+}
 if (!registry.includes("LINK_ALIASES")) fail("entity-registry missing link alias map");
 else pass("entity-registry has explicit link aliases");
 
@@ -52,6 +84,18 @@ else pass("entity-ui self-initializes on campaign pages");
 
 if (!parser.includes("EntityRegistry?.getAll")) fail("parser missing registry fallback in parseContent");
 else pass("parser falls back to EntityRegistry when entities arg omitted");
+
+if (!parser.includes("CatalogueTypes") && !parser.includes("linkAlternation")) {
+  fail("parser not using declarative link types");
+} else {
+  pass("parser builds link regex from CatalogueTypes");
+}
+
+if (!parser.includes("skill") || !parser.includes("feature")) {
+  fail("parser fallback missing skill/feature");
+} else {
+  pass("parser supports skill/feature links");
+}
 
 if (!fs.existsSync(path.join(root, "test/entity-links-test.html"))) {
   fail("missing browser test page test/entity-links-test.html");
