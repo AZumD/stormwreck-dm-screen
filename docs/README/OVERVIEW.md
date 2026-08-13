@@ -74,6 +74,7 @@ Run with Node when available:
 - `test/validate-skills-features.js`
 - `test/validate-scene-meta.js`
 - `test/validate-scene-meta-runtime.js`
+- `test/validate-toolbar-icons.js`
 - `test/validate-layout.js`
 - `test/validate-maps.js`
 - `test/validate-maps-media.js`

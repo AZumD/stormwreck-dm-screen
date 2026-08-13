@@ -238,10 +238,7 @@
       const chapterSections = sections.filter((s) => s.chapter === chapter.id);
       if (!chapterSections.length && !SectionEditor.isEditMode()) return;
 
-      const chapterLi = document.createElement("li");
-      chapterLi.className = "nav-chapter";
-      chapterLi.textContent = chapter.title;
-      sectionNav.appendChild(chapterLi);
+      /* No auto chapter headings — sandbox lists scenes only */
 
       chapterSections.forEach((section) => {
         const data = getSectionData(section);
@@ -293,7 +290,8 @@
       const chapterSections = sections.filter((s) => s.chapter === chapter.id);
       if (!chapterSections.length && !editMode) return;
 
-      html += `<div class="chapter-divider" id="chapter-${chapter.id}"><h2>${escapeHtml(chapter.title)}</h2></div>`;
+      /* Anchor kept for deep-links; no auto-injected chapter title */
+      html += `<div class="chapter-anchor" id="chapter-${chapter.id}" hidden></div>`;
       if (editMode && !chapterSections.length) {
         html += addPassageControlsHtml(chapter.id, null);
       }
@@ -352,7 +350,6 @@
     editingSectionId = null;
 
     const data = getSectionData(section);
-    const chapter = ADVENTURE.chapters.find((c) => c.id === section.chapter);
     const badges = [
       data.isCustom ? `<span class="edited-badge">${t.customBadge || "custom"}</span>` : "",
       data.isEdited ? `<span class="edited-badge">${t.editedBadge || "edited"}</span>` : ""
@@ -360,7 +357,6 @@
 
     playView.innerHTML = `
       <section class="adventure-section play-scene${data.isEdited || data.isCustom ? " is-edited" : ""}${data.isCustom ? " is-custom" : ""}${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
-        ${chapter ? `<p class="play-scene__chapter">${escapeHtml(chapter.title)}</p>` : ""}
         <div class="section-header">
           <h1 class="section-title">${escapeHtml(data.title)} ${badges}</h1>
           ${sectionActionsHtml(section, data)}

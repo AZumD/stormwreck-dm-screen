@@ -13,10 +13,14 @@ Main controller for a campaign DM screen: scene Play view, Document reference sc
 | Mode | Behavior |
 |------|----------|
 | **Play** (default) | One focused scene: content, status/notes, At this scene, connections |
-| **Document** | Continuous chapter/section scroll (prep/reference) |
+| **Document** | Continuous scene scroll (prep/reference) |
 | **Panels** | NPCs / monsters / locations / notes / history / checklist |
 
 View mode persists in `{campaignId}-view-mode`.
+
+Toolbar uses compact icon buttons for navigation, edit mode, and Play/Document (labels via `aria-label` / `title`).
+
+Chapter ids still group passages internally; chapter titles are **not** auto-injected into the sidebar, Play view, or Document scroll (sandbox-authored content only).
 
 ## Campaign play state
 - Scene status/notes via `CampaignStateUI` chrome on each section

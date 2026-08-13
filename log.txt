@@ -19,3 +19,4 @@
 [2026-08-12] Added Skill + Feature catalogues; declarative CatalogueTypes; class/race refs; @skill/@feature links. See js/core/catalogue/types.js, core-skills.js, core-features.js
 [2026-08-13] Scene-oriented Play view with At this scene cast + connections (SceneMeta). See js/core/scene-meta.js, js/core/scene-ui.js, js/campaign-app.js
 [2026-08-13] SceneMeta uses nested section.scene defaults, first-class locationId, entity type inferred from EntityRegistry. See js/core/scene-meta.js, js/core/scene-ui.js
+[2026-08-13] Compact toolbar icons (nav/edit/play/document); removed auto chapter headings from nav/Play/Document. See campaigns/stormwreck-isle/index.html, js/campaign-app.js

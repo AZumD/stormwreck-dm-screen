@@ -174,7 +174,7 @@ body[data-nav-collapsed="true"] .sidebar {
 .sidebar-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -187,8 +187,67 @@ body[data-nav-collapsed="true"] .sidebar {
   box-shadow: 0 -5px 0 currentColor, 0 5px 0 currentColor;
 }
 
-.sidebar-toggle__label {
-  font-size: 0.82rem;
+.toolbar-btn--icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-icon {
+  display: block;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toolbar-icon--edit {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-radius: 1px;
+  transform: rotate(-18deg);
+}
+
+.toolbar-icon--edit::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 5px;
+  height: 5px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.toolbar-icon--play {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6px 0 6px 10px;
+  border-color: transparent transparent transparent currentColor;
+  margin-left: 2px;
+}
+
+.toolbar-icon--document {
+  width: 11px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 1px;
+}
+
+.toolbar-icon--document::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 3px;
+  height: 1.5px;
+  background: currentColor;
+  box-shadow: 0 3px 0 currentColor, 0 6px 0 currentColor;
+  opacity: 0.85;
 }
 
 .back-link {
@@ -309,7 +368,6 @@ body[data-nav-collapsed="true"] .sidebar {
 
 .nav-scene {
   font-size: 0.86rem;
-  padding-left: 1.65rem;
 }
 
 /* ── Main area ───────────────────────────────────────── */
@@ -325,8 +383,8 @@ body[data-nav-collapsed="true"] .sidebar {
 .main-toolbar {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.85rem 1.75rem;
+  gap: 0.55rem;
+  padding: 0.75rem 1.25rem;
   background: rgba(18, 26, 38, 0.92);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(8px);
@@ -463,14 +521,6 @@ body[data-nav-collapsed="true"] .sidebar {
 
 .play-view {
   max-width: 740px;
-}
-
-.play-scene__chapter {
-  margin: 0 0 0.35rem;
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
 }
 
 .view-mode-toggle {
@@ -761,6 +811,10 @@ body[data-nav-collapsed="true"] .sidebar {
 }
 
 /* ── Adventure document ──────────────────────────────── */
+.chapter-anchor {
+  display: none;
+}
+
 .chapter-divider {
   margin: 3.25rem 0 1.75rem;
   padding-top: 2.25rem;
@@ -2951,12 +3005,8 @@ body.media-bar-open .app {
     display: inline-flex;
   }
 
-  body:not(.sidebar-collapsed) .sidebar-toggle__label {
-    display: none;
-  }
-
   .main-toolbar {
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
     flex-wrap: wrap;
   }
 
