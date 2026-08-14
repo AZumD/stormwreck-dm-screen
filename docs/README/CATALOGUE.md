@@ -19,15 +19,22 @@ Selecting a list entry opens a **wiki-style read view** (title, summary, section
 Empty fields are omitted from the wiki body so pages stay readable.
 
 List fields with `refType` (e.g. `feature`, `skill`) render as clickable entity links when the page loads EntityRegistry + EntityUI.
+Unresolved ids / legacy plain strings render as ordinary text (no broken links).
+
+Textarea wiki fields run through `ContentParser.markdownLite`, so `@feature:id|Label` and friends work in freeform prose.
 
 ## Skills & Features
 | Type | Role |
 |------|------|
 | **Skill** | Ability checks, typical uses, source/page, tags |
-| **Feature** | Reusable abilities (class / subclass / species / background / feat / other) |
+| **Feature** | Reusable abilities (class / subclass / species / background / feat / **monster trait/action/…** / other) |
 
 Classes and races store **references** (`featureRefs`, `skillRefs`, and `@feature:` / `@skill:` text) rather than duplicating full rules.
 
+Monsters can store **catalogue links** (`skillRefs`, `traitRefs`, `actionRefs`, …) plus optional freeform notes for creature-specific attack lines. Shared rules live in Feature entries (e.g. Undead Fortitude, Slam).
+
+## Entity modal navigation
+`EntityUI` uses a single dialog with a small Back stack: click a link inside the modal → open that entity; Back returns; close clears history.
 ## Image fields
 | Field | Catalogues | Notes |
 |-------|------------|-------|

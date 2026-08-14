@@ -10,10 +10,11 @@ Separate from **CampaignState** (play status/notes) and **SectionEditor** (prose
 ## Storage
 | Key | Contents |
 |-----|----------|
-| `{campaignId}-scene-meta` | `{ [sceneId]: { locationId, entities[], connections[], updatedAt } }` |
+| `{campaignId}-scene-meta` | `{ [sceneId]: partial overrides + updatedAt }` |
 | `{campaignId}-scene-tray-collapsed` | `"1"` / `"0"` global tray open preference |
 
-Local overrides merge over booklet defaults. Defaults are never mutated.
+Overrides are **partial**. Only keys that were deliberately written are stored.
+Missing keys fall through to booklet defaults. A present empty value (`""`, `[]`) intentionally clears that default.
 
 ## Booklet defaults
 Prefer nested `section.scene` on `ADVENTURE.sections`:
@@ -43,30 +44,33 @@ Legacy top-level `locationId` / `entities` / `connections` still read if `scene`
 { "id": "zombie", "quantity": 2, "note": "Both begin in the surf." }
 ```
 
-- `id` — catalogue link id (EntityRegistry resolves type/name/stats)
-- `quantity` — optional scene count
-- `note` — optional scene-specific note
-- Do **not** store `type`; infer via `EntityRegistry.resolve(id)`
+Do **not** store `type`; infer via `EntityRegistry.resolve(id)`.
 
 ## Connection shape
 ```json
 { "sceneId": "inhabitants", "label": "Climb toward Dragon's Rest" }
 ```
 
-Stored on the source scene only (no redundant `from`). Destination is a stable section/scene id.
+No redundant `from`.
 
 ## locationId
-First-class field for “where is this scene happening?” — independent of the entity cast list.
-Used later by maps, timeline defaults, NPC memory, etc.
+First-class field for “where is this scene happening?”
+`SceneMeta.getLocationId(campaignId, sceneId, section?)` exposes it without callers digging into storage.
+
+Campaign location defaults (history / interactions) prefer this over the active map via `CampaignStateUI.inferLocationId`.
 
 ## API
 | Method | Role |
 |--------|------|
-| `get(campaignId, sceneId, section?)` | Merged defaults + overrides |
-| `patch` / `setEntities` / `setLocationId` | Write overrides |
+| `get` | Merged defaults + overrides |
+| `getLocationId` | Effective `locationId` only |
+| `patch` | Write only keys present on the partial |
+| `setEntities` / `setLocationId` / `setConnections` | Single-dimension overrides |
 | `addEntity` / `removeEntity` | Cast edits (never touches global catalogue) |
 | `addConnection` / `removeConnection` | Graph edges |
-| `isTrayCollapsed` / `setTrayCollapsed` | UI preference |
+
+Mutating one dimension must not erase effective values of the others.
 
 ## Related
-`js/core/scene-ui.js` — Play/Document “At this scene” + connections UI
+`js/core/scene-ui.js` — Play/Document “At this scene” + connections UI  
+`js/core/campaign-state-ui.js` — `inferLocationId` (scene → map → empty)

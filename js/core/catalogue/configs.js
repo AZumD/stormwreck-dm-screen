@@ -337,11 +337,73 @@ window.CatalogueConfigs = {
       {
         title: "Abilities",
         fields: [
-          { id: "traits", label: "Traits", type: "textarea", rows: 4, grid: "full" },
-          { id: "actions", label: "Actions", type: "textarea", rows: 5, grid: "full" },
-          { id: "bonusActions", label: "Bonus actions", type: "textarea", rows: 3, grid: "full" },
-          { id: "reactions", label: "Reactions", type: "textarea", rows: 3, grid: "full" },
-          { id: "legendaryActions", label: "Legendary actions", type: "textarea", rows: 3, grid: "full" },
+          {
+            id: "skillRefs",
+            label: "Skills (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "skill",
+            placeholder: "perception or @skill:perception|Perception"
+          },
+          {
+            id: "traitRefs",
+            label: "Traits (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "feature",
+            placeholder: "undead-fortitude or @feature:undead-fortitude|Undead Fortitude"
+          },
+          {
+            id: "actionRefs",
+            label: "Actions (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "feature",
+            placeholder: "slam or @feature:slam|Slam"
+          },
+          {
+            id: "bonusActionRefs",
+            label: "Bonus actions (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "feature",
+            placeholder: "@feature:…"
+          },
+          {
+            id: "reactionRefs",
+            label: "Reactions (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "feature",
+            placeholder: "@feature:…"
+          },
+          {
+            id: "legendaryActionRefs",
+            label: "Legendary actions (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "feature",
+            placeholder: "@feature:…"
+          },
+          {
+            id: "traits",
+            label: "Traits (freeform / creature notes)",
+            type: "textarea",
+            rows: 3,
+            grid: "full",
+            placeholder: "Optional prose. Prefer Trait links above for reusable rules. @feature:id|Name works here."
+          },
+          {
+            id: "actions",
+            label: "Actions (freeform / creature notes)",
+            type: "textarea",
+            rows: 4,
+            grid: "full",
+            placeholder: "Creature-specific attack lines, etc. Link shared actions above."
+          },
+          { id: "bonusActions", label: "Bonus actions (freeform)", type: "textarea", rows: 2, grid: "full" },
+          { id: "reactions", label: "Reactions (freeform)", type: "textarea", rows: 2, grid: "full" },
+          { id: "legendaryActions", label: "Legendary actions (freeform)", type: "textarea", rows: 2, grid: "full" },
           { id: "notes", label: "Notes", type: "textarea", rows: 3, grid: "full" }
         ]
       }
@@ -370,6 +432,12 @@ window.CatalogueConfigs = {
       conditionImmunities: "",
       senses: "",
       languages: "",
+      skillRefs: [],
+      traitRefs: [],
+      actionRefs: [],
+      bonusActionRefs: [],
+      reactionRefs: [],
+      legendaryActionRefs: [],
       traits: "",
       actions: "",
       bonusActions: "",
@@ -730,7 +798,7 @@ window.CatalogueConfigs = {
   feature: {
     type: "feature",
     title: "Feature Catalogue",
-    subtitle: "Reusable class, subclass, species, background, and other abilities.",
+    subtitle: "Reusable abilities — class, species, monster traits/actions, and more.",
     newLabel: "New feature",
     searchPlaceholder: "Search features…",
     listIcon: "✱",
@@ -750,6 +818,11 @@ window.CatalogueConfigs = {
               "Species feature",
               "Background feature",
               "Feat",
+              "Monster trait",
+              "Monster action",
+              "Monster bonus action",
+              "Monster reaction",
+              "Legendary action",
               "Other"
             ]
           },

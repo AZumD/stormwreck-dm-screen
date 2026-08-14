@@ -69,11 +69,13 @@
           </a>
 
           <div class="landing-secondary">
-            <div class="card card-placeholder" aria-disabled="true">
-              <span class="card-tag card-tag--muted">Coming soon</span>
-              <h3>New campaign</h3>
-              <p>Add more adventures here when you need them.</p>
-            </div>
+            <div id="user-campaign-list" class="user-campaign-list" hidden></div>
+
+            <button type="button" id="create-campaign-btn" class="card card-create">
+              <span class="card-tag">New</span>
+              <h3>Create new campaign</h3>
+              <p>Blank sandbox with Play, Document, maps, and session tools.</p>
+            </button>
           </div>
         </section>
       </main>
@@ -83,5 +85,30 @@
       <p>Local storage · no login · just for you</p>
     </footer>
   </div>
+
+  <dialog id="create-campaign-dialog" class="create-campaign-dialog">
+    <form id="create-campaign-form" method="dialog">
+      <div class="create-campaign-dialog__header">
+        <h2>Create new campaign</h2>
+        <button type="button" class="create-campaign-dialog__close" id="create-campaign-cancel" aria-label="Cancel">&times;</button>
+      </div>
+      <div class="create-campaign-dialog__body">
+        <label class="create-campaign-field">
+          <span>Title</span>
+          <input type="text" id="create-campaign-title" name="title" required maxlength="80" placeholder="e.g. Coastal hex crawl" autocomplete="off">
+        </label>
+        <label class="create-campaign-field">
+          <span>Description <em>(optional)</em></span>
+          <textarea id="create-campaign-description" name="description" rows="3" maxlength="240" placeholder="Short note for the library card"></textarea>
+        </label>
+      </div>
+      <div class="create-campaign-dialog__actions">
+        <button type="submit" class="create-campaign-submit">Create &amp; open</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/core/campaign-registry.js"></script>
+  <script src="js/landing.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@ window.ContentParser = (function () {
   "use strict";
 
   function linkAlternation() {
-    if (window.CatalogueTypes?.linkAlternation) return CatalogueTypes.linkAlternation();
+    if (window.CatalogueTypes?.linkAlternation) return window.CatalogueTypes.linkAlternation();
     return "npc|monster|location|item|pc|race|class|spell|skill|feature";
   }
 

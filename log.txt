@@ -20,3 +20,7 @@
 [2026-08-13] Scene-oriented Play view with At this scene cast + connections (SceneMeta). See js/core/scene-meta.js, js/core/scene-ui.js, js/campaign-app.js
 [2026-08-13] SceneMeta uses nested section.scene defaults, first-class locationId, entity type inferred from EntityRegistry. See js/core/scene-meta.js, js/core/scene-ui.js
 [2026-08-13] Compact toolbar icons (nav/edit/play/document); removed auto chapter headings from nav/Play/Document. See campaigns/stormwreck-isle/index.html, js/campaign-app.js
+[2026-08-13] SceneMeta partial overrides + scene-first location inference for history/interactions. See js/core/scene-meta.js, js/core/campaign-state-ui.js
+[2026-08-13] Catalogue wiki cross-links + EntityUI modal Back stack; monster trait/action Feature refs. See js/core/entity-ui.js, js/core/entity-registry.js, js/core/catalogue/
+[2026-08-13] Chronicle panel: Story So Far, session prose, curated Key Events (separate from History). See js/core/chronicle-store.js, js/core/chronicle-ui.js
+[2026-08-15] Map pin hover tooltips are compact (no full summary). Landing Create new campaign → sandbox shell. See js/core/entity-ui.js, js/core/campaign-registry.js, campaigns/sandbox/

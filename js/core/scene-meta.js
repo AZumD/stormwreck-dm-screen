@@ -1,6 +1,9 @@
 /**
  * Scene design metadata — entity cast + connections per section/scene.
  * Separate from CampaignState (play status/notes) and SectionEditor (prose).
+ *
+ * Storage is partial overrides on top of booklet defaults (section.scene).
+ * Missing override keys fall through to defaults; present empty values clear defaults.
  */
 window.SceneMeta = (function () {
   "use strict";
@@ -30,6 +33,10 @@ window.SceneMeta = (function () {
       console.warn("SceneMeta save failed:", err);
       return false;
     }
+  }
+
+  function hasOwn(obj, key) {
+    return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
   }
 
   function normalizeEntity(raw) {
@@ -92,64 +99,68 @@ window.SceneMeta = (function () {
     return String(entity?.id || "");
   }
 
-  /** Merge booklet defaults with local overrides (overrides win per field when present). */
+  function readOverride(campaignId, sectionId) {
+    const raw = loadAll(campaignId)[sectionId];
+    return raw && typeof raw === "object" ? raw : null;
+  }
+
+  /** Merge booklet defaults with local overrides (present keys win, including empties). */
   function get(campaignId, sectionId, section) {
     const defaults = defaultsFromSection(section);
-    const stored = normalizeMeta(loadAll(campaignId)[sectionId] || null);
-    const hasStore = !!loadAll(campaignId)[sectionId];
+    const raw = readOverride(campaignId, sectionId);
+    if (!raw) return defaults;
 
-    if (!hasStore) return defaults;
-
-    /* Stored empty arrays intentionally clear defaults when user removed everything */
-    const all = loadAll(campaignId);
-    const raw = all[sectionId] || {};
     return {
-      locationId:
-        Object.prototype.hasOwnProperty.call(raw, "locationId") ? stored.locationId : defaults.locationId,
-      entities: Object.prototype.hasOwnProperty.call(raw, "entities") ? stored.entities : defaults.entities,
-      connections: Object.prototype.hasOwnProperty.call(raw, "connections")
-        ? stored.connections
+      locationId: hasOwn(raw, "locationId") ? String(raw.locationId || "").trim() : defaults.locationId,
+      entities: hasOwn(raw, "entities")
+        ? (Array.isArray(raw.entities) ? raw.entities.map(normalizeEntity).filter(Boolean) : [])
+        : defaults.entities,
+      connections: hasOwn(raw, "connections")
+        ? (Array.isArray(raw.connections) ? raw.connections.map(normalizeConnection).filter(Boolean) : [])
         : defaults.connections
     };
   }
 
-  function patch(campaignId, sectionId, partial) {
-    const all = loadAll(campaignId);
-    const current = normalizeMeta(all[sectionId] || null);
-    const next = {
-      ...current,
-      ...(partial || {})
-    };
-    if (partial && Object.prototype.hasOwnProperty.call(partial, "entities")) {
-      next.entities = (partial.entities || []).map(normalizeEntity).filter(Boolean);
-    }
-    if (partial && Object.prototype.hasOwnProperty.call(partial, "connections")) {
-      next.connections = (partial.connections || []).map(normalizeConnection).filter(Boolean);
-    }
-    if (partial && Object.prototype.hasOwnProperty.call(partial, "locationId")) {
-      next.locationId = String(partial.locationId || "").trim();
-    }
-    all[sectionId] = {
-      locationId: next.locationId,
-      entities: next.entities,
-      connections: next.connections,
-      updatedAt: Date.now()
-    };
-    saveAll(campaignId, all);
-    return get(campaignId, sectionId, null);
+  function getLocationId(campaignId, sectionId, section) {
+    return get(campaignId, sectionId, section).locationId || "";
   }
 
-  function setEntities(campaignId, sectionId, entities) {
-    return patch(campaignId, sectionId, { entities });
+  /**
+   * Write only the keys present on `partial` as local overrides.
+   * Does not snapshot unrelated effective fields — other dimensions keep falling
+   * through to defaults (or their own overrides) via get().
+   */
+  function patch(campaignId, sectionId, partial, section) {
+    const all = loadAll(campaignId);
+    const existing = readOverride(campaignId, sectionId);
+    const raw = existing ? { ...existing } : {};
+
+    if (partial && hasOwn(partial, "locationId")) {
+      raw.locationId = String(partial.locationId || "").trim();
+    }
+    if (partial && hasOwn(partial, "entities")) {
+      raw.entities = (partial.entities || []).map(normalizeEntity).filter(Boolean);
+    }
+    if (partial && hasOwn(partial, "connections")) {
+      raw.connections = (partial.connections || []).map(normalizeConnection).filter(Boolean);
+    }
+
+    raw.updatedAt = Date.now();
+    all[sectionId] = raw;
+    saveAll(campaignId, all);
+    return get(campaignId, sectionId, section);
+  }
+
+  function setEntities(campaignId, sectionId, entities, section) {
+    return patch(campaignId, sectionId, { entities }, section);
   }
 
   function setLocationId(campaignId, sectionId, locationId, section) {
-    const meta = get(campaignId, sectionId, section);
-    return patch(campaignId, sectionId, {
-      locationId: String(locationId || "").trim(),
-      entities: meta.entities,
-      connections: meta.connections
-    });
+    return patch(campaignId, sectionId, { locationId: String(locationId || "").trim() }, section);
+  }
+
+  function setConnections(campaignId, sectionId, connections, section) {
+    return patch(campaignId, sectionId, { connections }, section);
   }
 
   function addEntity(campaignId, sectionId, entity, section) {
@@ -157,25 +168,17 @@ window.SceneMeta = (function () {
     const next = normalizeEntity(entity);
     if (!next) return meta;
     const without = meta.entities.filter((e) => entityKey(e) !== entityKey(next));
-    return patch(campaignId, sectionId, {
-      locationId: meta.locationId,
-      entities: [...without, next],
-      connections: meta.connections
-    });
+    return patch(campaignId, sectionId, { entities: [...without, next] }, section);
   }
 
   function removeEntity(campaignId, sectionId, entityId, _type, section) {
     const meta = get(campaignId, sectionId, section);
-    const entities = meta.entities.filter((e) => e.id !== entityId);
-    return patch(campaignId, sectionId, {
-      locationId: meta.locationId,
-      entities,
-      connections: meta.connections
-    });
-  }
-
-  function setConnections(campaignId, sectionId, connections) {
-    return patch(campaignId, sectionId, { connections });
+    return patch(
+      campaignId,
+      sectionId,
+      { entities: meta.entities.filter((e) => e.id !== entityId) },
+      section
+    );
   }
 
   function addConnection(campaignId, sectionId, connection, section) {
@@ -183,20 +186,17 @@ window.SceneMeta = (function () {
     const next = normalizeConnection(connection);
     if (!next) return meta;
     const without = meta.connections.filter((c) => c.sceneId !== next.sceneId);
-    return patch(campaignId, sectionId, {
-      locationId: meta.locationId,
-      entities: meta.entities,
-      connections: [...without, next]
-    });
+    return patch(campaignId, sectionId, { connections: [...without, next] }, section);
   }
 
   function removeConnection(campaignId, sectionId, targetSceneId, section) {
     const meta = get(campaignId, sectionId, section);
-    return patch(campaignId, sectionId, {
-      locationId: meta.locationId,
-      entities: meta.entities,
-      connections: meta.connections.filter((c) => c.sceneId !== targetSceneId)
-    });
+    return patch(
+      campaignId,
+      sectionId,
+      { connections: meta.connections.filter((c) => c.sceneId !== targetSceneId) },
+      section
+    );
   }
 
   function isTrayCollapsed(campaignId) {
@@ -217,6 +217,7 @@ window.SceneMeta = (function () {
 
   return {
     get,
+    getLocationId,
     patch,
     setEntities,
     setLocationId,

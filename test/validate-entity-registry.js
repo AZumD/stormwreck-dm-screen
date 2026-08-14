@@ -76,8 +76,9 @@ else pass("entity-registry normalizes list fields");
 if (!registry.includes("CatalogueSeeds")) fail("entity-registry missing in-memory seed fallback");
 else pass("entity-registry merges seeds without requiring localStorage");
 
-if (!entityUi.includes('document.addEventListener("click"')) fail("entity-ui missing document click delegation");
-else pass("entity-ui uses document-level click delegation");
+if (!entityUi.includes("document.addEventListener") || !/"click"/.test(entityUi) || !entityUi.includes(".entity-link")) {
+  fail("entity-ui missing document click delegation");
+} else pass("entity-ui uses document-level click delegation");
 
 if (!entityUi.includes("bootstrapEntityUI")) fail("entity-ui missing auto-init bootstrap");
 else pass("entity-ui self-initializes on campaign pages");

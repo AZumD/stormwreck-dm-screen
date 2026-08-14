@@ -481,33 +481,199 @@
   gap: 0.55rem;
 }
 
-/* ── Secondary / placeholder card ──────────────────── */
+/* ── Secondary campaigns + create ──────────────────── */
 .landing-secondary {
   margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
-.card-placeholder {
+.user-campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.card-user-campaign {
+  display: block;
   padding: 1.15rem 1.35rem;
   border-radius: var(--landing-radius);
-  border: 1px dashed var(--landing-border);
-  background: rgba(18, 26, 38, 0.5);
-  opacity: 0.55;
-  cursor: default;
+  border: 1px solid var(--landing-border);
+  background: linear-gradient(135deg, var(--landing-panel) 0%, rgba(18, 26, 38, 0.85) 100%);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.25s var(--landing-ease),
+    transform 0.25s var(--landing-ease);
 }
 
-.card-placeholder h3 {
+.card-user-campaign:hover,
+.card-user-campaign:focus-visible {
+  border-color: rgba(196, 164, 98, 0.55);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.card-user-campaign__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.card-user-campaign h3 {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--landing-ink);
+}
+
+.card-user-campaign p {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  color: var(--landing-muted);
+  line-height: 1.45;
+}
+
+.card-create {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 1.15rem 1.35rem;
+  border-radius: var(--landing-radius);
+  border: 1px dashed rgba(196, 164, 98, 0.45);
+  background: rgba(18, 26, 38, 0.55);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color 0.25s var(--landing-ease),
+    background 0.25s var(--landing-ease),
+    transform 0.25s var(--landing-ease);
+}
+
+.card-create:hover,
+.card-create:focus-visible {
+  border-color: rgba(196, 164, 98, 0.75);
+  background: rgba(28, 38, 52, 0.75);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.card-create h3 {
   margin: 0.35rem 0 0.3rem;
   font-family: var(--font-serif);
   font-size: 1.05rem;
   font-weight: 400;
-  color: var(--landing-muted);
+  color: var(--landing-ink);
 }
 
-.card-placeholder p {
+.card-create p {
   margin: 0;
   font-size: 0.88rem;
   color: var(--landing-muted);
-  opacity: 0.85;
+}
+
+.create-campaign-dialog {
+  width: min(420px, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--landing-border);
+  border-radius: var(--landing-radius);
+  background: var(--landing-panel);
+  color: var(--landing-ink);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.create-campaign-dialog::backdrop {
+  background: rgba(6, 10, 16, 0.65);
+}
+
+.create-campaign-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem 0.65rem;
+}
+
+.create-campaign-dialog__header h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.create-campaign-dialog__close {
+  border: 0;
+  background: transparent;
+  color: var(--landing-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+}
+
+.create-campaign-dialog__body {
+  padding: 0 1.15rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.create-campaign-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--landing-muted);
+}
+
+.create-campaign-field em {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.create-campaign-field input,
+.create-campaign-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--landing-border);
+  background: rgba(10, 14, 22, 0.65);
+  color: var(--landing-ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.create-campaign-field input:focus,
+.create-campaign-field textarea:focus {
+  outline: 1px solid rgba(196, 164, 98, 0.55);
+  border-color: rgba(196, 164, 98, 0.55);
+}
+
+.create-campaign-dialog__actions {
+  padding: 0 1.15rem 1.15rem;
+}
+
+.create-campaign-submit {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #c4a462 0%, #a8843d 100%);
+  color: #1a1408;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-campaign-submit:hover {
+  filter: brightness(1.05);
 }
 
 /* ── Reference card (utility style) ──────────────────── */

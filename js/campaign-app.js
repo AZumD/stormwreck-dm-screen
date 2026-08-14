@@ -114,7 +114,22 @@
     bootstrap();
   }
 
+  function syncCampaignChrome() {
+    const title = ADVENTURE.meta?.title || "Campaign";
+    const level = ADVENTURE.meta?.level || "";
+    const h1 = document.querySelector(".sidebar-title-block h1");
+    const sub = document.querySelector(".sidebar-title-block .subtitle");
+    if (h1) h1.textContent = title;
+    if (sub) sub.textContent = level ? `DM Screen · ${level}` : "DM Screen";
+    if (document.body?.dataset) {
+      document.body.dataset.campaignId = campaignId;
+    }
+    document.title = `${title} — DM Screen`;
+  }
+
   async function bootstrap() {
+    syncCampaignChrome();
+
     if (window.CatalogueImages) {
       try {
         await CatalogueImages.preload(["pc", "npc", "item", "monster", "location"]);
@@ -168,6 +183,8 @@
           jumpToSection,
           getSessionNumber,
           getSections,
+          getSectionBase,
+          getFocusedSceneId: () => focusedSceneId || location.hash.replace("#", "") || "",
           getSectionTitle: (id) => {
             const section = getSectionById(id);
             return section ? getSectionData(section).title : id;
@@ -178,6 +195,23 @@
           },
           refreshHistoryPanel: () => {
             if (activeView.type === "panel" && activeView.id === "history") renderPanel("history");
+          }
+        }
+      });
+    }
+    if (window.ChronicleUI) {
+      ChronicleUI.init({
+        campaignId,
+        api: {
+          jumpToSection,
+          getSessionNumber,
+          getSections,
+          getSectionTitle: (id) => {
+            const section = getSectionById(id);
+            return section ? getSectionData(section).title : id;
+          },
+          refreshChroniclePanel: () => {
+            if (activeView.type === "panel" && activeView.id === "chronicle") renderPanel("chronicle");
           }
         }
       });
@@ -751,6 +785,12 @@
           ? CampaignStateUI.renderHistoryPanel()
           : `<h1>History</h1><p class="empty-state">Campaign state unavailable.</p>`;
         if (window.CampaignStateUI) CampaignStateUI.bindHistoryPanel(panelView);
+        break;
+      case "chronicle":
+        panelView.innerHTML = window.ChronicleUI
+          ? ChronicleUI.renderChroniclePanel()
+          : `<h1>Chronicle</h1><p class="empty-state">Chronicle unavailable.</p>`;
+        if (window.ChronicleUI) ChronicleUI.bindChroniclePanel(panelView);
         break;
       case "checklist":
         panelView.innerHTML = renderChecklistView();

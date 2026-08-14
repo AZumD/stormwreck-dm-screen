@@ -15,5 +15,7 @@ node test/validate-scene-meta-runtime.js
 - Nested `section.scene` defaults (`locationId`, entities, connections)
 - Entity `type` stripped on normalize (inferred at UI via EntityRegistry)
 - Connections store destination only (no `from`)
-- `addEntity` / `removeEntity` / `setLocationId`
+- Partial overrides: `setEntities` / `setConnections` / `setLocationId` preserve other effective fields
+- Explicit empty overrides clear defaults without falling back
+- Legacy full-snapshot `{campaignId}-scene-meta` still loads
 - Booklet defaults not mutated by local overrides

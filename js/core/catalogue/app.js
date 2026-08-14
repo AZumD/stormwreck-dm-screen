@@ -82,11 +82,16 @@ window.CatalogueApp = (function () {
   function renderEntityRefHtml(raw, defaultType) {
     const ref = parseEntityRef(raw, defaultType);
     if (!ref) return escapeHtml(String(raw || ""));
-    if (ref.type) {
-      const label = resolveRefLabel(ref);
-      return `<button type="button" class="entity-link" data-type="${escapeHtml(ref.type)}" data-id="${escapeHtml(ref.id)}">${escapeHtml(label)}</button>`;
+
+    const entity = window.EntityRegistry?.resolve?.(ref.id) || window.ENTITIES?.[ref.id] || null;
+    if (!entity) {
+      /* Legacy plain string or unknown id — no broken link */
+      return escapeHtml(ref.label || raw || ref.id);
     }
-    return escapeHtml(ref.id);
+
+    const label = ref.label || entity.name || ref.id;
+    const type = ref.type || entity.type || defaultType || "";
+    return `<button type="button" class="entity-link" data-type="${escapeHtml(type)}" data-id="${escapeHtml(entity.id || ref.id)}">${escapeHtml(label)}</button>`;
   }
 
   function isEmptyFieldValue(value, field) {

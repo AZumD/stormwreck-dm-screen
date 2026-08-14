@@ -9,7 +9,7 @@ window.CatalogueSeeds.feature = [
     id: "feature-undead-fortitude",
     linkId: "undead-fortitude",
     name: "Undead Fortitude",
-    featureType: "Other",
+    featureType: "Monster trait",
     grantedBy: "",
     levelPrerequisite: "",
     source: "Monster Manual / Basic Rules",
@@ -20,6 +20,22 @@ window.CatalogueSeeds.feature = [
     usesRecharge: "Passive (on dropping to 0 HP)",
     notes: "Common on zombies.",
     tags: ["monster", "undead", "rule"]
+  },
+  {
+    id: "feature-slam",
+    linkId: "slam",
+    name: "Slam",
+    featureType: "Monster action",
+    grantedBy: "",
+    levelPrerequisite: "",
+    source: "Monster Manual / Basic Rules",
+    page: "",
+    summary: "Melee bludgeoning attack with the creature's slam.",
+    description:
+      "Melee Weapon Attack: proficiency + Strength to hit, reach 5 ft., one target.\nHit: bludgeoning damage based on the creature's stat block (often 1d6 + Strength modifier for Medium undead).",
+    usesRecharge: "At will",
+    notes: "Creature-specific attack bonus and damage live on the monster entry.",
+    tags: ["monster", "action", "melee"]
   },
   {
     id: "feature-darkvision",

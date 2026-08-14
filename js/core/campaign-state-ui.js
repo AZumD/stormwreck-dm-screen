@@ -121,7 +121,7 @@ window.CampaignStateUI = (function () {
     return opts.join("");
   }
 
-  function inferLocationId() {
+  function inferMapLocationId() {
     try {
       const mapId = localStorage.getItem(`${campaignId}-active-map`);
       const registry = window.MAPS;
@@ -139,6 +139,42 @@ window.CampaignStateUI = (function () {
       /* ignore */
     }
     return "";
+  }
+
+  function resolveContextSceneId(explicitSceneId) {
+    if (explicitSceneId) return String(explicitSceneId);
+    if (typeof api.getFocusedSceneId === "function") {
+      const focused = api.getFocusedSceneId();
+      if (focused) return String(focused);
+    }
+    const current = window.CampaignState?.getCurrentSceneId?.();
+    if (current) return String(current);
+    try {
+      const hash = String(location.hash || "").replace(/^#/, "");
+      if (hash) return hash;
+    } catch {
+      /* ignore */
+    }
+    return "";
+  }
+
+  /**
+   * Infer campaign location for forms / memory defaults.
+   * Priority: explicit/context scene SceneMeta.locationId → active map → "".
+   * Does not change maps or SceneMeta; callers may always override the result.
+   */
+  function inferLocationId(explicitSceneId) {
+    const sceneId = resolveContextSceneId(explicitSceneId);
+    if (sceneId && window.SceneMeta) {
+      const section =
+        typeof api.getSectionBase === "function" ? api.getSectionBase(sceneId) : null;
+      const sceneLoc = SceneMeta.getLocationId(campaignId, sceneId, section);
+      if (sceneLoc) {
+        const resolved = window.EntityRegistry?.resolve?.(sceneLoc);
+        return resolved?.id || sceneLoc;
+      }
+    }
+    return inferMapLocationId();
   }
 
   /* ── Scene chrome ───────────────────────────────────── */
@@ -367,8 +403,12 @@ window.CampaignStateUI = (function () {
     if (!dialogEl || !dialogBody) return;
     pendingEntityId = entityId;
     const mem = CampaignState.getNpcMemory(entityId);
-    const currentScene = CampaignState.getCurrentSceneId() || "";
-    const locationId = mem.lastSeenLocation || inferLocationId();
+    const currentScene =
+      CampaignState.getCurrentSceneId() ||
+      (typeof api.getFocusedSceneId === "function" ? api.getFocusedSceneId() : "") ||
+      "";
+    /* Memory last-seen wins when set; otherwise infer from scene → map */
+    const locationId = mem.lastSeenLocation || inferLocationId(currentScene);
 
     dialogBody.innerHTML = `
       <form class="interaction-form" id="interaction-form">
@@ -492,6 +532,7 @@ window.CampaignStateUI = (function () {
               <article class="history-entry" data-entry-id="${escapeHtml(e.id)}">
                 <div class="history-entry__meta">${meta || `<span class="history-type">${escapeHtml(e.type)}</span>`}</div>
                 <p class="history-entry__text">${escapeHtml(e.text)}</p>
+                <button type="button" class="chronicle-promote" data-promote-history="${escapeHtml(e.id)}">${escapeHtml(t().makeKeyEvent || "★ Make Key Event")}</button>
               </article>`;
           })
           .join("");
@@ -531,11 +572,20 @@ window.CampaignStateUI = (function () {
         if (typeof api.jumpToSection === "function") api.jumpToSection(btn.dataset.jumpScene);
       });
     });
+    root.querySelectorAll("[data-promote-history]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (window.ChronicleUI?.promoteHistoryEntry) ChronicleUI.promoteHistoryEntry(btn.dataset.promoteHistory);
+      });
+    });
   }
 
   function openManualHistoryForm(root) {
     const host = root.querySelector("#history-manual-form");
     if (!host) return;
+    const defaultScene =
+      CampaignState.getCurrentSceneId() ||
+      (typeof api.getFocusedSceneId === "function" ? api.getFocusedSceneId() : "") ||
+      "";
     host.classList.remove("hidden");
     host.innerHTML = `
       <form class="interaction-form" id="manual-history-form">
@@ -544,10 +594,10 @@ window.CampaignStateUI = (function () {
           <input type="number" min="1" name="session" value="${sessionNumber()}">
         </label>
         <label>${escapeHtml(t().sceneLabel || "Scene")}
-          <select name="sceneId">${sectionOptionsHtml(CampaignState.getCurrentSceneId() || "")}</select>
+          <select name="sceneId">${sectionOptionsHtml(defaultScene)}</select>
         </label>
         <label>${escapeHtml(t().locationLabel || "Location")}
-          <select name="locationId">${locationOptionsHtml(inferLocationId())}</select>
+          <select name="locationId">${locationOptionsHtml(inferLocationId(defaultScene))}</select>
         </label>
         <label>${escapeHtml(t().entityLabel || "Entity")}
           <select name="entityId">${entityOptionsHtml("")}</select>
@@ -601,6 +651,7 @@ window.CampaignStateUI = (function () {
     refreshAllSceneChrome,
     renderHistoryPanel,
     bindHistoryPanel,
-    openLogInteraction
+    openLogInteraction,
+    inferLocationId
   };
 })();

@@ -44,6 +44,24 @@ if (!css.includes(".landing-sidebar") || !css.includes(".landing-body")) {
   pass("landing sidebar styles");
 }
 
+if (!html.includes("create-campaign-btn") || !html.includes("user-campaign-list")) {
+  fail("landing missing create/list campaign hooks");
+} else {
+  pass("create campaign hooks");
+}
+
+if (html.includes("card-placeholder") && html.includes("Coming soon")) {
+  fail("Coming soon placeholder still present");
+} else {
+  pass("coming soon placeholder gone");
+}
+
+if (!css.includes(".card-create") || !css.includes(".create-campaign-dialog")) {
+  fail("landing.css missing create campaign styles");
+} else {
+  pass("create campaign styles");
+}
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

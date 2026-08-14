@@ -45,6 +45,13 @@ if (!meta.includes("addEntity") || !meta.includes("addConnection")) {
   fail("SceneMeta missing entity/connection APIs");
 } else pass("SceneMeta APIs");
 
+if (!meta.includes("getLocationId")) fail("SceneMeta missing getLocationId");
+else pass("SceneMeta getLocationId");
+
+if (!meta.includes("Write only the keys present")) {
+  fail("SceneMeta patch should write partial overrides only");
+} else pass("SceneMeta partial patch");
+
 if (!meta.includes("type is inferred via EntityRegistry") && !meta.includes("/* type is inferred")) {
   fail("SceneMeta should not store entity type");
 } else pass("entity type not stored");

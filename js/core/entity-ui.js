@@ -2,16 +2,21 @@
 window.EntityUI = (function () {
   "use strict";
 
-  const { markdownLite, escapeHtml } = ContentParser;
+  const { markdownLite, escapeHtml, replaceLinks } = window.ContentParser;
 
   let tooltipEl;
   let modalEl;
   let modalTitleEl;
   let modalBodyEl;
+  let modalBackEl;
   let t;
   let globalHandlersBound = false;
   let modalUiBound = false;
   const modalEnrichers = [];
+
+  /* Single-modal navigation stack (previous entity ids) */
+  let navStack = [];
+  let currentModalId = null;
 
   function init(options) {
     tooltipEl = options.tooltip;
@@ -22,13 +27,15 @@ window.EntityUI = (function () {
 
     if (modalEl && !modalUiBound) {
       modalUiBound = true;
+      ensureBackButton();
       modalEl.addEventListener("click", (e) => {
-        if (e.target === modalEl) modalEl.close();
+        if (e.target === modalEl) closeModal();
       });
+      modalEl.addEventListener("close", clearNavStack);
 
       const modalClose = document.getElementById("modal-close");
       if (modalClose) {
-        modalClose.addEventListener("click", () => modalEl.close());
+        modalClose.addEventListener("click", () => closeModal());
       }
     }
 
@@ -42,7 +49,10 @@ window.EntityUI = (function () {
           if (!link) return;
           e.preventDefault();
           e.stopPropagation();
-          openModal(link.dataset.id);
+          const id = link.dataset.id;
+          if (!id) return;
+          const fromOpenModal = isModalOpen() && !!currentModalId;
+          openModal(id, { pushHistory: fromOpenModal && id !== currentModalId });
         },
         true
       );
@@ -69,16 +79,72 @@ window.EntityUI = (function () {
     }
   }
 
+  function ensureBackButton() {
+    if (!modalEl) return;
+    modalBackEl = document.getElementById("modal-back");
+    if (modalBackEl) {
+      modalBackEl.addEventListener("click", goBack);
+      return;
+    }
+    const header = modalEl.querySelector(".modal-header");
+    if (!header) return;
+    modalBackEl = document.createElement("button");
+    modalBackEl.type = "button";
+    modalBackEl.id = "modal-back";
+    modalBackEl.className = "modal-back hidden";
+    modalBackEl.setAttribute("aria-label", t.modalBack || "Back");
+    modalBackEl.title = t.modalBack || "Back";
+    modalBackEl.innerHTML = `<span class="modal-back__icon" aria-hidden="true"></span>`;
+    const closeBtn = header.querySelector("#modal-close");
+    if (closeBtn) header.insertBefore(modalBackEl, closeBtn);
+    else header.appendChild(modalBackEl);
+    modalBackEl.addEventListener("click", goBack);
+  }
+
+  function isModalOpen() {
+    if (!modalEl) return false;
+    if (typeof modalEl.open === "boolean") return modalEl.open;
+    return modalEl.hasAttribute("open");
+  }
+
+  function clearNavStack() {
+    navStack = [];
+    currentModalId = null;
+    syncBackButton();
+  }
+
+  function syncBackButton() {
+    if (!modalBackEl) return;
+    const show = navStack.length > 0;
+    modalBackEl.classList.toggle("hidden", !show);
+    modalBackEl.disabled = !show;
+  }
+
+  function closeModal() {
+    if (!modalEl) return;
+    clearNavStack();
+    if (typeof modalEl.close === "function") modalEl.close();
+    else modalEl.removeAttribute("open");
+  }
+
+  function goBack() {
+    const prev = navStack.pop();
+    syncBackButton();
+    if (!prev) return;
+    openModal(prev, { pushHistory: false, replace: true });
+  }
+
   function resolveEntity(id) {
     if (!id) return null;
     if (window.EntityRegistry?.resolve) {
-      const entity = EntityRegistry.resolve(id);
+      const entity = window.EntityRegistry.resolve(id);
       if (entity) return entity;
     }
     return window.ENTITIES?.[id] || null;
   }
 
-  function buildTooltipHtml(entity) {
+  function buildTooltipHtml(entity, options = {}) {
+    const compact = !!options.compact;
     const ac = entity.stats?.AC || entity.stats?.ac;
     const hp = entity.stats?.HP || entity.stats?.hp;
     const portrait = entity.portrait
@@ -92,7 +158,7 @@ window.EntityUI = (function () {
           <div class="tooltip-meta">${(t.typeLabels?.[entity.type] || entity.type).toUpperCase()}</div>
         </div>
       </div>
-      ${entity.summary ? `<div class="tooltip-stat">${escapeHtml(entity.summary)}</div>` : ""}
+      ${!compact && entity.summary ? `<div class="tooltip-stat">${escapeHtml(entity.summary)}</div>` : ""}
       ${ac ? `<div class="tooltip-stat">AC ${escapeHtml(ac)}${hp ? ` · HP ${escapeHtml(hp)}` : ""}</div>` : ""}
       <div class="tooltip-meta" style="margin-top:0.5rem">${t.clickForDetails || "Click for full details"}</div>`;
   }
@@ -120,7 +186,7 @@ window.EntityUI = (function () {
     moveTooltip(e);
   }
 
-  function showTooltipForEntity(entityId, e) {
+  function showTooltipForEntity(entityId, e, options = {}) {
     const entity = resolveEntity(entityId);
     if (!entity) {
       showTooltipHtml(
@@ -129,7 +195,7 @@ window.EntityUI = (function () {
       );
       return;
     }
-    showTooltipHtml(buildTooltipHtml(entity), e);
+    showTooltipHtml(buildTooltipHtml(entity, options), e);
   }
 
   function showTooltipForParty(member, e) {
@@ -137,7 +203,8 @@ window.EntityUI = (function () {
   }
 
   function showTooltipForPin(pin, e) {
-    if (pin.entityId) return showTooltipForEntity(pin.entityId, e);
+    /* Map pins stay compact — name/type/AC·HP only, not the full summary */
+    if (pin.entityId) return showTooltipForEntity(pin.entityId, e, { compact: true });
     if (pin.partyId && window.PARTY) {
       const member = window.PARTY.find((p) => p.id === pin.partyId);
       if (member) return showTooltipForParty(member, e);
@@ -161,13 +228,43 @@ window.EntityUI = (function () {
     if (tooltipEl) tooltipEl.classList.add("hidden");
   }
 
-  function openModal(entityId) {
+  function formatStatValue(value) {
+    const raw = String(value ?? "");
+    if (!raw) return "";
+    if (raw.includes("@") || raw.includes("[[")) {
+      const registry = window.EntityRegistry?.getAll?.() || window.ENTITIES || {};
+      return replaceLinks(raw, registry);
+    }
+    return escapeHtml(raw);
+  }
+
+  /**
+   * @param {string} entityId
+   * @param {{ pushHistory?: boolean, replace?: boolean }} [options]
+   * - Fresh open (campaign link, search, etc.): clears stack
+   * - pushHistory true: keep stack and push previous id (in-modal wiki nav)
+   * - replace true: render without touching stack (Back)
+   */
+  function openModal(entityId, options = {}) {
     if (!modalEl) return;
+    ensureBackButton();
+
+    const pushHistory = !!options.pushHistory;
+    const replace = !!options.replace;
+
+    if (!replace && !pushHistory) {
+      navStack = [];
+    } else if (pushHistory && currentModalId && currentModalId !== entityId) {
+      navStack.push(currentModalId);
+    }
+
+    currentModalId = entityId || null;
 
     const entity = resolveEntity(entityId);
     if (!entity) {
-      modalTitleEl.textContent = entityId;
+      if (modalTitleEl) modalTitleEl.textContent = entityId;
       modalBodyEl.innerHTML = `<p class="empty-state">No catalogue entry for <strong>${escapeHtml(entityId)}</strong>. Add or edit it in the matching catalogue on the DM Library landing page, then refresh.</p>`;
+      syncBackButton();
       try {
         modalEl.showModal();
       } catch {
@@ -177,7 +274,7 @@ window.EntityUI = (function () {
       return;
     }
 
-    modalTitleEl.textContent = entity.name;
+    if (modalTitleEl) modalTitleEl.textContent = entity.name;
     let body = "";
     if (entity.portrait) {
       body += `<img class="entity-portrait" src="${escapeHtml(entity.portrait)}" alt="${escapeHtml(entity.name)}">`;
@@ -187,7 +284,7 @@ window.EntityUI = (function () {
     if (entity.stats && Object.keys(entity.stats).length) {
       body += `<div class="stat-block">`;
       for (const [label, value] of Object.entries(entity.stats)) {
-        body += `<div class="stat-row"><span class="stat-label">${escapeHtml(label)}</span><span class="stat-value">${escapeHtml(value)}</span></div>`;
+        body += `<div class="stat-row"><span class="stat-label">${escapeHtml(label)}</span><span class="stat-value">${formatStatValue(value)}</span></div>`;
       }
       body += `</div>`;
     }
@@ -201,6 +298,7 @@ window.EntityUI = (function () {
         console.warn("EntityUI modal enricher failed:", err);
       }
     });
+    syncBackButton();
     try {
       modalEl.showModal();
     } catch {
@@ -215,7 +313,10 @@ window.EntityUI = (function () {
 
   function openPartyModal(member) {
     if (!modalEl) return;
-    modalTitleEl.textContent = member.name;
+    navStack = [];
+    currentModalId = null;
+    syncBackButton();
+    if (modalTitleEl) modalTitleEl.textContent = member.name;
     const portrait = member.portrait
       ? `<img class="entity-portrait" src="${escapeHtml(member.portrait)}" alt="${escapeHtml(member.name)}">`
       : "";
@@ -239,7 +340,10 @@ window.EntityUI = (function () {
       if (member) return openPartyModal(member);
     }
     if (!modalEl) return;
-    modalTitleEl.textContent = pin.label;
+    navStack = [];
+    currentModalId = null;
+    syncBackButton();
+    if (modalTitleEl) modalTitleEl.textContent = pin.label;
     modalBodyEl.innerHTML = pin.summary ? `<p>${escapeHtml(pin.summary)}</p>` : `<p class="empty-state">No details.</p>`;
     modalEl.showModal();
     hideTooltip();
@@ -258,9 +362,13 @@ window.EntityUI = (function () {
     moveTooltip,
     hideTooltip,
     openModal,
+    closeModal,
+    goBack,
     openPartyModal,
     openPinModal,
-    bindEntityLinks
+    bindEntityLinks,
+    /** Test helper */
+    _navState: () => ({ stack: navStack.slice(), current: currentModalId })
   };
 })();
 

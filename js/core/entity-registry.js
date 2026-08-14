@@ -65,6 +65,11 @@ window.EntityRegistry = (function () {
       subclasses: asArray(entry.subclasses),
       featureRefs: asArray(entry.featureRefs),
       skillRefs: asArray(entry.skillRefs),
+      traitRefs: asArray(entry.traitRefs),
+      actionRefs: asArray(entry.actionRefs),
+      bonusActionRefs: asArray(entry.bonusActionRefs),
+      reactionRefs: asArray(entry.reactionRefs),
+      legendaryActionRefs: asArray(entry.legendaryActionRefs),
       tags: asArray(entry.tags)
     };
   }
@@ -89,9 +94,69 @@ window.EntityRegistry = (function () {
     return parts.filter(Boolean).join("\n\n");
   }
 
-  function refsBlock(label, refs) {
+  /**
+   * Normalize a stored ref into @type:id|Label for markdownLite / replaceLinks.
+   * Unresolvable bare strings stay plain text (no broken links).
+   */
+  function formatRefMarkdown(raw, defaultType) {
+    const text = String(raw || "").trim();
+    if (!text) return "";
+
+    let type = "";
+    let id = "";
+    let label = "";
+
+    const at = text.match(/^@([\w-]+):([\w-]+)(?:\|(.+))?$/);
+    if (at) {
+      type = at[1];
+      id = at[2];
+      label = (at[3] || "").trim();
+    } else {
+      const typed = text.match(/^([\w-]+):([\w-]+)(?:\|(.+))?$/);
+      if (typed) {
+        type = typed[1];
+        id = typed[2];
+        label = (typed[3] || "").trim();
+      } else if (defaultType) {
+        type = defaultType;
+        id = text;
+      } else {
+        id = text;
+      }
+    }
+
+    const cached = window.ENTITIES?.[id] || null;
+    if (!entriesByCatalogueId.size) {
+      try {
+        indexEntries();
+      } catch {
+        /* index may not be ready yet */
+      }
+    }
+    const catalogueEntry = resolveCatalogueEntry(id);
+    if (!cached && !catalogueEntry) {
+      return label || text;
+    }
+
+    const linkType =
+      type ||
+      cached?.type ||
+      defaultType ||
+      TYPE_MAP[catalogueEntry?._catalogueType] ||
+      "feature";
+    const linkKey = cached?.id || (catalogueEntry ? linkId(catalogueEntry) : id);
+    const display = label || cached?.name || catalogueEntry?.name || id;
+    return `@${linkType}:${linkKey}|${display}`;
+  }
+
+  function refsBlock(label, refs, defaultType) {
     if (!refs?.length) return "";
-    return `**${label}:**\n${refs.map((r) => `- ${r}`).join("\n")}`;
+    const lines = refs
+      .map((r) => formatRefMarkdown(r, defaultType))
+      .filter(Boolean)
+      .map((line) => `- ${line}`);
+    if (!lines.length) return "";
+    return `**${label}:**\n${lines.join("\n")}`;
   }
 
   function npcToEntity(entry) {
@@ -130,11 +195,17 @@ window.EntityRegistry = (function () {
     const id = linkId(entry);
     const summary = [entry.size, entry.creatureType, entry.cr ? `CR ${entry.cr}` : ""].filter(Boolean).join(" · ");
     const details = joinBlocks([
-      entry.traits,
-      entry.actions && `**Actions:**\n${entry.actions}`,
-      entry.bonusActions && `**Bonus Actions:**\n${entry.bonusActions}`,
-      entry.reactions && `**Reactions:**\n${entry.reactions}`,
-      entry.legendaryActions && `**Legendary Actions:**\n${entry.legendaryActions}`,
+      refsBlock("Skills", entry.skillRefs, "skill"),
+      refsBlock("Traits", entry.traitRefs, "feature"),
+      refsBlock("Actions", entry.actionRefs, "feature"),
+      refsBlock("Bonus Actions", entry.bonusActionRefs, "feature"),
+      refsBlock("Reactions", entry.reactionRefs, "feature"),
+      refsBlock("Legendary Actions", entry.legendaryActionRefs, "feature"),
+      entry.traits && `**Trait notes:**\n${entry.traits}`,
+      entry.actions && `**Action notes:**\n${entry.actions}`,
+      entry.bonusActions && `**Bonus Action notes:**\n${entry.bonusActions}`,
+      entry.reactions && `**Reaction notes:**\n${entry.reactions}`,
+      entry.legendaryActions && `**Legendary Action notes:**\n${entry.legendaryActions}`,
       entry.notes && `**Notes:**\n${entry.notes}`
     ]);
 
@@ -254,7 +325,7 @@ window.EntityRegistry = (function () {
     const details = joinBlocks([
       entry.summary,
       entry.abilityScoreIncrease && `**Ability scores:** ${entry.abilityScoreIncrease}`,
-      refsBlock("Features", entry.featureRefs),
+      refsBlock("Features", entry.featureRefs, "feature"),
       entry.traits && `**Traits:**\n${entry.traits}`,
       entry.languages && `**Languages:** ${entry.languages}`,
       entry.senses && `**Senses:** ${entry.senses}`,
@@ -281,9 +352,9 @@ window.EntityRegistry = (function () {
     const id = linkId(entry);
     const details = joinBlocks([
       entry.summary,
-      refsBlock("Skill options", entry.skillRefs),
+      refsBlock("Skill options", entry.skillRefs, "skill"),
       entry.skillChoices && `**Skill choices:** ${entry.skillChoices}`,
-      refsBlock("Features", entry.featureRefs),
+      refsBlock("Features", entry.featureRefs, "feature"),
       entry.features && `**Features by level:**\n${entry.features}`,
       entry.spellcasting && `**Spellcasting:**\n${entry.spellcasting}`,
       entry.subclasses?.length && `**Subclasses:**\n${entry.subclasses.map((s) => `- ${s}`).join("\n")}`,
@@ -421,9 +492,9 @@ window.EntityRegistry = (function () {
   function mergeAllSeeds() {
     if (!window.CatalogueSeeds || !window.CatalogueStore) return;
     for (const type of Object.keys(TYPE_MAP)) {
-      if (CatalogueSeeds[type]?.length) {
+      if (window.CatalogueSeeds[type]?.length) {
         try {
-          CatalogueStore.mergeSeeds(type, CatalogueSeeds[type]);
+          window.CatalogueStore.mergeSeeds(type, window.CatalogueSeeds[type]);
         } catch {
           /* storage unavailable */
         }
@@ -545,5 +616,5 @@ window.EntityRegistry = (function () {
 
   build();
 
-  return { build, resolve, getAll, byType, linkId, register, TYPE_MAP, CONVERTERS };
+  return { build, resolve, getAll, byType, linkId, register, formatRefMarkdown, TYPE_MAP, CONVERTERS };
 })();

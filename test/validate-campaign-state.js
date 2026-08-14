@@ -57,6 +57,18 @@ if (!ui.includes("Object.values(registry)") && !ui.includes("!Array.isArray(regi
   pass("inferLocationId supports object MAPS");
 }
 
+if (!ui.includes("SceneMeta.getLocationId") || !ui.includes("inferMapLocationId")) {
+  fail("inferLocationId should prefer SceneMeta before map");
+} else {
+  pass("inferLocationId prefers SceneMeta then map");
+}
+
+if (!app.includes("getFocusedSceneId")) {
+  fail("campaign-app should expose focused scene to CampaignStateUI");
+} else {
+  pass("campaign-app exposes focused scene");
+}
+
 if (!ui.includes("entityOptionsHtml") || !ui.includes('"monster"') || !ui.includes('"item"')) {
   fail("History entity picker missing multi-type options");
 } else {
