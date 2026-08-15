@@ -7,23 +7,9 @@ Persists user-created campaigns for the DM Library landing page. Built-in bookle
 `js/core/campaign-registry.js` → `window.CampaignRegistry`
 
 ## Storage
-Key: `dm-campaigns` (localStorage)
+Key: `dm-campaigns` (legacy localStorage fallback)
 
-```json
-{
-  "version": 1,
-  "campaigns": [
-    {
-      "id": "coastal-hex",
-      "title": "Coastal hex crawl",
-      "description": "…",
-      "level": "",
-      "createdAt": 0,
-      "updatedAt": 0
-    }
-  ]
-}
-```
+Authoritative store when the local server is running: `data/campaigns/index.json` via `/api/campaigns`.
 
 ## API
 | Method | Role |

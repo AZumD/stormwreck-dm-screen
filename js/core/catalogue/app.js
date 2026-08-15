@@ -457,16 +457,20 @@ window.CatalogueApp = (function () {
     if (!config) throw new Error(`Unknown catalogue type: ${type}`);
 
     const start = async () => {
+      document.body.classList.add("is-booting");
+      if (window.LocalApiClient) await LocalApiClient.ready();
+      if (window.CatalogueStore) await CatalogueStore.bootstrap([type]);
       if (window.CatalogueImages) {
         await CatalogueImages.preload(type);
         await CatalogueImages.migrateType(type);
       }
-      boot();
+      await boot();
+      document.body.classList.remove("is-booting");
     };
 
-    function boot() {
+    async function boot() {
     if (window.CatalogueSeeds?.[type]) {
-      CatalogueStore.mergeSeeds(type, CatalogueSeeds[type]);
+      await CatalogueStore.mergeSeeds(type, CatalogueSeeds[type]);
     }
 
     const listEl = document.getElementById("cat-list");
@@ -571,12 +575,12 @@ window.CatalogueApp = (function () {
         renderEditor(activeId, { mode: "edit" });
       });
 
-      article.querySelector("[data-action='delete']")?.addEventListener("click", () => {
+      article.querySelector("[data-action='delete']")?.addEventListener("click", async () => {
         const name = article.querySelector(".cat-wiki__title")?.textContent || "this entry";
         if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
         clearTimeout(saveTimer);
         try {
-          CatalogueStore.remove(type, article.dataset.entryId);
+          await CatalogueStore.remove(type, article.dataset.entryId);
         } catch {
           alert("Could not delete this entry.");
           return;
@@ -655,17 +659,17 @@ window.CatalogueApp = (function () {
         const toStore = window.CatalogueImages
           ? await CatalogueImages.persistEntryImages(type, merged)
           : merged;
-        CatalogueStore.upsert(type, toStore);
-        setStatus("Saved locally");
+        await CatalogueStore.upsert(type, toStore);
+        setStatus("Saved");
         renderList();
         return true;
       } catch (err) {
         if (err?.quota) {
           setStatus("Save failed — storage full");
           alert("Could not save text fields — browser local storage is full. Images now use a separate store; try removing unused catalogue entries.");
-        } else if (err?.message === "idb-save-failed") {
+        } else if (err?.message === "idb-save-failed" || err?.message === "asset-save-failed") {
           setStatus("Image save failed");
-          alert("Could not save the image in browser storage. Try another browser or free some disk space.");
+          alert("Could not save the image. Check that the local server is running (npm start).");
         } else {
           setStatus("Save failed");
           alert("Could not save this entry. Try again with a smaller image.");
@@ -701,12 +705,12 @@ window.CatalogueApp = (function () {
         renderEditor(activeId, { mode: "view" });
       });
 
-      form.querySelector("[data-action='delete']")?.addEventListener("click", () => {
+      form.querySelector("[data-action='delete']")?.addEventListener("click", async () => {
         const name = form.querySelector('[name="name"]')?.value || "this entry";
         if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
         clearTimeout(saveTimer);
         try {
-          CatalogueStore.remove(type, form.dataset.entryId);
+          await CatalogueStore.remove(type, form.dataset.entryId);
         } catch {
           alert("Could not delete this entry.");
           return;
@@ -765,8 +769,8 @@ window.CatalogueApp = (function () {
             const toStore = window.CatalogueImages
               ? await CatalogueImages.persistEntryImages(type, merged)
               : merged;
-            CatalogueStore.upsert(type, toStore);
-            setStatus("Saved locally");
+            await CatalogueStore.upsert(type, toStore);
+            setStatus("Saved");
             renderEditor(activeId, { mode: "edit" });
           } catch (err) {
             const hydrated = window.CatalogueImages
@@ -779,9 +783,9 @@ window.CatalogueApp = (function () {
             } else if (err?.message === "invalid-image") {
               setStatus("Invalid image");
               alert("Could not read that image file.");
-            } else if (err?.message === "idb-save-failed") {
+            } else if (err?.message === "idb-save-failed" || err?.message === "asset-save-failed") {
               setStatus("Image save failed");
-              alert("Could not save the image in browser storage. Try another browser or free some disk space.");
+              alert("Could not save the image. Check that the local server is running (npm start).");
             } else if (err?.quota || err?.message === "quota") {
               setStatus("Save failed — storage full");
               alert(
@@ -812,8 +816,8 @@ window.CatalogueApp = (function () {
             const toStore = window.CatalogueImages
               ? await CatalogueImages.persistEntryImages(type, merged)
               : merged;
-            CatalogueStore.upsert(type, toStore);
-            setStatus("Saved locally");
+            await CatalogueStore.upsert(type, toStore);
+            setStatus("Saved");
             renderEditor(activeId, { mode: "edit" });
           } catch {
             setStatus("Save failed");
@@ -840,16 +844,16 @@ window.CatalogueApp = (function () {
       });
     }
 
-    newBtn?.addEventListener("click", () => {
+    newBtn?.addEventListener("click", async () => {
       clearTimeout(saveTimer);
       const entry = {
         id: CatalogueStore.generateId(type),
         ...JSON.parse(JSON.stringify(config.defaults))
       };
       try {
-        CatalogueStore.upsert(type, entry);
+        await CatalogueStore.upsert(type, entry);
       } catch {
-        alert("Could not create a new entry (storage may be full).");
+        alert("Could not create a new entry. Is the local server running (npm start)?");
         return;
       }
       renderEditor(entry.id, { mode: "edit" });

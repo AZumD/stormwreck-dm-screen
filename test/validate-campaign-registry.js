@@ -73,45 +73,50 @@ const sandbox = {
 sandbox.window = sandbox;
 vm.runInNewContext(registrySrc, sandbox);
 
-const CR = sandbox.window.CampaignRegistry;
-if (!CR) {
-  fail("CampaignRegistry not defined");
-} else {
-  pass("CampaignRegistry defined");
+(async () => {
+  const CR = sandbox.window.CampaignRegistry;
+  if (!CR) {
+    fail("CampaignRegistry not defined");
+  } else {
+    pass("CampaignRegistry defined");
 
-  const a = CR.create({ title: "Coastal Hex", description: "Test" });
-  if (!a || a.id !== "coastal-hex" || a.title !== "Coastal Hex") fail("create slug/title failed");
-  else pass("create campaign");
+    const a = await CR.create({ title: "Coastal Hex", description: "Test" });
+    if (!a || a.id !== "coastal-hex" || a.title !== "Coastal Hex") fail("create slug/title failed");
+    else pass("create campaign");
 
-  const again = CR.create({ title: "Coastal Hex" });
-  if (!again || again.id !== "coastal-hex-2") fail("unique id collision handling failed");
-  else pass("unique campaign ids");
+    const again = await CR.create({ title: "Coastal Hex" });
+    if (!again || again.id !== "coastal-hex-2") fail("unique id collision handling failed");
+    else pass("unique campaign ids");
 
-  const storm = CR.create({ title: "Stormwreck Isle" });
-  if (!storm || storm.id === "stormwreck-isle") fail("must not reuse stormwreck-isle id");
-  else pass("reserve stormwreck-isle id");
+    const storm = await CR.create({ title: "Stormwreck Isle" });
+    if (!storm || storm.id === "stormwreck-isle") fail("must not reuse stormwreck-isle id");
+    else pass("reserve stormwreck-isle id");
 
-  if (CR.list().length < 3) fail("list missing entries");
-  else pass("list campaigns");
+    if (CR.list().length < 3) fail("list missing entries");
+    else pass("list campaigns");
 
-  if (!CR.get(a.id) || CR.get("missing")) fail("get lookup wrong");
-  else pass("get campaign");
+    if (!CR.get(a.id) || CR.get("missing")) fail("get lookup wrong");
+    else pass("get campaign");
 
-  const url = CR.sandboxUrl(a.id);
-  if (!url.includes("campaigns/sandbox/index.html") || !url.includes(`id=${a.id}`)) {
-    fail("sandboxUrl shape wrong");
-  } else pass("sandboxUrl");
+    const url = CR.sandboxUrl(a.id);
+    if (!url.includes("campaigns/sandbox/index.html") || !url.includes(`id=${a.id}`)) {
+      fail("sandboxUrl shape wrong");
+    } else pass("sandboxUrl");
 
-  CR.update(a.id, { description: "Updated" });
-  if (CR.get(a.id).description !== "Updated") fail("update failed");
-  else pass("update campaign");
+    await CR.update(a.id, { description: "Updated" });
+    if (CR.get(a.id).description !== "Updated") fail("update failed");
+    else pass("update campaign");
 
-  if (!CR.remove(again.id) || CR.get(again.id)) fail("remove failed");
-  else pass("remove campaign");
-}
+    if (!(await CR.remove(again.id)) || CR.get(again.id)) fail("remove failed");
+    else pass("remove campaign");
+  }
 
-if (failed) {
-  console.error(`\n${failed} check(s) failed`);
+  if (failed) {
+    console.error(`\n${failed} check(s) failed`);
+    process.exit(1);
+  }
+  console.log("\nAll campaign-registry checks passed");
+})().catch((err) => {
+  console.error(err);
   process.exit(1);
-}
-console.log("\nAll campaign-registry checks passed");
+});

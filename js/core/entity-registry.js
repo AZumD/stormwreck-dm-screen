@@ -489,12 +489,12 @@ window.EntityRegistry = (function () {
 
   const entriesByCatalogueId = new Map();
 
-  function mergeAllSeeds() {
+  async function mergeAllSeeds() {
     if (!window.CatalogueSeeds || !window.CatalogueStore) return;
     for (const type of Object.keys(TYPE_MAP)) {
       if (window.CatalogueSeeds[type]?.length) {
         try {
-          window.CatalogueStore.mergeSeeds(type, window.CatalogueSeeds[type]);
+          await window.CatalogueStore.mergeSeeds(type, window.CatalogueSeeds[type]);
         } catch {
           /* storage unavailable */
         }
@@ -554,7 +554,7 @@ window.EntityRegistry = (function () {
     return null;
   }
 
-  function build() {
+  async function build() {
     entriesByCatalogueId.clear();
 
     if (!window.CatalogueStore && !window.CatalogueSeeds) {
@@ -562,7 +562,7 @@ window.EntityRegistry = (function () {
       return window.ENTITIES;
     }
 
-    mergeAllSeeds();
+    await mergeAllSeeds();
     indexEntries();
 
     const entities = {};

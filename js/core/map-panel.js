@@ -34,12 +34,8 @@ window.MapPanel = (function () {
   }
 
   function loadFilters(campaignId) {
-    try {
-      const saved = JSON.parse(localStorage.getItem(filtersKey(campaignId)) || "null");
-      if (saved && typeof saved === "object") return { ...defaultFilters(), ...saved };
-    } catch {
-      /* ignore */
-    }
+    const saved = window.CampaignMapState?.get(campaignId)?.filters;
+    if (saved && typeof saved === "object") return { ...defaultFilters(), ...saved };
     return defaultFilters();
   }
 
@@ -48,62 +44,34 @@ window.MapPanel = (function () {
   }
 
   function saveFilters(campaignId, filters) {
-    try {
-      localStorage.setItem(filtersKey(campaignId), JSON.stringify(filters));
-    } catch {
-      /* ignore */
-    }
+    if (window.CampaignMapState) CampaignMapState.patch(campaignId, { filters });
   }
 
   function loadPinPositions(campaignId) {
-    try {
-      const data = JSON.parse(localStorage.getItem(pinPosKey(campaignId)) || "{}");
-      return data && typeof data === "object" ? data : {};
-    } catch {
-      return {};
-    }
+    const data = window.CampaignMapState?.get(campaignId)?.pinPositions;
+    return data && typeof data === "object" ? data : {};
   }
 
   function savePinPositions(campaignId, data) {
-    try {
-      localStorage.setItem(pinPosKey(campaignId), JSON.stringify(data));
-    } catch {
-      /* ignore */
-    }
+    if (window.CampaignMapState) CampaignMapState.patch(campaignId, { pinPositions: data });
   }
 
   function loadPartyPositions(campaignId) {
-    try {
-      const data = JSON.parse(localStorage.getItem(partyPosKey(campaignId)) || "{}");
-      return data && typeof data === "object" ? data : {};
-    } catch {
-      return {};
-    }
+    const data = window.CampaignMapState?.get(campaignId)?.partyPositions;
+    return data && typeof data === "object" ? data : {};
   }
 
   function savePartyPositions(campaignId, data) {
-    try {
-      localStorage.setItem(partyPosKey(campaignId), JSON.stringify(data));
-    } catch {
-      /* ignore */
-    }
+    if (window.CampaignMapState) CampaignMapState.patch(campaignId, { partyPositions: data });
   }
 
   function loadCustomPins(campaignId) {
-    try {
-      const data = JSON.parse(localStorage.getItem(customPinsKey(campaignId)) || "{}");
-      return data && typeof data === "object" ? data : {};
-    } catch {
-      return {};
-    }
+    const data = window.CampaignMapState?.get(campaignId)?.customPins;
+    return data && typeof data === "object" ? data : {};
   }
 
   function saveCustomPins(campaignId, data) {
-    try {
-      localStorage.setItem(customPinsKey(campaignId), JSON.stringify(data));
-    } catch {
-      /* ignore */
-    }
+    if (window.CampaignMapState) CampaignMapState.patch(campaignId, { customPins: data });
   }
 
   function locationLinkId(entry) {
@@ -214,7 +182,9 @@ window.MapPanel = (function () {
 
     let filters = loadFilters(campaignId);
     let maps = getEffectiveMaps();
-    let activeMapId = localStorage.getItem(mapKey(campaignId)) || Object.keys(maps)[0];
+    let activeMapId =
+      (window.CampaignMapState?.get(campaignId)?.activeMap) ||
+      Object.keys(maps)[0];
     if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0];
 
     let zoom = 1;
@@ -364,7 +334,7 @@ window.MapPanel = (function () {
 
     mapSelect.addEventListener("change", () => {
       activeMapId = mapSelect.value;
-      localStorage.setItem(mapKey(campaignId), activeMapId);
+      if (window.CampaignMapState) CampaignMapState.patch(campaignId, { activeMap: activeMapId });
       resetZoom();
       renderMap();
     });

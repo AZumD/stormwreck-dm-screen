@@ -87,35 +87,49 @@ window.ChronicleStore = (function () {
     };
   }
 
+  function useApi() {
+    return window.LocalApiClient && LocalApiClient.isAvailable();
+  }
+
   function load() {
     if (!campaignId) return emptyState();
     try {
       const raw = JSON.parse(localStorage.getItem(storageKey(campaignId)) || "null");
-      if (!raw || typeof raw !== "object") return emptyState();
-      const sessions = {};
-      Object.entries(raw.sessions || {}).forEach(([key, val]) => {
-        const s = normalizeSession(val, key);
-        if (s) sessions[String(s.session)] = s;
-      });
-      const keyEvents = Array.isArray(raw.keyEvents)
-        ? raw.keyEvents.map(normalizeKeyEvent).filter(Boolean)
-        : [];
-      return {
-        version: VERSION,
-        storySoFar: typeof raw.storySoFar === "string" ? raw.storySoFar : "",
-        sessions,
-        keyEvents
-      };
+      return hydrate(raw);
     } catch {
       return emptyState();
     }
   }
 
+  function hydrate(raw) {
+    if (!raw || typeof raw !== "object") return emptyState();
+    const sessions = {};
+    Object.entries(raw.sessions || {}).forEach(([key, val]) => {
+      const s = normalizeSession(val, key);
+      if (s) sessions[String(s.session)] = s;
+    });
+    const keyEvents = Array.isArray(raw.keyEvents)
+      ? raw.keyEvents.map(normalizeKeyEvent).filter(Boolean)
+      : [];
+    return {
+      version: VERSION,
+      storySoFar: typeof raw.storySoFar === "string" ? raw.storySoFar : "",
+      sessions,
+      keyEvents
+    };
+  }
+
   function save(state) {
     if (!campaignId) return false;
+    cache = state;
+    if (useApi()) {
+      LocalApiClient.putCampaignDocument(campaignId, "chronicle", state).catch((err) => {
+        console.warn("ChronicleStore save failed:", err);
+      });
+      return true;
+    }
     try {
       localStorage.setItem(storageKey(campaignId), JSON.stringify(state));
-      cache = state;
       return true;
     } catch (err) {
       console.warn("ChronicleStore save failed:", err);
@@ -128,8 +142,20 @@ window.ChronicleStore = (function () {
     return cache;
   }
 
-  function init(id) {
+  async function init(id) {
     campaignId = id;
+    if (window.LocalApiClient) await LocalApiClient.ready();
+    if (useApi()) {
+      try {
+        const doc = await LocalApiClient.getCampaignDocument(campaignId, "chronicle");
+        if (doc) {
+          cache = hydrate(doc);
+          return cache;
+        }
+      } catch (err) {
+        console.warn("ChronicleStore API load failed:", err);
+      }
+    }
     cache = load();
     return cache;
   }

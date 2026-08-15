@@ -82,7 +82,12 @@
     </div>
 
     <footer class="landing-footer">
-      <p>Local storage · no login · just for you</p>
+      <div class="landing-data-tools">
+        <button type="button" id="import-browser-data" class="landing-tool-btn">Import browser data</button>
+        <a id="export-library" class="landing-tool-btn landing-tool-btn--link" href="/api/export" download="dm-library-export.json">Export library JSON</a>
+      </div>
+      <p id="import-browser-report" class="landing-import-report" hidden></p>
+      <p>File-backed library via <code>npm start</code> · localStorage import is non-destructive</p>
     </footer>
   </div>
 
@@ -108,7 +113,13 @@
     </form>
   </dialog>
 
+  <script src="js/core/save-status.js"></script>
+  <script src="js/core/local-api-client.js"></script>
+  <script src="js/core/catalogue/types.js"></script>
+  <script src="js/core/catalogue/store.js"></script>
+  <script src="js/core/catalogue/images.js"></script>
   <script src="js/core/campaign-registry.js"></script>
+  <script src="js/core/browser-import.js"></script>
   <script src="js/landing.js"></script>
 </body>
 </html>

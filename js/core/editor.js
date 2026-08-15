@@ -4,6 +4,13 @@ window.SectionEditor = (function () {
 
   const MODE_KEY = "dm-edit-mode";
 
+  const editsMem = new Map();
+  const structureMem = new Map();
+
+  function useApi() {
+    return window.LocalApiClient && LocalApiClient.isAvailable();
+  }
+
   function editsKey(campaignId) {
     return `${campaignId}-section-edits`;
   }
@@ -13,14 +20,25 @@ window.SectionEditor = (function () {
   }
 
   function loadEdits(campaignId) {
+    if (editsMem.has(campaignId)) return editsMem.get(campaignId);
     try {
-      return JSON.parse(localStorage.getItem(editsKey(campaignId)) || "{}");
+      const data = JSON.parse(localStorage.getItem(editsKey(campaignId)) || "{}");
+      editsMem.set(campaignId, data && typeof data === "object" ? data : {});
+      return editsMem.get(campaignId);
     } catch {
+      editsMem.set(campaignId, {});
       return {};
     }
   }
 
   function saveEdits(campaignId, edits) {
+    editsMem.set(campaignId, edits);
+    if (useApi()) {
+      LocalApiClient.putCampaignDocument(campaignId, "section-edits", edits).catch((err) => {
+        console.warn("SectionEditor edits save failed:", err);
+      });
+      return;
+    }
     try {
       localStorage.setItem(editsKey(campaignId), JSON.stringify(edits));
     } catch {
@@ -29,28 +47,62 @@ window.SectionEditor = (function () {
   }
 
   function loadStructure(campaignId) {
+    if (structureMem.has(campaignId)) return structureMem.get(campaignId);
     try {
       const raw = JSON.parse(localStorage.getItem(structureKey(campaignId)) || "{}");
-      return {
+      const structure = {
         deleted: Array.isArray(raw.deleted) ? raw.deleted.filter(Boolean) : [],
         custom: Array.isArray(raw.custom) ? raw.custom.filter((s) => s && s.id) : []
       };
+      structureMem.set(campaignId, structure);
+      return structure;
     } catch {
-      return { deleted: [], custom: [] };
+      const structure = { deleted: [], custom: [] };
+      structureMem.set(campaignId, structure);
+      return structure;
     }
   }
 
   function saveStructure(campaignId, structure) {
+    const payload = {
+      deleted: structure.deleted || [],
+      custom: structure.custom || []
+    };
+    structureMem.set(campaignId, payload);
+    if (useApi()) {
+      LocalApiClient.putCampaignDocument(campaignId, "section-structure", payload).catch((err) => {
+        console.warn("SectionEditor structure save failed:", err);
+      });
+      return;
+    }
     try {
-      localStorage.setItem(
-        structureKey(campaignId),
-        JSON.stringify({
-          deleted: structure.deleted || [],
-          custom: structure.custom || []
-        })
-      );
+      localStorage.setItem(structureKey(campaignId), JSON.stringify(payload));
     } catch {
       /* file:// / quota */
+    }
+  }
+
+  async function bootstrap(campaignId) {
+    if (window.LocalApiClient) await LocalApiClient.ready();
+    if (!useApi()) {
+      loadEdits(campaignId);
+      loadStructure(campaignId);
+      return;
+    }
+    try {
+      const edits = await LocalApiClient.getCampaignDocument(campaignId, "section-edits");
+      editsMem.set(campaignId, edits && typeof edits === "object" ? edits : {});
+    } catch {
+      editsMem.set(campaignId, {});
+    }
+    try {
+      const raw = await LocalApiClient.getCampaignDocument(campaignId, "section-structure");
+      structureMem.set(campaignId, {
+        deleted: Array.isArray(raw?.deleted) ? raw.deleted.filter(Boolean) : [],
+        custom: Array.isArray(raw?.custom) ? raw.custom.filter((s) => s && s.id) : []
+      });
+    } catch {
+      structureMem.set(campaignId, { deleted: [], custom: [] });
     }
   }
 
@@ -280,6 +332,7 @@ window.SectionEditor = (function () {
     exportEdits,
     loadEdits,
     loadStructure,
-    generateId
+    generateId,
+    bootstrap
   };
 })();

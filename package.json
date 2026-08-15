@@ -1,0 +1,14 @@
+{
+  "name": "stormwreck-dm-screen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local DM Library — file-backed Node server + vanilla frontend",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node test/validate-server.js && node test/validate-persistence-client.js && node test/validate-landing.js && node test/validate-campaign-registry.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

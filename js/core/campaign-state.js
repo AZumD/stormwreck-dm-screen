@@ -87,35 +87,43 @@ window.CampaignState = (function () {
   function loadFromStorage(id) {
     try {
       const parsed = JSON.parse(localStorage.getItem(storageKey(id)) || "null");
-      if (!parsed || typeof parsed !== "object") return emptyState();
-      const scenes = {};
-      Object.entries(parsed.scenes || {}).forEach(([sid, val]) => {
-        scenes[sid] = normalizeScene(val);
-      });
-      const npcMemory = {};
-      Object.entries(parsed.npcMemory || {}).forEach(([eid, val]) => {
-        npcMemory[eid] = normalizeMemory(val);
-      });
-      const timeline = Array.isArray(parsed.timeline)
-        ? parsed.timeline.map(normalizeTimelineEntry).filter(Boolean)
-        : [];
-      const party = Array.isArray(parsed.party)
-        ? parsed.party.map(normalizePartyMember).filter(Boolean)
-        : [];
-      return {
-        version: VERSION,
-        scenes,
-        npcMemory,
-        timeline,
-        party
-      };
+      return hydrateState(parsed);
     } catch {
       return emptyState();
     }
   }
 
+  function useApi() {
+    return window.LocalApiClient && LocalApiClient.isAvailable();
+  }
+
+  function hydrateState(parsed) {
+    if (!parsed || typeof parsed !== "object") return emptyState();
+    const scenes = {};
+    Object.entries(parsed.scenes || {}).forEach(([sid, val]) => {
+      scenes[sid] = normalizeScene(val);
+    });
+    const npcMemory = {};
+    Object.entries(parsed.npcMemory || {}).forEach(([eid, val]) => {
+      npcMemory[eid] = normalizeMemory(val);
+    });
+    const timeline = Array.isArray(parsed.timeline)
+      ? parsed.timeline.map(normalizeTimelineEntry).filter(Boolean)
+      : [];
+    const party = Array.isArray(parsed.party)
+      ? parsed.party.map(normalizePartyMember).filter(Boolean)
+      : [];
+    return { version: VERSION, scenes, npcMemory, timeline, party };
+  }
+
   function persist() {
     if (!campaignId || !cache) return false;
+    if (useApi()) {
+      LocalApiClient.putCampaignDocument(campaignId, "campaign-state", cache).catch((err) => {
+        console.warn("CampaignState save failed:", err);
+      });
+      return true;
+    }
     try {
       localStorage.setItem(storageKey(campaignId), JSON.stringify(cache));
       return true;
@@ -129,15 +137,28 @@ window.CampaignState = (function () {
     return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  function init(id) {
+  async function init(id) {
     campaignId = id || "campaign";
+    if (window.LocalApiClient) await LocalApiClient.ready();
+    if (useApi()) {
+      try {
+        const doc = await LocalApiClient.getCampaignDocument(campaignId, "campaign-state");
+        if (doc) {
+          cache = hydrateState(doc);
+          return cache;
+        }
+      } catch (err) {
+        console.warn("CampaignState API load failed:", err);
+      }
+    }
     cache = loadFromStorage(campaignId);
     return cache;
   }
 
   function ensure() {
     if (!cache || !campaignId) {
-      init(campaignId || window.ADVENTURE?.meta?.id || "campaign");
+      campaignId = campaignId || window.ADVENTURE?.meta?.id || "campaign";
+      cache = loadFromStorage(campaignId);
     }
     return cache;
   }

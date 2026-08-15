@@ -8,6 +8,12 @@
 window.SceneMeta = (function () {
   "use strict";
 
+  const mem = new Map();
+
+  function useApi() {
+    return window.LocalApiClient && LocalApiClient.isAvailable();
+  }
+
   function storageKey(campaignId) {
     return `${campaignId}-scene-meta`;
   }
@@ -17,15 +23,26 @@ window.SceneMeta = (function () {
   }
 
   function loadAll(campaignId) {
+    if (mem.has(campaignId)) return mem.get(campaignId);
     try {
       const raw = JSON.parse(localStorage.getItem(storageKey(campaignId)) || "{}");
-      return raw && typeof raw === "object" ? raw : {};
+      const data = raw && typeof raw === "object" ? raw : {};
+      mem.set(campaignId, data);
+      return data;
     } catch {
+      mem.set(campaignId, {});
       return {};
     }
   }
 
   function saveAll(campaignId, data) {
+    mem.set(campaignId, data);
+    if (useApi()) {
+      LocalApiClient.putCampaignDocument(campaignId, "scene-meta", data).catch((err) => {
+        console.warn("SceneMeta save failed:", err);
+      });
+      return true;
+    }
     try {
       localStorage.setItem(storageKey(campaignId), JSON.stringify(data));
       return true;
@@ -33,6 +50,20 @@ window.SceneMeta = (function () {
       console.warn("SceneMeta save failed:", err);
       return false;
     }
+  }
+
+  async function bootstrap(campaignId) {
+    if (window.LocalApiClient) await LocalApiClient.ready();
+    if (useApi()) {
+      try {
+        const doc = await LocalApiClient.getCampaignDocument(campaignId, "scene-meta");
+        mem.set(campaignId, doc && typeof doc === "object" ? doc : {});
+        return mem.get(campaignId);
+      } catch (err) {
+        console.warn("SceneMeta API load failed:", err);
+      }
+    }
+    return loadAll(campaignId);
   }
 
   function hasOwn(obj, key) {
@@ -230,6 +261,7 @@ window.SceneMeta = (function () {
     setTrayCollapsed,
     normalizeEntity,
     normalizeConnection,
-    defaultsFromSection
+    defaultsFromSection,
+    bootstrap
   };
 })();

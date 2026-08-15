@@ -676,6 +676,66 @@
   filter: brightness(1.05);
 }
 
+.landing-data-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.landing-tool-btn {
+  appearance: none;
+  border: 1px solid var(--landing-border);
+  background: rgba(18, 26, 38, 0.75);
+  color: var(--landing-ink);
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.landing-tool-btn:hover,
+.landing-tool-btn:focus-visible {
+  border-color: rgba(196, 164, 98, 0.55);
+  outline: none;
+}
+
+.landing-tool-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.landing-import-report {
+  white-space: pre-wrap;
+  text-align: left;
+  max-width: 36rem;
+  margin: 0 auto 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--landing-border);
+  background: rgba(10, 14, 22, 0.55);
+  font-size: 0.82rem;
+  color: var(--landing-muted);
+  line-height: 1.45;
+}
+
+body.is-booting::before {
+  content: "Loading library…";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 18, 0.72);
+  color: #e8e0d0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
 /* ── Reference card (utility style) ──────────────────── */
 .card-reference {
   display: flex;

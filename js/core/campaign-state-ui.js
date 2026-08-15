@@ -56,7 +56,7 @@ window.CampaignStateUI = (function () {
   function sessionNumber() {
     if (typeof api.getSessionNumber === "function") return Number(api.getSessionNumber()) || 1;
     try {
-      return Number(localStorage.getItem(`${campaignId}-session`)) || 1;
+      return Number(window.CampaignPrefs?.get(campaignId)?.session) || 1;
     } catch {
       return 1;
     }
@@ -123,7 +123,7 @@ window.CampaignStateUI = (function () {
 
   function inferMapLocationId() {
     try {
-      const mapId = localStorage.getItem(`${campaignId}-active-map`);
+      const mapId = window.CampaignMapState?.get(campaignId)?.activeMap;
       const registry = window.MAPS;
       let map = null;
       if (registry && typeof registry === "object" && !Array.isArray(registry)) {

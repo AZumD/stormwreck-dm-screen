@@ -44,21 +44,13 @@
   let catalogueSearchActive = -1;
 
   function loadViewMode() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.viewMode);
-      if (saved === "document" || saved === "play") return saved;
-    } catch {
-      /* ignore */
-    }
+    const saved = window.CampaignPrefs?.get(campaignId)?.viewMode;
+    if (saved === "document" || saved === "play") return saved;
     return "play";
   }
 
   function saveViewMode(mode) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.viewMode, mode);
-    } catch {
-      /* ignore */
-    }
+    if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { viewMode: mode });
   }
 
   function getSections() {
@@ -128,7 +120,15 @@
   }
 
   async function bootstrap() {
+    document.body.classList.add("is-booting");
     syncCampaignChrome();
+
+    if (window.LocalApiClient) await LocalApiClient.ready();
+    if (window.CatalogueStore) await CatalogueStore.bootstrap();
+    if (window.CampaignPrefs) await CampaignPrefs.bootstrap(campaignId);
+    if (window.CampaignMapState) await CampaignMapState.bootstrap(campaignId);
+    if (window.SectionEditor?.bootstrap) await SectionEditor.bootstrap(campaignId);
+    if (window.SceneMeta?.bootstrap) await SceneMeta.bootstrap(campaignId);
 
     if (window.CatalogueImages) {
       try {
@@ -141,7 +141,7 @@
 
     if (window.EntityRegistry) {
       try {
-        EntityRegistry.build();
+        await EntityRegistry.build();
       } catch (err) {
         console.error("EntityRegistry.build failed:", err);
       }
@@ -154,7 +154,8 @@
       modalBody: modalBody
     });
 
-    if (window.CampaignState) CampaignState.init(campaignId);
+    if (window.CampaignState) await CampaignState.init(campaignId);
+    if (window.ChronicleStore) await ChronicleStore.init(campaignId);
     if (window.PartyRoster) PartyRoster.init();
     if (window.SceneUI) {
       SceneUI.init({
@@ -224,6 +225,7 @@
     syncEditModeUI();
     MapPanel.init(campaignId);
     restoreInitialScene();
+    document.body.classList.remove("is-booting");
 
     window.addEventListener("focus", async () => {
       if (window.CatalogueImages) {
@@ -1049,7 +1051,7 @@
   }
 
   function renderNotesView() {
-    const saved = localStorage.getItem(STORAGE_KEYS.notes) || "";
+    const saved = window.CampaignPrefs?.get(campaignId)?.notes || "";
     return `
       <h1>${t.headings.notes}</h1>
       <p>${t.notesIntro}</p>
@@ -1074,21 +1076,21 @@
       clearTimeout(saveTimer);
       status.textContent = t.saving;
       saveTimer = setTimeout(() => {
-        localStorage.setItem(STORAGE_KEYS.notes, editor.value);
+        if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { notes: editor.value });
         status.textContent = t.savedLocally;
       }, 400);
     });
 
     sessionInput.addEventListener("change", () => {
       const n = Math.max(1, parseInt(sessionInput.value, 10) || 1);
-      localStorage.setItem(STORAGE_KEYS.session, String(n));
+      if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { session: String(n) });
       sessionInput.value = n;
       loadSessionBadge();
     });
   }
 
   function getSessionNumber() {
-    return localStorage.getItem(STORAGE_KEYS.session) || "1";
+    return window.CampaignPrefs?.get(campaignId)?.session || "1";
   }
 
   function loadSessionBadge() {
@@ -1096,15 +1098,12 @@
   }
 
   function getChecklistState() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.checklist) || "{}");
-    } catch {
-      return {};
-    }
+    const state = window.CampaignPrefs?.get(campaignId)?.checklist;
+    return state && typeof state === "object" ? state : {};
   }
 
   function saveChecklistState(state) {
-    localStorage.setItem(STORAGE_KEYS.checklist, JSON.stringify(state));
+    if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { checklist: state });
   }
 
   function renderChecklistView() {

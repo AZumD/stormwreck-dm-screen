@@ -1,41 +1,16 @@
 /**
- * User-created campaigns registry (landing page).
- * Built-in booklet campaigns (e.g. Stormwreck) stay as static folders;
- * custom campaigns open the shared sandbox shell with ?id=.
+ * User-created campaigns registry — file-backed via /api when available.
  */
 window.CampaignRegistry = (function () {
   "use strict";
 
   const STORAGE_KEY = "dm-campaigns";
   const VERSION = 1;
+  let cache = null;
+  let readyPromise = null;
 
   function empty() {
     return { version: VERSION, campaigns: [] };
-  }
-
-  function load() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (!raw || typeof raw !== "object") return empty();
-      const campaigns = Array.isArray(raw.campaigns)
-        ? raw.campaigns
-            .map(normalize)
-            .filter(Boolean)
-        : [];
-      return { version: VERSION, campaigns };
-    } catch {
-      return empty();
-    }
-  }
-
-  function save(state) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      return true;
-    } catch (err) {
-      console.warn("CampaignRegistry save failed:", err);
-      return false;
-    }
   }
 
   function normalize(raw) {
@@ -53,6 +28,57 @@ window.CampaignRegistry = (function () {
     };
   }
 
+  function loadLocal() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (!raw || typeof raw !== "object") return empty();
+      const campaigns = Array.isArray(raw.campaigns)
+        ? raw.campaigns.map(normalize).filter(Boolean)
+        : [];
+      return { version: VERSION, campaigns };
+    } catch {
+      return empty();
+    }
+  }
+
+  function saveLocal(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (err) {
+      console.warn("CampaignRegistry save failed:", err);
+      return false;
+    }
+  }
+
+  function useApi() {
+    return window.LocalApiClient && LocalApiClient.isAvailable();
+  }
+
+  async function bootstrap() {
+    if (readyPromise) return readyPromise;
+    readyPromise = (async () => {
+      if (window.LocalApiClient) await LocalApiClient.ready();
+      if (useApi()) {
+        try {
+          const list = await LocalApiClient.listCampaigns();
+          cache = { version: VERSION, campaigns: (list || []).map(normalize).filter(Boolean) };
+          return cache;
+        } catch (err) {
+          console.warn("CampaignRegistry API load failed:", err);
+        }
+      }
+      cache = loadLocal();
+      return cache;
+    })();
+    return readyPromise;
+  }
+
+  function ensure() {
+    if (!cache) cache = loadLocal();
+    return cache;
+  }
+
   function slugify(title) {
     const base = String(title || "campaign")
       .toLowerCase()
@@ -65,12 +91,14 @@ window.CampaignRegistry = (function () {
   }
 
   function list() {
-    return load().campaigns.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    return ensure()
+      .campaigns.slice()
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   }
 
   function get(id) {
     const key = String(id || "").trim();
-    return load().campaigns.find((c) => c.id === key) || null;
+    return ensure().campaigns.find((c) => c.id === key) || null;
   }
 
   function exists(id) {
@@ -90,10 +118,22 @@ window.CampaignRegistry = (function () {
     return id;
   }
 
-  function create({ title, description, level } = {}) {
+  async function create({ title, description, level } = {}) {
     const trimmed = String(title || "").trim();
     if (!trimmed) return null;
-    const state = load();
+    await bootstrap();
+    if (useApi()) {
+      const entry = await LocalApiClient.createCampaign({
+        title: trimmed,
+        description: description || "",
+        level: level || ""
+      });
+      const normalized = normalize(entry);
+      if (normalized) {
+        ensure().campaigns.push(normalized);
+      }
+      return normalized;
+    }
     const entry = normalize({
       id: uniqueId(trimmed),
       title: trimmed,
@@ -103,13 +143,22 @@ window.CampaignRegistry = (function () {
       updatedAt: Date.now()
     });
     if (!entry) return null;
-    state.campaigns.push(entry);
-    save(state);
+    ensure().campaigns.push(entry);
+    saveLocal(ensure());
     return entry;
   }
 
-  function update(id, patch) {
-    const state = load();
+  async function update(id, patch) {
+    await bootstrap();
+    if (useApi()) {
+      const entry = await LocalApiClient.updateCampaign(id, patch || {});
+      const normalized = normalize(entry);
+      const state = ensure();
+      const idx = state.campaigns.findIndex((c) => c.id === id);
+      if (idx >= 0 && normalized) state.campaigns[idx] = normalized;
+      return normalized;
+    }
+    const state = ensure();
     const idx = state.campaigns.findIndex((c) => c.id === id);
     if (idx < 0) return null;
     const next = normalize({
@@ -120,16 +169,22 @@ window.CampaignRegistry = (function () {
     });
     if (!next) return null;
     state.campaigns[idx] = next;
-    save(state);
+    saveLocal(state);
     return next;
   }
 
-  function remove(id) {
-    const state = load();
+  async function remove(id) {
+    await bootstrap();
+    if (useApi()) {
+      await LocalApiClient.removeCampaign(id);
+      ensure().campaigns = ensure().campaigns.filter((c) => c.id !== id);
+      return true;
+    }
+    const state = ensure();
     const before = state.campaigns.length;
     state.campaigns = state.campaigns.filter((c) => c.id !== id);
     if (state.campaigns.length === before) return false;
-    save(state);
+    saveLocal(state);
     return true;
   }
 
@@ -147,6 +202,7 @@ window.CampaignRegistry = (function () {
     remove,
     uniqueId,
     slugify,
-    sandboxUrl
+    sandboxUrl,
+    bootstrap
   };
 })();

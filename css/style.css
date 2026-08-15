@@ -3363,3 +3363,37 @@ body.media-bar-open .app {
     padding: 0.5rem 1rem;
   }
 }
+
+/* Save status + boot gate */
+.save-status {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 10000;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(18, 26, 38, 0.92);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease);
+}
+.save-status.is-visible { opacity: 1; }
+.save-status[data-state="saving"] { color: var(--accent); }
+.save-status[data-state="saved"] { color: var(--success); }
+.save-status[data-state="error"] { color: var(--danger); }
+
+body.is-booting::before {
+  content: "Loading library…";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 18, 0.72);
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+}
