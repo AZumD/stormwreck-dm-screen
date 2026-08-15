@@ -1,0 +1,13 @@
+{
+  "id": "sw-mylas-equipment",
+  "name": "Myla's Equipment Stock",
+  "itemType": "Shop inventory",
+  "rarity": "Common",
+  "value": "PHB prices",
+  "weight": "—",
+  "attunement": false,
+  "description": "Myla the winged kobold sells standard adventuring equipment from the Player's Handbook at Dragon's Rest.",
+  "properties": "Available after meeting the cloister inhabitants. Myla also experiments with alchemy — potential source of odd consumables at DM discretion.",
+  "notes": "Chapter 1 — free room and board; gear available from Myla.",
+  "updatedAt": 1786752801540
+}

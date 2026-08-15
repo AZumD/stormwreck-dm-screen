@@ -1,0 +1,19 @@
+{
+  "id": "sw-beach-harbor",
+  "name": "Beach & Harbor (Dragon's Rest)",
+  "mapImage": "",
+  "description": "Calm harbor on the island's north side where the party's ship drops anchor. Long path winds up the cliff to the cloister. Site of the drowned sailors encounter.",
+  "npcs": [],
+  "monsters": [
+    "Zombie ×3 (drowned sailors)"
+  ],
+  "itemsOfInterest": [
+    "Path to cloister",
+    "Recent shipwreck debris"
+  ],
+  "featuredIn": [
+    "Dragons of Stormwreck Isle — Chapter 1"
+  ],
+  "notes": "Three zombies from recent shipwreck — fight optional (they can't catch party up the path). Undead Fortitude applies.",
+  "updatedAt": 1786752801503
+}

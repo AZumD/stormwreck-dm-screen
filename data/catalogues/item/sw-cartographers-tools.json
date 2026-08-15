@@ -1,0 +1,13 @@
+{
+  "id": "sw-cartographers-tools",
+  "name": "Cartographer's Tools",
+  "itemType": "Artisan's tools",
+  "rarity": "Common",
+  "value": "15 gp",
+  "weight": "6 lb.",
+  "attunement": false,
+  "description": "Professional mapmaking tools found in the captain's quarters of the Compass Rose.",
+  "properties": "Compass Rose C4 — part of treasure hoard with 50 gp, dagger, and a compass.",
+  "notes": "Loot in captain's quarters alongside zombies.",
+  "updatedAt": 1786752801540
+}

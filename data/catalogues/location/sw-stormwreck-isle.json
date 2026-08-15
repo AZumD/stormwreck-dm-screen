@@ -1,0 +1,20 @@
+{
+  "id": "sw-stormwreck-isle",
+  "name": "Stormwreck Isle",
+  "mapImage": "",
+  "description": "A small island on the Sword Coast with a foreboding name. Seaweed shimmers in brilliant colors; rays of sunlight illuminate lush grass and dark basalt rock. Calm harbor on the north side. Shaped by centuries of dragon conflict and draconic magic.",
+  "npcs": [],
+  "monsters": [
+    "Zombie (drowned sailors on beach)",
+    "Merrow (optional prologue only)"
+  ],
+  "itemsOfInterest": [
+    "Recent shipwrecks north of cloister",
+    "Draconic spiritual scars where dragons died"
+  ],
+  "featuredIn": [
+    "Dragons of Stormwreck Isle"
+  ],
+  "notes": "Adventure for levels 1–3. Red dragon Sharruth imprisoned beneath the sea — her fury shaped the volcanoes here.",
+  "updatedAt": 1786752801503
+}

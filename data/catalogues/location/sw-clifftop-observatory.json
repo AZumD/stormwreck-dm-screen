@@ -1,0 +1,27 @@
+{
+  "id": "sw-clifftop-observatory",
+  "name": "Clifftop Observatory",
+  "mapImage": "",
+  "description": "Ruined observatory where Runara killed a blue dragon a century ago. Sparkrender has claimed it for a ritual when the King-Killer Star comet is nearest. Marble dragon statues veined with gold; energy bridge to tower; star map floor in gold and gems.",
+  "npcs": [
+    "Mek",
+    "Minn",
+    "Aidron (prisoner)"
+  ],
+  "monsters": [
+    "Sparkrender",
+    "Stirge ×6 (D2 rotunda)",
+    "Sparkrender's kobold minions"
+  ],
+  "itemsOfInterest": [
+    "D1 — moonstone key slot in dragon statue",
+    "D2 Rotunda — golden sculpture (DC 15 Arcana: comet approaching)",
+    "Dragon effigies: Astalagan, Clyssavar, Eldenemir, Sharruth, Turadaer",
+    "D5–D6 Tower — Sparkrender's hoard, finale"
+  ],
+  "featuredIn": [
+    "Dragons of Stormwreck Isle — Chapter 4"
+  ],
+  "notes": "Requires moonstone key from Runara. Party should complete Ch 2 and Ch 3 first.\n\nHelp Mek & Minn vs stirges → friendly kobolds may fetch key.\n\nFinale: fight, negotiate, or creative solutions with Sparkrender.",
+  "updatedAt": 1786752801503
+}

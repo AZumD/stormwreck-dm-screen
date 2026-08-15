@@ -1,0 +1,38 @@
+{
+  "id": "sw-zombie",
+  "name": "Zombie",
+  "size": "Medium",
+  "creatureType": "Undead",
+  "alignment": "Neutral evil",
+  "cr": "1/4",
+  "xp": "50",
+  "str": 13,
+  "dex": 6,
+  "con": 16,
+  "int": 3,
+  "wis": 6,
+  "cha": 5,
+  "ac": "8",
+  "hp": "22 (3d8+9)",
+  "speed": "20 ft.",
+  "savingThrows": "Wis +0",
+  "skills": "",
+  "skillRefs": [],
+  "damageImmunities": "Poison",
+  "conditionImmunities": "Poisoned",
+  "senses": "Darkvision 60 ft., passive Perception 8",
+  "languages": "Understands languages it knew in life but can't speak",
+  "traitRefs": [
+    "undead-fortitude"
+  ],
+  "actionRefs": [
+    "slam"
+  ],
+  "traits": "",
+  "actions": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6+1) bludgeoning damage.",
+  "bonusActions": "",
+  "reactions": "",
+  "legendaryActions": "",
+  "notes": "Drowned sailors on the beach (Ch 1). Hard to put down without radiant damage or crits.\n\nCompass Rose: 2 in C4 captain's quarters; 1 in C8 lower deck. New zombies stop when hold curse is broken.",
+  "updatedAt": 1786752801503
+}

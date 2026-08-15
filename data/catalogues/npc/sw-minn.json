@@ -1,0 +1,31 @@
+{
+  "id": "sw-minn",
+  "name": "Minn",
+  "role": "Sparkrender's kobold follower",
+  "race": "Kobold",
+  "alignment": "Lawful good (misguided)",
+  "age": "Young",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Clifftop Observatory (D2 rotunda)",
+  "str": 7,
+  "dex": 15,
+  "con": 9,
+  "int": 10,
+  "wis": 9,
+  "cha": 10,
+  "ac": "13",
+  "hp": "7 (3d6-3)",
+  "speed": "30 ft., fly 30 ft.",
+  "traits": "Blue face paint. Paired with Mek at the rotunda.",
+  "ideals": "Brotherhood with Mek.",
+  "bonds": "Brother Mek. Sister Myla.",
+  "flaws": "Easily swayed by dragon charisma.",
+  "equipment": [
+    "Blue face paint",
+    "Dagger"
+  ],
+  "summary": "Myla's brother — with Mek at the observatory.",
+  "backstory": "Followed Sparkrender alongside Mek.",
+  "notes": "Same encounter as Mek — help against stirges to gain allies.",
+  "updatedAt": 1786752801503
+}

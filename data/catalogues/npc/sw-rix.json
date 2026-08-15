@@ -1,0 +1,31 @@
+{
+  "id": "sw-rix",
+  "name": "Rix",
+  "role": "Temple attendant",
+  "race": "Kobold",
+  "alignment": "Lawful good",
+  "age": "Adult",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Dragon's Rest — temple",
+  "str": 7,
+  "dex": 12,
+  "con": 10,
+  "int": 11,
+  "wis": 12,
+  "cha": 13,
+  "ac": "12",
+  "hp": "5 (2d6-2)",
+  "speed": "30 ft.",
+  "traits": "Loves puns. Tends the temple.",
+  "ideals": "Honor Bahamut through service.",
+  "bonds": "The cloister temple.",
+  "flaws": "Cannot resist a good (or bad) pun.",
+  "equipment": [
+    "Temple robes",
+    "Incense"
+  ],
+  "summary": "Tends the temple. Saw the shipwreck with Varnoth.",
+  "backstory": "Witnessed the latest ship crash north of the cloister.",
+  "notes": "With Varnoth, points party toward the Compass Rose wreck quest.",
+  "updatedAt": 1786752801503
+}

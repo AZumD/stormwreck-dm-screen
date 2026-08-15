@@ -25,3 +25,4 @@
 [2026-08-13] Chronicle panel: Story So Far, session prose, curated Key Events (separate from History). See js/core/chronicle-store.js, js/core/chronicle-ui.js
 [2026-08-15] Map pin hover tooltips are compact (no full summary). Landing Create new campaign → sandbox shell. See js/core/entity-ui.js, js/core/campaign-registry.js, campaigns/sandbox/
 [2026-08-15] File-backed persistence via local Node server (`npm start`) writing `/data`; browser import tool; assets on disk. See server/, js/core/local-api-client.js, docs/README/SERVER.md
+[2026-08-15] Hardened file persistence: per-key write serialization, static deny for /data|/server|/.git|/source|.env*, restored .gitignore, fixed boot CSS. See js/core/local-api-client.js, server/lib/static-guard.js

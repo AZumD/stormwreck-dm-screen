@@ -85,5 +85,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Also: `test/validate-*.js` Node validators; browser smoke HTML under `test/`.
+Also: `test/validate-*.js` Node validators (`validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
 

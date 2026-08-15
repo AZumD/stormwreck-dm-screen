@@ -1,11 +1,37 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+*~
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+credentials.json
+*.pem
+
+# Dependencies / local venv
+node_modules/
+mistralvenv/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Logs / junk
+*.log
+npm-debug.log*
+.cursor/
+
+# Copyrighted / local source PDFs (keep out of the repo)
+source/*.pdf
+
+# File-backed data: track normal library JSON/assets; ignore ephemeral churn
 data/.tmp/
 data/**/*.tmp
 data/**/*.tmp.*
 data/.backup/
-*.log
-.DS_Store
-Thumbs.db
-node_modules/
-.env
-.env.*
-!.env.example

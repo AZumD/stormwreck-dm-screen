@@ -1,0 +1,31 @@
+{
+  "id": "sw-runara",
+  "name": "Elder Runara",
+  "role": "Cloister leader (adult bronze dragon in human form)",
+  "race": "Bronze dragon (human form)",
+  "alignment": "Lawful good",
+  "age": "Centuries old",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Dragon's Rest",
+  "str": 25,
+  "dex": 10,
+  "con": 23,
+  "int": 16,
+  "wis": 15,
+  "cha": 19,
+  "ac": "18 (natural armor)",
+  "hp": "142 (19d10+38)",
+  "speed": "40 ft., fly 80 ft., swim 40 ft.",
+  "traits": "Wise, patient, protective of the cloister. Appears as an elderly human with white hair in tight braids.",
+  "ideals": "Peace between chromatic and metallic dragons; redemption for those shaped by violence.",
+  "bonds": "Dragon's Rest and its residents. The island's lingering draconic magic.",
+  "flaws": "Reluctant to reveal her true nature; may intervene only when the party is truly defeated.",
+  "equipment": [
+    "Simple white robe",
+    "Moonstone key (given to party when ready)"
+  ],
+  "summary": "Leads Dragon's Rest — secretly an adult bronze dragon. Killed a blue dragon here a century ago and founded the cloister as sanctuary.",
+  "backstory": "A century ago Runara pleaded with a blue dragon to stop harnessing the island's destructive magic. When he refused, she killed him. Weary of strife, she founded Dragon's Rest. She dreams of peace between dragon kind.",
+  "notes": "Attitude: Indifferent → friendly if party protects cloister or takes quests. Hostile if they harm residents.\n\nSecret lair via undersea tunnel (not on map). Never seems to sleep.\n\nCan rescue a defeated party — use sparingly.",
+  "updatedAt": 1786752801503
+}

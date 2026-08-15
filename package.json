@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node test/validate-server.js && node test/validate-persistence-client.js && node test/validate-landing.js && node test/validate-campaign-registry.js"
+    "test": "node test/validate-server.js && node test/validate-persistence-client.js && node test/validate-write-queue.js && node test/validate-static-guard.js && node test/validate-landing.js && node test/validate-campaign-registry.js"
   },
   "engines": {
     "node": ">=18"

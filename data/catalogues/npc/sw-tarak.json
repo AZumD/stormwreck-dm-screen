@@ -1,0 +1,32 @@
+{
+  "id": "sw-tarak",
+  "name": "Tarak",
+  "role": "Botanist & gardener",
+  "race": "Human",
+  "alignment": "Neutral (friendly)",
+  "age": "Middle-aged",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Dragon's Rest — gardens",
+  "str": 10,
+  "dex": 12,
+  "con": 12,
+  "int": 14,
+  "wis": 13,
+  "cha": 11,
+  "ac": "12 (leather armor)",
+  "hp": "16 (3d8+3)",
+  "speed": "30 ft.",
+  "traits": "Kindly, generous with herbalism knowledge. Becomes cold if pressed about his past.",
+  "ideals": "Growth and healing through nature.",
+  "bonds": "The cloister gardens. Sinensa and the myconids (via mushroom offerings).",
+  "flaws": "Hides a criminal past as a poisoner for the Gilded Gallows thieves' guild.",
+  "equipment": [
+    "Herbalism kit",
+    "Gardening tools",
+    "Heart cap mushroom offering (for myconids)"
+  ],
+  "summary": "Tends the cloister gardens. Former poisoner — Gilded Gallows tattoos (DC 15 History to recognize).",
+  "backstory": "Once a poisoner for the Gilded Gallows. Found refuge at Dragon's Rest and reinvented himself as a botanist.",
+  "notes": "Quest: Needs heart cap mushrooms from Seagrow Caves — blocked by spore servant octopus.\n\nMentioning Tarak or his offering grants advantage on DC 20 Charisma checks with myconids.",
+  "updatedAt": 1786752801503
+}

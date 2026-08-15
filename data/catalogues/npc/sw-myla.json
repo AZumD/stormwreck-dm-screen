@@ -1,0 +1,32 @@
+{
+  "id": "sw-myla",
+  "name": "Myla",
+  "role": "Inventor & equipment vendor",
+  "race": "Winged kobold",
+  "alignment": "Lawful good",
+  "age": "Young adult",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Dragon's Rest",
+  "str": 7,
+  "dex": 14,
+  "con": 9,
+  "int": 16,
+  "wis": 10,
+  "cha": 12,
+  "ac": "14",
+  "hp": "7 (3d6-3)",
+  "speed": "30 ft., fly 30 ft. (injured wings)",
+  "traits": "Energetic inventor, lawful good. Calls stirges 'hungry, icky, blood-sucking bat-things.'",
+  "ideals": "Progress through clever tinkering and alchemy.",
+  "bonds": "Laylee (helper). Her injured wings from a stirge attack.",
+  "flaws": "Heartbroken that brothers Mek and Minn follow Sparkrender.",
+  "equipment": [
+    "Alchemy supplies",
+    "Standard adventuring gear for sale",
+    "Experimental devices"
+  ],
+  "summary": "Winged kobold tinkerer who sells equipment. Brothers defected to Sparkrender.",
+  "backstory": "One of nine lawful good kobolds at the cloister. Injured wings limit her flight. Experiments with alchemy — Laylee is banned from using alchemical fire.",
+  "notes": "Sells equipment from the rulebook. Brothers Mek and Minn are at the observatory with blue face paint.",
+  "updatedAt": 1786752801503
+}

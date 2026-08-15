@@ -58,15 +58,25 @@ window.LocalApiClient = (function () {
     return available === true;
   }
 
-  function trackWrite(key, promise) {
-    if (window.SaveStatus) SaveStatus.saving();
-    const tracked = Promise.resolve(promise)
+  /**
+   * Serialize writes per key: same key waits for prior settle (success or fail).
+   * `startWrite` must be a function so the HTTP call does not start until its turn.
+   */
+  function trackWrite(key, startWrite) {
+    if (typeof startWrite !== "function") {
+      throw new Error("trackWrite requires a write factory function");
+    }
+    if (window.SaveStatus) window.SaveStatus.saving();
+    const prev = writeQueue.get(key) || Promise.resolve();
+    const tracked = prev
+      .catch(() => undefined)
+      .then(() => startWrite())
       .then((result) => {
-        if (window.SaveStatus) SaveStatus.saved();
+        if (window.SaveStatus) window.SaveStatus.saved();
         return result;
       })
       .catch((err) => {
-        if (window.SaveStatus) SaveStatus.failed(err);
+        if (window.SaveStatus) window.SaveStatus.failed(err);
         throw err;
       })
       .finally(() => {
@@ -96,8 +106,7 @@ window.LocalApiClient = (function () {
   }
 
   async function putCatalogue(type, id, entry) {
-    return trackWrite(
-      `cat:${type}:${id}`,
+    return trackWrite(`cat:${type}:${id}`, () =>
       request("PUT", `/api/catalogues/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, entry).then(
         (d) => d.entry
       )
@@ -105,8 +114,7 @@ window.LocalApiClient = (function () {
   }
 
   async function deleteCatalogue(type, id) {
-    return trackWrite(
-      `cat:${type}:${id}:del`,
+    return trackWrite(`cat:${type}:${id}`, () =>
       request("DELETE", `/api/catalogues/${encodeURIComponent(type)}/${encodeURIComponent(id)}`)
     );
   }
@@ -118,29 +126,25 @@ window.LocalApiClient = (function () {
   }
 
   async function createCampaign(payload) {
-    return trackWrite(
-      "campaigns:create",
+    return trackWrite("campaigns:create", () =>
       request("POST", "/api/campaigns", payload).then((d) => d.campaign)
     );
   }
 
   async function upsertCampaign(id, payload) {
-    return trackWrite(
-      `campaign:${id}:upsert`,
+    return trackWrite(`campaign:${id}`, () =>
       request("PUT", `/api/campaigns/${encodeURIComponent(id)}`, payload).then((d) => d.campaign)
     );
   }
 
   async function updateCampaign(id, patch) {
-    return trackWrite(
-      `campaign:${id}`,
+    return trackWrite(`campaign:${id}`, () =>
       request("PATCH", `/api/campaigns/${encodeURIComponent(id)}`, patch).then((d) => d.campaign)
     );
   }
 
   async function removeCampaign(id) {
-    return trackWrite(
-      `campaign:${id}:del`,
+    return trackWrite(`campaign:${id}`, () =>
       request("DELETE", `/api/campaigns/${encodeURIComponent(id)}`)
     );
   }
@@ -154,8 +158,7 @@ window.LocalApiClient = (function () {
   }
 
   async function putCampaignDocument(campaignId, kind, document) {
-    return trackWrite(
-      `doc:${campaignId}:${kind}`,
+    return trackWrite(`doc:${campaignId}:${kind}`, () =>
       request(
         "PUT",
         `/api/campaigns/${encodeURIComponent(campaignId)}/documents/${encodeURIComponent(kind)}`,
@@ -166,8 +169,7 @@ window.LocalApiClient = (function () {
 
   /* Assets */
   async function putCatalogueAsset(type, id, field, dataUrl) {
-    return trackWrite(
-      `asset:${type}:${id}:${field}`,
+    return trackWrite(`asset:${type}:${id}:${field}`, () =>
       request(
         "PUT",
         `/api/catalogue-assets/${encodeURIComponent(type)}/${encodeURIComponent(id)}/${encodeURIComponent(field)}`,
@@ -177,8 +179,7 @@ window.LocalApiClient = (function () {
   }
 
   async function deleteCatalogueAsset(type, id, field) {
-    return trackWrite(
-      `asset:${type}:${id}:${field}:del`,
+    return trackWrite(`asset:${type}:${id}:${field}`, () =>
       request(
         "DELETE",
         `/api/catalogue-assets/${encodeURIComponent(type)}/${encodeURIComponent(id)}/${encodeURIComponent(field)}`
@@ -207,6 +208,9 @@ window.LocalApiClient = (function () {
     putCampaignDocument,
     putCatalogueAsset,
     deleteCatalogueAsset,
-    exportAll
+    exportAll,
+    /* test hook */
+    _trackWrite: trackWrite,
+    _writeQueue: writeQueue
   };
 })();

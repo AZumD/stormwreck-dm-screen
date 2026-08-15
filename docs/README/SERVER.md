@@ -16,6 +16,7 @@ Open `http://127.0.0.1:3000`
 | `server/index.js` | Native Node HTTP entry (binds `127.0.0.1` by default; **no npm deps**) |
 | `server/routes/api.js` | `/api` JSON routes |
 | `server/lib/http-util.js` | Body parsing / JSON responses |
+| `server/lib/static-guard.js` | Block static access to `/data`, `/server`, `/.git`, … |
 | `server/lib/atomic-fs.js` | Atomic JSON/binary writes + `.bak` |
 | `server/lib/ids.js` | Safe id / type validation |
 | `server/lib/catalogues.js` | One JSON file per catalogue entry |

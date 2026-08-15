@@ -78,7 +78,13 @@
     }
     try {
       const report = await BrowserDataImport.run();
+      const scan = report.scan || {};
       const lines = [
+        `Origin scanned: ${scan.origin || "(unknown)"}`,
+        `localStorage keys on this origin: ${scan.localStorageKeys ?? 0}`,
+        `Catalogue entries found in browser: ${scan.catalogueEntries ?? 0}`,
+        `Campaign-related keys found: ${scan.campaignKeys ?? 0}`,
+        "",
         `Catalogue entries imported: ${report.catalogueEntries}`,
         `Campaigns imported: ${report.campaigns}`,
         `Campaign documents written: ${report.campaignDocs}`,
@@ -91,8 +97,15 @@
         lines.push("", ...report.errors.slice(0, 12).map((e) => `• ${e}`));
       }
       lines.push("", "Browser localStorage and IndexedDB were not cleared.");
-      if (importReport) importReport.textContent = lines.join("\n");
-      await CampaignRegistry.bootstrap();
+      if ((scan.catalogueEntries || 0) === 0 && (scan.campaignKeys || 0) === 0) {
+        lines.push(
+          "",
+          "No legacy library data on this origin.",
+          "If you previously opened the app as a file:// page (or another host/port), that data lives in a different browser store.",
+          "Open the old URL once, or copy localStorage from DevTools → Application, then import again from http://127.0.0.1:3000."
+        );
+      }
+      if (importReport) importReport.textContent = lines.join("\n");      await CampaignRegistry.bootstrap();
       renderUserCampaigns();
     } catch (err) {
       if (importReport) importReport.textContent = `Import failed: ${err.message || err}`;

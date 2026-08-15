@@ -11,6 +11,7 @@ const { URL } = require("url");
 const { ensureDataLayout, projectRoot } = require("./lib/atomic-fs");
 const { createApiRoutes, handleApi } = require("./routes/api");
 const { sendJson } = require("./lib/http-util");
+const { isDeniedStaticPath } = require("./lib/static-guard");
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "127.0.0.1";
@@ -51,32 +52,58 @@ async function sendFile(res, filePath) {
   res.end(data);
 }
 
+function denyStatic(res) {
+  res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+  res.end("Not found");
+}
+
 async function serveStatic(req, res, root, pathname) {
+  if (isDeniedStaticPath(pathname)) {
+    denyStatic(res);
+    return;
+  }
+
   let target = safeJoin(root, pathname === "/" ? "/index.html" : pathname);
   if (!target) {
     sendJson(res, 400, { ok: false, error: "Invalid path" });
     return;
   }
+
+  /* Double-check resolved path stays outside denied top-level dirs */
+  const rel = path.relative(root, target).replace(/\\/g, "/");
+  if (isDeniedStaticPath(`/${rel}`)) {
+    denyStatic(res);
+    return;
+  }
+
   try {
     let stat = await fsp.stat(target);
     if (stat.isDirectory()) {
       target = path.join(target, "index.html");
+      const dirRel = path.relative(root, target).replace(/\\/g, "/");
+      if (isDeniedStaticPath(`/${dirRel}`)) {
+        denyStatic(res);
+        return;
+      }
       stat = await fsp.stat(target);
     }
     if (!stat.isFile()) {
-      sendJson(res, 404, { ok: false, error: "Not found" });
+      denyStatic(res);
       return;
     }
     await sendFile(res, target);
   } catch {
-    /* try .html extension */
     try {
       const htmlPath = `${target}.html`;
+      const htmlRel = path.relative(root, htmlPath).replace(/\\/g, "/");
+      if (isDeniedStaticPath(`/${htmlRel}`)) {
+        denyStatic(res);
+        return;
+      }
       await fsp.access(htmlPath);
       await sendFile(res, htmlPath);
     } catch {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("Not found");
+      denyStatic(res);
     }
   }
 }
@@ -111,7 +138,11 @@ async function main() {
   });
 }
 
-main().catch((err) => {
-  console.error("Failed to start server:", err);
-  process.exit(1);
-});
+module.exports = { serveStatic, isDeniedStaticPath };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  });
+}

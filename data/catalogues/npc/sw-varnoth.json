@@ -1,0 +1,31 @@
+{
+  "id": "sw-varnoth",
+  "name": "Varnoth",
+  "role": "Former general",
+  "race": "Human",
+  "alignment": "Lawful neutral",
+  "age": "Elderly",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Dragon's Rest",
+  "str": 14,
+  "dex": 12,
+  "con": 14,
+  "int": 12,
+  "wis": 14,
+  "cha": 10,
+  "ac": "14 (leather armor)",
+  "hp": "32 (5d8+10)",
+  "speed": "30 ft.",
+  "traits": "Gruff exterior, empathetic listener. Believes in second chances.",
+  "ideals": "Understanding the consequences of violence.",
+  "bonds": "The Azure Wolves (former company). The cloister's contemplative life.",
+  "flaws": "Can seem dismissive until a topic earns her respect.",
+  "equipment": [
+    "Worn military cloak",
+    "Walking stick"
+  ],
+  "summary": "General Varnoth Wender — led the Azure Wolves mercenary company. Now in contemplative retirement.",
+  "backstory": "Spent decades as a mercenary general. Witnessed too much war and came to Dragon's Rest seeking peace.",
+  "notes": "Attitude: Indifferent → friendly when discussing history, ethics, or impact of actions.\n\nWitness: Saw the most recent shipwreck north of the island (with Rix).",
+  "updatedAt": 1786752801503
+}

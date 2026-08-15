@@ -1,0 +1,23 @@
+{
+  "id": "sw-compass-rose",
+  "name": "Compass Rose (Shipwreck)",
+  "mapImage": "",
+  "description": "Older shipwreck north of the cloister — source of the zombies plaguing the beach. Several ships have crashed here; the latest veered off course suddenly (witnessed by Varnoth and Rix). Cursed cargo in the hold animates drowned sailors.",
+  "npcs": [],
+  "monsters": [
+    "Zombie ×2 (C4 captain's quarters)",
+    "Zombie + Ghoul (C8 lower deck)"
+  ],
+  "itemsOfInterest": [
+    "C3 Wheel — 'Compass Rose' engraved; noise attracts C4 zombies",
+    "C4 Captain's Quarters — 50 gp, tools, compass, dagger",
+    "C6 Crew Quarters — trapped floorboard, 200 gp, lovers' portrait",
+    "C8 Lower Deck — ghoul ambush",
+    "C9 Hold — captain's chest, curse heart"
+  ],
+  "featuredIn": [
+    "Dragons of Stormwreck Isle — Chapter 3"
+  ],
+  "notes": "Breaking the hold curse stops new beach zombies. Can be done before or after Seagrow Caves (party choice).",
+  "updatedAt": 1786752801503
+}

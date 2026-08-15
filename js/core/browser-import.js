@@ -37,7 +37,7 @@ window.BrowserDataImport = (function () {
     }
   }
 
-  /** Do not overwrite newer or existing file-backed data blindly */
+  /** Do not overwrite newer file-backed data; allow replacing empty stubs */
   function shouldWrite(existing, incoming) {
     if (existing == null) return true;
     if (incoming == null) return false;
@@ -46,7 +46,99 @@ window.BrowserDataImport = (function () {
     if (iAt && eAt && iAt > eAt) return true;
     if (!eAt && iAt) return true;
     if (typeof existing === "object" && Object.keys(existing).length === 0) return true;
+    if (isEmptyStub(existing) && !isEmptyStub(incoming)) return true;
     return false;
+  }
+
+  function isEmptyStub(doc) {
+    if (doc == null) return true;
+    if (typeof doc !== "object") return !String(doc).trim();
+    const keys = Object.keys(doc);
+    if (!keys.length) return true;
+    /* campaign-state */
+    if ("scenes" in doc || "timeline" in doc || "npcMemory" in doc) {
+      return (
+        !Object.keys(doc.scenes || {}).length &&
+        !Object.keys(doc.npcMemory || {}).length &&
+        !(doc.timeline || []).length &&
+        !(doc.party || []).length
+      );
+    }
+    /* chronicle */
+    if ("storySoFar" in doc || "keyEvents" in doc || "sessions" in doc) {
+      return (
+        !String(doc.storySoFar || "").trim() &&
+        !Object.keys(doc.sessions || {}).length &&
+        !(doc.keyEvents || []).length
+      );
+    }
+    /* prefs */
+    if ("viewMode" in doc || "chronicleSessionOrder" in doc) {
+      return (
+        !String(doc.notes || "").trim() &&
+        !Object.keys(doc.checklist || {}).length &&
+        String(doc.session || "1") === "1" &&
+        (doc.viewMode || "play") === "play"
+      );
+    }
+    /* map-state */
+    if ("pinPositions" in doc || "customPins" in doc || "activeMap" in doc) {
+      return (
+        !doc.activeMap &&
+        !Object.keys(doc.pinPositions || {}).length &&
+        !Object.keys(doc.partyPositions || {}).length &&
+        !Object.keys(doc.customPins || {}).length
+      );
+    }
+    /* notes */
+    if ("text" in doc && keys.length <= 2) {
+      return !String(doc.text || "").trim();
+    }
+    return false;
+  }
+
+  function prefsHaveBrowserContent(prefs) {
+    return !isEmptyStub(prefs);
+  }
+
+  function mapHasBrowserContent(mapState) {
+    return !isEmptyStub(mapState);
+  }
+
+  function scanBrowserStorage() {
+    const catalogueCounts = {};
+    let catalogueEntries = 0;
+    CATALOGUE_TYPES.forEach((type) => {
+      const entries = parseJson(localStorage.getItem(`catalogue-${type}`), []);
+      const n = Array.isArray(entries) ? entries.filter((e) => e?.id).length : 0;
+      catalogueCounts[type] = n;
+      catalogueEntries += n;
+    });
+    let campaignKeys = 0;
+    const keySample = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (
+        key.includes("-campaign-state") ||
+        key.includes("-chronicle") ||
+        key.includes("-scene-meta") ||
+        key.includes("-section-") ||
+        key.includes("-notes") ||
+        key === "dm-campaigns"
+      ) {
+        campaignKeys += 1;
+        if (keySample.length < 8) keySample.push(key);
+      }
+    }
+    return {
+      origin: typeof location !== "undefined" ? location.origin : "",
+      localStorageKeys: localStorage.length,
+      catalogueEntries,
+      catalogueCounts,
+      campaignKeys,
+      keySample
+    };
   }
 
   function discoverCampaignIds() {
@@ -257,13 +349,20 @@ window.BrowserDataImport = (function () {
         parseJson(localStorage.getItem(`${campaignId}-checklist`), null),
         report
       );
-      await putDocIfNeeded(campaignId, "map-state", buildMapState(campaignId), report);
-      await putDocIfNeeded(campaignId, "prefs", buildPrefs(campaignId), report);
+      const mapState = buildMapState(campaignId);
+      if (mapHasBrowserContent(mapState)) {
+        await putDocIfNeeded(campaignId, "map-state", mapState, report);
+      }
+      const prefs = buildPrefs(campaignId);
+      if (prefsHaveBrowserContent(prefs)) {
+        await putDocIfNeeded(campaignId, "prefs", prefs, report);
+      }
     }
   }
 
   async function run() {
     const report = emptyReport();
+    report.scan = scanBrowserStorage();
     if (!window.LocalApiClient) {
       report.errors.push("LocalApiClient missing");
       return report;
@@ -280,5 +379,5 @@ window.BrowserDataImport = (function () {
     return report;
   }
 
-  return { run, discoverCampaignIds, CATALOGUE_TYPES };
+  return { run, discoverCampaignIds, CATALOGUE_TYPES, scanBrowserStorage };
 })();

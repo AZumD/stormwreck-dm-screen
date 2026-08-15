@@ -1,0 +1,27 @@
+{
+  "id": "sw-seagrow-caves",
+  "name": "Seagrow Caves",
+  "mapImage": "",
+  "description": "Sea caves at the base of a two-hundred-foot cliff of dark gray stone. A swirling slick of colors dances on the water's surface, emanating from the cave. Home to myconids; linked to Sharruth's grave and the Elemental Plane of Fire.",
+  "npcs": [
+    "Sinensa (myconid leader, ill)"
+  ],
+  "monsters": [
+    "Myconid",
+    "Myconid sprouts",
+    "Spore servant octopus (B1)",
+    "Stirge ×2 (B1, level 2+)",
+    "Violet fungus (B2)"
+  ],
+  "itemsOfInterest": [
+    "B1 Entrance — octopus in water",
+    "B2 Fungus Farm — sprouts & violet fungi",
+    "B6 Crystal Cave — fire-plane link, sulfur smell",
+    "Heart cap mushrooms (Tarak's quest)"
+  ],
+  "featuredIn": [
+    "Dragons of Stormwreck Isle — Chapter 2"
+  ],
+  "notes": "Reach by rowboat (5 mi, ~3 hr 20 min) or coastal walk (7 mi, ~2 hr 20 min).\n\nTides: Low midnight–sunrise & noon–sunset; High sunrise–noon & sunset–midnight.\n\nDC 20 Charisma to parley with myconids; Tarak mention = advantage.",
+  "updatedAt": 1786752801503
+}

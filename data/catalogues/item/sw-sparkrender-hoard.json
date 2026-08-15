@@ -1,0 +1,13 @@
+{
+  "id": "sw-sparkrender-hoard",
+  "name": "Sparkrender's Treasure Hoard",
+  "itemType": "Treasure",
+  "rarity": "Varies",
+  "value": "See booklet",
+  "weight": "—",
+  "attunement": false,
+  "description": "Coins and jewels piled in the observatory tower where Sparkrender sleeps amid lightning arcing around his horns (D5–D6).",
+  "properties": "Reward for defeating or negotiating with Sparkrender. Use booklet treasure guidance for level-appropriate payout.",
+  "notes": "Finale loot. Aidron may ally if freed before or during the fight.",
+  "updatedAt": 1786752801540
+}

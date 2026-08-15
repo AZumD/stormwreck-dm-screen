@@ -1,0 +1,31 @@
+{
+  "id": "sw-mek",
+  "name": "Mek",
+  "role": "Sparkrender's kobold follower",
+  "race": "Kobold",
+  "alignment": "Lawful good (misguided)",
+  "age": "Young",
+  "activeCampaign": "Dragons of Stormwreck Isle",
+  "location": "Clifftop Observatory (D2 rotunda)",
+  "str": 7,
+  "dex": 15,
+  "con": 9,
+  "int": 10,
+  "wis": 9,
+  "cha": 10,
+  "ac": "13",
+  "hp": "7 (3d6-3)",
+  "speed": "30 ft., fly 30 ft.",
+  "traits": "Blue face paint. Fighting stirges when party arrives.",
+  "ideals": "Loyalty to Sparkrender (misplaced).",
+  "bonds": "Brother Minn. Sister Myla at the cloister.",
+  "flaws": "Follows Sparkrender despite good alignment — can be turned if party helps them.",
+  "equipment": [
+    "Blue face paint",
+    "Light crossbow"
+  ],
+  "summary": "Myla's brother — loyal to Sparkrender. Found at observatory rotunda vs stirges.",
+  "backstory": "Left Dragon's Rest with Minn to follow the blue wyrmling's cause.",
+  "notes": "If party helps vs 6 stirges → friendly. May offer to fetch the moonstone key.",
+  "updatedAt": 1786752801503
+}

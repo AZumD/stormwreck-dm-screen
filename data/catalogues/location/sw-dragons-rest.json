@@ -1,0 +1,26 @@
+{
+  "id": "sw-dragons-rest",
+  "name": "Dragon's Rest",
+  "mapImage": "",
+  "description": "Cloister and home base. Open-air temple perched on a cliff edge; path from the beach dotted with doorways cut into rock. Cells, library, dining hall, and gardens. Founded by Runara a century ago as sanctuary for those seeking peace.",
+  "npcs": [
+    "Elder Runara",
+    "Tarak",
+    "Varnoth",
+    "Myla",
+    "Laylee",
+    "Rix",
+    "Nine lawful good kobolds"
+  ],
+  "monsters": [],
+  "itemsOfInterest": [
+    "Temple (non-evil +1d4 to saves)",
+    "Myla's equipment shop",
+    "Tarak's gardens"
+  ],
+  "featuredIn": [
+    "Dragons of Stormwreck Isle — Chapter 1"
+  ],
+  "notes": "All adventure sites are a few miles away. Party gets free room and board. Protection aura in temple.",
+  "updatedAt": 1786752801503
+}

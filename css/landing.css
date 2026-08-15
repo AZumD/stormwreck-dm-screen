@@ -722,19 +722,6 @@
   line-height: 1.45;
 }
 
-body.is-booting::before {
-  content: "Loading library…";
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  display: grid;
-  place-items: center;
-  background: rgba(8, 12, 18, 0.72);
-  color: #e8e0d0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.15rem;
-  letter-spacing: 0.02em;
-}
 
 /* ── Reference card (utility style) ──────────────────── */
 .card-reference {
@@ -937,4 +924,17 @@ body.is-booting::before {
   .card-featured__body {
     padding: 2rem 2.1rem 1.85rem;
   }
+}
+
+body.is-booting::before {
+  content: "Loading library...";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 18, 0.72);
+  color: #e8e0d0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
 }

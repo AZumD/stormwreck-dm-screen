@@ -37,9 +37,9 @@ if (!images.includes("/api/assets/") || !images.includes("putCatalogueAsset")) {
   fail("CatalogueImages missing file asset support");
 } else pass("CatalogueImages file assets");
 
-if (!client.includes("/api/catalogues/") || !client.includes("putCampaignDocument")) {
-  fail("LocalApiClient incomplete");
-} else pass("LocalApiClient surface");
+if (!client.includes("startWrite") || !client.includes(".catch(() => undefined)")) {
+  fail("LocalApiClient must serialize writes per key via factories");
+} else pass("LocalApiClient write serialization");
 
 if (!campaignApp.includes("CatalogueStore.bootstrap") || !campaignApp.includes("CampaignPrefs.bootstrap")) {
   fail("campaign-app missing file-backed bootstrap");
@@ -56,6 +56,10 @@ if (!importSrc.includes("localStorage") || !importSrc.includes("exportAllIdb")) 
 if (gitignore.includes("\ndata/\n") || gitignore.includes("\ndata\n")) {
   fail("gitignore must not ignore whole /data");
 } else pass("data/ not fully gitignored");
+
+if (!gitignore.includes("source/*.pdf") || !gitignore.includes(".cursor/") || !gitignore.includes("credentials.json")) {
+  fail("gitignore missing restored protections");
+} else pass("gitignore restored protections");
 
 if (!gitignore.includes("data/.backup/") || !gitignore.includes("node_modules/")) {
   fail("gitignore missing backup/node_modules rules");
