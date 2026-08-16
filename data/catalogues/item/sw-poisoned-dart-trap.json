@@ -9,5 +9,10 @@
   "description": "A hidden floorboard trap in Compass Rose crew quarters (C6) — portrait of 'Aleitha and Brastos — together forever.'",
   "properties": "+5 to hit. Hit: 1 piercing damage + 1d6 poison damage. Target must succeed DC 11 Constitution save or take poison damage.",
   "notes": "200 gp hidden beneath the trapped floorboard.",
-  "updatedAt": 1786752801540
+  "updatedAt": 1786918771752,
+  "category": "Hazard & Trap",
+  "tags": [
+    "nautical",
+    "Stormwreck Isle"
+  ]
 }

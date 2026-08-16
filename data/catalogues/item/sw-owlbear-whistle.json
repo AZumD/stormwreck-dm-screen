@@ -1,0 +1,17 @@
+{
+  "id": "sw-owlbear-whistle",
+  "name": "Ugglebjörns-visselpipa",
+  "itemType": "Kuriosa",
+  "rarity": "Vanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "En liten sliten visselpipa av trä, ursprungligen använd av en kringresande djurtrupp.",
+  "properties": "Visselpipan kan användas tillsammans med Animal Handling för att lugna den strandsatta ugglebjörnen på ön.",
+  "notes": "Hänger kring halsen på ugglebjörnen i det valfria mötet på Stormwreck Isle.",
+  "updatedAt": 1786918771752,
+  "category": "Trinket & Curio",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

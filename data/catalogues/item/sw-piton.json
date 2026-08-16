@@ -1,0 +1,17 @@
+{
+  "id": "sw-piton",
+  "name": "Bergskil",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "5 cp",
+  "weight": "0.25 lb",
+  "attunement": false,
+  "description": "En kraftig metallkil som kan slås in i sten eller trä för att säkra rep.",
+  "properties": "",
+  "notes": "Säljs och används vanligen flera åt gången.",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

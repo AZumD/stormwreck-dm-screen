@@ -1,0 +1,19 @@
+{
+  "id": "sw-herb-black-rose",
+  "name": "Svartros",
+  "itemType": "Råmaterial / Gift",
+  "rarity": "Ovanlig",
+  "value": "15 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "Ser ut som en vanlig ros, men kronbladen är kolsvarta och törnen är sylvassa och spröda som glas.",
+  "properties": "Giftig. Kan destilleras till ett pulver som gör att offret faller i en drömlös, dödsliknande sömn i 8 timmar (Con-save DC 13).",
+  "notes": "Populär bland lönnmördare i Baldur's Gate. Törnen bryts lätt av och fastnar i huden.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "poison",
+    "Stormwreck Isle"
+  ]
+}

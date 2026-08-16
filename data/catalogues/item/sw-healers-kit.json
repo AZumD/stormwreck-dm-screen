@@ -1,0 +1,18 @@
+{
+  "id": "sw-healers-kit",
+  "name": "Läkekit",
+  "itemType": "Medicinsk utrustning",
+  "rarity": "Vanlig",
+  "value": "5 gp",
+  "weight": "3 lb",
+  "attunement": false,
+  "description": "En läderväska med bandage, salvor, spjälor och enklare sjukvårdsmaterial.",
+  "properties": "Har 10 användningar. En användning kan stabilisera en varelse på 0 HP utan Medicine-test.",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Tool & Kit",
+  "tags": [
+    "medical",
+    "Stormwreck Isle"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "sw-tinder-pouch",
+  "name": "Fnöskepung",
+  "itemType": "Överlevnadsutrustning",
+  "rarity": "Vanlig",
+  "value": "1 sp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En liten vaxad läderpåse fylld med torr näver, fnöskticka, gräs och andra lättantändliga material.",
+  "properties": "Används tillsammans med tändstål för att snabbt fånga en gnista.",
+  "notes": "Hålls noggrant torr även när resten av utrustningen blir genomblöt.",
+  "updatedAt": 1786919236511,
+  "category": "Adventuring Gear",
+  "tags": [
+    "camp",
+    "Stormwreck Isle"
+  ]
+}

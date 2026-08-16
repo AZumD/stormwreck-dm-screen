@@ -1,0 +1,13 @@
+{
+  "id": "subclass-monk-shadow",
+  "name": "Way of Shadow",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-monk|Monk",
+  "source": "Core rules",
+  "summary": "Shadow arts teleportation and darkness magic.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

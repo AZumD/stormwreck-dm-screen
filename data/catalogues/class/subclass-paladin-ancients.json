@@ -1,0 +1,13 @@
+{
+  "id": "subclass-paladin-ancients",
+  "name": "Oath of the Ancients",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-paladin|Paladin",
+  "source": "Core rules",
+  "summary": "Nature-bound oath with Nature's Wrath and Aura of Warding.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

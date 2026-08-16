@@ -15,5 +15,6 @@
   "description": "Choose up to six creatures in a 30-ft-radius sphere. Each regains 3d8 + spellcasting mod HP.",
   "higherLevels": "+1d8 per slot above 5th.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -1,0 +1,17 @@
+{
+  "id": "sw-backpack",
+  "name": "Ryggsäck",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "2 gp",
+  "weight": "5 lb",
+  "attunement": false,
+  "description": "En stadig ryggsäck av läder och grovt tyg för proviant, verktyg och andra förnödenheter.",
+  "properties": "Rymmer upp till 30 lb utrustning utöver föremål som spänns fast utanpå.",
+  "notes": "Vanlig basutrustning för resor och utforskning.",
+  "updatedAt": 1786918771752,
+  "category": "Container & Storage",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

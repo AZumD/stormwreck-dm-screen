@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-elf-high",
+  "name": "High Elf",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-elf|Elf",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "High elves blend martial tradition with arcane study.",
+  "abilityScoreIncrease": "INT +1 (plus Elf DEX +2)",
+  "featureRefs": [],
+  "traits": "Elf Weapon Training — longsword, shortsword, shortbow, longbow.\nCantrip — one wizard cantrip (INT).\nExtra Language — one extra language of your choice.",
+  "languages": "Common, Elvish + one of your choice",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

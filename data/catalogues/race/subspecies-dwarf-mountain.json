@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-dwarf-mountain",
+  "name": "Mountain Dwarf",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-dwarf|Dwarf",
+  "size": "Medium",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Mountain dwarves are stronger and trained in armor from youth.",
+  "abilityScoreIncrease": "STR +2 (plus Dwarf CON +2)",
+  "featureRefs": [],
+  "traits": "Dwarven Armor Training — proficiency with light and medium armor.",
+  "languages": "Common, Dwarvish",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

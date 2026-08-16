@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-enchantment",
+  "name": "School of Enchantment",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Hypnotic Gaze and instinctive charm defenses.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -15,5 +15,6 @@
   "description": "Reaction when hit by an attack (or targeted by magic missile). +5 AC including against the triggering attack; magic missile deals no damage.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

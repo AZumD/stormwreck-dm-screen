@@ -15,5 +15,6 @@
   "description": "CHA save or banished. Natives of current plane: harmless demiplane; return if spell ends before 1 minute. Others: return to home plane; stay gone if concentration lasts full minute.",
   "higherLevels": "+1 creature per slot above 4th.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

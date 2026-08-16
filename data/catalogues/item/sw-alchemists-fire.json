@@ -1,0 +1,18 @@
+{
+  "id": "sw-alchemists-fire",
+  "name": "Alkemisteld",
+  "itemType": "Förbrukningsvara",
+  "rarity": "Vanlig",
+  "value": "50 gp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En klibbig och lättantändlig alkemisk vätska i en bräcklig flaska.",
+  "properties": "Kan kastas som ett improviserat distansvapen. Vid träff fattar målet eld och tar återkommande eldskada tills lågorna släcks.",
+  "notes": "Myla experimenterar bland annat med alkemisteld i Dragon's Rest.",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "alchemy",
+    "Stormwreck Isle"
+  ]
+}

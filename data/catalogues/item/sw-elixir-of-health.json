@@ -1,0 +1,19 @@
+{
+  "id": "sw-elixir-of-health",
+  "name": "Hälsoelixir",
+  "itemType": "Magisk dryck",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "En klar röd dryck där små ljusprickar tycks bubbla genom vätskan.",
+  "properties": "När elixiret dricks botas sjukdomar och tillstånden blinded, deafened, paralyzed och poisoned upphör.",
+  "notes": "Tarak kan brygga detta av rubinmurklan från Seagrow Caves.",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "magic",
+    "potion",
+    "Stormwreck Isle"
+  ]
+}

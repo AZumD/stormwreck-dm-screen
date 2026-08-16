@@ -1,0 +1,13 @@
+{
+  "id": "subclass-druid-land",
+  "name": "Circle of the Land",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-druid|Druid",
+  "source": "Core rules",
+  "summary": "Terrain spell lists, Natural Recovery, and Land's Stride.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

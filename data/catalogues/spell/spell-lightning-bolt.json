@@ -15,5 +15,6 @@
   "description": "Creatures in the line take 8d6 lightning (DEX half).",
   "higherLevels": "+1d6 per slot above 3rd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

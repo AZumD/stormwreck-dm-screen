@@ -1,0 +1,19 @@
+{
+  "id": "sw-battleaxe-plus-one",
+  "name": "Stridsyxa +1",
+  "itemType": "Magiskt vapen",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "4 lb",
+  "attunement": false,
+  "description": "En välbevarad stridsyxa genomsyrad av kvarvarande magi från Clifftop Observatory.",
+  "properties": "+1 bonus på attack- och skadeslag med vapnet. 1d8 slashing, versatile (1d10).",
+  "notes": "Kan hittas i observatoriets gamla bibliotek.",
+  "updatedAt": 1786919418124,
+  "category": "Weapon",
+  "tags": [
+    "magic",
+    "Stormwreck Isle"
+  ],
+  "portrait": ""
+}

@@ -1,0 +1,19 @@
+{
+  "id": "sw-ruby-morel",
+  "name": "Rubinmurkla",
+  "itemType": "Magisk svamp",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "En stor självlysande röd svamp med en märkligt organisk form.",
+  "properties": "Tarak kan använda svampen för att framställa ett hälsoelixir.",
+  "notes": "Finns hos mykoniderna i Seagrow Caves och ges som belöning när kolonin räddas.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "magic",
+    "Stormwreck Isle"
+  ]
+}

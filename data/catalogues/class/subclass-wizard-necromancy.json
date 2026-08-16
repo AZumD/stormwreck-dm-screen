@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-necromancy",
+  "name": "School of Necromancy",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Grim Harvest and undead thrall control.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

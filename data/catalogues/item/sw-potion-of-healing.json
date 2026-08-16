@@ -1,0 +1,19 @@
+{
+  "id": "sw-potion-of-healing",
+  "name": "Läkedryck",
+  "itemType": "Magisk dryck",
+  "rarity": "Vanlig",
+  "value": "50 gp",
+  "weight": "0.5 lb",
+  "attunement": false,
+  "description": "En röd läkande dryck som skimrar svagt när flaskan skakas.",
+  "properties": "Återställer 2d4 + 2 HP när den dricks.",
+  "notes": "Tarak kan framställa en läkedryck av varje hjärthatt som förs tillbaka till honom.",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "magic",
+    "potion",
+    "Stormwreck Isle"
+  ]
+}

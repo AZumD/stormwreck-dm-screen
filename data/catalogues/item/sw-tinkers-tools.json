@@ -1,0 +1,17 @@
+{
+  "id": "sw-tinkers-tools",
+  "name": "Mekanikverktyg",
+  "itemType": "Hantverksverktyg",
+  "rarity": "Vanlig",
+  "value": "50 gp",
+  "weight": "10 lb",
+  "attunement": false,
+  "description": "Små handverktyg, nålar, tråd, lim och reservdelar för reparationer och mekaniskt pill.",
+  "properties": "",
+  "notes": "Lämplig utrustning för Mylas ständiga experiment och konstruktioner.",
+  "updatedAt": 1786918771752,
+  "category": "Tool & Kit",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

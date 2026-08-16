@@ -1,0 +1,17 @@
+{
+  "id": "sw-fine-wine",
+  "name": "Flaska fint vin",
+  "itemType": "Handelsvara",
+  "rarity": "Vanlig",
+  "value": "10 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En väl förseglad flaska dyrbart vin som mirakulöst har överlevt skeppsbrottet.",
+  "properties": "",
+  "notes": "En av Compass Roses lastlådor innehåller fem hela flaskor och en trasig.",
+  "updatedAt": 1786918771752,
+  "category": "Trade Good",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

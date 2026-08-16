@@ -15,5 +15,6 @@
   "description": "Choose angelic/fey/fiendish appearance. Allies designated by you ignore the spirits. Enemies: speed halved; WIS save when entering/starting in aura or take 3d8 radiant/necrotic.",
   "higherLevels": "+1d8 per slot above 3rd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

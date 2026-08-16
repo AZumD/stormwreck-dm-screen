@@ -1,0 +1,17 @@
+{
+  "id": "sw-hempen-rope",
+  "name": "Hamprep, 50 fot",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "1 gp",
+  "weight": "10 lb",
+  "attunement": false,
+  "description": "Femtio fot grovt hamprep för klättring, förtöjning, säkring och improviserade lösningar.",
+  "properties": "Repet har 2 HP och kan slitas av med ett lyckat DC 17 Strength-test.",
+  "notes": "Något äventyrare aldrig uppskattar förrän de glömt köpa det.",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

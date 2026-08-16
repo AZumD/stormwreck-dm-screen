@@ -1,0 +1,13 @@
+{
+  "id": "subclass-fighter-champion",
+  "name": "Champion",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-fighter|Fighter",
+  "source": "Core rules",
+  "summary": "Improved Critical and reliable athletic prowess.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -15,5 +15,6 @@
   "description": "Creatures in cone take 8d8 cold (CON half).",
   "higherLevels": "+1d8 per slot above 5th.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

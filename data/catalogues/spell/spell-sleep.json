@@ -15,5 +15,6 @@
   "description": "Roll 5d8; put creatures to sleep in ascending current HP order until the HP pool is used. Undead and charm-immune creatures unaffected.",
   "higherLevels": "+2d8 per slot above 1st.",
   "notes": "No save — HP pool matters.",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

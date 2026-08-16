@@ -15,5 +15,6 @@
   "description": "WIS save (advantage if fighting you). Charmed; you have telepathic link and can issue commands. Damage: new save to end.",
   "higherLevels": "Duration up to 8 hours (9th-level slot).",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -15,5 +15,6 @@
   "description": "Each creature in a 20-ft-radius sphere takes 8d6 fire (DEX half). Ignites flammables.",
   "higherLevels": "+1d6 per slot above 3rd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

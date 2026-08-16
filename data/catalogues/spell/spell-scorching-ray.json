@@ -15,5 +15,6 @@
   "description": "Three rays; each hit deals 2d6 fire. Same or different targets.",
   "higherLevels": "+1 ray per slot above 2nd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -15,5 +15,6 @@
   "description": "Ranged spell attack; necrotic damage (1d8 → 2d8/3d8/4d8). Undead also have disadvantage on attacks against you until your next turn.",
   "higherLevels": "Damage increases at levels 5, 11, and 17.",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

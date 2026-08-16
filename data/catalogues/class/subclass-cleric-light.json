@@ -1,0 +1,13 @@
+{
+  "id": "subclass-cleric-light",
+  "name": "Light Domain",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-cleric|Cleric",
+  "source": "Core rules",
+  "summary": "Radiant and fire magic with Warding Flare.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

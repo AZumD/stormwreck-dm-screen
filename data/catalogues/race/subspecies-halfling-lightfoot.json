@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-halfling-lightfoot",
+  "name": "Lightfoot Halfling",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-halfling|Halfling",
+  "size": "Small",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Lightfoots are especially stealthy and charismatic.",
+  "abilityScoreIncrease": "CHA +1 (plus Halfling DEX +2)",
+  "featureRefs": [],
+  "traits": "Naturally Stealthy — you can attempt to hide behind a creature that is at least one size larger than you.",
+  "languages": "Common, Halfling",
+  "senses": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

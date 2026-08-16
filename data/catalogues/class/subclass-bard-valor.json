@@ -1,0 +1,13 @@
+{
+  "id": "subclass-bard-valor",
+  "name": "College of Valor",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-bard|Bard",
+  "source": "Core rules",
+  "summary": "Martial college with Combat Inspiration, armor, and Extra Attack.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

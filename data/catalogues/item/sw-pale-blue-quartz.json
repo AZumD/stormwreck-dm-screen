@@ -1,0 +1,18 @@
+{
+  "id": "sw-pale-blue-quartz",
+  "name": "Ljusblå kvartskristall",
+  "itemType": "Ädelsten",
+  "rarity": "Vanlig",
+  "value": "10 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En blekt blå kvartskristall med ett kallt, glasartat skimmer.",
+  "properties": "",
+  "notes": "Fem exemplar ingår i Sparkrenders skatt.",
+  "updatedAt": 1786918771752,
+  "category": "Treasure & Valuable",
+  "tags": [
+    "gem",
+    "Stormwreck Isle"
+  ]
+}

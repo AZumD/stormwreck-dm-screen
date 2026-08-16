@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-illusion",
+  "name": "School of Illusion",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Improved minor illusion and malleable illusions.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

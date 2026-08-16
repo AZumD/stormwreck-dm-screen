@@ -15,5 +15,6 @@
   "description": "Auto-succeeds vs spells of 3rd level or lower. Higher: ability check with your spellcasting ability (DC 10 + spell level).",
   "higherLevels": "Auto-counters spells of equal or lower level than the slot used.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

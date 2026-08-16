@@ -15,5 +15,6 @@
   "description": "Primary target DEX save or 10d8 lightning (half on success). Three bolts leap to other targets within 30 ft of the first.",
   "higherLevels": "+1 bolt (leap target) per slot above 6th.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

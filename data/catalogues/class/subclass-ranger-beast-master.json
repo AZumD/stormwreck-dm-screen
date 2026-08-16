@@ -1,0 +1,13 @@
+{
+  "id": "subclass-ranger-beast-master",
+  "name": "Beast Master",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-ranger|Ranger",
+  "source": "Core rules",
+  "summary": "Bonded beast companion that fights beside you.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

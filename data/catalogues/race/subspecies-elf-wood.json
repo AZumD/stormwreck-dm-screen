@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-elf-wood",
+  "name": "Wood Elf",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-elf|Elf",
+  "size": "Medium",
+  "speed": "35 ft.",
+  "source": "Core rules",
+  "summary": "Wood elves move swiftly and vanish into natural cover.",
+  "abilityScoreIncrease": "WIS +1 (plus Elf DEX +2)",
+  "featureRefs": [],
+  "traits": "Elf Weapon Training — longsword, shortsword, shortbow, longbow.\nFleet of Foot — base walking speed 35 ft.\nMask of the Wild — hide when lightly obscured by natural phenomena.",
+  "languages": "Common, Elvish",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

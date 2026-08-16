@@ -1,0 +1,17 @@
+{
+  "id": "sw-coiled-hemp-rope",
+  "name": "Hoprullat hamprep",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "1 gp",
+  "weight": "10 lb",
+  "attunement": false,
+  "description": "Ett långt hamprep som hålls tätt hoprullat och spänt mot väskan eller bältet.",
+  "properties": "Används för klättring, läger, fällor, förtöjning och hundra andra improviserade lösningar.",
+  "notes": "Kan vara kortare än standardrep om ni vill hålla utrustningen mer realistiskt kompakt.",
+  "updatedAt": 1786919286773,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

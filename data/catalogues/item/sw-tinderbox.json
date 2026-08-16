@@ -1,0 +1,17 @@
+{
+  "id": "sw-tinderbox",
+  "name": "Elddon",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "5 sp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En liten ask med flinta, eldstål och torrt fnöske.",
+  "properties": "Att tända en fackla eller annat lättantändligt bränsle tar en handling. En vanlig eld tar ungefär 1 minut att få igång.",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

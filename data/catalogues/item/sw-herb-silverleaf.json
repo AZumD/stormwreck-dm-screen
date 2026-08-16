@@ -1,0 +1,18 @@
+{
+  "id": "sw-herb-silverleaf",
+  "name": "Silverbark",
+  "itemType": "Råmaterial / Ört",
+  "rarity": "Ovanlig",
+  "value": "10 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "Barken från ett lågväxande träd som reflekterar månljus. Vid beröring är ytan alltid frostigt kall, oavsett klimat.",
+  "properties": "Tuggas den rå bedövar den smärta helt. Ignorera effekterna av utmattning (exhaustion) i 1d4 timmar.",
+  "notes": "Kräver en silverkniv för att skördas korrekt; stål får barken att omedelbart ruttna och bli oanvändbar.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "Stormwreck Isle"
+  ]
+}

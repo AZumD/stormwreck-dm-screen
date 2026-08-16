@@ -1,0 +1,18 @@
+{
+  "id": "sw-captains-journal",
+  "name": "Kaptenens loggbok",
+  "itemType": "Dokument",
+  "rarity": "Vanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Compass Roses kaptens loggbok, omsorgsfullt inslagen för att skyddas mot havsvattnet.",
+  "properties": "Innehåller viktiga ledtrådar om skeppets sista resa och förbannelsens ursprung.",
+  "notes": "Finns i det järnbeslagna kaptensskrinet i skeppets vattenfyllda lastrum.",
+  "updatedAt": 1786918771752,
+  "category": "Document & Lore",
+  "tags": [
+    "nautical",
+    "Stormwreck Isle"
+  ]
+}

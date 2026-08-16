@@ -15,5 +15,6 @@
   "description": "Choose one creature, object, or effect. Spells of 3rd or lower end. Higher: check DC 10 + spell level for each.",
   "higherLevels": "Auto-ends spells of equal or lower level than the slot used.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

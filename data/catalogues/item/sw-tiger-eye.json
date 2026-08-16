@@ -1,0 +1,18 @@
+{
+  "id": "sw-tiger-eye",
+  "name": "Tigeröga",
+  "itemType": "Ädelsten",
+  "rarity": "Vanlig",
+  "value": "10 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En liten polerad brun-gul ädelsten vars band tycks röra sig i ljuset.",
+  "properties": "",
+  "notes": "Två exemplar finns bland skatterna i harpyns bo på Compass Rose.",
+  "updatedAt": 1786918771752,
+  "category": "Treasure & Valuable",
+  "tags": [
+    "gem",
+    "Stormwreck Isle"
+  ]
+}

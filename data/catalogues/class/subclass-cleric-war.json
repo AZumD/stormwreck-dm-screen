@@ -1,0 +1,13 @@
+{
+  "id": "subclass-cleric-war",
+  "name": "War Domain",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-cleric|Cleric",
+  "source": "Core rules",
+  "summary": "Martial cleric with War Priest bonus attacks and Divine Strike.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

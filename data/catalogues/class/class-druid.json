@@ -27,10 +27,11 @@
   ],
   "features": "1 — @feature:druidic|Druidic, @feature:spellcasting-druid|Spellcasting (Druid)\n2 — @feature:wild-shape|Wild Shape, Druid Circle\n4 — Wild Shape improvement\n6+ — circle features\n18 — Timeless Body, Beast Spells\n20 — Archdruid",
   "spellcasting": "Full caster (WIS). Prepare from full druid list. Ritual casting. No metal armor/shields by tradition.",
-  "subclasses": [
-    "Circle of the Land",
-    "Circle of the Moon"
-  ],
   "notes": "Wild Shape CR and swim/fly forms unlock by level / circle.",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-druid-land|Circle of the Land",
+    "@class:subclass-druid-moon|Circle of the Moon"
+  ]
 }

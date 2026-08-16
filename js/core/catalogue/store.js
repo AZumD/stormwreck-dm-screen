@@ -173,17 +173,37 @@ window.CatalogueStore = (function () {
       }
       const existing = byId.get(seed.id);
       let patched = false;
-      ["featureRefs", "skillRefs", "tags", "traitRefs", "actionRefs", "bonusActionRefs", "reactionRefs", "legendaryRefs"].forEach(
-        (field) => {
-          const seedVal = seed[field];
-          const cur = existing[field];
-          const empty = cur == null || (Array.isArray(cur) ? !cur.length : String(cur).trim() === "");
-          if (empty && seedVal != null && !(Array.isArray(seedVal) && !seedVal.length)) {
-            existing[field] = Array.isArray(seedVal) ? seedVal.slice() : seedVal;
-            patched = true;
-          }
+      [
+        "featureRefs",
+        "skillRefs",
+        "tags",
+        "traitRefs",
+        "actionRefs",
+        "bonusActionRefs",
+        "reactionRefs",
+        "legendaryActionRefs",
+        "legendaryRefs",
+        "category",
+        "entryKind",
+        "subclassRefs",
+        "parentClassRef",
+        "subspeciesRefs",
+        "parentSpeciesRef",
+        "locationType",
+        "parentLocationRef",
+        "classRefs",
+        "source",
+        "itemType",
+        "rarity"
+      ].forEach((field) => {
+        const seedVal = seed[field];
+        const cur = existing[field];
+        const empty = cur == null || (Array.isArray(cur) ? !cur.length : String(cur).trim() === "");
+        if (empty && seedVal != null && !(Array.isArray(seedVal) && !seedVal.length)) {
+          existing[field] = Array.isArray(seedVal) ? seedVal.slice() : seedVal;
+          patched = true;
         }
-      );
+      });
       if (patched) {
         existing.updatedAt = Date.now();
         changedIds.push(seed.id);

@@ -1,0 +1,19 @@
+{
+  "id": "sw-dragon-bone-candlestick",
+  "name": "Drakformad ljusstake av ben",
+  "itemType": "Konstföremål",
+  "rarity": "Vanlig",
+  "value": "25 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En elegant ljusstake utskuren ur ben och formad som en slingrande drake.",
+  "properties": "",
+  "notes": "Två matchande ljusstakar finns bland Compass Roses last.",
+  "updatedAt": 1786918771752,
+  "category": "Trinket & Curio",
+  "tags": [
+    "dragon",
+    "art",
+    "Stormwreck Isle"
+  ]
+}

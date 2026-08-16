@@ -12,10 +12,11 @@
   "skillChoices": "Choose 2 from Arcana, Deception, Insight, Intimidation, Persuasion, Religion",
   "features": "1 — Spellcasting, Sorcerous Origin\n2 — Font of Magic (sorcery points)\n3 — Metamagic\n6+ — origin features\n20 — Sorcerous Restoration",
   "spellcasting": "Full caster (CHA). Known spells. Sorcery points fuel metamagic and slot conversion.",
-  "subclasses": [
-    "Draconic Bloodline",
-    "Wild Magic"
-  ],
   "notes": "",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-sorcerer-draconic|Draconic Bloodline",
+    "@class:subclass-sorcerer-wild-magic|Wild Magic"
+  ]
 }

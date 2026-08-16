@@ -1,0 +1,19 @@
+{
+  "id": "sw-spell-scroll-hold-person",
+  "name": "Besvärjelsepergament: Hold Person",
+  "itemType": "Besvärjelsepergament",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Ett bevarat magiskt pergament från observatoriets gamla samlingar.",
+  "properties": "Innehåller besvärjelsen Hold Person och förbrukas när besvärjelsen kastas från pergamentet.",
+  "notes": "Kan hittas tillsammans med Stridsyxa +1 i Clifftop Observatorys bibliotek.",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "magic",
+    "scroll",
+    "Stormwreck Isle"
+  ]
+}

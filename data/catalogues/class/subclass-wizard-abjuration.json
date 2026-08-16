@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-abjuration",
+  "name": "School of Abjuration",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Arcane Ward absorbs damage; abjuration specialists.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

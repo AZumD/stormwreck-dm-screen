@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-halfling-stout",
+  "name": "Stout Halfling",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-halfling|Halfling",
+  "size": "Small",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Stout halflings share some dwarven hardiness against poison.",
+  "abilityScoreIncrease": "CON +1 (plus Halfling DEX +2)",
+  "featureRefs": [],
+  "traits": "Stout Resilience — advantage on saving throws against poison, and resistance to poison damage.",
+  "languages": "Common, Halfling",
+  "senses": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -15,5 +15,6 @@
   "description": "Bonus action curse. Your attacks deal +1d6 necrotic. Target has disadvantage on checks with one chosen ability. If target drops to 0, reassign hex with bonus action.",
   "higherLevels": "Duration up to 8 hours (3rd+) or 24 hours (5th+).",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

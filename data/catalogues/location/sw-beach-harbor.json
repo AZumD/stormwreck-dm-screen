@@ -15,6 +15,13 @@
     "Dragons of Stormwreck Isle — Chapter 1"
   ],
   "notes": "Three zombies from recent shipwreck — fight optional (they can't catch party up the path). Undead Fortitude applies.",
-  "updatedAt": 1786797698138,
-  "portrait": ""
+  "updatedAt": 1786918771752,
+  "portrait": "",
+  "locationType": "Landmark",
+  "parentLocationRef": "@location:sw-dragons-rest|Dragon's Rest",
+  "tags": [
+    "coastal",
+    "harbor",
+    "Stormwreck Isle"
+  ]
 }

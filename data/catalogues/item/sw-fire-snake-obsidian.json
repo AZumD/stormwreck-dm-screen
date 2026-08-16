@@ -1,0 +1,18 @@
+{
+  "id": "sw-fire-snake-obsidian",
+  "name": "Obsidianfragment från eldsnokägg",
+  "itemType": "Ädelsten och mineral",
+  "rarity": "Vanlig",
+  "value": "10 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "Ett mörkt, glasartat fragment av det glödande stenklot som omgav en ännu ofödd eldsnok.",
+  "properties": "",
+  "notes": "Eldsnokens ägg i Seagrow Caves splittras i 25 sådana fragment.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "elemental",
+    "Stormwreck Isle"
+  ]
+}

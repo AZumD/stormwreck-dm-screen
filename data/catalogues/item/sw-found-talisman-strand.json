@@ -1,0 +1,16 @@
+{
+  "id": "sw-found-talisman-strand",
+  "name": "Fyndtalismaner",
+  "itemType": "Talisman",
+  "rarity": "Vanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Små benbitar, tänder, stenar, frön och andra föremål uppträdda på läderband eller knutna direkt i utrustningen.",
+  "properties": "",
+  "notes": "Inget är köpt. Varje del är hittad, given eller tagen från något hon själv fällt och har sin egen historia. Vissa kan användas vid små personliga ritualer utan att vara magiska föremål.",
+  "updatedAt": 1786919668254,
+  "portrait": "",
+  "category": "Trinket & Curio",
+  "tags": []
+}

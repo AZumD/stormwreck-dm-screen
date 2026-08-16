@@ -5,10 +5,15 @@
   "speed": "25 ft.",
   "source": "Core rules",
   "summary": "Small inventors and illusionists — curious, clever, and hard to charm.",
-  "abilityScoreIncrease": "INT +2 (forest: DEX +1; rock: CON +1)",
-  "traits": "Darkvision 60 ft.\nGnome Cunning — advantage on INT/WIS/CHA saves vs magic.\nForest: Natural Illusionist (minor illusion), Speak with Small Beasts.\nRock: Artificer's Lore, Tinker (tiny clockwork devices).",
+  "abilityScoreIncrease": "INT +2 (see subspecies for additional ASI)",
+  "traits": "Darkvision 60 ft.\nGnome Cunning — advantage on INT/WIS/CHA saves vs magic.",
   "languages": "Common, Gnomish",
   "senses": "Darkvision 60 ft.",
-  "notes": "Subraces commonly used: forest gnome, rock gnome.",
-  "updatedAt": 1786753781208
+  "notes": "Choose a subspecies: Forest Gnome or Rock Gnome.",
+  "updatedAt": 1786918974958,
+  "entryKind": "species",
+  "subspeciesRefs": [
+    "@race:subspecies-gnome-forest|Forest Gnome",
+    "@race:subspecies-gnome-rock|Rock Gnome"
+  ]
 }

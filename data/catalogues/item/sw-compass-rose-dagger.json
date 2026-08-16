@@ -1,0 +1,18 @@
+{
+  "id": "sw-compass-rose-dagger",
+  "name": "Kaptenens dolk",
+  "itemType": "Vapen",
+  "rarity": "Vanlig",
+  "value": "2 gp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En enkel dolk som legat skyddad i skrivbordet i Compass Roses kaptenshytt.",
+  "properties": "1d4 piercing. Finesse, light, thrown (20/60).",
+  "notes": "Finns tillsammans med 50 gp och kartografverktyg i kaptens skrivbord.",
+  "updatedAt": 1786918771752,
+  "category": "Weapon",
+  "tags": [
+    "nautical",
+    "Stormwreck Isle"
+  ]
+}

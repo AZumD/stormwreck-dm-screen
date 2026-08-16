@@ -15,5 +15,6 @@
   "description": "CON save or blinded or deafened. End of each turn: repeat save to end.",
   "higherLevels": "+1 target per slot above 2nd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

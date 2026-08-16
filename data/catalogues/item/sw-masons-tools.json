@@ -1,0 +1,17 @@
+{
+  "id": "sw-masons-tools",
+  "name": "Murverktyg",
+  "itemType": "Hantverksverktyg",
+  "rarity": "Vanlig",
+  "value": "10 gp",
+  "weight": "8 lb",
+  "attunement": false,
+  "description": "En uppsättning verktyg för att forma, reparera och arbeta med sten.",
+  "properties": "",
+  "notes": "Varnoth använder en uppsättning murverktyg för att underhålla Dragon's Rest.",
+  "updatedAt": 1786918771752,
+  "category": "Tool & Kit",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

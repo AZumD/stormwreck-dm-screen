@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-dwarf-hill",
+  "name": "Hill Dwarf",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-dwarf|Dwarf",
+  "size": "Medium",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Hill dwarves favor wisdom and tough constitutions.",
+  "abilityScoreIncrease": "WIS +1 (plus Dwarf CON +2)",
+  "featureRefs": [],
+  "traits": "Dwarven Toughness — your hit point maximum increases by 1, and it increases by 1 every time you gain a level.",
+  "languages": "Common, Dwarvish",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

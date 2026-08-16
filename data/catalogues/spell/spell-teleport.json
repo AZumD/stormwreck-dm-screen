@@ -15,5 +15,6 @@
   "description": "Accuracy depends on familiarity (Permanent Circle / Associated Object / Very Familiar / Seen Casually / Viewed Once / Description / False Destination). Mishaps possible on poor familiarity.",
   "higherLevels": "",
   "notes": "Use the teleport familiarity table from the full rules.",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

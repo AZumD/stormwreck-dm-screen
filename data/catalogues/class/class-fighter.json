@@ -26,11 +26,12 @@
   ],
   "features": "1 — Fighting Style, @feature:second-wind|Second Wind\n2 — @feature:action-surge|Action Surge (1)\n3 — Martial Archetype\n5 — Extra Attack\n9 — Indomitable\n11 — Extra Attack (2)\n13+ — Indomitable & archetype improvements\n20 — Extra Attack (3)",
   "spellcasting": "Eldritch Knight only (INT, 1/3 caster).",
-  "subclasses": [
-    "Champion",
-    "Battle Master",
-    "Eldritch Knight"
-  ],
   "notes": "",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-fighter-champion|Champion",
+    "@class:subclass-fighter-battle-master|Battle Master",
+    "@class:subclass-fighter-eldritch-knight|Eldritch Knight"
+  ]
 }

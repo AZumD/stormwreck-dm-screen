@@ -15,5 +15,6 @@
   "description": "Like Hold Person but any creature type except undead.",
   "higherLevels": "+1 creature per slot above 5th.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -1,0 +1,19 @@
+{
+  "id": "sw-potion-lightning-resistance",
+  "name": "Dryck av blixtresistens",
+  "itemType": "Magisk dryck",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "En magisk dryck vars innehåll knastrar svagt av statisk elektricitet.",
+  "properties": "Ger resistens mot lightning damage i 1 timme när den dricks.",
+  "notes": "Gömd bakom en lös tegelsten i studiekammaren vid Clifftop Observatory tillsammans med 10 gp.",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "magic",
+    "potion",
+    "Stormwreck Isle"
+  ]
+}

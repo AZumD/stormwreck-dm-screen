@@ -1,0 +1,17 @@
+{
+  "id": "sw-oil-flask",
+  "name": "Oljeflaska",
+  "itemType": "Förbrukningsvara",
+  "rarity": "Vanlig",
+  "value": "1 sp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En pint lampolja i en liten glas- eller keramikflaska.",
+  "properties": "Kan användas som bränsle eller kastas och antändas för att skapa eld.",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

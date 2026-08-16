@@ -9,5 +9,10 @@
   "description": "Myla the winged kobold sells standard adventuring equipment from the Player's Handbook at Dragon's Rest.",
   "properties": "Available after meeting the cloister inhabitants. Myla also experiments with alchemy — potential source of odd consumables at DM discretion.",
   "notes": "Chapter 1 — free room and board; gear available from Myla.",
-  "updatedAt": 1786752801540
+  "updatedAt": 1786918771752,
+  "category": "Collection & Hoard",
+  "tags": [
+    "shop",
+    "Stormwreck Isle"
+  ]
 }

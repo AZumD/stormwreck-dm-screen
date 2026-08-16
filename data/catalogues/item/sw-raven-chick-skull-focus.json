@@ -1,0 +1,16 @@
+{
+  "id": "sw-raven-chick-skull-focus",
+  "name": "Korpungens kranium",
+  "itemType": "Magifokus",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Det lilla rengjorda kraniet från en korpunge, upphängt i ett mörkt läderband och polerat av år av beröring.",
+  "properties": "Fungerar som druidskt magifokus om spelledaren tillåter det. Föremålet behöver inte vara magiskt i sig.",
+  "notes": "Lore-föremål. Betydelsen bör vara personlig snarare än monetär: ett dödsfall, ett löfte, en fågelfamilj hon skyddade eller hennes första verkliga kontakt med naturmagin.",
+  "updatedAt": 1786919657101,
+  "portrait": "",
+  "category": "Wondrous Item",
+  "tags": []
+}

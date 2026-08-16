@@ -15,5 +15,6 @@
   "description": "Creature you can see regains 1d4 + spellcasting ability modifier HP. No undead/constructs.",
   "higherLevels": "+1d4 per slot above 1st.",
   "notes": "Can't cast another leveled spell as action same turn (cantrip OK).",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

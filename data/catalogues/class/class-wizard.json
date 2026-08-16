@@ -12,16 +12,17 @@
   "skillChoices": "Choose 2 from Arcana, History, Insight, Investigation, Medicine, Religion",
   "features": "1 — Spellcasting, Arcane Recovery\n2 — Arcane Tradition\n6+ — tradition features\n18 — Spell Mastery\n20 — Signature Spells",
   "spellcasting": "Full caster (INT). Spellbook; prepare INT mod + wizard level spells each day. Ritual casting from book.",
-  "subclasses": [
-    "School of Abjuration",
-    "School of Conjuration",
-    "School of Divination",
-    "School of Enchantment",
-    "School of Evocation",
-    "School of Illusion",
-    "School of Necromancy",
-    "School of Transmutation"
-  ],
   "notes": "Copying spells into the book costs time and gold; Arcane Recovery restores slots on a short rest (1/day).",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-wizard-abjuration|School of Abjuration",
+    "@class:subclass-wizard-conjuration|School of Conjuration",
+    "@class:subclass-wizard-divination|School of Divination",
+    "@class:subclass-wizard-enchantment|School of Enchantment",
+    "@class:subclass-wizard-evocation|School of Evocation",
+    "@class:subclass-wizard-illusion|School of Illusion",
+    "@class:subclass-wizard-necromancy|School of Necromancy",
+    "@class:subclass-wizard-transmutation|School of Transmutation"
+  ]
 }

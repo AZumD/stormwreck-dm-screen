@@ -12,11 +12,12 @@
   "skillChoices": "Choose 2 from Arcana, Deception, History, Intimidation, Investigation, Nature, Religion",
   "features": "1 — Otherworldly Patron, Pact Magic\n2 — Eldritch Invocations\n3 — Pact Boon\n6+ — patron features\n11 — Mystic Arcanum (6th)\n17 — Mystic Arcanum (9th)\n20 — Eldritch Master",
   "spellcasting": "Pact Magic (CHA). Few slots, all at same level, recover on short rest. Invocations expand options.",
-  "subclasses": [
-    "The Archfey",
-    "The Fiend",
-    "The Great Old One"
-  ],
   "notes": "Pact Boons: Chain, Blade, or Tome.",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-warlock-archfey|The Archfey",
+    "@class:subclass-warlock-fiend|The Fiend",
+    "@class:subclass-warlock-great-old-one|The Great Old One"
+  ]
 }

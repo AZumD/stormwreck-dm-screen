@@ -1,0 +1,17 @@
+{
+  "id": "sw-rations",
+  "name": "Fältranson, 1 dag",
+  "itemType": "Proviant",
+  "rarity": "Vanlig",
+  "value": "5 sp",
+  "weight": "2 lb",
+  "attunement": false,
+  "description": "Hållbar mat för en dags resa: torkat kött, hårt bröd, nötter, torkad frukt och liknande.",
+  "properties": "Räcker som mat för en person under en dag.",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "sw-wooden-kasa",
+  "name": "Träkåsa",
+  "itemType": "Personlig utrustning",
+  "rarity": "Vanlig",
+  "value": "1 sp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En liten handskuren träkåsa med kort skaft och hål för läderrem.",
+  "properties": "Används som kopp, skopa eller liten skål.",
+  "notes": "Sliten mjuk efter lång användning och mörkare kring kanten från varma drycker.",
+  "updatedAt": 1786919681387,
+  "portrait": "",
+  "category": "Container & Storage",
+  "tags": []
+}

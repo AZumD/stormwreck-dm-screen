@@ -1,0 +1,13 @@
+{
+  "id": "subclass-rogue-arcane-trickster",
+  "name": "Arcane Trickster",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-rogue|Rogue",
+  "source": "Core rules",
+  "summary": "1/3 wizard spellcasting focused on enchantment and illusion.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

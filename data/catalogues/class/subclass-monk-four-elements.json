@@ -1,0 +1,13 @@
+{
+  "id": "subclass-monk-four-elements",
+  "name": "Way of the Four Elements",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-monk|Monk",
+  "source": "Core rules",
+  "summary": "Spend ki on elemental disciplines resembling spells.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

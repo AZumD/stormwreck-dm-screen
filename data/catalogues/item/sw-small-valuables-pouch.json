@@ -1,0 +1,18 @@
+{
+  "id": "sw-small-valuables-pouch",
+  "name": "Samlarpung",
+  "itemType": "Behållare",
+  "rarity": "Vanlig",
+  "value": "2 sp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En mjuk läderpung med dragsnöre för mynt, små värdesaker, märkliga fynd och personliga troféer.",
+  "properties": "",
+  "notes": "Innehållet är en blandning av pengar och fullständigt obegripliga småsaker som bara ägaren vet värdet på.",
+  "updatedAt": 1786919236511,
+  "category": "Container & Storage",
+  "tags": [
+    "treasure",
+    "Stormwreck Isle"
+  ]
+}

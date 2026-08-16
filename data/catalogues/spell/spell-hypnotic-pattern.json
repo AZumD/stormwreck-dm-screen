@@ -15,5 +15,6 @@
   "description": "WIS save or charmed and incapacitated with speed 0. Ends for a creature if it takes damage or someone uses an action to shake it.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

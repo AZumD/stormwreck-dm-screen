@@ -1,0 +1,13 @@
+{
+  "id": "subclass-cleric-life",
+  "name": "Life Domain",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-cleric|Cleric",
+  "source": "Core rules",
+  "summary": "Supreme healing domain — Disciple of Life and Preserve Life.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

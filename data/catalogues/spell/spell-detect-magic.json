@@ -15,5 +15,6 @@
   "description": "Feel presence of magic in 30 ft. Action to see faint aura around visible magical objects/creatures and learn school.",
   "higherLevels": "",
   "notes": "Blocked by 1 ft stone, 1 inch metal, etc.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

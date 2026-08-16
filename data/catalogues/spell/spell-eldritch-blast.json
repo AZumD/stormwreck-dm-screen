@@ -15,5 +15,6 @@
   "description": "Ranged spell attack for 1d10 force. Extra beams at 5th (2), 11th (3), 17th (4); beams can target same or different creatures.",
   "higherLevels": "Beam count scales with character level.",
   "notes": "Often paired with Agonizing Blast invocation.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -83,9 +83,15 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/campaign-app.js` | Campaign screen controller |
 
+## Catalogues
+- Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)
+- Items use controlled `category` + freeform `itemType` / `tags`
+- Race catalogue holds species + subspecies (`@race:`); class catalogue holds class + subclass (`@class:`)
+- Locations may nest via `parentLocationRef`; monsters carry `source` / `tags`
+
 ## Tests
 ```bash
 npm test
 ```
-Also: `test/validate-*.js` Node validators (`validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
+Also: `test/validate-*.js` Node validators (`validate-catalogue-taxonomy`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
 

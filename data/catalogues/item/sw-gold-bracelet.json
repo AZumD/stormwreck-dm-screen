@@ -1,0 +1,18 @@
+{
+  "id": "sw-gold-bracelet",
+  "name": "Litet guldarmband",
+  "itemType": "Smycke",
+  "rarity": "Vanlig",
+  "value": "25 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "Ett litet guldarmband som fortfarande glänser trots år av salt, vind och sjöfåglar.",
+  "properties": "",
+  "notes": "Finns bland skräpet i harpyns bo högst upp i Compass Roses mast.",
+  "updatedAt": 1786918771752,
+  "category": "Treasure & Valuable",
+  "tags": [
+    "jewelry",
+    "Stormwreck Isle"
+  ]
+}

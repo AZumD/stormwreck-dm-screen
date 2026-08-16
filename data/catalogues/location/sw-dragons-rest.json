@@ -22,5 +22,12 @@
     "Dragons of Stormwreck Isle — Chapter 1"
   ],
   "notes": "All adventure sites are a few miles away. Party gets free room and board. Protection aura in temple.",
-  "updatedAt": 1786752801503
+  "updatedAt": 1786918771752,
+  "locationType": "Settlement",
+  "parentLocationRef": "@location:sw-stormwreck-isle|Stormwreck Isle",
+  "tags": [
+    "cloister",
+    "sanctuary",
+    "Stormwreck Isle"
+  ]
 }

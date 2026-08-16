@@ -1,0 +1,17 @@
+{
+  "id": "sw-silver-bar",
+  "name": "Silvertacka",
+  "itemType": "Handelsvara",
+  "rarity": "Vanlig",
+  "value": "5 gp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En liten gjuten tacka av silver.",
+  "properties": "",
+  "notes": "Tio sådana tackor kan hittas tillsammans i en lastlåda på Compass Rose.",
+  "updatedAt": 1786918771752,
+  "category": "Trade Good",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

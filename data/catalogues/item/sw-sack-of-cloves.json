@@ -1,0 +1,17 @@
+{
+  "id": "sw-sack-of-cloves",
+  "name": "Säck med kryddnejlika",
+  "itemType": "Handelsvara",
+  "rarity": "Vanlig",
+  "value": "60 gp",
+  "weight": "20 lb",
+  "attunement": false,
+  "description": "En tung säck fylld med hel torkad kryddnejlika, fortfarande värdefull trots lång tid till sjöss.",
+  "properties": "",
+  "notes": "En möjlig last i Compass Roses nedre däck.",
+  "updatedAt": 1786918771752,
+  "category": "Trade Good",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

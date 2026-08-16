@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-gnome-rock",
+  "name": "Rock Gnome",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-gnome|Gnome",
+  "size": "Small",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Rock gnomes invent tiny devices and excel with magical technology.",
+  "abilityScoreIncrease": "CON +1 (plus Gnome INT +2)",
+  "featureRefs": [],
+  "traits": "Artificer's Lore — double proficiency on History checks related to magic items, alchemical objects, or technological devices.\nTinker — spend 1 hour and 10 gp to create a Tiny clockwork device (Clockwork Toy, Fire Starter, or Music Box).",
+  "languages": "Common, Gnomish",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

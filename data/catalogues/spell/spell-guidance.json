@@ -15,5 +15,6 @@
   "description": "Touched willing creature can add 1d4 to one ability check of its choice before the spell ends.",
   "higherLevels": "",
   "notes": "Concentration — drops if you cast another concentration spell.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

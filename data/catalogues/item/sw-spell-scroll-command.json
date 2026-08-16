@@ -1,0 +1,19 @@
+{
+  "id": "sw-spell-scroll-command",
+  "name": "Besvärjelsepergament: Command",
+  "itemType": "Besvärjelsepergament",
+  "rarity": "Vanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Ett mystiskt pergament förseglat i ett skyddande läderfodral.",
+  "properties": "Innehåller besvärjelsen Command och förbrukas när besvärjelsen kastas från pergamentet.",
+  "notes": "En möjlig last i Compass Roses nedre däck.",
+  "updatedAt": 1786918771752,
+  "category": "Consumable",
+  "tags": [
+    "magic",
+    "scroll",
+    "Stormwreck Isle"
+  ]
+}

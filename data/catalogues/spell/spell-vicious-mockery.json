@@ -15,5 +15,6 @@
   "description": "WIS save or take 1d4 psychic (scales) and disadvantage on its next attack roll before your next turn. Target must hear you.",
   "higherLevels": "Damage increases at levels 5, 11, and 17.",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

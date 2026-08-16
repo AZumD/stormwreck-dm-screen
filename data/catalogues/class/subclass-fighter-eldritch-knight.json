@@ -1,0 +1,13 @@
+{
+  "id": "subclass-fighter-eldritch-knight",
+  "name": "Eldritch Knight",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-fighter|Fighter",
+  "source": "Core rules",
+  "summary": "1/3 wizard spellcasting bonded to weapons.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

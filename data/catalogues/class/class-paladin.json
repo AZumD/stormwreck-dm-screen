@@ -15,11 +15,12 @@
   ],
   "features": "1 — Divine Sense, Lay on Hands\n2 — Fighting Style, Spellcasting, @feature:divine-smite|Divine Smite\n3 — Divine Health, Sacred Oath\n5 — Extra Attack\n6 — Aura of Protection\n10 — Aura of Courage\n11 — Improved Divine Smite\n14 — Cleansing Touch\nOath features at 3/7/15/20",
   "spellcasting": "Half caster (CHA). Prepare from paladin list. Oath spells always prepared.",
-  "subclasses": [
-    "Oath of Devotion",
-    "Oath of the Ancients",
-    "Oath of Vengeance"
-  ],
   "notes": "Divine Smite spends spell slots for radiant damage on hit.",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-paladin-devotion|Oath of Devotion",
+    "@class:subclass-paladin-ancients|Oath of the Ancients",
+    "@class:subclass-paladin-vengeance|Oath of Vengeance"
+  ]
 }

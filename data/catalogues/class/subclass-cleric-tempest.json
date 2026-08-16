@@ -1,0 +1,13 @@
+{
+  "id": "subclass-cleric-tempest",
+  "name": "Tempest Domain",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-cleric|Cleric",
+  "source": "Core rules",
+  "summary": "Thunder and lightning domain with Wrath of the Storm.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -1,0 +1,13 @@
+{
+  "id": "subclass-fighter-battle-master",
+  "name": "Battle Master",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-fighter|Fighter",
+  "source": "Core rules",
+  "summary": "Maneuvers fueled by superiority dice for battlefield control.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

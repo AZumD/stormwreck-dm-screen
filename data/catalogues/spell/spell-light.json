@@ -15,5 +15,6 @@
   "description": "Touched object (or object worn/carried by unwilling creature after DEX save) sheds light. Ends if cast again.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

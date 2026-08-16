@@ -1,0 +1,13 @@
+{
+  "id": "subclass-paladin-devotion",
+  "name": "Oath of Devotion",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-paladin|Paladin",
+  "source": "Core rules",
+  "summary": "Sacred Weapon and Turn the Unholy — classic righteous knight.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

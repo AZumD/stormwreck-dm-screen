@@ -1,0 +1,13 @@
+{
+  "id": "subclass-paladin-vengeance",
+  "name": "Oath of Vengeance",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-paladin|Paladin",
+  "source": "Core rules",
+  "summary": "Hunter of wrongdoers — Vow of Enmity and Relentless Avenger.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

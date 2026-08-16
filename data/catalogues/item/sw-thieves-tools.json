@@ -1,0 +1,17 @@
+{
+  "id": "sw-thieves-tools",
+  "name": "Tjuvverktyg",
+  "itemType": "Verktyg",
+  "rarity": "Vanlig",
+  "value": "25 gp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "Dyrkar, små filar, tänger, saxar och andra instrument för lås och mekaniska fällor.",
+  "properties": "Används bland annat för att dyrka lås och desarmera vissa fällor.",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Tool & Kit",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

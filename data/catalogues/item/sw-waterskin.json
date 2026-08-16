@@ -1,0 +1,17 @@
+{
+  "id": "sw-waterskin",
+  "name": "Vattenskinn",
+  "itemType": "Behållare",
+  "rarity": "Vanlig",
+  "value": "2 sp",
+  "weight": "5 lb",
+  "attunement": false,
+  "description": "En förseglad läderbehållare för dricksvatten.",
+  "properties": "Rymmer ungefär 4 pints vätska.",
+  "notes": "Angiven vikt gäller ungefär när behållaren är fylld.",
+  "updatedAt": 1786918771752,
+  "category": "Container & Storage",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

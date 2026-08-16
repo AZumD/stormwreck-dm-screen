@@ -1,0 +1,18 @@
+{
+  "id": "sw-herb-bloodkeep",
+  "name": "Blodstilla",
+  "itemType": "Råmaterial / Ört",
+  "rarity": "Vanlig",
+  "value": "5 sp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En mörkröd, taggig växt vars blad känns tjocka och läderartade. Krossar man stjälken luktar den intensivt av järn och fuktig jord.",
+  "properties": "Kan tuggas till en tjock pasta. Appliceras den på sår stabiliserar den omedelbart en döende varelse.",
+  "notes": "Växer uteslutande där blod har spillts. Färgar fingrarna permanent röda om man inte bär handskar när man plockar den.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "Stormwreck Isle"
+  ]
+}

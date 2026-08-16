@@ -1,0 +1,19 @@
+{
+  "id": "sw-bone-utensils",
+  "name": "Bestick av ben",
+  "itemType": "Personlig utrustning",
+  "rarity": "Vanlig",
+  "value": "1 sp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En enkel sked och ett litet ätverktyg utskurna ur polerat djurben.",
+  "properties": "",
+  "notes": "Hemmagjorda. Små märken i benen visar var verktygen slipats och reparerats.",
+  "updatedAt": 1786919560116,
+  "category": "Adventuring Gear",
+  "tags": [
+    "trinket",
+    "Stormwreck Isle"
+  ],
+  "portrait": ""
+}

@@ -1,0 +1,15 @@
+{
+  "id": "sw-small-game-snare",
+  "name": "Smådjursfälla",
+  "itemType": "Jaktutrustning",
+  "category": "Adventuring Gear",
+  "tags": ["survival", "hunting", "Stormwreck Isle"],
+  "rarity": "Vanlig",
+  "value": "5 sp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En enkel hopvikbar snara av rep, trä och böjliga grenar för att fånga kaniner, fåglar och andra smådjur.",
+  "properties": "Kan sättas upp under en kort rast eller längre lägeruppehåll. Kräver lämplig terräng och bete för att vara effektiv.",
+  "notes": "Avsedd för föda och överlevnad, inte strid.",
+  "updatedAt": 1786918560000
+}

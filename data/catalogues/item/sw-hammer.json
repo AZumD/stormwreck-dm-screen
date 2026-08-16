@@ -1,0 +1,17 @@
+{
+  "id": "sw-hammer",
+  "name": "Hammare",
+  "itemType": "Verktyg",
+  "rarity": "Vanlig",
+  "value": "1 gp",
+  "weight": "3 lb",
+  "attunement": false,
+  "description": "En vanlig arbetshammare för spik, kilar och diverse brutalt praktiska lösningar.",
+  "properties": "",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

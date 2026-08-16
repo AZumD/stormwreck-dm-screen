@@ -1,0 +1,13 @@
+{
+  "id": "subclass-monk-open-hand",
+  "name": "Way of the Open Hand",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-monk|Monk",
+  "source": "Core rules",
+  "summary": "Flurry control effects and Quivering Palm.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -9,5 +9,10 @@
   "description": "A fine magnetic compass from the Compass Rose captain's quarters.",
   "properties": "Compass Rose C4 treasure.",
   "notes": "Found with 50 gp, cartographer's tools, and a dagger.",
-  "updatedAt": 1786752801540
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "nautical",
+    "Stormwreck Isle"
+  ]
 }

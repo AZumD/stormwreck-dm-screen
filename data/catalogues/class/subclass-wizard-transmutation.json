@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-transmutation",
+  "name": "School of Transmutation",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Transmuter's Stone and shapechanging mastery.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -1,0 +1,13 @@
+{
+  "id": "subclass-cleric-trickery",
+  "name": "Trickery Domain",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-cleric|Cleric",
+  "source": "Core rules",
+  "summary": "Illusion and deception — Blessing of the Trickster and Invoke Duplicity.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

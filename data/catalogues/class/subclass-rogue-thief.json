@@ -1,0 +1,13 @@
+{
+  "id": "subclass-rogue-thief",
+  "name": "Thief",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-rogue|Rogue",
+  "source": "Core rules",
+  "summary": "Fast Hands and Second-Story Work for infiltration.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

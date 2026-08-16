@@ -1,0 +1,13 @@
+{
+  "id": "subclass-bard-lore",
+  "name": "College of Lore",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-bard|Bard",
+  "source": "Core rules",
+  "summary": "Cutting Words and Magical Secrets — versatile knowledge and spell theft.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

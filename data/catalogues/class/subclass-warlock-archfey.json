@@ -1,0 +1,13 @@
+{
+  "id": "subclass-warlock-archfey",
+  "name": "The Archfey",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-warlock|Warlock",
+  "source": "Core rules",
+  "summary": "Fey patron — Fey Presence and misty escape options.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

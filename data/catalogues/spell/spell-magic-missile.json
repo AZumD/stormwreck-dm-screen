@@ -15,5 +15,6 @@
   "description": "Three darts; each deals 1d4+1 force. Same or different targets you can see.",
   "higherLevels": "+1 dart per slot above 1st.",
   "notes": "Shield spell blocks it.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

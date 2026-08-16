@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-divination",
+  "name": "School of Divination",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Portent dice rewrite rolls; third eye senses.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

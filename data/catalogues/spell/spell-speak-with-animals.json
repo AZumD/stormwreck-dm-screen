@@ -15,5 +15,6 @@
   "description": "Beasts can give information about nearby locations and monsters; limited by intelligence and attitude.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

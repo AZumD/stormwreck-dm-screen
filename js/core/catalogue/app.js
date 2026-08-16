@@ -24,16 +24,47 @@ window.CatalogueApp = (function () {
   }
 
   function listSummary(entry, config) {
+    if (Array.isArray(config.listMeta) && config.listMeta.length) {
+      const bits = config.listMeta
+        .map((key) => {
+          if (key === "level" && (entry.level === "0" || String(entry.level).toLowerCase() === "cantrip")) {
+            return "Cantrip";
+          }
+          if (key === "level" && entry.level != null && entry.level !== "") return `Lv ${entry.level}`;
+          if (key === "cr" && entry.cr) return `CR ${entry.cr}`;
+          if (key === "entryKind") {
+            const labels = config.entryKindLabels || config.groupLabels || {};
+            const raw = entry.entryKind || "";
+            return labels[raw] || raw;
+          }
+          const v = entry[key];
+          if (Array.isArray(v)) return v.filter(Boolean).slice(0, 2).join(", ");
+          return v;
+        })
+        .filter(Boolean)
+        .map(String);
+      if (bits.length) return bits.join(" · ");
+    }
     if (config.type === "pc") {
       const bits = [entry.class, entry.level ? `Lv ${entry.level}` : ""].filter(Boolean);
       return bits.join(" · ") || "Player character";
     }
     if (config.type === "npc") return entry.role || entry.summary?.slice(0, 60) || "NPC";
-    if (config.type === "item") return [entry.itemType, entry.rarity].filter(Boolean).join(" · ") || "Item";
+    if (config.type === "item") {
+      return [entry.category, entry.itemType, entry.rarity].filter(Boolean).join(" · ") || "Item";
+    }
     if (config.type === "monster") return [entry.size, entry.creatureType, entry.cr ? `CR ${entry.cr}` : ""].filter(Boolean).join(" · ") || "Monster";
-    if (config.type === "location") return entry.featuredIn?.[0] ? `Featured in ${entry.featuredIn[0]}` : "Location";
-    if (config.type === "race") return [entry.size, entry.speed].filter(Boolean).join(" · ") || "Race";
-    if (config.type === "class") return [entry.hitDie, entry.primaryAbility].filter(Boolean).join(" · ") || "Class";
+    if (config.type === "location") {
+      return [entry.locationType, entry.featuredIn?.[0] ? `Featured in ${entry.featuredIn[0]}` : ""].filter(Boolean).join(" · ") || "Location";
+    }
+    if (config.type === "race") {
+      const kind = entry.entryKind === "subspecies" ? "Subspecies" : entry.entryKind === "species" ? "Species" : "";
+      return [kind, entry.size, entry.speed].filter(Boolean).join(" · ") || "Race";
+    }
+    if (config.type === "class") {
+      if (entry.entryKind === "subclass") return "Subclass";
+      return [entry.hitDie, entry.primaryAbility].filter(Boolean).join(" · ") || "Class";
+    }
     if (config.type === "skill") return entry.defaultAbility || entry.summary?.slice(0, 60) || "Skill";
     if (config.type === "feature") {
       return [entry.featureType, entry.levelPrerequisite ? `Lv ${entry.levelPrerequisite}` : ""].filter(Boolean).join(" · ") || "Feature";
@@ -43,6 +74,117 @@ window.CatalogueApp = (function () {
       return [lvl, entry.school].filter(Boolean).join(" · ") || "Spell";
     }
     return "";
+  }
+
+  function matchesShowWhen(condition, entry) {
+    if (!condition || typeof condition !== "object") return true;
+    const field = condition.field;
+    if (!field) return true;
+    const value = entry?.[field];
+    if (Object.prototype.hasOwnProperty.call(condition, "equals")) {
+      return String(value ?? "") === String(condition.equals);
+    }
+    if (Object.prototype.hasOwnProperty.call(condition, "notEquals")) {
+      return String(value ?? "") !== String(condition.notEquals);
+    }
+    if (Array.isArray(condition.in)) {
+      return condition.in.map(String).includes(String(value ?? ""));
+    }
+    return true;
+  }
+
+  function isSectionVisible(section, entry) {
+    return matchesShowWhen(section.showWhen, entry);
+  }
+
+  function isFieldVisible(field, entry) {
+    return matchesShowWhen(field.showWhen, entry);
+  }
+
+  function facetValue(entry, fieldId) {
+    const raw = entry?.[fieldId];
+    if (raw == null) return "";
+    if (Array.isArray(raw)) return raw.filter(Boolean).map(String).join(", ");
+    return String(raw).trim();
+  }
+
+  function groupKeyForEntry(entry, groupBy) {
+    const raw = facetValue(entry, groupBy);
+    return raw || "";
+  }
+
+  function groupLabel(config, key) {
+    const labels = config.groupLabels || {};
+    if (Object.prototype.hasOwnProperty.call(labels, key)) return labels[key];
+    if (!key) return labels[""] || "Uncategorized";
+    return key;
+  }
+
+  function buildSearchHaystack(entry, config) {
+    const fields = Array.isArray(config.searchFields) && config.searchFields.length
+      ? config.searchFields
+      : null;
+    const values = [];
+    if (fields) {
+      fields.forEach((key) => {
+        const v = entry[key];
+        if (Array.isArray(v)) values.push(...v.filter(Boolean));
+        else if (v != null && String(v).trim()) values.push(String(v));
+      });
+    } else {
+      [
+        entry.name,
+        entry.role,
+        entry.summary,
+        entry.itemType,
+        entry.category,
+        entry.creatureType,
+        entry.class,
+        entry.size,
+        entry.hitDie,
+        entry.primaryAbility,
+        entry.source,
+        entry.school,
+        entry.level,
+        entry.classes,
+        entry.defaultAbility,
+        entry.featureType,
+        entry.grantedBy,
+        entry.entryKind,
+        entry.parentClassRef,
+        entry.parentSpeciesRef,
+        entry.parentLocationRef,
+        entry.locationType,
+        entry.rarity,
+        ...(Array.isArray(entry.tags) ? entry.tags : []),
+        ...(Array.isArray(entry.classRefs) ? entry.classRefs : [])
+      ]
+        .filter(Boolean)
+        .forEach((v) => values.push(String(v)));
+    }
+    return values.join(" ").toLowerCase();
+  }
+
+  function selectOptionsHtml(field, current) {
+    const options = Array.isArray(field.options) ? field.options : [];
+    const normalized = options.map((opt) => {
+      if (opt && typeof opt === "object") {
+        return { value: String(opt.value ?? ""), label: String(opt.label ?? opt.value ?? "") };
+      }
+      return { value: String(opt), label: String(opt) };
+    });
+    const known = new Set(normalized.map((o) => o.value));
+    const extra =
+      current !== undefined && current !== null && String(current) !== "" && !known.has(String(current))
+        ? `<option value="${escapeHtml(String(current))}" selected>${escapeHtml(String(current))}</option>`
+        : "";
+    const opts = normalized
+      .map((opt) => {
+        const selected = String(opt.value) === String(current ?? "") ? " selected" : "";
+        return `<option value="${escapeHtml(opt.value)}"${selected}>${escapeHtml(opt.label)}</option>`;
+      })
+      .join("");
+    return `${extra}${opts}`;
   }
 
   function formatWikiText(text) {
@@ -162,8 +304,12 @@ window.CatalogueApp = (function () {
       : "";
 
     const sections = config.sections
+      .filter((section) => isSectionVisible(section, entry))
       .map((section) => {
-        const visible = section.fields.filter((f) => !skipIds.has(f.id) && !isEmptyFieldValue(entry[f.id], f));
+        const visible = section.fields.filter(
+          (f) =>
+            isFieldVisible(f, entry) && !skipIds.has(f.id) && !isEmptyFieldValue(entry[f.id], f)
+        );
         if (!visible.length) return "";
 
         const allAbilities = visible.every((f) => ABILITY_IDS.has(f.id));
@@ -315,20 +461,11 @@ window.CatalogueApp = (function () {
     }
 
     if (field.type === "select") {
-      const options = Array.isArray(field.options) ? field.options : [];
-      const current = value ?? "";
-      const opts = options
-        .map((opt) => {
-          const selected = String(opt) === String(current) ? " selected" : "";
-          return `<option value="${escapeHtml(opt)}"${selected}>${escapeHtml(opt)}</option>`;
-        })
-        .join("");
       return `
         <div class="${gridClass}">
           <label for="field-${field.id}">${escapeHtml(field.label)}</label>
           <select id="field-${field.id}" name="${field.id}">
-            ${current && !options.includes(current) ? `<option value="${escapeHtml(current)}" selected>${escapeHtml(current)}</option>` : ""}
-            ${opts}
+            ${selectOptionsHtml(field, value ?? "")}
           </select>
         </div>`;
     }
@@ -360,13 +497,17 @@ window.CatalogueApp = (function () {
 
   function renderForm(entry, config) {
     const sections = config.sections
-      .map(
-        (section) => `
+      .filter((section) => isSectionVisible(section, entry))
+      .map((section) => {
+        const fields = section.fields.filter((f) => isFieldVisible(f, entry));
+        if (!fields.length) return "";
+        return `
         <section class="cat-section">
           <h3 class="cat-section__title">${escapeHtml(section.title)}</h3>
-          <div class="cat-grid">${section.fields.map((f) => renderField(f, entry)).join("")}</div>
-        </section>`
-      )
+          <div class="cat-grid">${fields.map((f) => renderField(f, entry)).join("")}</div>
+        </section>`;
+      })
+      .filter(Boolean)
       .join("");
 
     return `
@@ -380,6 +521,73 @@ window.CatalogueApp = (function () {
         </div>
         ${sections}
       </form>`;
+  }
+
+  function facetOptionValues(facet, entries) {
+    if (Array.isArray(facet.options) && facet.options.length) {
+      return facet.options.map((opt) => {
+        if (opt && typeof opt === "object") {
+          return { value: String(opt.value ?? ""), label: String(opt.label ?? opt.value ?? "") };
+        }
+        return { value: String(opt), label: String(opt) };
+      });
+    }
+    const seen = new Map();
+    entries.forEach((entry) => {
+      const raw = entry?.[facet.id];
+      const values = Array.isArray(raw) ? raw : [raw];
+      values.forEach((v) => {
+        const key = v == null ? "" : String(v).trim();
+        if (!key) return;
+        if (!seen.has(key)) seen.set(key, key);
+      });
+    });
+    return [...seen.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([value, label]) => ({ value, label }));
+  }
+
+  function matchesFacet(entry, facet, selected) {
+    if (!selected) return true;
+    const raw = entry?.[facet.id];
+    if (Array.isArray(raw)) return raw.map(String).includes(selected);
+    return String(raw ?? "").trim() === selected;
+  }
+
+  function sortGroupKeys(keys, config) {
+    const order = Array.isArray(config.groupOrder) ? config.groupOrder : null;
+    return keys.slice().sort((a, b) => {
+      if (a === "" && b !== "") return 1;
+      if (b === "" && a !== "") return -1;
+      if (order) {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        if (ia !== -1 || ib !== -1) {
+          if (ia === -1) return 1;
+          if (ib === -1) return -1;
+          if (ia !== ib) return ia - ib;
+        }
+      }
+      return groupLabel(config, a).localeCompare(groupLabel(config, b), undefined, {
+        sensitivity: "base"
+      });
+    });
+  }
+
+  function renderEntryButton(e, config, activeId) {
+    const thumb = e.portrait
+      ? `<img class="cat-list-item__thumb" src="${e.portrait}" alt="">`
+      : e.mapImage
+        ? `<img class="cat-list-item__thumb cat-list-item__thumb--map" src="${e.mapImage}" alt="">`
+        : `<span class="cat-list-item__icon" aria-hidden="true">${config.listIcon}</span>`;
+    return `
+        <button type="button" class="cat-list-item${e.id === activeId ? " is-active" : ""}" data-id="${escapeHtml(e.id)}">
+          ${thumb}
+          <span class="cat-list-item__body">
+            <span class="cat-list-item__name">${escapeHtml(e.name || "Untitled")}</span>
+            <span class="cat-list-item__meta">${escapeHtml(listSummary(e, config))}</span>
+          </span>
+        </button>`;
   }
 
   /** Resize/compress large photos; IndexedDB allows much bigger final sizes */
@@ -489,6 +697,11 @@ window.CatalogueApp = (function () {
     let saveTimer = null;
     /** fieldId → data URL for the open form (avoids huge HTML attributes) */
     let imageCache = {};
+    /** facetId → selected value ("" = All) */
+    const facetState = {};
+    (config.facets || []).forEach((f) => {
+      facetState[f.id] = "";
+    });
 
     function fieldConfig(fieldId) {
       for (const section of config.sections) {
@@ -498,62 +711,100 @@ window.CatalogueApp = (function () {
       return null;
     }
 
-    function entries() {
-      const q = (searchEl?.value || "").trim().toLowerCase();
-      const list = window.CatalogueImages
+    function allEntries() {
+      return window.CatalogueImages
         ? CatalogueImages.hydrateAll(type, CatalogueStore.list(type))
         : CatalogueStore.list(type);
-      return list.filter((e) => {
+    }
+
+    function entries() {
+      const q = (searchEl?.value || "").trim().toLowerCase();
+      const facets = Array.isArray(config.facets) ? config.facets : [];
+      return allEntries().filter((e) => {
+        for (const facet of facets) {
+          if (!matchesFacet(e, facet, facetState[facet.id] || "")) return false;
+        }
         if (!q) return true;
-        const hay = [
-          e.name,
-          e.role,
-          e.summary,
-          e.itemType,
-          e.creatureType,
-          e.class,
-          e.size,
-          e.hitDie,
-          e.primaryAbility,
-          e.source,
-          e.school,
-          e.level,
-          e.classes,
-          e.defaultAbility,
-          e.featureType,
-          e.grantedBy,
-          ...(Array.isArray(e.tags) ? e.tags : [])
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q);
+        return buildSearchHaystack(e, config).includes(q);
+      });
+    }
+
+    function ensureFacetControls() {
+      const tools = searchEl?.closest(".catalogue-sidebar__tools");
+      if (!tools || !Array.isArray(config.facets) || !config.facets.length) return;
+      let host = tools.querySelector("[data-cat-facets]");
+      if (!host) {
+        host = document.createElement("div");
+        host.className = "cat-facets";
+        host.setAttribute("data-cat-facets", "");
+        searchEl.insertAdjacentElement("afterend", host);
+      }
+      const pool = allEntries();
+      host.innerHTML = config.facets
+        .map((facet) => {
+          const opts = facetOptionValues(facet, pool);
+          const selected = facetState[facet.id] || "";
+          const optionHtml = [
+            `<option value="">All</option>`,
+            ...opts.map((opt) => {
+              const sel = opt.value === selected ? " selected" : "";
+              return `<option value="${escapeHtml(opt.value)}"${sel}>${escapeHtml(opt.label)}</option>`;
+            })
+          ].join("");
+          return `
+            <label class="cat-facet">
+              <span class="cat-facet__label">${escapeHtml(facet.label || facet.id)}</span>
+              <select class="cat-facet__select" data-facet-id="${escapeHtml(facet.id)}">${optionHtml}</select>
+            </label>`;
+        })
+        .join("");
+
+      host.querySelectorAll("[data-facet-id]").forEach((select) => {
+        select.addEventListener("change", () => {
+          facetState[select.dataset.facetId] = select.value || "";
+          renderList();
+        });
       });
     }
 
     function renderList() {
+      ensureFacetControls();
       const items = entries();
       if (!items.length) {
-        listEl.innerHTML = `<p class="cat-list-empty">No entries yet. Click <strong>${escapeHtml(config.newLabel)}</strong>.</p>`;
+        const total = allEntries().length;
+        listEl.innerHTML = total
+          ? `<p class="cat-list-empty">No matching entries.</p>`
+          : `<p class="cat-list-empty">No entries yet. Click <strong>${escapeHtml(config.newLabel)}</strong>.</p>`;
         return;
       }
 
-      listEl.innerHTML = items
-        .map((e) => {
-          const thumb = e.portrait
-            ? `<img class="cat-list-item__thumb" src="${e.portrait}" alt="">`
-            : e.mapImage
-              ? `<img class="cat-list-item__thumb cat-list-item__thumb--map" src="${e.mapImage}" alt="">`
-              : `<span class="cat-list-item__icon" aria-hidden="true">${config.listIcon}</span>`;
+      const groupBy = config.groupBy;
+      if (!groupBy) {
+        listEl.innerHTML = items.map((e) => renderEntryButton(e, config, activeId)).join("");
+        return;
+      }
+
+      const groups = new Map();
+      items.forEach((e) => {
+        const key = groupKeyForEntry(e, groupBy);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(e);
+      });
+
+      const keys = sortGroupKeys([...groups.keys()], config);
+      listEl.innerHTML = keys
+        .map((key) => {
+          const rows = groups.get(key) || [];
+          if (!rows.length) return "";
           return `
-        <button type="button" class="cat-list-item${e.id === activeId ? " is-active" : ""}" data-id="${escapeHtml(e.id)}">
-          ${thumb}
-          <span class="cat-list-item__body">
-            <span class="cat-list-item__name">${escapeHtml(e.name || "Untitled")}</span>
-            <span class="cat-list-item__meta">${escapeHtml(listSummary(e, config))}</span>
-          </span>
-        </button>`;
+            <div class="cat-list-group">
+              <div class="cat-list-group__title">${escapeHtml(groupLabel(config, key))}</div>
+              <div class="cat-list-group__items">
+                ${rows.map((e) => renderEntryButton(e, config, activeId)).join("")}
+              </div>
+            </div>`;
         })
+        .filter(Boolean)
         .join("");
     }
 
@@ -702,6 +953,21 @@ window.CatalogueApp = (function () {
 
       form.addEventListener("change", (e) => {
         if (e.target.matches("[data-image-input]")) return;
+        const name = e.target.getAttribute("name");
+        const showWhenFields = new Set();
+        config.sections.forEach((section) => {
+          if (section.showWhen?.field) showWhenFields.add(section.showWhen.field);
+          section.fields.forEach((field) => {
+            if (field.showWhen?.field) showWhenFields.add(field.showWhen.field);
+          });
+        });
+        if (name && showWhenFields.has(name)) {
+          clearTimeout(saveTimer);
+          saveCurrent(form).then((ok) => {
+            if (ok) renderEditor(activeId, { mode: "edit" });
+          });
+          return;
+        }
         scheduleSave();
       });
 
@@ -903,5 +1169,17 @@ window.CatalogueApp = (function () {
     start();
   }
 
-  return { init };
+  return {
+    init,
+    /* Exported for tests / tooling — browsing helpers stay config-driven */
+    _test: {
+      matchesShowWhen,
+      buildSearchHaystack,
+      matchesFacet,
+      groupKeyForEntry,
+      groupLabel,
+      sortGroupKeys,
+      facetValue
+    }
+  };
 })();

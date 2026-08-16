@@ -23,5 +23,12 @@
     "Dragons of Stormwreck Isle — Chapter 2"
   ],
   "notes": "Reach by rowboat (5 mi, ~3 hr 20 min) or coastal walk (7 mi, ~2 hr 20 min).\n\nTides: Low midnight–sunrise & noon–sunset; High sunrise–noon & sunset–midnight.\n\nDC 20 Charisma to parley with myconids; Tarak mention = advantage.",
-  "updatedAt": 1786752801503
+  "updatedAt": 1786918771752,
+  "locationType": "Cave",
+  "parentLocationRef": "@location:sw-stormwreck-isle|Stormwreck Isle",
+  "tags": [
+    "myconid",
+    "elemental",
+    "Stormwreck Isle"
+  ]
 }

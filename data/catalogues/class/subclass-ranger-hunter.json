@@ -1,0 +1,13 @@
+{
+  "id": "subclass-ranger-hunter",
+  "name": "Hunter",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-ranger|Ranger",
+  "source": "Core rules",
+  "summary": "Choose Colossus Slayer, Giant Killer, or Horde Breaker features.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

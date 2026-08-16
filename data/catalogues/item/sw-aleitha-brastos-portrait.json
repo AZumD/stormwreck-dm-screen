@@ -1,0 +1,18 @@
+{
+  "id": "sw-aleitha-brastos-portrait",
+  "name": "Porträtt av Aleitha och Brastos",
+  "itemType": "Kuriosa",
+  "rarity": "Vanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Ett bleknat målat porträtt av ett ungt par som ler och håller om varandra.",
+  "properties": "",
+  "notes": "Hänger i besättningens kvarter på Compass Rose. Bilden identifierar kvinnan som sjömannen Aleitha och mannen som Brastos.",
+  "updatedAt": 1786918771752,
+  "category": "Trinket & Curio",
+  "tags": [
+    "nautical",
+    "Stormwreck Isle"
+  ]
+}

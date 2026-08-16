@@ -15,11 +15,12 @@
   ],
   "features": "1 — Expertise, @feature:sneak-attack|Sneak Attack, Thieves' Cant\n2 — Cunning Action\n3 — Roguish Archetype\n5 — Uncanny Dodge\n6 — Expertise\n7 — Evasion\n11 — Reliable Talent\n14 — Blindsense\n15 — Slippery Mind\n18 — Elusive\n20 — Stroke of Luck",
   "spellcasting": "Arcane Trickster only (INT, 1/3 caster).",
-  "subclasses": [
-    "Thief",
-    "Assassin",
-    "Arcane Trickster"
-  ],
   "notes": "Sneak Attack dice scale with level; need finesse/ranged + advantage or ally within 5 ft.",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-rogue-thief|Thief",
+    "@class:subclass-rogue-assassin|Assassin",
+    "@class:subclass-rogue-arcane-trickster|Arcane Trickster"
+  ]
 }

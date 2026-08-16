@@ -232,6 +232,33 @@ window.CatalogueConfigs = {
     newLabel: "New item",
     searchPlaceholder: "Search items…",
     listIcon: "✦",
+    searchFields: ["name", "category", "itemType", "rarity", "tags", "description", "properties", "notes", "value"],
+    facets: [
+      { id: "category", label: "Category" },
+      { id: "rarity", label: "Rarity" }
+    ],
+    groupBy: "category",
+    groupOrder: [
+      "Weapon",
+      "Armor & Shield",
+      "Ammunition",
+      "Adventuring Gear",
+      "Tool & Kit",
+      "Consumable",
+      "Ingredient & Material",
+      "Wondrous Item",
+      "Treasure & Valuable",
+      "Document & Lore",
+      "Container & Storage",
+      "Trade Good",
+      "Trinket & Curio",
+      "Junk & Salvage",
+      "Hazard & Trap",
+      "Collection & Hoard",
+      "Other"
+    ],
+    groupLabels: { "": "Uncategorized" },
+    listMeta: ["category", "itemType", "rarity"],
     sections: [
       {
         title: "Item details",
@@ -248,11 +275,56 @@ window.CatalogueConfigs = {
             emptyLabel: "No image uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
           },
-          { id: "itemType", label: "Type", type: "text", grid: "half", placeholder: "Weapon, wondrous item…" },
-          { id: "rarity", label: "Rarity", type: "text", grid: "half", placeholder: "Common, rare, legendary…" },
+          {
+            id: "category",
+            label: "Category",
+            type: "select",
+            grid: "half",
+            options: [
+              "",
+              "Weapon",
+              "Armor & Shield",
+              "Ammunition",
+              "Adventuring Gear",
+              "Tool & Kit",
+              "Consumable",
+              "Ingredient & Material",
+              "Wondrous Item",
+              "Treasure & Valuable",
+              "Document & Lore",
+              "Container & Storage",
+              "Trade Good",
+              "Trinket & Curio",
+              "Junk & Salvage",
+              "Hazard & Trap",
+              "Collection & Hoard",
+              "Other"
+            ]
+          },
+          {
+            id: "itemType",
+            label: "Subtype / type detail",
+            type: "text",
+            grid: "half",
+            placeholder: "Longsword, herbalism kit, quest key…"
+          },
+          {
+            id: "rarity",
+            label: "Rarity",
+            type: "select",
+            grid: "half",
+            options: ["", "Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Artifact", "Unique", "Varies"]
+          },
           { id: "value", label: "Value", type: "text", grid: "half" },
           { id: "weight", label: "Weight", type: "text", grid: "half" },
-          { id: "attunement", label: "Requires attunement", type: "checkbox", grid: "full" }
+          { id: "attunement", label: "Requires attunement", type: "checkbox", grid: "half" },
+          {
+            id: "tags",
+            label: "Tags",
+            type: "list",
+            grid: "full",
+            placeholder: "quest, magic, alchemy, Stormwreck Isle…"
+          }
         ]
       },
       {
@@ -267,11 +339,13 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed item",
       portrait: "",
+      category: "",
       itemType: "",
       rarity: "",
       value: "",
       weight: "",
       attunement: false,
+      tags: [],
       description: "",
       properties: "",
       notes: ""
@@ -285,6 +359,27 @@ window.CatalogueConfigs = {
     newLabel: "New monster",
     searchPlaceholder: "Search monsters…",
     listIcon: "☠",
+    searchFields: [
+      "name",
+      "creatureType",
+      "size",
+      "cr",
+      "alignment",
+      "source",
+      "tags",
+      "traits",
+      "actions",
+      "notes"
+    ],
+    facets: [
+      { id: "creatureType", label: "Type" },
+      { id: "cr", label: "CR" },
+      { id: "size", label: "Size" },
+      { id: "source", label: "Source" }
+    ],
+    groupBy: "creatureType",
+    groupLabels: { "": "Uncategorized" },
+    listMeta: ["size", "creatureType", "cr"],
     sections: [
       {
         title: "Identity",
@@ -304,8 +399,16 @@ window.CatalogueConfigs = {
           { id: "size", label: "Size", type: "text", grid: "third" },
           { id: "creatureType", label: "Type", type: "text", grid: "third", placeholder: "Humanoid, dragon…" },
           { id: "alignment", label: "Alignment", type: "text", grid: "third" },
-          { id: "cr", label: "Challenge rating", type: "text", grid: "half" },
-          { id: "xp", label: "XP", type: "text", grid: "half" }
+          { id: "cr", label: "Challenge rating", type: "text", grid: "third" },
+          { id: "xp", label: "XP", type: "text", grid: "third" },
+          { id: "source", label: "Source", type: "text", grid: "third", placeholder: "Stormwreck Isle, MM…" },
+          {
+            id: "tags",
+            label: "Tags",
+            type: "list",
+            grid: "full",
+            placeholder: "undead, coastal, boss…"
+          }
         ]
       },
       {
@@ -416,6 +519,8 @@ window.CatalogueConfigs = {
       alignment: "",
       cr: "",
       xp: "",
+      source: "",
+      tags: [],
       str: 10,
       dex: 10,
       con: 10,
@@ -454,6 +559,38 @@ window.CatalogueConfigs = {
     newLabel: "New location",
     searchPlaceholder: "Search locations…",
     listIcon: "⌖",
+    searchFields: [
+      "name",
+      "locationType",
+      "parentLocationRef",
+      "tags",
+      "description",
+      "notes",
+      "featuredIn",
+      "npcs",
+      "monsters",
+      "itemsOfInterest"
+    ],
+    facets: [
+      { id: "locationType", label: "Type" }
+    ],
+    groupBy: "locationType",
+    groupOrder: [
+      "Region",
+      "Island",
+      "Settlement",
+      "District",
+      "Building",
+      "Room / Area",
+      "Dungeon",
+      "Cave",
+      "Ruin",
+      "Wilderness",
+      "Landmark",
+      "Other"
+    ],
+    groupLabels: { "": "Uncategorized" },
+    listMeta: ["locationType"],
     sections: [
       {
         title: "Overview",
@@ -470,15 +607,72 @@ window.CatalogueConfigs = {
             emptyLabel: "No map uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
           },
+          {
+            id: "locationType",
+            label: "Location type",
+            type: "select",
+            grid: "half",
+            options: [
+              "",
+              "Region",
+              "Island",
+              "Settlement",
+              "District",
+              "Building",
+              "Room / Area",
+              "Dungeon",
+              "Cave",
+              "Ruin",
+              "Wilderness",
+              "Landmark",
+              "Other"
+            ]
+          },
+          {
+            id: "parentLocationRef",
+            label: "Parent location",
+            type: "text",
+            grid: "half",
+            refType: "location",
+            placeholder: "@location:sw-dragons-rest|Dragon's Rest"
+          },
+          {
+            id: "tags",
+            label: "Tags",
+            type: "list",
+            grid: "full",
+            placeholder: "coastal, sacred, dungeon…"
+          },
           { id: "description", label: "Description", type: "textarea", rows: 5, grid: "full" }
         ]
       },
       {
         title: "Inhabitants & points of interest",
         fields: [
-          { id: "npcs", label: "NPCs", type: "list", grid: "full", placeholder: "NPC name" },
-          { id: "monsters", label: "Monsters", type: "list", grid: "full", placeholder: "Monster name" },
-          { id: "itemsOfInterest", label: "Items of interest", type: "list", grid: "full", placeholder: "Item or feature" }
+          {
+            id: "npcs",
+            label: "NPCs",
+            type: "list",
+            grid: "full",
+            refType: "npc",
+            placeholder: "@npc:sw-tarak|Tarak or plain name"
+          },
+          {
+            id: "monsters",
+            label: "Monsters",
+            type: "list",
+            grid: "full",
+            refType: "monster",
+            placeholder: "@monster:sw-ghoul|Ghoul or plain name"
+          },
+          {
+            id: "itemsOfInterest",
+            label: "Items of interest",
+            type: "list",
+            grid: "full",
+            refType: "item",
+            placeholder: "@item:sw-captains-compass|Captain's Compass or plain text"
+          }
         ]
       },
       {
@@ -492,6 +686,9 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed location",
       mapImage: "",
+      locationType: "",
+      parentLocationRef: "",
+      tags: [],
       description: "",
       npcs: [],
       monsters: [],
@@ -503,11 +700,45 @@ window.CatalogueConfigs = {
 
   race: {
     type: "race",
-    title: "Race Catalogue",
-    subtitle: "Ancestries and lineages with traits, speeds, and languages.",
-    newLabel: "New race",
-    searchPlaceholder: "Search races…",
+    title: "Species Catalogue",
+    subtitle: "Species and subspecies with traits, speeds, and languages.",
+    newLabel: "New species",
+    searchPlaceholder: "Search species…",
     listIcon: "◇",
+    searchFields: [
+      "name",
+      "entryKind",
+      "parentSpeciesRef",
+      "size",
+      "speed",
+      "source",
+      "summary",
+      "traits",
+      "languages",
+      "notes"
+    ],
+    facets: [
+      {
+        id: "entryKind",
+        label: "Kind",
+        options: [
+          { value: "species", label: "Species" },
+          { value: "subspecies", label: "Subspecies" }
+        ]
+      }
+    ],
+    groupBy: "entryKind",
+    groupOrder: ["species", "subspecies"],
+    groupLabels: {
+      species: "Species",
+      subspecies: "Subspecies",
+      "": "Uncategorized"
+    },
+    entryKindLabels: {
+      species: "Species",
+      subspecies: "Subspecies"
+    },
+    listMeta: ["entryKind", "size", "speed"],
     sections: [
       {
         title: "Identity",
@@ -524,9 +755,37 @@ window.CatalogueConfigs = {
             emptyLabel: "No portrait uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
           },
+          {
+            id: "entryKind",
+            label: "Entry kind",
+            type: "select",
+            grid: "half",
+            options: [
+              { value: "species", label: "Species" },
+              { value: "subspecies", label: "Subspecies" }
+            ]
+          },
+          { id: "source", label: "Source", type: "text", grid: "half", placeholder: "PHB, homebrew…" },
+          {
+            id: "parentSpeciesRef",
+            label: "Parent species",
+            type: "text",
+            grid: "full",
+            refType: "race",
+            placeholder: "@race:race-elf|Elf",
+            showWhen: { field: "entryKind", equals: "subspecies" }
+          },
+          {
+            id: "subspeciesRefs",
+            label: "Subspecies",
+            type: "list",
+            grid: "full",
+            refType: "race",
+            placeholder: "@race:subspecies-elf-high|High Elf",
+            showWhen: { field: "entryKind", equals: "species" }
+          },
           { id: "size", label: "Size", type: "text", grid: "half", placeholder: "Medium, Small…" },
           { id: "speed", label: "Speed", type: "text", grid: "half", placeholder: "30 ft." },
-          { id: "source", label: "Source", type: "text", grid: "half", placeholder: "PHB, homebrew…" },
           { id: "summary", label: "Summary", type: "textarea", rows: 2, grid: "full" }
         ]
       },
@@ -553,8 +812,11 @@ window.CatalogueConfigs = {
       }
     ],
     defaults: {
-      name: "Unnamed race",
+      name: "Unnamed species",
       portrait: "",
+      entryKind: "species",
+      parentSpeciesRef: "",
+      subspeciesRefs: [],
       size: "Medium",
       speed: "30 ft.",
       source: "",
@@ -571,10 +833,43 @@ window.CatalogueConfigs = {
   class: {
     type: "class",
     title: "Class Catalogue",
-    subtitle: "Classes with hit dice, proficiencies, and features.",
+    subtitle: "Classes and subclasses with hit dice, proficiencies, and features.",
     newLabel: "New class",
     searchPlaceholder: "Search classes…",
     listIcon: "⬡",
+    searchFields: [
+      "name",
+      "entryKind",
+      "parentClassRef",
+      "hitDie",
+      "primaryAbility",
+      "source",
+      "summary",
+      "features",
+      "notes"
+    ],
+    facets: [
+      {
+        id: "entryKind",
+        label: "Kind",
+        options: [
+          { value: "class", label: "Classes" },
+          { value: "subclass", label: "Subclasses" }
+        ]
+      }
+    ],
+    groupBy: "entryKind",
+    groupOrder: ["class", "subclass"],
+    groupLabels: {
+      class: "Classes",
+      subclass: "Subclasses",
+      "": "Uncategorized"
+    },
+    entryKindLabels: {
+      class: "Class",
+      subclass: "Subclass"
+    },
+    listMeta: ["entryKind", "hitDie", "primaryAbility"],
     sections: [
       {
         title: "Identity",
@@ -591,14 +886,57 @@ window.CatalogueConfigs = {
             emptyLabel: "No portrait uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
           },
-          { id: "hitDie", label: "Hit die", type: "text", grid: "half", placeholder: "d8, d10…" },
-          { id: "primaryAbility", label: "Primary ability", type: "text", grid: "half", placeholder: "Strength, Wisdom…" },
+          {
+            id: "entryKind",
+            label: "Entry kind",
+            type: "select",
+            grid: "half",
+            options: [
+              { value: "class", label: "Class" },
+              { value: "subclass", label: "Subclass" }
+            ]
+          },
           { id: "source", label: "Source", type: "text", grid: "half", placeholder: "PHB, homebrew…" },
+          {
+            id: "parentClassRef",
+            label: "Parent class",
+            type: "text",
+            grid: "full",
+            refType: "class",
+            placeholder: "@class:class-barbarian|Barbarian",
+            showWhen: { field: "entryKind", equals: "subclass" }
+          },
+          {
+            id: "subclassRefs",
+            label: "Subclasses",
+            type: "list",
+            grid: "full",
+            refType: "class",
+            placeholder: "@class:subclass-barbarian-berserker|Path of the Berserker",
+            showWhen: { field: "entryKind", equals: "class" }
+          },
+          {
+            id: "hitDie",
+            label: "Hit die",
+            type: "text",
+            grid: "half",
+            placeholder: "d8, d10…",
+            showWhen: { field: "entryKind", notEquals: "subclass" }
+          },
+          {
+            id: "primaryAbility",
+            label: "Primary ability",
+            type: "text",
+            grid: "half",
+            placeholder: "Strength, Wisdom…",
+            showWhen: { field: "entryKind", notEquals: "subclass" }
+          },
           { id: "summary", label: "Summary", type: "textarea", rows: 2, grid: "full" }
         ]
       },
       {
         title: "Proficiencies",
+        showWhen: { field: "entryKind", notEquals: "subclass" },
         fields: [
           { id: "savingThrows", label: "Saving throws", type: "text", grid: "full" },
           { id: "armorProficiencies", label: "Armor", type: "textarea", rows: 2, grid: "half" },
@@ -641,8 +979,7 @@ window.CatalogueConfigs = {
             grid: "full",
             placeholder: "1 — @feature:druidic|Druidic, @feature:spellcasting|Spellcasting\n2 — @feature:wild-shape|Wild Shape"
           },
-          { id: "spellcasting", label: "Spellcasting", type: "textarea", rows: 4, grid: "full" },
-          { id: "subclasses", label: "Subclasses / archetypes", type: "list", grid: "full", placeholder: "Subclass name" }
+          { id: "spellcasting", label: "Spellcasting", type: "textarea", rows: 4, grid: "full" }
         ]
       },
       {
@@ -653,6 +990,9 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed class",
       portrait: "",
+      entryKind: "class",
+      parentClassRef: "",
+      subclassRefs: [],
       hitDie: "",
       primaryAbility: "",
       source: "",
@@ -666,7 +1006,6 @@ window.CatalogueConfigs = {
       featureRefs: [],
       features: "",
       spellcasting: "",
-      subclasses: [],
       notes: ""
     }
   },
@@ -678,6 +1017,15 @@ window.CatalogueConfigs = {
     newLabel: "New spell",
     searchPlaceholder: "Search spells…",
     listIcon: "✧",
+    searchFields: ["name", "level", "school", "source", "classes", "classRefs", "summary", "description", "notes"],
+    facets: [
+      { id: "level", label: "Level" },
+      { id: "school", label: "School" },
+      { id: "source", label: "Source" }
+    ],
+    groupBy: "level",
+    groupLabels: { "": "Uncategorized", "0": "Cantrips", Cantrip: "Cantrips" },
+    listMeta: ["level", "school"],
     sections: [
       {
         title: "Identity",
@@ -697,7 +1045,15 @@ window.CatalogueConfigs = {
           { id: "level", label: "Level", type: "text", grid: "half", placeholder: "Cantrip, 1, 2…" },
           { id: "school", label: "School", type: "text", grid: "half", placeholder: "Evocation, Illusion…" },
           { id: "source", label: "Source", type: "text", grid: "half", placeholder: "Core rules, homebrew…" },
-          { id: "classes", label: "Classes", type: "text", grid: "half", placeholder: "Wizard, Cleric…" },
+          { id: "classes", label: "Classes (legacy text)", type: "text", grid: "half", placeholder: "Wizard, Cleric…" },
+          {
+            id: "classRefs",
+            label: "Class references",
+            type: "list",
+            grid: "full",
+            refType: "class",
+            placeholder: "@class:class-wizard|Wizard"
+          },
           { id: "ritual", label: "Ritual", type: "checkbox", grid: "half" },
           { id: "concentration", label: "Concentration", type: "checkbox", grid: "half" }
         ]
@@ -728,6 +1084,7 @@ window.CatalogueConfigs = {
       school: "",
       source: "",
       classes: "",
+      classRefs: [],
       ritual: false,
       concentration: false,
       castingTime: "1 action",
@@ -748,6 +1105,11 @@ window.CatalogueConfigs = {
     newLabel: "New skill",
     searchPlaceholder: "Search skills…",
     listIcon: "◎",
+    searchFields: ["name", "defaultAbility", "source", "summary", "description", "tags", "notes"],
+    facets: [{ id: "defaultAbility", label: "Ability" }],
+    groupBy: "defaultAbility",
+    groupLabels: { "": "Uncategorized" },
+    listMeta: ["defaultAbility"],
     sections: [
       {
         title: "Identity",
@@ -802,6 +1164,14 @@ window.CatalogueConfigs = {
     newLabel: "New feature",
     searchPlaceholder: "Search features…",
     listIcon: "✱",
+    searchFields: ["name", "featureType", "grantedBy", "source", "summary", "description", "tags", "notes"],
+    facets: [
+      { id: "featureType", label: "Type" },
+      { id: "source", label: "Source" }
+    ],
+    groupBy: "featureType",
+    groupLabels: { "": "Uncategorized" },
+    listMeta: ["featureType", "levelPrerequisite"],
     sections: [
       {
         title: "Identity",
@@ -831,7 +1201,7 @@ window.CatalogueConfigs = {
             label: "Granted by",
             type: "text",
             grid: "half",
-            placeholder: "@class:druid|Druid or @race:elf|Elf"
+            placeholder: "@class:class-druid|Druid or @race:race-elf|Elf"
           },
           {
             id: "levelPrerequisite",

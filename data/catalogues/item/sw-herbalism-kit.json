@@ -1,0 +1,18 @@
+{
+  "id": "sw-herbalism-kit",
+  "name": "Örtläkarkit",
+  "itemType": "Verktyg",
+  "rarity": "Vanlig",
+  "value": "5 gp",
+  "weight": "3 lb",
+  "attunement": false,
+  "description": "Saxar, mortel, pistill, små påsar och flaskor för att identifiera och bearbeta örter.",
+  "properties": "Proficiency med kitet kan användas vid relevanta tester för örter och växtbaserade preparat.",
+  "notes": "Passar särskilt väl ihop med Taraks arbete i Dragon's Rest.",
+  "updatedAt": 1786918771752,
+  "category": "Tool & Kit",
+  "tags": [
+    "alchemy",
+    "Stormwreck Isle"
+  ]
+}

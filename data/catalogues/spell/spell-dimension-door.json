@@ -15,5 +15,6 @@
   "description": "Arrive exactly where named/described. If destination occupied, you and passenger take force damage and spell fails.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-gnome-forest",
+  "name": "Forest Gnome",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-gnome|Gnome",
+  "size": "Small",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Forest gnomes lean into illusion and kinship with small beasts.",
+  "abilityScoreIncrease": "DEX +1 (plus Gnome INT +2)",
+  "featureRefs": [],
+  "traits": "Natural Illusionist — minor illusion cantrip (INT).\nSpeak with Small Beasts — communicate simple ideas with Small or smaller beasts.",
+  "languages": "Common, Gnomish",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

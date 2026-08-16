@@ -1,0 +1,17 @@
+{
+  "id": "sw-torch",
+  "name": "Fackla",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "1 cp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En trästav lindad med brännbart material och avsedd att ge ljus i mörker.",
+  "properties": "Brinner i 1 timme. Ger starkt ljus inom 20 fot och svagt ljus ytterligare 20 fot. En brinnande fackla kan användas som improviserat vapen och orsakar 1 eldskada vid träff.",
+  "notes": "",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

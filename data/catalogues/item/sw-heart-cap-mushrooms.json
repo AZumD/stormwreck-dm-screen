@@ -9,5 +9,11 @@
   "description": "Rare fungi Tarak needs for his alchemical work and as a peace offering to the myconids of Seagrow Caves.",
   "properties": "Found deeper in Seagrow Caves. Tarak's quest item. Presenting them (or mentioning Tarak) helps parley with myconids.",
   "notes": "Blocked by spore servant octopus at cave entrance (B1). Tarak points party to Seagrow Caves in Chapter 1.",
-  "updatedAt": 1786752801540
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "quest",
+    "Stormwreck Isle"
+  ]
 }

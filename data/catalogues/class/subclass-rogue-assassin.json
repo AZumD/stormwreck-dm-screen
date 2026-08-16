@@ -1,0 +1,13 @@
+{
+  "id": "subclass-rogue-assassin",
+  "name": "Assassin",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-rogue|Rogue",
+  "source": "Core rules",
+  "summary": "Assassinate on surprised foes; disguise and poison tools.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

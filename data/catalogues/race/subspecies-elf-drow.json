@@ -1,0 +1,17 @@
+{
+  "id": "subspecies-elf-drow",
+  "name": "Drow (Dark Elf)",
+  "entryKind": "subspecies",
+  "parentSpeciesRef": "@race:race-elf|Elf",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Underdark elves with superior darkvision and innate magic.",
+  "abilityScoreIncrease": "CHA +1 (plus Elf DEX +2)",
+  "featureRefs": [],
+  "traits": "Superior Darkvision — 120 ft.\nSunlight Sensitivity — disadvantage on attacks and Perception (sight) in sunlight.\nDrow Magic — dancing lights; at 3rd faerie fire 1/long rest; at 5th darkness 1/long rest (CHA).\nDrow Weapon Training — rapiers, shortswords, hand crossbows.",
+  "languages": "Common, Elvish",
+  "senses": "Darkvision 120 ft.",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

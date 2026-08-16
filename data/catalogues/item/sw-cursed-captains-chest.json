@@ -9,5 +9,12 @@
   "description": "The fallen captain's chest in the Compass Rose hold (C9). It crashed through the decks and anchors the curse that animates drowned sailors on the island's beaches.",
   "properties": "Breaking or dispelling the curse in C8–C9 stops new zombies from rising on the beach. See booklet treasure tables for hold contents.",
   "notes": "Chapter 3 finale objective. Source of zombie resurgence if ignored.",
-  "updatedAt": 1786752801540
+  "updatedAt": 1786918771752,
+  "category": "Container & Storage",
+  "tags": [
+    "nautical",
+    "magic",
+    "cursed",
+    "Stormwreck Isle"
+  ]
 }

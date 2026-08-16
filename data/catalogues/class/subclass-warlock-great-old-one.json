@@ -1,0 +1,13 @@
+{
+  "id": "subclass-warlock-great-old-one",
+  "name": "The Great Old One",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-warlock|Warlock",
+  "source": "Core rules",
+  "summary": "Alien patron — telepathy and thought-warping features.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

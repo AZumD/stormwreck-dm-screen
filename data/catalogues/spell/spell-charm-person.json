@@ -15,5 +15,6 @@
   "description": "WIS save; advantage if you or allies are fighting it. Charmed creature is friendly to you. Knows it was charmed when spell ends.",
   "higherLevels": "+1 target (within 30 ft of another) per slot above 1st.",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

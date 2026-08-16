@@ -15,5 +15,6 @@
   "description": "Target becomes invisible. Ends early if target attacks or casts a spell.",
   "higherLevels": "+1 target per slot above 2nd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

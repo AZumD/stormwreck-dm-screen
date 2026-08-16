@@ -1,0 +1,18 @@
+{
+  "id": "sw-herb-mageroyal",
+  "name": "Magikrona",
+  "itemType": "Råmaterial / Ört",
+  "rarity": "Vanlig",
+  "value": "2 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En vilt växande blomma med djupblå kronblad. Den verkar nästan absorbera det omgivande ljuset och kastar inga egna skuggor.",
+  "properties": "Bränns ofta som rökelse av trollkarlar. Den skarpa röken skärper sinnet och ger fördel (advantage) på nästa slag för Arcana eller History.",
+  "notes": "Askan luktar svagt av ozon. Drar tyvärr ofta till sig oförutsägbara fe-väsen om den lämnas blommande i en trädgård.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "Stormwreck Isle"
+  ]
+}

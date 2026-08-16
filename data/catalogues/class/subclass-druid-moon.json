@@ -1,0 +1,13 @@
+{
+  "id": "subclass-druid-moon",
+  "name": "Circle of the Moon",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-druid|Druid",
+  "source": "Core rules",
+  "summary": "Combat Wild Shape into stronger beasts and later elemental forms.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -15,5 +15,6 @@
   "description": "Fixes a break/tear no larger than 1 ft in any dimension. Doesn't restore magic to broken magic items.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

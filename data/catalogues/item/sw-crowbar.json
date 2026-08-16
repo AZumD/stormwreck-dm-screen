@@ -1,0 +1,17 @@
+{
+  "id": "sw-crowbar",
+  "name": "Kofot",
+  "itemType": "Verktyg",
+  "rarity": "Vanlig",
+  "value": "2 gp",
+  "weight": "5 lb",
+  "attunement": false,
+  "description": "En tung järnstång böjd för att bända upp dörrar, lock och envisa brädor.",
+  "properties": "Kan ge fördel på Strength-test där hävstång faktiskt hjälper.",
+  "notes": "Särskilt användbar bland skeppsvrak och gamla ruiner.",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

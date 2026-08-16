@@ -1,0 +1,15 @@
+{
+  "id": "sw-waxed-hide-shelter",
+  "name": "Vaxad skyddsduk",
+  "itemType": "Lägerutrustning",
+  "category": "Adventuring Gear",
+  "tags": ["camping", "survival", "Stormwreck Isle"],
+  "rarity": "Vanlig",
+  "value": "1 gp",
+  "weight": "5 lb",
+  "attunement": false,
+  "description": "Ett hoprullat stycke grovt tyg behandlat med vax, fett och kåda för att stöta bort regn.",
+  "properties": "Kan spännas mellan träd eller stöttas med grenar för att skapa ett enkelt vind- och regnskydd.",
+  "notes": "Mer praktiskt än ett egentligt tält. Kan vara lappat med mindre bitar djurhud där tyget har slitits sönder.",
+  "updatedAt": 1786918560000
+}

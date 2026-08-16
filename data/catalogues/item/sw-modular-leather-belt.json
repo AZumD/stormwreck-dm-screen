@@ -1,0 +1,15 @@
+{
+  "id": "sw-modular-leather-belt",
+  "name": "Modular Leather Belt",
+  "itemType": "Belt / harness",
+  "rarity": "Common",
+  "value": "1 gp",
+  "weight": "1 lb",
+  "attunement": false,
+  "category": "Adventuring Gear",
+  "tags": ["camp", "Stormwreck Isle"],
+  "description": "A sturdy leather belt with loops and ties for hanging pouches, a knife sheath, and small tools.",
+  "properties": "Holds everyday kit without filling pack space. Common among travelers and camp cooks.",
+  "notes": "Companion piece to flint knives and tinder pouches.",
+  "updatedAt": 1786919300000
+}

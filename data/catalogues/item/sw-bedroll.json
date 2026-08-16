@@ -1,0 +1,17 @@
+{
+  "id": "sw-bedroll",
+  "name": "Sovsäck",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "1 gp",
+  "weight": "7 lb",
+  "attunement": false,
+  "description": "En hoprullbar bädd av filt och vadderat tyg för nätter under bar himmel.",
+  "properties": "",
+  "notes": "Kan spännas fast utanpå en ryggsäck.",
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

@@ -15,5 +15,6 @@
   "description": "Difficult terrain / heavily obscured. DEX save or restrained; Athletics check as action to break free. Webs are flammable.",
   "higherLevels": "",
   "notes": "Needs anchors between solid surfaces or collapses.",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

@@ -15,5 +15,6 @@
   "description": "Sphere of darkness on a point or object. Darkvision can't see through; non-magical light can't illuminate. Covered if cast on object you hide.",
   "higherLevels": "",
   "notes": "Dispelled by daylight spell in overlapping area.",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

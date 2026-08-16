@@ -15,5 +15,6 @@
   "description": "If current HP ≤ 150, target is stunned until it makes a CON save at the end of its turns.",
   "higherLevels": "",
   "notes": "No effect if HP > 150.",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

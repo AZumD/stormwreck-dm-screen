@@ -15,5 +15,6 @@
   "description": "Voice booms 3×; cause harmless tremors; control flames/torches; create an instantaneous sound; unlock/open/close an unlocked door or window; alter your eyes' appearance.",
   "higherLevels": "",
   "notes": "Up to three effects at once.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

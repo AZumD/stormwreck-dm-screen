@@ -15,5 +15,6 @@
   "description": "Can't revive those dead longer than 1 minute, or undead. Doesn't restore missing body parts.",
   "higherLevels": "",
   "notes": "Material component consumed.",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

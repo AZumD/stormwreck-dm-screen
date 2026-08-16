@@ -15,5 +15,6 @@
   "description": "20-ft-radius sphere of fog centered on a point. Heavily obscured. Wind disperses it.",
   "higherLevels": "+20 ft radius per slot above 1st.",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

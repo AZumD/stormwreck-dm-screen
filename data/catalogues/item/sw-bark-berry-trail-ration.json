@@ -1,0 +1,15 @@
+{
+  "id": "sw-bark-berry-trail-ration",
+  "name": "Bark- och bärranson",
+  "itemType": "Proviant",
+  "category": "Consumable",
+  "tags": ["rations", "survival", "Stormwreck Isle"],
+  "rarity": "Vanlig",
+  "value": "2 sp",
+  "weight": "0.5 lb",
+  "attunement": false,
+  "description": "Täta hemmagjorda färdkakor av torkade bär, nötter, mald ätlig bark, honung och ibland strimlat torkat kött.",
+  "properties": "En liten men energirik färdranson som håller länge om den förvaras torrt.",
+  "notes": "Naturens fulaste powerbar. Smakar förmodligen ungefär som en mycket beslutsam träbit.",
+  "updatedAt": 1786918560000
+}

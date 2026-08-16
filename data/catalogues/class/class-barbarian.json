@@ -12,10 +12,14 @@
   "skillChoices": "Choose 2 from Animal Handling, Athletics, Intimidation, Nature, Perception, Survival",
   "features": "1 — Rage, Unarmored Defense\n2 — Reckless Attack, Danger Sense\n3 — Primal Path\n5 — Extra Attack, Fast Movement\n7 — Feral Instinct\n9 — Brutal Critical\n11 — Relentless Rage\n13+ — path features & Brutal Critical improvements",
   "spellcasting": "",
-  "subclasses": [
-    "Path of the Berserker",
-    "Path of the Totem Warrior"
-  ],
   "notes": "Best when unarmored or lightly armored; rage resists bludgeoning/piercing/slashing while active.",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786919236503,
+  "portrait": "",
+  "skillRefs": [],
+  "featureRefs": [],
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-barbarian-berserker|Path of the Berserker",
+    "@class:subclass-barbarian-totem-warrior|Path of the Totem Warrior"
+  ]
 }

@@ -1,0 +1,13 @@
+{
+  "id": "subclass-barbarian-berserker",
+  "name": "Path of the Berserker",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-barbarian|Barbarian",
+  "source": "Core rules",
+  "summary": "Frenzied rage for reckless offense at the cost of exhaustion.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

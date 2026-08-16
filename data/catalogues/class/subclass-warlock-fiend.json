@@ -1,0 +1,13 @@
+{
+  "id": "subclass-warlock-fiend",
+  "name": "The Fiend",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-warlock|Warlock",
+  "source": "Core rules",
+  "summary": "Fiendish patron — Dark One's Blessing temporary HP.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

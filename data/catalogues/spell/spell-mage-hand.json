@@ -15,5 +15,6 @@
   "description": "Hand can manipulate objects, open containers, stow/retrieve items — max 10 lb. Can't attack, activate magic items, or carry over 10 lb.",
   "higherLevels": "",
   "notes": "Arcane Trickster variant can be invisible and pick pockets.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

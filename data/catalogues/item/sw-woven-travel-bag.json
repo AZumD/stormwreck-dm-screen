@@ -1,0 +1,15 @@
+{
+  "id": "sw-woven-travel-bag",
+  "name": "Vävd resväska",
+  "itemType": "Äventyrarutrustning",
+  "category": "Container & Storage",
+  "tags": ["survival", "Stormwreck Isle"],
+  "rarity": "Vanlig",
+  "value": "5 sp",
+  "weight": "2 lb",
+  "attunement": false,
+  "description": "En enkel axelväska av grovt tyg och vävda växtfibrer, lagad på flera ställen med läderremmar och ojämna stygn.",
+  "properties": "Används för att bära mat, verktyg, örter och mindre personliga föremål.",
+  "notes": "Hemmabygge snarare än köpt utrustning. Kan lika gärna beskrivas som en enkel vävd ryggsäck beroende på hur karaktären bär den.",
+  "updatedAt": 1786918560000
+}

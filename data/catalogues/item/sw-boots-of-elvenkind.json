@@ -1,0 +1,18 @@
+{
+  "id": "sw-boots-of-elvenkind",
+  "name": "Alvstövlar",
+  "itemType": "Magiskt föremål",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "Mjuka och nästan viktlösa stövlar som tycks svälja ljudet av varje fotsteg.",
+  "properties": "Bärarens steg ger inget ljud. Bäraren har advantage på Dexterity (Stealth)-test som bygger på att röra sig tyst.",
+  "notes": "Finns i kaptensskrinet i Compass Roses lastrum.",
+  "updatedAt": 1786918771752,
+  "category": "Wondrous Item",
+  "tags": [
+    "magic",
+    "Stormwreck Isle"
+  ]
+}

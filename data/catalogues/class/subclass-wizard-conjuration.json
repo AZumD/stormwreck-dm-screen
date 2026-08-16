@@ -1,0 +1,13 @@
+{
+  "id": "subclass-wizard-conjuration",
+  "name": "School of Conjuration",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-wizard|Wizard",
+  "source": "Core rules",
+  "summary": "Minor Conjuration and Benign Transposition.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

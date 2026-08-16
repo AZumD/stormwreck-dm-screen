@@ -15,5 +15,6 @@
   "description": "If current HP ≤ 100, it dies. Otherwise no effect.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

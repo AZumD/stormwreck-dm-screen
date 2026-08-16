@@ -15,5 +15,6 @@
   "description": "WIS save. Suggest a course of activity worded to sound reasonable. Harmful acts auto-fail. Ends if you or allies harm the target.",
   "higherLevels": "",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

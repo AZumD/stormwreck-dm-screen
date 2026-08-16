@@ -1,0 +1,13 @@
+{
+  "id": "subclass-sorcerer-draconic",
+  "name": "Draconic Bloodline",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-sorcerer|Sorcerer",
+  "source": "Core rules",
+  "summary": "Draconic resilience, Elemental Affinity, and dragon wings.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

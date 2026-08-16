@@ -23,5 +23,12 @@
     "Dragons of Stormwreck Isle — Chapter 4"
   ],
   "notes": "Requires moonstone key from Runara. Party should complete Ch 2 and Ch 3 first.\n\nHelp Mek & Minn vs stirges → friendly kobolds may fetch key.\n\nFinale: fight, negotiate, or creative solutions with Sparkrender.",
-  "updatedAt": 1786752801503
+  "updatedAt": 1786918771752,
+  "locationType": "Ruin",
+  "parentLocationRef": "@location:sw-stormwreck-isle|Stormwreck Isle",
+  "tags": [
+    "dragon",
+    "observatory",
+    "Stormwreck Isle"
+  ]
 }

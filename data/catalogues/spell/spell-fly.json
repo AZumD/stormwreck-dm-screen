@@ -15,5 +15,6 @@
   "description": "Willing creature gains fly speed 60 ft. Falls if spell ends mid-air (unless it can stop the fall).",
   "higherLevels": "+1 target per slot above 3rd.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

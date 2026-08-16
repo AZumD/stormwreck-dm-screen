@@ -19,5 +19,13 @@
     "Dragons of Stormwreck Isle — Chapter 3"
   ],
   "notes": "Breaking the hold curse stops new beach zombies. Can be done before or after Seagrow Caves (party choice).",
-  "updatedAt": 1786752801503
+  "updatedAt": 1786918771752,
+  "locationType": "Ruin",
+  "parentLocationRef": "@location:sw-stormwreck-isle|Stormwreck Isle",
+  "tags": [
+    "shipwreck",
+    "cursed",
+    "nautical",
+    "Stormwreck Isle"
+  ]
 }

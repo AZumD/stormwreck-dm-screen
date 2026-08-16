@@ -15,5 +15,6 @@
   "description": "WIS save or 1d8 necrotic (1d12 if missing any HP). Scales with level.",
   "higherLevels": "Damage increases at levels 5, 11, and 17.",
   "notes": "Xanathar's / common table cantrip — include if your table uses it.",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

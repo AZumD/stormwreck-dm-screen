@@ -15,5 +15,6 @@
   "description": "CON save or 2d8 thunder and pushed 10 ft; half damage and no push on success. Audible to 300 ft.",
   "higherLevels": "+1d8 per slot above 1st.",
   "notes": "",
-  "updatedAt": 1786753781780
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

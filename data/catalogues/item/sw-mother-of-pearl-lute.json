@@ -1,0 +1,18 @@
+{
+  "id": "sw-mother-of-pearl-lute",
+  "name": "Pärlemorinlagd luta",
+  "itemType": "Musikinstrument",
+  "rarity": "Vanlig",
+  "value": "50 gp",
+  "weight": "2 lb",
+  "attunement": false,
+  "description": "En fint tillverkad luta dekorerad med skimrande pärlemorinläggningar.",
+  "properties": "Kan användas som luta av en varelse med relevant instrumentproficiency.",
+  "notes": "En möjlig last i Compass Roses nedre däck.",
+  "updatedAt": 1786918771752,
+  "category": "Tool & Kit",
+  "tags": [
+    "instrument",
+    "Stormwreck Isle"
+  ]
+}

@@ -12,15 +12,16 @@
   "skillChoices": "Choose 2 from History, Insight, Medicine, Persuasion, Religion",
   "features": "1 — Spellcasting, Divine Domain\n2 — Channel Divinity (1/rest), Domain feature\n5 — Destroy Undead (CR 1/2)\n6 — Domain feature / Channel Divinity (2)\n8 — Domain feature / Destroy Undead improvement\n10 — Divine Intervention\n17+ — Domain & Destroy Undead scaling",
   "spellcasting": "Full caster (WIS). Prepare from full cleric list each day. Domain spells always prepared.",
-  "subclasses": [
-    "Life Domain",
-    "Light Domain",
-    "Nature Domain",
-    "Tempest Domain",
-    "Trickery Domain",
-    "War Domain",
-    "Knowledge Domain"
-  ],
   "notes": "Domain choice drives armor/weapon extras and Channel Divinity options.",
-  "updatedAt": 1786753781456
+  "updatedAt": 1786918974958,
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-cleric-life|Life Domain",
+    "@class:subclass-cleric-light|Light Domain",
+    "@class:subclass-cleric-nature|Nature Domain",
+    "@class:subclass-cleric-tempest|Tempest Domain",
+    "@class:subclass-cleric-trickery|Trickery Domain",
+    "@class:subclass-cleric-war|War Domain",
+    "@class:subclass-cleric-knowledge|Knowledge Domain"
+  ]
 }

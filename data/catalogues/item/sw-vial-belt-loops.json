@@ -1,0 +1,17 @@
+{
+  "id": "sw-vial-belt-loops",
+  "name": "Flaskhållare av läder",
+  "itemType": "Äventyrarutrustning",
+  "rarity": "Vanlig",
+  "value": "3 sp",
+  "weight": "—",
+  "attunement": false,
+  "description": "Flera små läderöglor och fodral fastsatta på bältet för korkade flaskor och små burkar.",
+  "properties": "Håller dekokter, honung, torkade örter och andra små ingredienser lättåtkomliga.",
+  "notes": "Flaskorna är återanvända och har olika former och storlekar.",
+  "updatedAt": 1786919286782,
+  "category": "Adventuring Gear",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

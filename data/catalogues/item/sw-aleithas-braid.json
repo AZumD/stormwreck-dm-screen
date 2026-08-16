@@ -1,0 +1,18 @@
+{
+  "id": "sw-aleithas-braid",
+  "name": "Aleithas hårfläta",
+  "itemType": "Kuriosa",
+  "rarity": "Vanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "En gammal fläta av mänskligt hår, bevarad mellan sidorna i kaptenens loggbok.",
+  "properties": "",
+  "notes": "Fungerar som bokmärke vid loggbokens sista anteckning och är knuten till berättelsen om Aleitha och Brastos.",
+  "updatedAt": 1786918771752,
+  "category": "Trinket & Curio",
+  "tags": [
+    "nautical",
+    "Stormwreck Isle"
+  ]
+}

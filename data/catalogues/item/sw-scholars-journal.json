@@ -1,0 +1,17 @@
+{
+  "id": "sw-scholars-journal",
+  "name": "Forskarens journal",
+  "itemType": "Dokument",
+  "rarity": "Ovanlig",
+  "value": "—",
+  "weight": "—",
+  "attunement": false,
+  "description": "En liten svart journal med utsmyckat lås, fylld med stjärnkartor och anteckningar om magiska experiment.",
+  "properties": "Låset skyddas av en magisk giftfälla. Journalen innehåller en ledtråd till observatoriets dolda ingång.",
+  "notes": "Finns i den isolerade studiekammaren vid Clifftop Observatory.",
+  "updatedAt": 1786918771752,
+  "category": "Document & Lore",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

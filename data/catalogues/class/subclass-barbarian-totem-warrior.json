@@ -1,0 +1,13 @@
+{
+  "id": "subclass-barbarian-totem-warrior",
+  "name": "Path of the Totem Warrior",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-barbarian|Barbarian",
+  "source": "Core rules",
+  "summary": "Spirit totems grant defensive, offensive, or utility benefits while raging.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

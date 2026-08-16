@@ -1,0 +1,17 @@
+{
+  "id": "sw-homemade-jerky",
+  "name": "Hemgjort torkkött",
+  "itemType": "Proviant",
+  "rarity": "Vanlig",
+  "value": "3 sp",
+  "weight": "0.5 lb",
+  "attunement": false,
+  "description": "Tunna remsor kött som saltats, kryddats med vilda örter och torkats över låg eld.",
+  "properties": "Hållbar färdkost som kan ätas direkt eller läggas i soppa.",
+  "notes": "Tillverkas av vad jakten råkat ge snarare än en särskild sorts kött.",
+  "updatedAt": 1786918974958,
+  "category": "Consumable",
+  "tags": [
+    "Stormwreck Isle"
+  ]
+}

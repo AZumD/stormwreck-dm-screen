@@ -9,5 +9,11 @@
   "description": "A hexagonal key of pale moonstone veined with silver. Runara gives it to the party when they are ready to confront Sparkrender at the Clifftop Observatory.",
   "properties": "Insert into the hexagonal indentation at the base of a marble dragon statue at D1 (observatory approach). Activates the energy bridge across the chasm to the tower ruins.",
   "notes": "Quest item — Chapter 4. Without it the party cannot reach the observatory tower easily.",
-  "updatedAt": 1786752801540
+  "updatedAt": 1786918771752,
+  "category": "Adventuring Gear",
+  "tags": [
+    "quest",
+    "magic",
+    "Stormwreck Isle"
+  ]
 }

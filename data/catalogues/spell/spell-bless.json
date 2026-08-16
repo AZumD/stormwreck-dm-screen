@@ -15,5 +15,6 @@
   "description": "Bless up to three creatures you can see. Each adds 1d4 to attack rolls and saving throws for the duration.",
   "higherLevels": "+1 target per slot level above 1st.",
   "notes": "",
-  "updatedAt": 1786753781779
+  "updatedAt": 1786918771752,
+  "classRefs": []
 }

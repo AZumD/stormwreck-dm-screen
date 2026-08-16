@@ -1,0 +1,18 @@
+{
+  "id": "sw-small-camp-kettle",
+  "name": "Liten lägerkittel",
+  "itemType": "Lägerutrustning",
+  "rarity": "Vanlig",
+  "value": "8 sp",
+  "weight": "2 lb",
+  "attunement": false,
+  "description": "En liten sotig järnkittel med vikbart handtag, lagom stor för enkel soppa, dekokter eller vatten.",
+  "properties": "Kan ställas direkt i glöd eller hängas över en liten eld.",
+  "notes": "Insidan luktar permanent av örter oavsett hur väl den diskas.",
+  "updatedAt": 1786919236510,
+  "category": "Adventuring Gear",
+  "tags": [
+    "camp",
+    "Stormwreck Isle"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "subclass-sorcerer-wild-magic",
+  "name": "Wild Magic",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-sorcerer|Sorcerer",
+  "source": "Core rules",
+  "summary": "Wild Magic Surge table and Tides of Chaos.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

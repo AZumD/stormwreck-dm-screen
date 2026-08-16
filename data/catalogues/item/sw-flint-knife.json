@@ -1,0 +1,18 @@
+{
+  "id": "sw-flint-knife",
+  "name": "Flintadolk",
+  "itemType": "Vapen",
+  "rarity": "Vanlig",
+  "value": "5 sp",
+  "weight": "1 lb",
+  "attunement": false,
+  "description": "En kort flintklinga fastsurrad i ett handtag av horn eller trä med senor och läder.",
+  "properties": "Kan mekaniskt behandlas som en vanlig dolk: 1d4 piercing, finesse, light, thrown.",
+  "notes": "Karaktären bär två. Varsitt enkelt läderhölster på bältet är rimligare och säkrare än öppna fästen.",
+  "updatedAt": 1786919236509,
+  "category": "Weapon",
+  "tags": [
+    "primitive",
+    "Stormwreck Isle"
+  ]
+}

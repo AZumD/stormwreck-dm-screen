@@ -1,0 +1,13 @@
+{
+  "id": "subclass-cleric-knowledge",
+  "name": "Knowledge Domain",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-cleric|Cleric",
+  "source": "Core rules",
+  "summary": "Expertise in knowledge skills and Read Thoughts Channel Divinity.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

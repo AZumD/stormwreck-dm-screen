@@ -1,0 +1,19 @@
+{
+  "id": "sw-wind-spore",
+  "name": "Vindspor",
+  "itemType": "Magisk svamp",
+  "rarity": "Ovanlig",
+  "value": "30 gp",
+  "weight": "—",
+  "attunement": false,
+  "description": "En färgstark, mjuk svamp vars hatt släpper ifrån sig ett moln av märkligt livgivande sporer när den kläms.",
+  "properties": "När svampen kläms frigörs sporer. En varelse som andas in dem behöver inte andas under 1 timme.",
+  "notes": "2d4 mogna vindsporer kan normalt skördas vid den magiska varma källan på Stormwreck Isle.",
+  "updatedAt": 1786918771752,
+  "category": "Ingredient & Material",
+  "tags": [
+    "alchemy",
+    "magic",
+    "Stormwreck Isle"
+  ]
+}
