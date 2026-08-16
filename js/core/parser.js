@@ -63,21 +63,76 @@ window.ContentParser = (function () {
     return html;
   }
 
+  /* Open: {{collapse}}, {{collapse:Title}}, or {{collapse Title}} */
+  const COLLAPSE_CLOSE = "{{/collapse}}";
+
+  function collapseOpenRe() {
+    return /\{\{collapse(?:[:\s]+([^}]*))?\}\}/gi;
+  }
+
+  function findMatchingCollapseClose(html, bodyStart) {
+    let depth = 1;
+    let i = bodyStart;
+    const openRe = collapseOpenRe();
+    while (i < html.length && depth > 0) {
+      openRe.lastIndex = i;
+      const openMatch = openRe.exec(html);
+      const openIdx = openMatch ? openMatch.index : -1;
+      const closeIdx = html.toLowerCase().indexOf(COLLAPSE_CLOSE, i);
+
+      if (closeIdx === -1) return -1;
+
+      if (openIdx !== -1 && openIdx < closeIdx) {
+        depth += 1;
+        i = openIdx + openMatch[0].length;
+        continue;
+      }
+
+      depth -= 1;
+      if (depth === 0) return closeIdx;
+      i = closeIdx + COLLAPSE_CLOSE.length;
+    }
+    return -1;
+  }
+
+  function replaceCollapseBlocks(html, registry, depth) {
+    let out = "";
+    let i = 0;
+    const openRe = collapseOpenRe();
+    while (i < html.length) {
+      openRe.lastIndex = i;
+      const m = openRe.exec(html);
+      if (!m) {
+        out += html.slice(i);
+        break;
+      }
+      out += html.slice(i, m.index);
+      const bodyStart = m.index + m[0].length;
+      const closeIdx = findMatchingCollapseClose(html, bodyStart);
+      if (closeIdx === -1) {
+        out += m[0];
+        i = bodyStart;
+        continue;
+      }
+      const title = m[1];
+      const label = String(title || "").trim() || window.I18N?.collapseDefaultTitle || "Details";
+      const body = parseContent(String(html.slice(bodyStart, closeIdx) || "").trim(), registry, depth + 1);
+      out += `<details class="collapse-block"><summary class="collapse-block__summary">${escapeHtml(label)}</summary><div class="collapse-block__body">${body}</div></details>`;
+      i = closeIdx + COLLAPSE_CLOSE.length;
+    }
+    return out;
+  }
+
   function parseContent(raw, entities, depth = 0) {
     let html = String(raw ?? "");
     const registry = entities || window.EntityRegistry?.getAll?.() || window.ENTITIES || {};
     if (depth > 24) return escapeHtml(html);
 
     /*
-     * Structural blocks first. Bodies use full parseContent so nested
-     * {{read-aloud}} / {{dm-note}} / {{collapse}} / @links work inside collapses
-     * (inlineFormat used to escape already-rendered HTML).
+     * Structural blocks first. Collapse uses balanced open/close matching so
+     * nested {{collapse}}…{{/collapse}} works. Bodies recurse through parseContent.
      */
-    html = html.replace(/\{\{collapse(?::([^}]*))?\}\}([\s\S]*?)\{\{\/collapse\}\}/g, (_, title, text) => {
-      const label = String(title || "").trim() || window.I18N?.collapseDefaultTitle || "Details";
-      const body = parseContent(String(text || "").trim(), registry, depth + 1);
-      return `<details class="collapse-block"><summary class="collapse-block__summary">${escapeHtml(label)}</summary><div class="collapse-block__body">${body}</div></details>`;
-    });
+    html = replaceCollapseBlocks(html, registry, depth);
 
     html = html.replace(/\{\{read-aloud\}\}([\s\S]*?)\{\{\/read-aloud\}\}/g, (_, text) =>
       `<div class="read-aloud"><span class="read-aloud-label">${window.I18N?.readAloud || "Read Aloud"}</span>${parseContent(String(text || "").trim(), registry, depth + 1)}</div>`
@@ -146,7 +201,7 @@ window.ContentParser = (function () {
       .replace(/\{\{youtube:[^}]+\}\}/gi, " ")
       .replace(/\{\{\/?read-aloud\}\}/gi, " ")
       .replace(/\{\{\/?dm-note\}\}/gi, " ")
-      .replace(/\{\{collapse(?::[^}]*)?\}\}/gi, " ")
+      .replace(/\{\{collapse(?:[:\s][^}]*)?\}\}/gi, " ")
       .replace(/\{\{\/collapse\}\}/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/\[\[[^\]]+\]\]/g, " ")

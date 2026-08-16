@@ -79,6 +79,27 @@ if (!nestedLink.includes("entity-link") || !nestedLink.includes("data-id=\"sw-ru
   pass("entity link inside collapse works");
 }
 
+const nestedCollapse = parseContent(
+  "{{collapse:Outer}}\nbefore\n{{collapse:Inner}}\ninside\n{{/collapse}}\nafter\n{{/collapse}}"
+);
+const detailsCount = (nestedCollapse.match(/<details/g) || []).length;
+if (detailsCount !== 2) {
+  fail(`expected 2 nested details, got ${detailsCount}: ${nestedCollapse}`);
+} else if (!nestedCollapse.includes("Outer") || !nestedCollapse.includes("Inner") || !nestedCollapse.includes("inside")) {
+  fail("nested collapse missing labels/body: " + nestedCollapse);
+} else if (!nestedCollapse.includes("before") || !nestedCollapse.includes("after")) {
+  fail("outer collapse lost sibling text: " + nestedCollapse);
+} else {
+  pass("nested collapse blocks render");
+}
+
+const spaceTitle = parseContent("{{collapse Search room}}\nNothing here.\n{{/collapse}}");
+if (!spaceTitle.includes("Search room") || !spaceTitle.includes("Nothing here")) {
+  fail("space-title collapse failed: " + spaceTitle);
+} else {
+  pass("collapse title with space separator");
+}
+
 if (typeof preserveLineBreaks !== "function") fail("preserveLineBreaks not exported");
 else pass("preserveLineBreaks exported");
 

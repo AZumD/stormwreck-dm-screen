@@ -32,3 +32,4 @@
 [2026-08-16] Fixed passage editor wipe on link-tag prompts: skip focus re-render while editing; preserve drafts across scene refreshes. See js/campaign-app.js
 [2026-08-16] Collapse bodies use recursive parseContent so nested read-aloud/dm-note/links render instead of escaped HTML. See js/core/parser.js
 [2026-08-16] Free-form scenes: section-structure.scenes[], one-shot booklet migrate, unified delete, edit-mode drag reorder. See js/core/editor.js, js/campaign-app.js
+[2026-08-16] Nested collapse blocks via balanced open/close matching; allow {{collapse Title}} form. See js/core/parser.js
