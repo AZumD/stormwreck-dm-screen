@@ -1,0 +1,20 @@
+{
+  "id": "feature-spellcasting-druid",
+  "linkId": "spellcasting-druid",
+  "name": "Spellcasting (Druid)",
+  "featureType": "Class feature",
+  "grantedBy": "@class:druid|Druid",
+  "levelPrerequisite": "1",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Full Wisdom caster; prepare from the druid list; ritual casting.",
+  "description": "As a druid, you are a full spellcaster using Wisdom. You prepare spells from the full druid list, can cast rituals, and follow the class spell slot progression. Nonmetal armor/shields are a traditional restriction.",
+  "usesRecharge": "Spell slots / long rest",
+  "notes": "See class spellcasting notes for circle-specific details.",
+  "tags": [
+    "class",
+    "druid",
+    "spellcasting"
+  ],
+  "updatedAt": 1786753784142
+}

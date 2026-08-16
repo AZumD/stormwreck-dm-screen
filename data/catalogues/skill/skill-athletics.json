@@ -1,0 +1,18 @@
+{
+  "id": "skill-athletics",
+  "linkId": "athletics",
+  "name": "Athletics",
+  "defaultAbility": "Strength",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Climbing, jumping, and swimming.",
+  "description": "Your Strength (Athletics) check covers difficult situations you encounter while climbing, jumping, or swimming.",
+  "typicalUses": "Climb, jump, swim, grapple contests (often).",
+  "exampleChecks": "Scale a cliff; long jump a chasm; swim against a current.",
+  "notes": "",
+  "tags": [
+    "strength",
+    "movement"
+  ],
+  "updatedAt": 1786753783664
+}

@@ -1,0 +1,20 @@
+{
+  "id": "feature-action-surge",
+  "linkId": "action-surge",
+  "name": "Action Surge",
+  "featureType": "Class feature",
+  "grantedBy": "@class:fighter|Fighter",
+  "levelPrerequisite": "2",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Take one additional action on your turn.",
+  "description": "Starting at 2nd level, you can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action. Once you use this feature, you must finish a short or long rest before you can use it again. Starting at 17th level, you can use it twice before a rest, but only once on the same turn.",
+  "usesRecharge": "1 / short or long rest (2 at 17th)",
+  "notes": "",
+  "tags": [
+    "class",
+    "fighter",
+    "combat"
+  ],
+  "updatedAt": 1786753784142
+}

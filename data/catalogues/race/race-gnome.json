@@ -1,0 +1,14 @@
+{
+  "id": "race-gnome",
+  "name": "Gnome",
+  "size": "Small",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Small inventors and illusionists — curious, clever, and hard to charm.",
+  "abilityScoreIncrease": "INT +2 (forest: DEX +1; rock: CON +1)",
+  "traits": "Darkvision 60 ft.\nGnome Cunning — advantage on INT/WIS/CHA saves vs magic.\nForest: Natural Illusionist (minor illusion), Speak with Small Beasts.\nRock: Artificer's Lore, Tinker (tiny clockwork devices).",
+  "languages": "Common, Gnomish",
+  "senses": "Darkvision 60 ft.",
+  "notes": "Subraces commonly used: forest gnome, rock gnome.",
+  "updatedAt": 1786753781208
+}

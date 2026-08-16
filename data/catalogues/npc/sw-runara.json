@@ -27,5 +27,7 @@
   "summary": "Leads Dragon's Rest — secretly an adult bronze dragon. Killed a blue dragon here a century ago and founded the cloister as sanctuary.",
   "backstory": "A century ago Runara pleaded with a blue dragon to stop harnessing the island's destructive magic. When he refused, she killed him. Weary of strife, she founded Dragon's Rest. She dreams of peace between dragon kind.",
   "notes": "Attitude: Indifferent → friendly if party protects cloister or takes quests. Hostile if they harm residents.\n\nSecret lair via undersea tunnel (not on map). Never seems to sleep.\n\nCan rescue a defeated party — use sparingly.",
-  "updatedAt": 1786752801503
+  "updatedAt": 1786884507293,
+  "portrait": "/api/assets/portraits/npc/sw-runara",
+  "mapImage": ""
 }

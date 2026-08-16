@@ -54,7 +54,7 @@
   }
 
   function getSections() {
-    return SectionEditor.getSections(campaignId, ADVENTURE.sections);
+    return SectionEditor.getSections(campaignId);
   }
 
   function getSectionById(sectionId) {
@@ -62,18 +62,14 @@
   }
 
   function getSectionBase(sectionId) {
-    return (
-      (ADVENTURE.sections || []).find((s) => s.id === sectionId) ||
-      SectionEditor.getSections(campaignId, ADVENTURE.sections).find((s) => s.id === sectionId) ||
-      null
-    );
+    return getSectionById(sectionId);
   }
 
   function getSectionData(section) {
+    if (!section) return { title: "Untitled", content: "" };
     return SectionEditor.getSection(campaignId, section.id, {
       title: section.title,
-      content: section.content,
-      chapter: section.chapter
+      content: section.content
     });
   }
 
@@ -82,6 +78,7 @@
   }
 
   function refreshDocument(focusSectionId) {
+    const draft = captureEditorDraft();
     buildNav();
     const id = focusSectionId || focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
     if (activeView.type === "panel") {
@@ -89,17 +86,38 @@
       return;
     }
     if (loadViewMode() === "document" || activeView.type === "document") {
-      renderScrollDocument();
+      renderScrollDocument({ preserveDraft: draft });
       setupScrollSpy();
       if (id) {
         const el = document.getElementById(`section-${id}`);
         if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
       }
     } else {
-      renderPlayScene(id);
+      renderPlayScene(id, { preserveDraft: draft });
     }
     if (id) history.replaceState(null, "", `#${id}`);
     updateNavActive();
+  }
+
+  /** Snapshot open passage editor so prompts / scene-meta refreshes do not wipe drafts */
+  function captureEditorDraft() {
+    if (!editingSectionId) return null;
+    const host = document.querySelector(`[data-editor="${editingSectionId}"]`);
+    if (!host || host.classList.contains("hidden")) return null;
+    const titleEl = host.querySelector(".editor-title");
+    const contentEl = host.querySelector(".editor-content");
+    if (!titleEl || !contentEl) return null;
+    return {
+      sectionId: editingSectionId,
+      title: titleEl.value,
+      content: contentEl.value
+    };
+  }
+
+  function restoreEditorDraft(draft) {
+    if (!draft?.sectionId) return;
+    if (!document.querySelector(`[data-editor="${draft.sectionId}"]`)) return;
+    openSectionEditor(draft.sectionId, draft);
   }
 
   function init() {
@@ -127,13 +145,25 @@
     if (window.CatalogueStore) await CatalogueStore.bootstrap();
     if (window.CampaignPrefs) await CampaignPrefs.bootstrap(campaignId);
     if (window.CampaignMapState) await CampaignMapState.bootstrap(campaignId);
-    if (window.SectionEditor?.bootstrap) await SectionEditor.bootstrap(campaignId);
+    if (window.SectionEditor?.bootstrap) {
+      await SectionEditor.bootstrap(campaignId, ADVENTURE.sections || []);
+    }
     if (window.SceneMeta?.bootstrap) await SceneMeta.bootstrap(campaignId);
 
     if (window.CatalogueImages) {
       try {
-        await CatalogueImages.preload(["pc", "npc", "item", "monster", "location"]);
-        await CatalogueImages.migrateAll(["pc", "npc", "item", "monster", "location"]);
+        const imageTypes = window.CatalogueTypes?.ids?.() || [
+          "pc",
+          "npc",
+          "item",
+          "monster",
+          "location",
+          "race",
+          "class",
+          "spell"
+        ];
+        await CatalogueImages.preload(imageTypes);
+        await CatalogueImages.migrateAll(imageTypes);
       } catch (err) {
         console.warn("CatalogueImages preload failed:", err);
       }
@@ -169,8 +199,9 @@
           },
           getSectionBase,
           onSceneMetaChange: (sceneId) => {
-            if (activeView.type === "play") renderPlayScene(sceneId || focusedSceneId);
-            else if (activeView.type === "document") renderScrollDocument();
+            const draft = captureEditorDraft();
+            if (activeView.type === "play") renderPlayScene(sceneId || focusedSceneId, { preserveDraft: draft });
+            else if (activeView.type === "document") renderScrollDocument({ preserveDraft: draft });
             buildNav();
             updateNavActive();
           }
@@ -192,7 +223,9 @@
           },
           onSceneStateChange: () => {
             CampaignStateUI.applyNavSceneClasses();
-            if (activeView.type === "play" && focusedSceneId) renderPlayScene(focusedSceneId);
+            if (activeView.type === "play" && focusedSceneId) {
+              renderPlayScene(focusedSceneId, { preserveDraft: captureEditorDraft() });
+            }
           },
           refreshHistoryPanel: () => {
             if (activeView.type === "panel" && activeView.id === "history") renderPanel("history");
@@ -255,6 +288,8 @@
       }
       if (window.PartyRoster) PartyRoster.refresh();
       if (window.MapPanel?.refresh) MapPanel.refresh();
+      /* Native prompt() for @link tags blurs the window; do not wipe an open editor */
+      if (editingSectionId) return;
       if (activeView.type === "panel") {
         renderPanel(activeView.id);
       } else if (activeView.type === "play") {
@@ -269,81 +304,137 @@
   function buildNav() {
     sectionNav.innerHTML = "";
     const sections = getSections();
+    const editMode = SectionEditor.isEditMode();
 
-    ADVENTURE.chapters.forEach((chapter) => {
-      const chapterSections = sections.filter((s) => s.chapter === chapter.id);
-      if (!chapterSections.length && !SectionEditor.isEditMode()) return;
+    if (!sections.length && editMode) {
+      const li = document.createElement("li");
+      li.className = "nav-empty-hint";
+      li.textContent = t.noScenesHint || "No scenes yet — add one below.";
+      sectionNav.appendChild(li);
+    }
 
-      /* No auto chapter headings — sandbox lists scenes only */
+    sections.forEach((section) => {
+      const data = getSectionData(section);
+      const li = document.createElement("li");
+      li.className = "nav-scene-item";
+      li.dataset.section = section.id;
+      if (editMode) {
+        li.draggable = true;
+        li.classList.add("nav-scene-item--draggable");
+      }
 
-      chapterSections.forEach((section) => {
-        const data = getSectionData(section);
-        const li = document.createElement("li");
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "nav-btn nav-scene";
-        btn.dataset.section = section.id;
-        if (window.CampaignStateUI) {
-          const navCls = CampaignStateUI.navStatusClass(section.id).trim();
-          if (navCls) btn.className += ` ${navCls}`;
-        }
-        const mark = data.isCustom ? " +" : data.isEdited ? " •" : "";
-        btn.textContent = data.title + mark;
-        btn.addEventListener("click", () => jumpToSection(section.id));
-        li.appendChild(btn);
-        sectionNav.appendChild(li);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "nav-btn nav-scene";
+      btn.dataset.section = section.id;
+      if (window.CampaignStateUI) {
+        const navCls = CampaignStateUI.navStatusClass(section.id).trim();
+        if (navCls) btn.className += ` ${navCls}`;
+      }
+      btn.textContent = data.title;
+      btn.addEventListener("click", () => jumpToSection(section.id));
+      li.appendChild(btn);
+      sectionNav.appendChild(li);
+    });
+
+    if (editMode) {
+      bindNavDragReorder();
+      const addLi = document.createElement("li");
+      addLi.className = "nav-add-scene";
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "nav-btn nav-add-scene-btn";
+      addBtn.textContent = `+ ${t.addPassage || "Add passage"}`;
+      addBtn.addEventListener("click", () => addPassage(null));
+      addLi.appendChild(addBtn);
+      sectionNav.appendChild(addLi);
+    }
+  }
+
+  function bindNavDragReorder() {
+    if (!sectionNav || !SectionEditor.isEditMode()) return;
+    let dragId = null;
+
+    sectionNav.querySelectorAll(".nav-scene-item--draggable").forEach((li) => {
+      li.addEventListener("dragstart", (e) => {
+        dragId = li.dataset.section;
+        li.classList.add("is-dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", dragId);
+      });
+      li.addEventListener("dragend", () => {
+        li.classList.remove("is-dragging");
+        sectionNav.querySelectorAll(".nav-scene-item").forEach((el) => el.classList.remove("is-drop-target"));
+        dragId = null;
+      });
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        sectionNav.querySelectorAll(".nav-scene-item").forEach((el) => el.classList.remove("is-drop-target"));
+        if (li.dataset.section !== dragId) li.classList.add("is-drop-target");
+      });
+      li.addEventListener("dragleave", () => {
+        li.classList.remove("is-drop-target");
+      });
+      li.addEventListener("drop", (e) => {
+        e.preventDefault();
+        li.classList.remove("is-drop-target");
+        const fromId = e.dataTransfer.getData("text/plain") || dragId;
+        const toId = li.dataset.section;
+        if (!fromId || !toId || fromId === toId) return;
+        const ids = getSections().map((s) => s.id);
+        const fromIdx = ids.indexOf(fromId);
+        const toIdx = ids.indexOf(toId);
+        if (fromIdx < 0 || toIdx < 0) return;
+        ids.splice(fromIdx, 1);
+        ids.splice(toIdx, 0, fromId);
+        SectionEditor.reorderScenes(campaignId, ids);
+        refreshDocument(focusedSceneId || fromId);
       });
     });
   }
 
-  function sectionActionsHtml(section, data) {
+  function sectionActionsHtml(section) {
     if (!SectionEditor.isEditMode()) return "";
     return `
       <div class="section-actions">
         <button type="button" class="section-edit-btn" data-edit="${section.id}" title="${t.editSection}">✎ ${t.editSection}</button>
+        <button type="button" class="section-link-btn" data-link-scene="${section.id}" title="${t.linkScene || "Link scene"}">→ ${t.linkScene || "Link scene"}</button>
         <button type="button" class="section-delete-btn" data-delete="${section.id}" title="${t.deleteSection}">${t.deleteSection}</button>
       </div>`;
   }
 
-  function addPassageControlsHtml(chapterId, afterId) {
+  function addPassageControlsHtml(afterId) {
     if (!SectionEditor.isEditMode()) return "";
     const afterAttr = afterId ? ` data-after="${afterId}"` : "";
     return `
       <div class="add-passage-row">
-        <button type="button" class="add-passage-btn" data-add-chapter="${chapterId}"${afterAttr}>
+        <button type="button" class="add-passage-btn"${afterAttr}>
           + ${t.addPassage}
         </button>
       </div>`;
   }
 
-  function renderScrollDocument() {
+  function renderScrollDocument(options = {}) {
+    const draft = options.preserveDraft || null;
     let html = "";
     editingSectionId = null;
     const sections = getSections();
     const editMode = SectionEditor.isEditMode();
 
-    ADVENTURE.chapters.forEach((chapter) => {
-      const chapterSections = sections.filter((s) => s.chapter === chapter.id);
-      if (!chapterSections.length && !editMode) return;
-
-      /* Anchor kept for deep-links; no auto-injected chapter title */
-      html += `<div class="chapter-anchor" id="chapter-${chapter.id}" hidden></div>`;
-      if (editMode && !chapterSections.length) {
-        html += addPassageControlsHtml(chapter.id, null);
-      }
-
-      chapterSections.forEach((section) => {
+    if (!sections.length) {
+      html = editMode
+        ? `${addPassageControlsHtml(null)}<p class="empty-state">${escapeHtml(t.noScenesHint || "No scenes yet. Add a passage to begin.")}</p>`
+        : `<p class="empty-state">${escapeHtml(t.noScenesHint || "No scenes yet.")}</p>`;
+    } else {
+      if (editMode) html += addPassageControlsHtml(null);
+      sections.forEach((section) => {
         const data = getSectionData(section);
-        const badges = [
-          data.isCustom ? `<span class="edited-badge">${t.customBadge || "custom"}</span>` : "",
-          data.isEdited ? `<span class="edited-badge">${t.editedBadge || "edited"}</span>` : ""
-        ].join(" ");
-
         html += `
-          <section class="adventure-section${data.isEdited || data.isCustom ? " is-edited" : ""}${data.isCustom ? " is-custom" : ""}${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
+          <section class="adventure-section${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
             <div class="section-header">
-              <h1 class="section-title">${escapeHtml(data.title)} ${badges}</h1>
-              ${sectionActionsHtml(section, data)}
+              <h1 class="section-title">${escapeHtml(data.title)}</h1>
+              ${sectionActionsHtml(section)}
             </div>
             ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id) : ""}
             <div class="section-body" data-body="${section.id}">
@@ -352,32 +443,31 @@
             ${window.SceneUI ? SceneUI.sceneExtrasHtml(section.id) : ""}
             <div class="section-editor hidden" data-editor="${section.id}"></div>
           </section>
-          ${addPassageControlsHtml(section.chapter, section.id)}`;
+          ${addPassageControlsHtml(section.id)}`;
       });
-    });
-
-    const deleted = SectionEditor.getDeletedIds(campaignId);
-    if (editMode && deleted.length) {
-      html += `
-        <div class="restore-passages">
-          <p>${t.deletedPassagesHint.replace("{n}", String(deleted.length))}</p>
-          <button type="button" class="btn" id="restore-deleted-passages">${t.restoreDeleted}</button>
-        </div>`;
     }
 
     scrollDocument.innerHTML = html;
     bindDocumentEditControls();
     if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(scrollDocument);
     if (window.SceneUI) SceneUI.bind(scrollDocument);
+    if (draft) restoreEditorDraft(draft);
   }
 
-  function renderPlayScene(sceneId) {
+  function renderPlayScene(sceneId, options = {}) {
     if (!playView) return;
+    const draft = options.preserveDraft || null;
     const sections = getSections();
     const id = sceneId || focusedSceneId || sections[0]?.id;
     const section = getSectionById(id);
     if (!section) {
-      playView.innerHTML = `<p class="empty-state">No scenes yet.</p>`;
+      playView.innerHTML = SectionEditor.isEditMode()
+        ? `${addPassageControlsHtml(null)}<p class="empty-state">${escapeHtml(t.noScenesHint || "No scenes yet. Add a passage to begin.")}</p>`
+        : `<p class="empty-state">${escapeHtml(t.noScenesHint || "No scenes yet.")}</p>`;
+      playView.classList.remove("hidden");
+      scrollDocument.classList.add("hidden");
+      panelView.classList.add("hidden");
+      bindDocumentEditControls();
       return;
     }
 
@@ -386,16 +476,12 @@
     editingSectionId = null;
 
     const data = getSectionData(section);
-    const badges = [
-      data.isCustom ? `<span class="edited-badge">${t.customBadge || "custom"}</span>` : "",
-      data.isEdited ? `<span class="edited-badge">${t.editedBadge || "edited"}</span>` : ""
-    ].join(" ");
 
     playView.innerHTML = `
-      <section class="adventure-section play-scene${data.isEdited || data.isCustom ? " is-edited" : ""}${data.isCustom ? " is-custom" : ""}${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
+      <section class="adventure-section play-scene${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
         <div class="section-header">
-          <h1 class="section-title">${escapeHtml(data.title)} ${badges}</h1>
-          ${sectionActionsHtml(section, data)}
+          <h1 class="section-title">${escapeHtml(data.title)}</h1>
+          ${sectionActionsHtml(section)}
         </div>
         ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id) : ""}
         <div class="section-body" data-body="${section.id}">
@@ -414,6 +500,7 @@
     if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(playView);
     if (window.SceneUI) SceneUI.bind(playView);
     updateNavActive();
+    if (draft && draft.sectionId === section.id) restoreEditorDraft(draft);
   }
 
   function bindDocumentEditControls() {
@@ -423,34 +510,32 @@
         btn.addEventListener("click", () => openSectionEditor(btn.dataset.edit));
       });
 
+      root.querySelectorAll(".section-link-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (window.SceneUI?.openConnectionPicker) {
+            SceneUI.openConnectionPicker(btn.dataset.linkScene);
+          }
+        });
+      });
+
       root.querySelectorAll(".section-delete-btn").forEach((btn) => {
         btn.addEventListener("click", () => deletePassage(btn.dataset.delete));
       });
 
       root.querySelectorAll(".add-passage-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
-          addPassage(btn.dataset.addChapter, btn.dataset.after || null);
+          addPassage(btn.dataset.after || null);
         });
       });
     });
-
-    const restoreBtn = document.getElementById("restore-deleted-passages");
-    if (restoreBtn) {
-      restoreBtn.addEventListener("click", () => {
-        if (!confirm(t.confirmRestoreDeleted)) return;
-        SectionEditor.restoreAllDeleted(campaignId);
-        refreshDocument();
-      });
-    }
   }
 
-  function addPassage(chapterId, afterId) {
+  function addPassage(afterId) {
     const title = prompt(t.newPassagePrompt, t.newPassageDefaultTitle);
     if (title == null) return;
     const trimmed = title.trim() || t.newPassageDefaultTitle;
 
     const created = SectionEditor.addSection(campaignId, {
-      chapter: chapterId,
       afterId: afterId || null,
       title: trimmed
     });
@@ -464,19 +549,20 @@
     if (!section) return;
 
     const data = getSectionData(section);
-    const isCustom = SectionEditor.isCustomSection(campaignId, sectionId);
-    const message = isCustom
-      ? t.confirmDeleteCustom.replace("{title}", data.title)
-      : t.confirmDeleteBuiltIn.replace("{title}", data.title);
+    const message = (t.confirmDeleteScene || t.confirmDeleteCustom || 'Delete "{title}"?').replace(
+      "{title}",
+      data.title
+    );
 
     if (!confirm(message)) return;
 
-    SectionEditor.deleteSection(campaignId, sectionId, ADVENTURE.sections);
+    SectionEditor.deleteSection(campaignId, sectionId);
     if (editingSectionId === sectionId) editingSectionId = null;
-    refreshDocument();
+    if (focusedSceneId === sectionId) focusedSceneId = getSections()[0]?.id || null;
+    refreshDocument(focusedSceneId);
   }
 
-  function openSectionEditor(sectionId) {
+  function openSectionEditor(sectionId, draft) {
     if (editingSectionId && editingSectionId !== sectionId) {
       closeSectionEditor(editingSectionId, false);
     }
@@ -489,17 +575,16 @@
     const body = document.querySelector(`[data-body="${sectionId}"]`);
     if (!host || !body) return;
 
-    const isCustom = SectionEditor.isCustomSection(campaignId, sectionId);
-    const resetBtn = isCustom
-      ? ""
-      : `<button type="button" class="btn btn-danger" data-reset="${sectionId}">${t.resetSection}</button>`;
+    const titleValue = draft && draft.title != null ? draft.title : data.title;
+    const contentValue =
+      draft && draft.content != null ? draft.content : String(data.content || "").trim();
 
     editingSectionId = sectionId;
     body.classList.add("hidden");
     host.classList.remove("hidden");
     host.innerHTML = `
       <label class="editor-label">${t.passageTitleLabel || "Title"}</label>
-      <input type="text" class="editor-title" value="${escapeHtml(data.title)}">
+      <input type="text" class="editor-title" value="${escapeHtml(titleValue)}">
       <label class="editor-label">${t.passageContentLabel || "Content"}</label>
       <div class="editor-toolbar" role="toolbar" aria-label="${escapeHtml(t.editorToolbar || "Formatting")}">
         <button type="button" class="editor-tool" data-wrap="read-aloud" title="${escapeHtml(t.wrapReadAloudHint || "Wrap selection as read-aloud")}">${escapeHtml(t.wrapReadAloud || "Read aloud")}</button>
@@ -518,19 +603,16 @@
         <span class="editor-toolbar__sep" aria-hidden="true"></span>
         <button type="button" class="editor-tool" data-insert-youtube="${sectionId}">${escapeHtml(t.insertYoutube || "YouTube")}</button>
       </div>
-      <textarea class="editor-content" rows="14">${escapeHtml(data.content.trim())}</textarea>
+      <textarea class="editor-content" rows="14">${escapeHtml(contentValue)}</textarea>
       <p class="format-hint">${t.formatHelp}</p>
       <div class="editor-actions">
         <button type="button" class="btn btn-primary" data-save="${sectionId}">${t.saveSection}</button>
         <button type="button" class="btn" data-cancel="${sectionId}">${t.cancelEdit}</button>
-        ${resetBtn}
         <button type="button" class="btn btn-danger" data-delete-inline="${sectionId}">${t.deleteSection}</button>
       </div>`;
 
     host.querySelector(`[data-save="${sectionId}"]`).addEventListener("click", () => saveSectionEditor(sectionId));
     host.querySelector(`[data-cancel="${sectionId}"]`).addEventListener("click", () => closeSectionEditor(sectionId, false));
-    const resetEl = host.querySelector(`[data-reset="${sectionId}"]`);
-    if (resetEl) resetEl.addEventListener("click", () => resetSectionEditor(sectionId));
     host.querySelector(`[data-delete-inline="${sectionId}"]`).addEventListener("click", () => deletePassage(sectionId));
     bindEditorToolbar(host);
 
@@ -677,12 +759,6 @@
     const title = host.querySelector(".editor-title").value.trim() || t.newPassageDefaultTitle;
     const content = host.querySelector(".editor-content").value;
     SectionEditor.saveSection(campaignId, sectionId, title, content);
-    closeSectionEditor(sectionId, true);
-  }
-
-  function resetSectionEditor(sectionId) {
-    if (!confirm(t.confirmResetSection)) return;
-    SectionEditor.resetSection(campaignId, sectionId);
     closeSectionEditor(sectionId, true);
   }
 

@@ -1,0 +1,19 @@
+{
+  "id": "spell-teleport",
+  "name": "Teleport",
+  "level": "7",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "10 feet",
+  "components": "V",
+  "duration": "Instantaneous",
+  "summary": "Teleport yourself and up to 8 willing creatures / one object to a destination on the same plane.",
+  "description": "Accuracy depends on familiarity (Permanent Circle / Associated Object / Very Familiar / Seen Casually / Viewed Once / Description / False Destination). Mishaps possible on poor familiarity.",
+  "higherLevels": "",
+  "notes": "Use the teleport familiarity table from the full rules.",
+  "updatedAt": 1786753781780
+}

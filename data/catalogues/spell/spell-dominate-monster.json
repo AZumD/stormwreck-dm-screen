@@ -1,0 +1,19 @@
+{
+  "id": "spell-dominate-monster",
+  "name": "Dominate Monster",
+  "level": "8",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "Charm and telepathically control any creature (WIS save).",
+  "description": "WIS save (advantage if fighting you). Charmed; you have telepathic link and can issue commands. Damage: new save to end.",
+  "higherLevels": "Duration up to 8 hours (9th-level slot).",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

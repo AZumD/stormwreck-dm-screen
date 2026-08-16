@@ -4,8 +4,10 @@
 Local Node server that serves the vanilla DM Library frontend and persists user data under `/data`.
 
 ## Start
+**Windows:** double-click `start-dm-screen.bat` (finds Node, starts the server, opens the browser).
+
+Or from a terminal (no `npm install` — zero dependencies):
 ```bash
-npm install
 npm start
 ```
 Open `http://127.0.0.1:3000`

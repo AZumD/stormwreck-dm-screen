@@ -1,0 +1,18 @@
+{
+  "id": "skill-animal-handling",
+  "linkId": "animal-handling",
+  "name": "Animal Handling",
+  "defaultAbility": "Wisdom",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Calm, control, or read an animal.",
+  "description": "When there is any question whether you can calm down a domesticated animal, keep a mount from getting spooked, or intuit an animal's intentions, the GM might call for a Wisdom (Animal Handling) check.",
+  "typicalUses": "Calm mounts, train beasts, read animal mood, guide beasts.",
+  "exampleChecks": "Quiet a frightened horse; coax a watchdog; sense if a beast is about to attack.",
+  "notes": "",
+  "tags": [
+    "wisdom",
+    "nature"
+  ],
+  "updatedAt": 1786753783664
+}

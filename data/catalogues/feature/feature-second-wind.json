@@ -1,0 +1,20 @@
+{
+  "id": "feature-second-wind",
+  "linkId": "second-wind",
+  "name": "Second Wind",
+  "featureType": "Class feature",
+  "grantedBy": "@class:fighter|Fighter",
+  "levelPrerequisite": "1",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Bonus action to regain hit points.",
+  "description": "You have a limited well of stamina that you can draw on to protect yourself from harm. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once you use this feature, you must finish a short or long rest before you can use it again.",
+  "usesRecharge": "1 / short or long rest",
+  "notes": "",
+  "tags": [
+    "class",
+    "fighter",
+    "healing"
+  ],
+  "updatedAt": 1786753784142
+}

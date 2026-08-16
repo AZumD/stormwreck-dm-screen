@@ -1,0 +1,19 @@
+{
+  "id": "spell-hunter-s-mark",
+  "name": "Hunter's Mark",
+  "level": "1",
+  "school": "Divination",
+  "source": "Core rules",
+  "classes": "Ranger",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 bonus action",
+  "range": "90 feet",
+  "components": "V",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "+1d6 weapon damage vs marked prey; advantage to track it.",
+  "description": "Mark a creature. Weapon attacks deal +1d6. Advantage on Perception/Survival to find it. Reassign if it drops to 0 HP.",
+  "higherLevels": "Duration up to 8 hours (3rd+) or 24 hours (5th+).",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

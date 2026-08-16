@@ -1,9 +1,9 @@
 {
   "id": "sw-spore-servant-octopus",
   "name": "Spore Servant Octopus",
-  "size": "Medium",
-  "creatureType": "Plant",
-  "alignment": "Unaligned",
+  "size": "Medelstor",
+  "creatureType": "Växt",
+  "alignment": "Oallierad",
   "cr": "1/4",
   "xp": "50",
   "str": 14,
@@ -20,11 +20,11 @@
   "damageImmunities": "",
   "senses": "Blindsight 30 ft., passive Perception 10",
   "languages": "—",
-  "traits": "Seagrow Caves entrance (B1) — blocks Tarak's mushroom quest. Fungus-controlled octopus.",
-  "actions": "Tentacles. +4 to hit, reach 5 ft. Hit: 5 (1d6+2) bludgeoning damage.",
+  "traits": "En bläckfisk vars kropp har tagits över av svamp och sporer. Den styrs av den främmande växtligheten snarare än av sin egen vilja.",
+  "actions": "Tentakler. +4 to hit, räckvidd 5 ft. Träff: 5 (1d6+2) bludgeoning damage.",
   "bonusActions": "",
   "reactions": "",
   "legendaryActions": "",
-  "notes": "In the water at cave entrance. Combine with 2 stirges at level 2.",
+  "notes": "",
   "updatedAt": 1786752801503
 }

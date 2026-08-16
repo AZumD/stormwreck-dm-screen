@@ -1,0 +1,18 @@
+{
+  "id": "skill-acrobatics",
+  "linkId": "acrobatics",
+  "name": "Acrobatics",
+  "defaultAbility": "Dexterity",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Stay on your feet in tricky situations.",
+  "description": "Your Dexterity (Acrobatics) check covers your attempt to stay on your feet in a tricky situation, such as when you're trying to run across a sheet of ice, balance on a tightrope, or stay upright on a rocking ship's deck.",
+  "typicalUses": "Balance, tumble, stunts, keeping footing on unstable ground.",
+  "exampleChecks": "Walk a narrow ledge; land safely after a fall; tumble through an enemy's space.",
+  "notes": "",
+  "tags": [
+    "dexterity",
+    "movement"
+  ],
+  "updatedAt": 1786753783664
+}

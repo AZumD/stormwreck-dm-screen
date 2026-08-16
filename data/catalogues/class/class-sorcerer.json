@@ -1,0 +1,21 @@
+{
+  "id": "class-sorcerer",
+  "name": "Sorcerer",
+  "hitDie": "d6",
+  "primaryAbility": "Charisma",
+  "source": "Core rules",
+  "summary": "Innate spellcasters who twist magic with metamagic and sorcerous origin.",
+  "savingThrows": "Constitution, Charisma",
+  "armorProficiencies": "None",
+  "weaponProficiencies": "Daggers, darts, slings, quarterstaffs, light crossbows",
+  "toolProficiencies": "",
+  "skillChoices": "Choose 2 from Arcana, Deception, Insight, Intimidation, Persuasion, Religion",
+  "features": "1 — Spellcasting, Sorcerous Origin\n2 — Font of Magic (sorcery points)\n3 — Metamagic\n6+ — origin features\n20 — Sorcerous Restoration",
+  "spellcasting": "Full caster (CHA). Known spells. Sorcery points fuel metamagic and slot conversion.",
+  "subclasses": [
+    "Draconic Bloodline",
+    "Wild Magic"
+  ],
+  "notes": "",
+  "updatedAt": 1786753781456
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-knock",
+  "name": "Knock",
+  "level": "2",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V",
+  "duration": "Instantaneous",
+  "summary": "Unlock one lock/bolt/bar on an object; loud knock.",
+  "description": "Unlocks / unbars / opens one lock on a door, chest, etc. Magical locks suppressed 10 minutes. Audible to 300 ft.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

@@ -1,0 +1,20 @@
+{
+  "id": "race-elf",
+  "name": "Elf",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Graceful folk of keen senses and long lives — trance instead of sleep.",
+  "abilityScoreIncrease": "DEX +2 (high: INT +1; wood: WIS +1; drow: CHA +1 — pick subrace)",
+  "featureRefs": [
+    "@feature:darkvision|Darkvision",
+    "@feature:keen-senses|Keen Senses",
+    "@feature:fey-ancestry|Fey Ancestry",
+    "@feature:trance|Trance"
+  ],
+  "traits": "Subrace extras:\nHigh: cantrip, Extra Language, Elf Weapon Training.\nWood: Fleet of Foot (35 ft.), Mask of the Wild, Elf Weapon Training.\nDrow: Superior Darkvision 120 ft., Sunlight Sensitivity, Drow Magic, Drow Weapon Training.",
+  "languages": "Common, Elvish",
+  "senses": "Darkvision 60 ft. (drow 120 ft.)",
+  "notes": "Subraces commonly used: high elf, wood elf, drow.",
+  "updatedAt": 1786753781208
+}

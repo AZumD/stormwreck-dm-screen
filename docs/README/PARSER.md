@@ -14,7 +14,7 @@ Turns adventure markup into HTML: entity links, read-aloud / DM notes, YouTube c
 | `{{youtube:url\|Label}}` | Media chip → MediaBar |
 | `{{read-aloud}}…{{/read-aloud}}` | Read-aloud box |
 | `{{dm-note}}…{{/dm-note}}` | DM note box |
-| `{{collapse:Title}}…{{/collapse}}` | Collapsed block; click title to expand |
+| `{{collapse:Title}}…{{/collapse}}` | Collapsed block; click title to expand. Nested `{{read-aloud}}`, `{{dm-note}}`, links, and further collapses are parsed normally inside the body. |
 | `**bold**` / `<b>` | Strong text |
 | Line breaks | Preserved as `<br>` (no special markup needed) |
 

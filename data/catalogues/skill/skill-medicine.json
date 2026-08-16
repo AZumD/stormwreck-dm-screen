@@ -1,0 +1,18 @@
+{
+  "id": "skill-medicine",
+  "linkId": "medicine",
+  "name": "Medicine",
+  "defaultAbility": "Wisdom",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Stabilize and diagnose injuries.",
+  "description": "A Wisdom (Medicine) check lets you try to stabilize a dying companion or diagnose an illness.",
+  "typicalUses": "Stabilize, diagnose disease/poison, treat wounds.",
+  "exampleChecks": "Identify a poison; stabilize a fallen ally; judge cause of death.",
+  "notes": "",
+  "tags": [
+    "wisdom",
+    "healing"
+  ],
+  "updatedAt": 1786753783664
+}

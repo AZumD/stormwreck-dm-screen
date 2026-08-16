@@ -1,0 +1,19 @@
+{
+  "id": "spell-thaumaturgy",
+  "name": "Thaumaturgy",
+  "level": "Cantrip",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Cleric",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "V",
+  "duration": "Up to 1 minute",
+  "summary": "Minor divine wonders — voice boom, tremors, lights, doors.",
+  "description": "Voice booms 3×; cause harmless tremors; control flames/torches; create an instantaneous sound; unlock/open/close an unlocked door or window; alter your eyes' appearance.",
+  "higherLevels": "",
+  "notes": "Up to three effects at once.",
+  "updatedAt": 1786753781779
+}

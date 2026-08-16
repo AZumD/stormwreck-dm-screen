@@ -1,0 +1,19 @@
+{
+  "id": "spell-dimension-door",
+  "name": "Dimension Door",
+  "level": "4",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "500 feet",
+  "components": "V",
+  "duration": "Instantaneous",
+  "summary": "Teleport yourself (and one willing ally) up to 500 ft.",
+  "description": "Arrive exactly where named/described. If destination occupied, you and passenger take force damage and spell fails.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

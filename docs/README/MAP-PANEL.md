@@ -8,7 +8,7 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 
 ## Image resolution
 1. Look up `map.locationId` (or `map.id`) in Location catalogue
-2. If `entry.mapImage` (data URL from IndexedDB hydrate) exists → use it
+2. If `entry.mapImage` (`/api/assets/…` or hydrated legacy value) exists → use it
 3. Else use `map.image` placeholder path
 4. Locations with an upload but no `MAPS` entry are added to the dropdown automatically
 

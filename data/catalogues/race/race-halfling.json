@@ -1,0 +1,14 @@
+{
+  "id": "race-halfling",
+  "name": "Halfling",
+  "size": "Small",
+  "speed": "25 ft.",
+  "source": "Core rules",
+  "summary": "Small, lucky wanderers — brave when it counts, hard to pin down.",
+  "abilityScoreIncrease": "DEX +2 (lightfoot: CHA +1; stout: CON +1)",
+  "traits": "Lucky — reroll natural 1s on attack rolls, ability checks, and saving throws (must use new roll).\nBrave — advantage on saves vs frightened.\nHalfling Nimbleness — move through the space of any creature larger than you.\nLightfoot: Naturally Stealthy (hide behind a creature one size larger).\nStout: Stout Resilience (poison advantage + resistance).",
+  "languages": "Common, Halfling",
+  "senses": "",
+  "notes": "Subraces commonly used: lightfoot, stout.",
+  "updatedAt": 1786753781208
+}

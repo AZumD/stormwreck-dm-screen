@@ -1,0 +1,19 @@
+{
+  "id": "spell-scorching-ray",
+  "name": "Scorching Ray",
+  "level": "2",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "Three rays of fire; each is a ranged spell attack.",
+  "description": "Three rays; each hit deals 2d6 fire. Same or different targets.",
+  "higherLevels": "+1 ray per slot above 2nd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

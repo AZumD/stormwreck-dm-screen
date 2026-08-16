@@ -1,0 +1,15 @@
+{
+  "background": {
+    "connections": [],
+    "updatedAt": 1786753857903
+  },
+  "npc-runara": {
+    "connections": [
+      {
+        "sceneId": "custom-cell-1-msw0shs8",
+        "label": "Cell 1"
+      }
+    ],
+    "updatedAt": 1786898399752
+  }
+}

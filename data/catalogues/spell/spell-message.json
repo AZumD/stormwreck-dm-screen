@@ -1,0 +1,19 @@
+{
+  "id": "spell-message",
+  "name": "Message",
+  "level": "Cantrip",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S, M (copper wire)",
+  "duration": "1 round",
+  "summary": "Whisper a short message to one creature; they can reply.",
+  "description": "Only target hears you. Travels around corners / through openings but blocked by magical silence or total cover barriers as noted in the full text.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

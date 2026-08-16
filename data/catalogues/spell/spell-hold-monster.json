@@ -1,0 +1,19 @@
+{
+  "id": "spell-hold-monster",
+  "name": "Hold Monster",
+  "level": "5",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "90 feet",
+  "components": "V, S, M (straight piece of iron)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Paralyze any creature (not undead) — WIS save.",
+  "description": "Like Hold Person but any creature type except undead.",
+  "higherLevels": "+1 creature per slot above 5th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

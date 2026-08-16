@@ -1,0 +1,19 @@
+{
+  "id": "spell-thunderwave",
+  "name": "Thunderwave",
+  "level": "1",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Bard, Druid, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Self (15-foot cube)",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "Thunder boom in 15-ft cube; push creatures away.",
+  "description": "CON save or 2d8 thunder and pushed 10 ft; half damage and no push on success. Audible to 300 ft.",
+  "higherLevels": "+1d8 per slot above 1st.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

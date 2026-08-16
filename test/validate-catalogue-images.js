@@ -1,5 +1,5 @@
 /**
- * Validates catalogue image upload wiring (IndexedDB path).
+ * Validates catalogue image upload wiring (file-backed + legacy IDB).
  * Run: node test/validate-catalogue-images.js
  */
 
@@ -29,16 +29,22 @@ const mapPanel = read("js/core/map-panel.js");
 const campaignApp = read("js/campaign-app.js");
 const registry = read("js/core/entity-registry.js");
 
-if (!images.includes("indexedDB") || !images.includes("CatalogueImages")) {
-  fail("images.js missing IndexedDB CatalogueImages API");
+if (!images.includes("CatalogueImages") || !images.includes("/api/assets/")) {
+  fail("images.js missing file-backed CatalogueImages API");
 } else {
-  pass("CatalogueImages IndexedDB module present");
+  pass("CatalogueImages file-backed module present");
 }
 
-if (!images.includes("persistEntryImages") || !images.includes("__idb__")) {
-  fail("images.js missing persist/marker helpers");
+if (!images.includes("persistEntryImages") || !images.includes("clearFields")) {
+  fail("images.js missing persist/clearFields helpers");
 } else {
-  pass("persistEntryImages + __idb__ marker");
+  pass("persistEntryImages + clearFields");
+}
+
+if (!images.includes("indexedDB")) {
+  fail("images.js should keep IndexedDB for legacy/offline");
+} else {
+  pass("IndexedDB legacy path retained");
 }
 
 if (!app.includes("compressImageFile")) fail("missing image compression");
@@ -53,7 +59,7 @@ if (!app.includes("CatalogueImages.persistEntryImages")) {
 if (!app.includes("CatalogueStore.upsert(type, toStore)")) {
   fail("upload path may not upsert after image persist");
 } else {
-  pass("upserts marker entry after IDB persist");
+  pass("upserts entry after asset persist");
 }
 
 if (!app.includes("imageCache")) fail("missing image cache");

@@ -1,0 +1,19 @@
+{
+  "id": "spell-speak-with-animals",
+  "name": "Speak with Animals",
+  "level": "1",
+  "school": "Divination",
+  "source": "Core rules",
+  "classes": "Bard, Druid, Ranger",
+  "ritual": true,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Self",
+  "components": "V, S",
+  "duration": "10 minutes",
+  "summary": "Comprehend and verbally communicate with beasts.",
+  "description": "Beasts can give information about nearby locations and monsters; limited by intelligence and attitude.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

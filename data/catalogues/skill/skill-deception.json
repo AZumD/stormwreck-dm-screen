@@ -1,0 +1,18 @@
+{
+  "id": "skill-deception",
+  "linkId": "deception",
+  "name": "Deception",
+  "defaultAbility": "Charisma",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Hide the truth convincingly.",
+  "description": "Your Charisma (Deception) check determines whether you can convincingly hide the truth, either verbally or through your actions.",
+  "typicalUses": "Lies, disguises, false intentions, con games.",
+  "exampleChecks": "Bluff a guard; pass as another person; feint in social play.",
+  "notes": "",
+  "tags": [
+    "charisma",
+    "social"
+  ],
+  "updatedAt": 1786753783664
+}

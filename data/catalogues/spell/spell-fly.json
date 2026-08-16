@@ -1,0 +1,19 @@
+{
+  "id": "spell-fly",
+  "name": "Fly",
+  "level": "3",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S, M (wing feather)",
+  "duration": "Concentration, up to 10 minutes",
+  "summary": "Grant a flying speed of 60 feet.",
+  "description": "Willing creature gains fly speed 60 ft. Falls if spell ends mid-air (unless it can stop the fall).",
+  "higherLevels": "+1 target per slot above 3rd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

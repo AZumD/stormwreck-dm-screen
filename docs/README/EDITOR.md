@@ -1,41 +1,36 @@
 # EDITOR.js
 
 ## Purpose
-Inline adventure passage editing for campaign screens. Persists edits, custom passages, and soft-deletes in `localStorage`.
+Free-form campaign scene list: ordered passages with title/content, persisted under `/data` (localStorage offline).
 
 ## File
 `js/core/editor.js` → global `window.SectionEditor`
 
-## Storage keys
-| Key | Contents |
-|-----|----------|
+## Storage
+| Key / doc | Contents |
+|-----------|----------|
 | `dm-edit-mode` | `"1"` when Edit mode is on |
-| `{campaignId}-section-edits` | Title/content overrides for booklet passages |
-| `{campaignId}-section-structure` | `{ deleted: string[], custom: Section[] }` |
+| `{campaignId}-section-structure` / `section-structure.json` | `{ scenes: [{ id, title, content }, …] }` |
+| `{campaignId}-section-edits` | Legacy only — folded into `scenes` on migrate, then cleared |
+
+Booklet `ADVENTURE.sections` is **reference only**. On first bootstrap with a legacy `{ deleted, custom }` structure, scenes are materialized once (booklet − deleted + customs + edits), then the campaign owns the list.
 
 ## API
 | Method | Role |
 |--------|------|
-| `getSections(campaignId, baseSections)` | Booklet sections − deleted + custom inserts |
-| `getSection(campaignId, id, defaults)` | Resolved title/content for one passage |
-| `saveSection` / `resetSection` | Edit booklet text (or update custom body) |
-| `addSection({ chapter, afterId, title, content })` | Create a custom passage |
-| `deleteSection(campaignId, id, baseSections)` | Soft-delete booklet / hard-delete custom |
-| `restoreAllDeleted` / `getDeletedIds` | Restore removed booklet passages |
-| `isCustomSection` / `isEditMode` / `setEditMode` | Helpers |
-
-## Custom section shape
-```js
-{ id, chapter, title, content, afterId, createdAt }
-```
+| `bootstrap(campaignId, baseSections?)` | Load + one-shot legacy migrate |
+| `getSections(campaignId)` | Ordered scene list |
+| `getSection` / `saveSection` | Read / update one scene |
+| `addSection({ afterId?, title, content })` | Insert or append |
+| `deleteSection(campaignId, id)` | Remove from list |
+| `reorderScenes(campaignId, orderedIds)` | Persist drag order |
+| `isEditMode` / `setEditMode` | Edit mode flag |
 
 ## UI (campaign-app)
 In **Edit mode**:
-- **Edit** / **Delete** on each passage
-- **+ Add passage** under each passage (and empty chapters)
-- **Restore removed booklet passages** when any soft-deletes exist
-- Passage editor **toolbar**: wrap selection as Read aloud / DM note / Collapse / Bold; insert NPC·Monster·Location·Item links; YouTube
+- **Edit** / **Link scene** / **Delete** on each passage
+- **+ Add passage** in sidebar and under passages
+- **Drag** sidebar scenes to reorder (disabled outside edit mode)
+- Passage editor toolbar: Read aloud / DM note / Collapse / Bold / entity links / YouTube
 
-Select text first, then click a wrap button so the selection stays inside the tags. Link buttons use the selection as the display name and prompt for the catalogue link id.
-
-**Collapse tag:** `{{collapse:If the players lose}}…{{/collapse}}` — title stays visible; body expands on click.
+No custom vs booklet badges, Reset, or restore-deleted UI.

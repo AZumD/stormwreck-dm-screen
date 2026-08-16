@@ -1,0 +1,19 @@
+{
+  "id": "spell-sleep",
+  "name": "Sleep",
+  "level": "1",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "90 feet",
+  "components": "V, S, M (fine sand / rose petals / cricket)",
+  "duration": "1 minute",
+  "summary": "Put low-HP creatures in a 20-ft radius to sleep.",
+  "description": "Roll 5d8; put creatures to sleep in ascending current HP order until the HP pool is used. Undead and charm-immune creatures unaffected.",
+  "higherLevels": "+2d8 per slot above 1st.",
+  "notes": "No save — HP pool matters.",
+  "updatedAt": 1786753781780
+}

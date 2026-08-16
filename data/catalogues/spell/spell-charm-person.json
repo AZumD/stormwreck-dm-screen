@@ -1,0 +1,19 @@
+{
+  "id": "spell-charm-person",
+  "name": "Charm Person",
+  "level": "1",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Druid, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "V, S",
+  "duration": "1 hour",
+  "summary": "Humanoid regards you as a friendly acquaintance (WIS save).",
+  "description": "WIS save; advantage if you or allies are fighting it. Charmed creature is friendly to you. Knows it was charmed when spell ends.",
+  "higherLevels": "+1 target (within 30 ft of another) per slot above 1st.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

@@ -1,0 +1,14 @@
+{
+  "id": "race-half-orc",
+  "name": "Half-Orc",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Fierce survivors marked by orcish endurance and relentless grit.",
+  "abilityScoreIncrease": "STR +2, CON +1",
+  "traits": "Darkvision 60 ft.\nMenacing — Intimidation proficiency.\nRelentless Endurance — once per long rest, drop to 1 HP instead of 0.\nSavage Attacks — extra damage die on critical melee weapon hits.",
+  "languages": "Common, Orc",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786753781208
+}

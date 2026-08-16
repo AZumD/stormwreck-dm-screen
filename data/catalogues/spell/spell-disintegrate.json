@@ -1,0 +1,19 @@
+{
+  "id": "spell-disintegrate",
+  "name": "Disintegrate",
+  "level": "6",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S, M (lodestone + dust)",
+  "duration": "Instantaneous",
+  "summary": "Green ray; DEX save or massive force damage — dusted at 0 HP.",
+  "description": "DEX save or 10d6+40 force. Reduced to 0 HP: disintegrated (and creations destroyed). Also destroys Large or smaller nonmagical objects / creations of magical force (Wall of Force).",
+  "higherLevels": "+3d6 per slot above 6th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

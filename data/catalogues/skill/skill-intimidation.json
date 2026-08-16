@@ -1,0 +1,18 @@
+{
+  "id": "skill-intimidation",
+  "linkId": "intimidation",
+  "name": "Intimidation",
+  "defaultAbility": "Charisma",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Influence through threats or force of presence.",
+  "description": "When you attempt to influence someone through overt threats, hostile actions, and physical violence, the GM might ask you to make a Charisma (Intimidation) check.",
+  "typicalUses": "Threats, interrogation, scare tactics.",
+  "exampleChecks": "Cow a thug; force a confession; clear a tavern with a glare.",
+  "notes": "",
+  "tags": [
+    "charisma",
+    "social"
+  ],
+  "updatedAt": 1786753783664
+}

@@ -63,22 +63,29 @@ window.ContentParser = (function () {
     return html;
   }
 
-  function parseContent(raw, entities) {
-    let html = raw;
+  function parseContent(raw, entities, depth = 0) {
+    let html = String(raw ?? "");
     const registry = entities || window.EntityRegistry?.getAll?.() || window.ENTITIES || {};
+    if (depth > 24) return escapeHtml(html);
+
+    /*
+     * Structural blocks first. Bodies use full parseContent so nested
+     * {{read-aloud}} / {{dm-note}} / {{collapse}} / @links work inside collapses
+     * (inlineFormat used to escape already-rendered HTML).
+     */
+    html = html.replace(/\{\{collapse(?::([^}]*))?\}\}([\s\S]*?)\{\{\/collapse\}\}/g, (_, title, text) => {
+      const label = String(title || "").trim() || window.I18N?.collapseDefaultTitle || "Details";
+      const body = parseContent(String(text || "").trim(), registry, depth + 1);
+      return `<details class="collapse-block"><summary class="collapse-block__summary">${escapeHtml(label)}</summary><div class="collapse-block__body">${body}</div></details>`;
+    });
 
     html = html.replace(/\{\{read-aloud\}\}([\s\S]*?)\{\{\/read-aloud\}\}/g, (_, text) =>
-      `<div class="read-aloud"><span class="read-aloud-label">${window.I18N?.readAloud || "Read Aloud"}</span>${inlineFormat(text.trim(), registry)}</div>`
+      `<div class="read-aloud"><span class="read-aloud-label">${window.I18N?.readAloud || "Read Aloud"}</span>${parseContent(String(text || "").trim(), registry, depth + 1)}</div>`
     );
 
     html = html.replace(/\{\{dm-note\}\}([\s\S]*?)\{\{\/dm-note\}\}/g, (_, text) =>
-      `<div class="dm-note"><span class="dm-note-label">${window.I18N?.dmNote || "DM Note"}</span>${inlineFormat(text.trim(), registry)}</div>`
+      `<div class="dm-note"><span class="dm-note-label">${window.I18N?.dmNote || "DM Note"}</span>${parseContent(String(text || "").trim(), registry, depth + 1)}</div>`
     );
-
-    html = html.replace(/\{\{collapse(?::([^}]*))?\}\}([\s\S]*?)\{\{\/collapse\}\}/g, (_, title, text) => {
-      const label = String(title || "").trim() || window.I18N?.collapseDefaultTitle || "Details";
-      return `<details class="collapse-block"><summary class="collapse-block__summary">${escapeHtml(label)}</summary><div class="collapse-block__body">${inlineFormat(String(text || "").trim(), registry)}</div></details>`;
-    });
 
     html = replaceYouTube(html);
     html = replaceLinks(html, registry);

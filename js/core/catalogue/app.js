@@ -268,8 +268,8 @@ window.CatalogueApp = (function () {
     const hint =
       field.hint ||
       (isPortrait
-        ? "Portraits are stored in this browser. Large files are resized automatically."
-        : "Maps are stored in this browser. Large files are resized automatically.");
+        ? "Portraits are saved under /data with your catalogue entries. Large files are resized automatically."
+        : "Maps are saved under /data with your catalogue entries. Large files are resized automatically.");
 
     const preview = value
       ? `<img class="${previewClass}" src="${value}" alt="${escapeHtml(field.label || "Preview")}">`
@@ -652,6 +652,12 @@ window.CatalogueApp = (function () {
               merged[field.id] = imageCache[field.id] || existing[field.id];
             }
           }
+          /* Never let a blank form field drop a file-backed or legacy image URL */
+          if (!merged[field.id] && existingRaw[field.id] && options.preserveImages !== false) {
+            if (!Object.prototype.hasOwnProperty.call(imageCache, field.id) || imageCache[field.id]) {
+              merged[field.id] = imageCache[field.id] || existingRaw[field.id];
+            }
+          }
         });
       });
 
@@ -765,11 +771,24 @@ window.CatalogueApp = (function () {
             const fromForm = readForm(form, config);
             const merged = { ...existing, ...fromForm, [fieldId]: dataUrl };
             if (!merged.name?.trim()) merged.name = config.defaults.name;
+            /* Keep sibling image fields — blank hidden inputs must not wipe other assets */
+            if (window.CatalogueImages) {
+              CatalogueImages.IMAGE_FIELDS.forEach((f) => {
+                if (f === fieldId) return;
+                if (!merged[f] && existingRaw[f]) merged[f] = existingRaw[f];
+                else if (!merged[f] && existing[f]) merged[f] = existing[f];
+              });
+            }
 
             const toStore = window.CatalogueImages
               ? await CatalogueImages.persistEntryImages(type, merged)
               : merged;
             await CatalogueStore.upsert(type, toStore);
+            if (window.CatalogueImages?.IMAGE_FIELDS) {
+              CatalogueImages.IMAGE_FIELDS.forEach((f) => {
+                if (toStore[f]) imageCache[f] = toStore[f];
+              });
+            }
             setStatus("Saved");
             renderEditor(activeId, { mode: "edit" });
           } catch (err) {
@@ -812,9 +831,16 @@ window.CatalogueApp = (function () {
           const existing = window.CatalogueImages ? CatalogueImages.hydrate(type, existingRaw) : existingRaw;
           const fromForm = readForm(form, config);
           const merged = { ...existing, ...fromForm, [fieldId]: "" };
+          if (window.CatalogueImages) {
+            CatalogueImages.IMAGE_FIELDS.forEach((f) => {
+              if (f === fieldId) return;
+              if (!merged[f] && existingRaw[f]) merged[f] = existingRaw[f];
+              else if (!merged[f] && existing[f]) merged[f] = existing[f];
+            });
+          }
           try {
             const toStore = window.CatalogueImages
-              ? await CatalogueImages.persistEntryImages(type, merged)
+              ? await CatalogueImages.persistEntryImages(type, merged, { clearFields: [fieldId] })
               : merged;
             await CatalogueStore.upsert(type, toStore);
             setStatus("Saved");

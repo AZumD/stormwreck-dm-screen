@@ -1,0 +1,19 @@
+{
+  "id": "spell-polymorph",
+  "name": "Polymorph",
+  "level": "4",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Bard, Druid, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S, M (caterpillar cocoon)",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "Transform a creature into a beast of equal or lower CR.",
+  "description": "WIS save (willing auto-fail). Stats replaced by beast's (except alignment/personality). HP: use beast's; revert with leftover HP when form drops or spell ends.",
+  "higherLevels": "",
+  "notes": "Shapechangers auto-succeed.",
+  "updatedAt": 1786753781780
+}

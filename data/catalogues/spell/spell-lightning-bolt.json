@@ -1,0 +1,19 @@
+{
+  "id": "spell-lightning-bolt",
+  "name": "Lightning Bolt",
+  "level": "3",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Self (100-foot line)",
+  "components": "V, S, M (fur + amber/crystal/glass rod)",
+  "duration": "Instantaneous",
+  "summary": "100-ft-long, 5-ft-wide lightning line; DEX save half.",
+  "description": "Creatures in the line take 8d6 lightning (DEX half).",
+  "higherLevels": "+1d6 per slot above 3rd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

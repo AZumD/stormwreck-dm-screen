@@ -1,5 +1,6 @@
 /**
- * Catalogue images — file-backed assets via API; IndexedDB kept only for legacy import.
+ * Catalogue images — file-backed assets via API (same /data tree as catalogue JSON).
+ * IndexedDB is kept only for offline fallback + one-shot migration/import.
  */
 window.CatalogueImages = (function () {
   "use strict";
@@ -31,6 +32,23 @@ window.CatalogueImages = (function () {
 
   function isAssetUrl(value) {
     return typeof value === "string" && value.startsWith("/api/assets/");
+  }
+
+  function allTypes() {
+    return (
+      window.CatalogueTypes?.ids?.() || [
+        "pc",
+        "npc",
+        "item",
+        "monster",
+        "location",
+        "race",
+        "class",
+        "spell",
+        "skill",
+        "feature"
+      ]
+    );
   }
 
   function openDb() {
@@ -120,12 +138,17 @@ window.CatalogueImages = (function () {
     return setIdb(type, entryId, field, dataUrl);
   }
 
+  /** Explicit remove (clear button). Never call this for blank form fields. */
+  async function clear(type, entryId, field) {
+    return set(type, entryId, field, "");
+  }
+
+  /**
+   * Always load IndexedDB into memory so legacy images can migrate when the API is up.
+   * File-backed `/api/assets/…` URLs still load from the server on demand.
+   */
   async function preload(types) {
     const list = Array.isArray(types) ? types : [types];
-    if (useApi()) {
-      /* Asset URLs load from server on demand; nothing to preload into memory */
-      return;
-    }
     try {
       const db = await openDb();
       await new Promise((resolve, reject) => {
@@ -156,13 +179,22 @@ window.CatalogueImages = (function () {
         out[field] = cached;
         return;
       }
-      if (isMarker(out[field])) out[field] = "";
+      /* Keep markers in place when nothing is cached — migrate/import can still find them */
+      if (isMarker(out[field]) && useApi()) out[field] = "";
     });
     return out;
   }
 
   function hydrateAll(type, entries) {
     return (entries || []).map((e) => hydrate(type, e));
+  }
+
+  async function migrateFieldFromCache(type, entryId, field) {
+    const cached = getSync(type, entryId, field);
+    if (!cached || !useApi()) return null;
+    if (isDataUrl(cached)) return set(type, entryId, field, cached);
+    if (isAssetUrl(cached)) return cached;
+    return null;
   }
 
   /** Move legacy data-URL / IDB images into file assets when API is available */
@@ -187,15 +219,15 @@ window.CatalogueImages = (function () {
           continue;
         }
         if (isMarker(value) || !value) {
-          const cached = getSync(type, entry.id, field);
-          if (cached && isDataUrl(cached) && useApi()) {
-            try {
-              entry[field] = await set(type, entry.id, field, cached);
+          try {
+            const migrated = await migrateFieldFromCache(type, entry.id, field);
+            if (migrated) {
+              entry[field] = migrated;
               entryChanged = true;
               moved += 1;
-            } catch {
-              /* ignore */
             }
+          } catch {
+            /* ignore */
           }
         }
       }
@@ -210,17 +242,46 @@ window.CatalogueImages = (function () {
     return moved;
   }
 
-  async function migrateAll(types = ["pc", "npc", "item", "monster", "location"]) {
+  async function migrateAll(types) {
+    const list = types || allTypes();
     let total = 0;
-    for (const type of types) total += await migrateType(type);
+    for (const type of list) total += await migrateType(type);
     return total;
   }
 
-  async function persistEntryImages(type, entry) {
+  /**
+   * Persist image fields for an entry.
+   * Empty strings do NOT delete files — that was wiping portraits on ordinary text saves.
+   * Pass `clearFields: ["portrait"]` (or use clear()) for intentional removes.
+   */
+  async function persistEntryImages(type, entry, options = {}) {
     if (!entry?.id) return entry;
+    const clearFields = new Set(options.clearFields || []);
+    const previous = window.CatalogueStore?.get?.(type, entry.id) || null;
     const out = { ...entry };
+
     for (const field of IMAGE_FIELDS) {
+      if (!Object.prototype.hasOwnProperty.call(out, field) && !clearFields.has(field)) {
+        if (previous && Object.prototype.hasOwnProperty.call(previous, field)) {
+          out[field] = previous[field];
+        }
+        continue;
+      }
+
       const value = out[field];
+
+      if (clearFields.has(field)) {
+        try {
+          await clear(type, entry.id, field);
+          out[field] = "";
+        } catch (err) {
+          const error = new Error("asset-save-failed");
+          error.cause = err;
+          throw error;
+        }
+        continue;
+      }
+
       if (isDataUrl(value)) {
         try {
           out[field] = await set(type, entry.id, field, value);
@@ -229,20 +290,42 @@ window.CatalogueImages = (function () {
           error.cause = err;
           throw error;
         }
-      } else if (value === "" || value == null) {
-        await set(type, entry.id, field, "");
-        out[field] = "";
-      } else if (isMarker(value)) {
-        const cached = getSync(type, entry.id, field);
-        if (cached && useApi()) {
-          out[field] = await set(type, entry.id, field, cached);
-        } else {
-          out[field] = MARKER;
-        }
-      } else if (isAssetUrl(value)) {
+        continue;
+      }
+
+      if (isAssetUrl(value)) {
         out[field] = value;
+        continue;
+      }
+
+      if (isMarker(value)) {
+        const migrated = await migrateFieldFromCache(type, entry.id, field);
+        out[field] = migrated || MARKER;
+        continue;
+      }
+
+      if (value === "" || value == null) {
+        const prevVal = previous?.[field];
+        if (isAssetUrl(prevVal)) {
+          out[field] = prevVal;
+          continue;
+        }
+        if (isMarker(prevVal) || isDataUrl(prevVal)) {
+          const migrated = await migrateFieldFromCache(type, entry.id, field);
+          if (migrated) {
+            out[field] = migrated;
+            continue;
+          }
+          if (isMarker(prevVal) || isDataUrl(prevVal)) {
+            out[field] = prevVal;
+            continue;
+          }
+        }
+        out[field] = "";
+        continue;
       }
     }
+
     return out;
   }
 
@@ -269,6 +352,7 @@ window.CatalogueImages = (function () {
     isAssetUrl,
     getSync,
     set,
+    clear,
     preload,
     hydrate,
     hydrateAll,

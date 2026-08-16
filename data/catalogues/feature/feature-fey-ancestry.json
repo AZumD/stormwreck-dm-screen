@@ -1,0 +1,19 @@
+{
+  "id": "feature-fey-ancestry",
+  "linkId": "fey-ancestry",
+  "name": "Fey Ancestry",
+  "featureType": "Species feature",
+  "grantedBy": "@race:elf|Elf",
+  "levelPrerequisite": "",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Advantage vs being charmed; magic can't put you to sleep.",
+  "description": "You have advantage on saving throws against being charmed, and magic can't put you to sleep.",
+  "usesRecharge": "Passive",
+  "notes": "",
+  "tags": [
+    "species",
+    "elf"
+  ],
+  "updatedAt": 1786753784142
+}

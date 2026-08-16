@@ -1,0 +1,19 @@
+{
+  "id": "spell-web",
+  "name": "Web",
+  "level": "2",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S, M (bit of spiderweb)",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "Thick webs restrain creatures in a 20-ft cube.",
+  "description": "Difficult terrain / heavily obscured. DEX save or restrained; Athletics check as action to break free. Webs are flammable.",
+  "higherLevels": "",
+  "notes": "Needs anchors between solid surfaces or collapses.",
+  "updatedAt": 1786753781780
+}

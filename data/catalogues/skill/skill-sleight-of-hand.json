@@ -1,0 +1,18 @@
+{
+  "id": "skill-sleight-of-hand",
+  "linkId": "sleight-of-hand",
+  "name": "Sleight of Hand",
+  "defaultAbility": "Dexterity",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Plant, conceal, or steal small objects.",
+  "description": "Whenever you attempt an act of legerdemain or manual trickery, such as planting something on someone else or concealing an object on your person, make a Dexterity (Sleight of Hand) check.",
+  "typicalUses": "Pick pockets, palm objects, plant evidence, subtle juggling.",
+  "exampleChecks": "Lift a keyring; hide a potion; switch identical vials.",
+  "notes": "",
+  "tags": [
+    "dexterity",
+    "stealth"
+  ],
+  "updatedAt": 1786753783664
+}

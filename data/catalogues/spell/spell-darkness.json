@@ -1,0 +1,19 @@
+{
+  "id": "spell-darkness",
+  "name": "Darkness",
+  "level": "2",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, M (bat fur + drop of pitch/coal)",
+  "duration": "Concentration, up to 10 minutes",
+  "summary": "15-ft-radius magical darkness.",
+  "description": "Sphere of darkness on a point or object. Darkvision can't see through; non-magical light can't illuminate. Covered if cast on object you hide.",
+  "higherLevels": "",
+  "notes": "Dispelled by daylight spell in overlapping area.",
+  "updatedAt": 1786753781780
+}

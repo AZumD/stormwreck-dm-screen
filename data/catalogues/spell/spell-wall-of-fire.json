@@ -1,0 +1,19 @@
+{
+  "id": "spell-wall-of-fire",
+  "name": "Wall of Fire",
+  "level": "4",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Druid, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S, M (phosphorus)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Opaque wall of fire damages creatures nearby.",
+  "description": "Wall up to 60×20×1 ft or ring 20-ft diameter ×20 ft. DEX save when appearing; 5d8 fire. One side radiates heat (DEX save or 5d8 when entering/ending turn within 10 ft).",
+  "higherLevels": "+1d8 per slot above 4th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

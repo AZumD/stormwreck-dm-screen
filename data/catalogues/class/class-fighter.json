@@ -1,0 +1,36 @@
+{
+  "id": "class-fighter",
+  "name": "Fighter",
+  "hitDie": "d10",
+  "primaryAbility": "Strength or Dexterity",
+  "source": "Core rules",
+  "summary": "Masters of arms and armor — reliable damage and battlefield control.",
+  "savingThrows": "Strength, Constitution",
+  "armorProficiencies": "All armor, shields",
+  "weaponProficiencies": "Simple weapons, martial weapons",
+  "toolProficiencies": "",
+  "skillChoices": "Choose 2 from the listed skill options",
+  "skillRefs": [
+    "@skill:acrobatics|Acrobatics",
+    "@skill:animal-handling|Animal Handling",
+    "@skill:athletics|Athletics",
+    "@skill:history|History",
+    "@skill:insight|Insight",
+    "@skill:intimidation|Intimidation",
+    "@skill:perception|Perception",
+    "@skill:survival|Survival"
+  ],
+  "featureRefs": [
+    "@feature:second-wind|Second Wind",
+    "@feature:action-surge|Action Surge"
+  ],
+  "features": "1 — Fighting Style, @feature:second-wind|Second Wind\n2 — @feature:action-surge|Action Surge (1)\n3 — Martial Archetype\n5 — Extra Attack\n9 — Indomitable\n11 — Extra Attack (2)\n13+ — Indomitable & archetype improvements\n20 — Extra Attack (3)",
+  "spellcasting": "Eldritch Knight only (INT, 1/3 caster).",
+  "subclasses": [
+    "Champion",
+    "Battle Master",
+    "Eldritch Knight"
+  ],
+  "notes": "",
+  "updatedAt": 1786753781456
+}

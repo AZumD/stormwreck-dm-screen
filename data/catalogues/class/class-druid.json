@@ -1,0 +1,36 @@
+{
+  "id": "class-druid",
+  "name": "Druid",
+  "hitDie": "d8",
+  "primaryAbility": "Wisdom",
+  "source": "Core rules",
+  "summary": "Wardens of nature who shapeshift and call on primal magic.",
+  "savingThrows": "Intelligence, Wisdom",
+  "armorProficiencies": "Light armor, medium armor, shields (nonmetal)",
+  "weaponProficiencies": "Clubs, daggers, darts, javelins, maces, quarterstaffs, scimitars, sickles, slings, spears",
+  "toolProficiencies": "Herbalism kit",
+  "skillChoices": "Choose 2 from the listed skill options",
+  "skillRefs": [
+    "@skill:arcana|Arcana",
+    "@skill:animal-handling|Animal Handling",
+    "@skill:insight|Insight",
+    "@skill:medicine|Medicine",
+    "@skill:nature|Nature",
+    "@skill:perception|Perception",
+    "@skill:religion|Religion",
+    "@skill:survival|Survival"
+  ],
+  "featureRefs": [
+    "@feature:druidic|Druidic",
+    "@feature:spellcasting-druid|Spellcasting (Druid)",
+    "@feature:wild-shape|Wild Shape"
+  ],
+  "features": "1 — @feature:druidic|Druidic, @feature:spellcasting-druid|Spellcasting (Druid)\n2 — @feature:wild-shape|Wild Shape, Druid Circle\n4 — Wild Shape improvement\n6+ — circle features\n18 — Timeless Body, Beast Spells\n20 — Archdruid",
+  "spellcasting": "Full caster (WIS). Prepare from full druid list. Ritual casting. No metal armor/shields by tradition.",
+  "subclasses": [
+    "Circle of the Land",
+    "Circle of the Moon"
+  ],
+  "notes": "Wild Shape CR and swim/fly forms unlock by level / circle.",
+  "updatedAt": 1786753781456
+}

@@ -1,0 +1,14 @@
+{
+  "id": "race-half-elf",
+  "name": "Half-Elf",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Caught between two worlds — charismatic and adaptable.",
+  "abilityScoreIncrease": "CHA +2; two other abilities +1 each",
+  "traits": "Darkvision 60 ft.\nFey Ancestry — advantage vs charmed; magic can't put you to sleep.\nSkill Versatility — proficiency in two skills of your choice.",
+  "languages": "Common, Elvish + one of your choice",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786753781208
+}

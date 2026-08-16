@@ -1,0 +1,19 @@
+{
+  "id": "spell-prestidigitation",
+  "name": "Prestidigitation",
+  "level": "Cantrip",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "10 feet",
+  "components": "V, S",
+  "duration": "Up to 1 hour",
+  "summary": "Minor magical tricks — sensory effects, tidy, flavor, tiny marks.",
+  "description": "Create harmless sensory effects; light/snuff a candle; clean or soil a small object; chill/warm/flavor nonliving material; make a color/mark/symbol; create a tiny nonmagical trinket (until end of next turn).",
+  "higherLevels": "",
+  "notes": "Up to three non-instant effects active at once.",
+  "updatedAt": 1786753781779
+}

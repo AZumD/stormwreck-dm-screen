@@ -9,7 +9,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
 
 ## Persistence (authoritative)
-Run with `npm start` → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
+**Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
 
 | Area | Path |
 |------|------|
@@ -34,13 +34,14 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 
 ## Scene runtime
 - Default **Play** view focuses one scene (content, notes, At this scene, connections)
-- **Document** view keeps the continuous chapter scroll for prep/reading
+- **Document** view keeps a continuous scroll of the ordered scene list
 - Scene cast + connections editable in UI; stored in `scene-meta.json`
 
 ## Campaign editing
-- **Edit mode** edits passage title/body
-- **Add passage** inserts custom sections under a chapter
-- **Delete** removes custom passages permanently; booklet passages are soft-deleted and restorable
+- **Edit mode** edits passage title/body; **drag** sidebar scenes to reorder
+- **Add passage** inserts a scene into the free-form ordered list
+- **Delete** removes a scene from the list (same for every scene)
+- Booklet `adventure.js` is reference only — not merged as live seed content after migrate
 - **YouTube** chips via `{{youtube:url|Label}}` play in the sticky media bar
 - Entity links (`@npc:…`, `@skill:…`, `@feature:…`, `@class:…`, `@race:…`, …) resolve through catalogues via `entity-registry.js`
 - Toolbar **Search catalogues** dropdown opens any built entity modal
@@ -58,11 +59,12 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ## Core scripts
 | Script | Role |
 |--------|------|
+| `start-dm-screen.bat` | Windows double-click launcher (Node + browser) |
 | `server/` | Local Node static + `/api` file persistence |
 | `js/core/local-api-client.js` | Browser → `/api` |
 | `js/core/browser-import.js` | Import legacy browser data |
 | `js/core/catalogue/types.js` | Declarative catalogue type list |
-| `js/core/editor.js` | Passage edit / add / delete |
+| `js/core/editor.js` | Free-form ordered scenes + edit-mode reorder |
 | `js/core/parser.js` | `@` links (all linkable types), YouTube chips, read-aloud / DM-note |
 | `js/core/media-bar.js` | Sticky YouTube ambience bar |
 | `js/core/entity-ui.js` | Tooltips + modals (map pins use compact tooltips) |
@@ -74,7 +76,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/chronicle-store.js` | Story So Far, session prose, Key Events |
 | `js/core/chronicle-ui.js` | Chronicle panel + key-event dialog |
 | `js/core/scene-meta.js` | Scene cast + connections (design data) |
-| `js/core/scene-ui.js` | At this scene tray + connection UI |
+| `js/core/scene-ui.js` | At this scene tray + connection UI (edit-mode Link scene) |
 | `js/core/party.js` | Party roster UI from catalogue refs |
 | `js/core/map-panel.js` | Map images, pins, drag positions |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |

@@ -42,6 +42,15 @@
       pass("collapse block renders details/summary");
     }
 
+    const nested = parseContent(
+      "{{collapse:Ask him}}\n{{read-aloud}}\nShipwrecks on the reef.\n{{/read-aloud}}\n{{/collapse}}"
+    );
+    if (!nested.includes('class="read-aloud"') || nested.includes("&lt;div")) {
+      fail("nested read-aloud escaped: " + nested);
+    } else {
+      pass("nested read-aloud inside collapse");
+    }
+
     lines.push("");
     lines.push(failed ? failed + " failed" : "All parser checks passed.");
     out.textContent = lines.join("\n");

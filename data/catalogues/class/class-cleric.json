@@ -1,0 +1,26 @@
+{
+  "id": "class-cleric",
+  "name": "Cleric",
+  "hitDie": "d8",
+  "primaryAbility": "Wisdom",
+  "source": "Core rules",
+  "summary": "Divine agents who heal, protect, and channel their deity's domain power.",
+  "savingThrows": "Wisdom, Charisma",
+  "armorProficiencies": "Light armor, medium armor, shields",
+  "weaponProficiencies": "Simple weapons",
+  "toolProficiencies": "",
+  "skillChoices": "Choose 2 from History, Insight, Medicine, Persuasion, Religion",
+  "features": "1 — Spellcasting, Divine Domain\n2 — Channel Divinity (1/rest), Domain feature\n5 — Destroy Undead (CR 1/2)\n6 — Domain feature / Channel Divinity (2)\n8 — Domain feature / Destroy Undead improvement\n10 — Divine Intervention\n17+ — Domain & Destroy Undead scaling",
+  "spellcasting": "Full caster (WIS). Prepare from full cleric list each day. Domain spells always prepared.",
+  "subclasses": [
+    "Life Domain",
+    "Light Domain",
+    "Nature Domain",
+    "Tempest Domain",
+    "Trickery Domain",
+    "War Domain",
+    "Knowledge Domain"
+  ],
+  "notes": "Domain choice drives armor/weapon extras and Channel Divinity options.",
+  "updatedAt": 1786753781456
+}

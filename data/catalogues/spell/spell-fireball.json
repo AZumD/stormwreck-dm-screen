@@ -1,0 +1,19 @@
+{
+  "id": "spell-fireball",
+  "name": "Fireball",
+  "level": "3",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "150 feet",
+  "components": "V, S, M (bat guano + sulfur)",
+  "duration": "Instantaneous",
+  "summary": "20-ft-radius explosion of fire; DEX save half.",
+  "description": "Each creature in a 20-ft-radius sphere takes 8d6 fire (DEX half). Ignites flammables.",
+  "higherLevels": "+1d6 per slot above 3rd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

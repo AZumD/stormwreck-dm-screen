@@ -1,0 +1,20 @@
+{
+  "id": "feature-druidic",
+  "linkId": "druidic",
+  "name": "Druidic",
+  "featureType": "Class feature",
+  "grantedBy": "@class:druid|Druid",
+  "levelPrerequisite": "1",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Secret language of druids; leave hidden messages.",
+  "description": "You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically spot such a message. Others spot the message's presence with a successful Wisdom (Perception) check but can't decipher it without magic.",
+  "usesRecharge": "Passive",
+  "notes": "",
+  "tags": [
+    "class",
+    "druid",
+    "language"
+  ],
+  "updatedAt": 1786753784142
+}

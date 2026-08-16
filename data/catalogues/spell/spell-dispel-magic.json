@@ -1,0 +1,19 @@
+{
+  "id": "spell-dispel-magic",
+  "name": "Dispel Magic",
+  "level": "3",
+  "school": "Abjuration",
+  "source": "Core rules",
+  "classes": "Bard, Cleric, Druid, Paladin, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "End spells on a creature, object, or magical effect.",
+  "description": "Choose one creature, object, or effect. Spells of 3rd or lower end. Higher: check DC 10 + spell level for each.",
+  "higherLevels": "Auto-ends spells of equal or lower level than the slot used.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

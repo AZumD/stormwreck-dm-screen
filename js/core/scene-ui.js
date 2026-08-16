@@ -192,6 +192,7 @@ window.SceneUI = (function () {
   function renderConnectionsHtml(sectionId) {
     if (!window.SceneMeta) return "";
     const meta = SceneMeta.get(campaignId, sectionId, sectionBase(sectionId));
+    const editMode = !!window.SectionEditor?.isEditMode?.();
     const rows = meta.connections
       .map((c) => {
         const title = sectionTitle(c.sceneId);
@@ -204,7 +205,11 @@ window.SceneUI = (function () {
                 ${c.label ? `<span class="scene-connection__label">${escapeHtml(c.label)}</span>` : ""}
               </span>
             </button>
-            <button type="button" class="scene-connection__remove" data-remove-connection="${escapeHtml(c.sceneId)}" data-scene="${escapeHtml(sectionId)}" aria-label="${escapeHtml(t().removeConnection || "Remove connection")}">×</button>
+            ${
+              editMode
+                ? `<button type="button" class="scene-connection__remove" data-remove-connection="${escapeHtml(c.sceneId)}" data-scene="${escapeHtml(sectionId)}" aria-label="${escapeHtml(t().removeConnection || "Remove connection")}">×</button>`
+                : ""
+            }
           </div>`;
       })
       .join("");
@@ -215,7 +220,11 @@ window.SceneUI = (function () {
         <div class="scene-connections__list">
           ${rows || `<p class="scene-connections__empty">${escapeHtml(t().connectionsEmpty || "No linked scenes yet.")}</p>`}
         </div>
-        <button type="button" class="scene-connections__add" data-add-connection="${escapeHtml(sectionId)}">${escapeHtml(t().addConnection || "+ Add connection")}</button>
+        ${
+          editMode
+            ? `<button type="button" class="scene-connections__add" data-add-connection="${escapeHtml(sectionId)}">${escapeHtml(t().addConnection || "+ Add connection")}</button>`
+            : ""
+        }
       </nav>`;
   }
 
@@ -387,8 +396,19 @@ window.SceneUI = (function () {
     if (!connectionDialog || !connectionDialogBody) return;
 
     const sections = typeof api.getSections === "function" ? api.getSections() : [];
-    const opts = sections
-      .filter((s) => s.id !== sectionId)
+    const others = sections.filter((s) => s.id !== sectionId);
+    if (!others.length) {
+      connectionDialogBody.innerHTML = `
+        <p class="empty-state">${escapeHtml(t().noOtherScenes || "No other scenes to link yet. Add another passage first.")}</p>`;
+      try {
+        connectionDialog.showModal();
+      } catch {
+        connectionDialog.setAttribute("open", "");
+      }
+      return;
+    }
+
+    const opts = others
       .map((s) => {
         const title = sectionTitle(s.id);
         return `<option value="${escapeHtml(s.id)}">${escapeHtml(title)}</option>`;

@@ -1,0 +1,18 @@
+{
+  "id": "skill-survival",
+  "linkId": "survival",
+  "name": "Survival",
+  "defaultAbility": "Wisdom",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Follow tracks, hunt, and navigate wilderness.",
+  "description": "The GM might ask you to make a Wisdom (Survival) check to follow tracks, hunt wild game, guide your group through frozen wastelands, identify signs that owlbears live nearby, predict the weather, or avoid quicksand and other natural hazards.",
+  "typicalUses": "Track, forage, navigate, predict weather, wilderness hazards.",
+  "exampleChecks": "Follow a creature's trail; find fresh water; avoid a bog.",
+  "notes": "",
+  "tags": [
+    "wisdom",
+    "wilderness"
+  ],
+  "updatedAt": 1786753783664
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-chill-touch",
+  "name": "Chill Touch",
+  "level": "Cantrip",
+  "school": "Necromancy",
+  "source": "Core rules",
+  "classes": "Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S",
+  "duration": "1 round",
+  "summary": "Necrotic ray; hit creature can't regain HP until your next turn.",
+  "description": "Ranged spell attack; necrotic damage (1d8 → 2d8/3d8/4d8). Undead also have disadvantage on attacks against you until your next turn.",
+  "higherLevels": "Damage increases at levels 5, 11, and 17.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

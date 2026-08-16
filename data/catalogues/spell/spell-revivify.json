@@ -1,0 +1,19 @@
+{
+  "id": "spell-revivify",
+  "name": "Revivify",
+  "level": "3",
+  "school": "Necromancy",
+  "source": "Core rules",
+  "classes": "Cleric, Paladin",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S, M (diamonds worth 300 gp, consumed)",
+  "duration": "Instantaneous",
+  "summary": "Return a creature dead ≤1 minute to life with 1 HP.",
+  "description": "Can't revive those dead longer than 1 minute, or undead. Doesn't restore missing body parts.",
+  "higherLevels": "",
+  "notes": "Material component consumed.",
+  "updatedAt": 1786753781780
+}

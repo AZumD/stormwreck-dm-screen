@@ -1,0 +1,18 @@
+{
+  "id": "skill-nature",
+  "linkId": "nature",
+  "name": "Nature",
+  "defaultAbility": "Intelligence",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Knowledge of terrain, plants, animals, and weather.",
+  "description": "Your Intelligence (Nature) check measures your ability to recall lore about terrain, plants and animals, the weather, and natural cycles.",
+  "typicalUses": "Identify flora/fauna, weather patterns, natural hazards.",
+  "exampleChecks": "Recognize a rare herb; predict a storm; know why animals avoid a shore.",
+  "notes": "",
+  "tags": [
+    "intelligence",
+    "wilderness"
+  ],
+  "updatedAt": 1786753783664
+}

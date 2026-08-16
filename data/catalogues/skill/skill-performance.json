@@ -1,0 +1,18 @@
+{
+  "id": "skill-performance",
+  "linkId": "performance",
+  "name": "Performance",
+  "defaultAbility": "Charisma",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Entertain an audience.",
+  "description": "Your Charisma (Performance) check determines how well you can delight an audience with music, dance, acting, storytelling, or some other form of entertainment.",
+  "typicalUses": "Music, dance, acting, oratory entertainment.",
+  "exampleChecks": "Win a crowd; distract with a song; impress a noble court.",
+  "notes": "",
+  "tags": [
+    "charisma",
+    "social"
+  ],
+  "updatedAt": 1786753783664
+}

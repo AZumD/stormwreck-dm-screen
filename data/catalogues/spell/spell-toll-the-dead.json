@@ -1,0 +1,19 @@
+{
+  "id": "spell-toll-the-dead",
+  "name": "Toll the Dead",
+  "level": "Cantrip",
+  "school": "Necromancy",
+  "source": "Core rules",
+  "classes": "Cleric, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "WIS save or take necrotic; more damage if already hurt.",
+  "description": "WIS save or 1d8 necrotic (1d12 if missing any HP). Scales with level.",
+  "higherLevels": "Damage increases at levels 5, 11, and 17.",
+  "notes": "Xanathar's / common table cantrip — include if your table uses it.",
+  "updatedAt": 1786753781779
+}

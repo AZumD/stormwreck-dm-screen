@@ -1,0 +1,19 @@
+{
+  "id": "spell-chain-lightning",
+  "name": "Chain Lightning",
+  "level": "6",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "150 feet",
+  "components": "V, S, M (fur; amber/glass/crystal rod; three silver pins)",
+  "duration": "Instantaneous",
+  "summary": "Lightning arcs to one target then up to three more.",
+  "description": "Primary target DEX save or 10d8 lightning (half on success). Three bolts leap to other targets within 30 ft of the first.",
+  "higherLevels": "+1 bolt (leap target) per slot above 6th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

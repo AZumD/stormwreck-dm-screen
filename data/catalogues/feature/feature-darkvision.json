@@ -1,0 +1,19 @@
+{
+  "id": "feature-darkvision",
+  "linkId": "darkvision",
+  "name": "Darkvision",
+  "featureType": "Species feature",
+  "grantedBy": "",
+  "levelPrerequisite": "",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "See in dim light as if bright; darkness as dim (usually 60 ft.).",
+  "description": "You can see in dim light within a stated range (commonly 60 feet) as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray.",
+  "usesRecharge": "Passive",
+  "notes": "Exact range varies by ancestry (e.g. drow often 120 ft.).",
+  "tags": [
+    "senses",
+    "species"
+  ],
+  "updatedAt": 1786753784142
+}

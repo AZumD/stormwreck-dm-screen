@@ -1,0 +1,19 @@
+{
+  "id": "spell-mage-armor",
+  "name": "Mage Armor",
+  "level": "1",
+  "school": "Abjuration",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S, M (piece of cured leather)",
+  "duration": "8 hours",
+  "summary": "Unarmored creature's AC becomes 13 + DEX mod.",
+  "description": "Willing unarmored creature. Ends if they don armor.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

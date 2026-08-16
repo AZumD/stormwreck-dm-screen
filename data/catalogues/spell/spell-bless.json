@@ -1,0 +1,19 @@
+{
+  "id": "spell-bless",
+  "name": "Bless",
+  "level": "1",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Cleric, Paladin",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "V, S, M (holy water sprinkle)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Up to 3 creatures add 1d4 to attacks and saves.",
+  "description": "Bless up to three creatures you can see. Each adds 1d4 to attack rolls and saving throws for the duration.",
+  "higherLevels": "+1 target per slot level above 1st.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

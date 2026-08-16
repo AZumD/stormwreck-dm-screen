@@ -1,0 +1,19 @@
+{
+  "id": "spell-spirit-guardians",
+  "name": "Spirit Guardians",
+  "level": "3",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Cleric",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Self (15-foot radius)",
+  "components": "V, S, M (holy symbol)",
+  "duration": "Concentration, up to 10 minutes",
+  "summary": "Spirits in 15-ft radius slow and damage enemies.",
+  "description": "Choose angelic/fey/fiendish appearance. Allies designated by you ignore the spirits. Enemies: speed halved; WIS save when entering/starting in aura or take 3d8 radiant/necrotic.",
+  "higherLevels": "+1d8 per slot above 3rd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

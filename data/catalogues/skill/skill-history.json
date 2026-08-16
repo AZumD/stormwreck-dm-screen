@@ -1,0 +1,18 @@
+{
+  "id": "skill-history",
+  "linkId": "history",
+  "name": "History",
+  "defaultAbility": "Intelligence",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Recall historical lore and legends.",
+  "description": "Your Intelligence (History) check measures your ability to recall lore about historical events, legendary people, ancient kingdoms, past disputes, recent wars, and lost civilizations.",
+  "typicalUses": "Royalty, wars, ruins, famous figures.",
+  "exampleChecks": "Identify a heraldic crest; date a ruin; recall a treaty.",
+  "notes": "",
+  "tags": [
+    "intelligence",
+    "knowledge"
+  ],
+  "updatedAt": 1786753783664
+}

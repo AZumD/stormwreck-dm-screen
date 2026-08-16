@@ -1,0 +1,19 @@
+{
+  "id": "spell-detect-magic",
+  "name": "Detect Magic",
+  "level": "1",
+  "school": "Divination",
+  "source": "Core rules",
+  "classes": "Bard, Cleric, Druid, Paladin, Ranger, Sorcerer, Wizard",
+  "ritual": true,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Self",
+  "components": "V, S",
+  "duration": "Concentration, up to 10 minutes",
+  "summary": "Sense magic within 30 ft; see auras with further scrutiny.",
+  "description": "Feel presence of magic in 30 ft. Action to see faint aura around visible magical objects/creatures and learn school.",
+  "higherLevels": "",
+  "notes": "Blocked by 1 ft stone, 1 inch metal, etc.",
+  "updatedAt": 1786753781779
+}

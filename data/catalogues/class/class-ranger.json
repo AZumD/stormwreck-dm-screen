@@ -1,0 +1,21 @@
+{
+  "id": "class-ranger",
+  "name": "Ranger",
+  "hitDie": "d10",
+  "primaryAbility": "Dexterity & Wisdom",
+  "source": "Core rules",
+  "summary": "Wilderness hunters who track prey and fight with steel or spells.",
+  "savingThrows": "Strength, Dexterity",
+  "armorProficiencies": "Light armor, medium armor, shields",
+  "weaponProficiencies": "Simple weapons, martial weapons",
+  "toolProficiencies": "",
+  "skillChoices": "Choose 3 from Animal Handling, Athletics, Insight, Investigation, Nature, Perception, Stealth, Survival",
+  "features": "1 — Favored Enemy, Natural Explorer\n2 — Fighting Style, Spellcasting\n3 — Ranger Archetype, Primeval Awareness\n5 — Extra Attack\n8 — Land's Stride\n10 — Hide in Plain Sight\n14 — Vanish\n18 — Feral Senses\n20 — Foe Slayer",
+  "spellcasting": "Half caster (WIS). Known spells (not prepared).",
+  "subclasses": [
+    "Hunter",
+    "Beast Master"
+  ],
+  "notes": "Optional class features / revised ranger exist at many tables — ask the DM.",
+  "updatedAt": 1786753781456
+}

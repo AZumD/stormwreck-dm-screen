@@ -1,0 +1,19 @@
+{
+  "id": "spell-mage-hand",
+  "name": "Mage Hand",
+  "level": "Cantrip",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "V, S",
+  "duration": "1 minute",
+  "summary": "Spectral hand manipulates objects at range.",
+  "description": "Hand can manipulate objects, open containers, stow/retrieve items — max 10 lb. Can't attack, activate magic items, or carry over 10 lb.",
+  "higherLevels": "",
+  "notes": "Arcane Trickster variant can be invisible and pick pockets.",
+  "updatedAt": 1786753781779
+}

@@ -1,0 +1,21 @@
+{
+  "id": "class-bard",
+  "name": "Bard",
+  "hitDie": "d8",
+  "primaryAbility": "Charisma",
+  "source": "Core rules",
+  "summary": "Magical entertainers who inspire allies and weave spells through performance.",
+  "savingThrows": "Dexterity, Charisma",
+  "armorProficiencies": "Light armor",
+  "weaponProficiencies": "Simple weapons, hand crossbows, longswords, rapiers, shortswords",
+  "toolProficiencies": "Three musical instruments",
+  "skillChoices": "Choose any 3 skills",
+  "features": "1 — Spellcasting, Bardic Inspiration (d6)\n2 — Jack of All Trades, Song of Rest\n3 — Bard College, Expertise\n5 — Font of Inspiration\n6 — Countercharm / college feature\n10 — Magical Secrets\n20 — Superior Inspiration",
+  "spellcasting": "Full caster (CHA). Ritual casting. Magical Secrets at 10/14/18.",
+  "subclasses": [
+    "College of Lore",
+    "College of Valor"
+  ],
+  "notes": "",
+  "updatedAt": 1786753781456
+}

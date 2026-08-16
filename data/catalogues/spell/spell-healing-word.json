@@ -1,0 +1,19 @@
+{
+  "id": "spell-healing-word",
+  "name": "Healing Word",
+  "level": "1",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Bard, Cleric, Druid",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 bonus action",
+  "range": "60 feet",
+  "components": "V",
+  "duration": "Instantaneous",
+  "summary": "Bonus-action heal at range: 1d4 + mod.",
+  "description": "Creature you can see regains 1d4 + spellcasting ability modifier HP. No undead/constructs.",
+  "higherLevels": "+1d4 per slot above 1st.",
+  "notes": "Can't cast another leveled spell as action same turn (cantrip OK).",
+  "updatedAt": 1786753781779
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-fog-cloud",
+  "name": "Fog Cloud",
+  "level": "1",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Druid, Ranger, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "Sphere of fog heavily obscures the area.",
+  "description": "20-ft-radius sphere of fog centered on a point. Heavily obscured. Wind disperses it.",
+  "higherLevels": "+20 ft radius per slot above 1st.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

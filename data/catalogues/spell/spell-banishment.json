@@ -1,0 +1,19 @@
+{
+  "id": "spell-banishment",
+  "name": "Banishment",
+  "level": "4",
+  "school": "Abjuration",
+  "source": "Core rules",
+  "classes": "Cleric, Paladin, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S, M (unpleasant item for the target)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Banish a creature to another plane (CHA save).",
+  "description": "CHA save or banished. Natives of current plane: harmless demiplane; return if spell ends before 1 minute. Others: return to home plane; stay gone if concentration lasts full minute.",
+  "higherLevels": "+1 creature per slot above 4th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

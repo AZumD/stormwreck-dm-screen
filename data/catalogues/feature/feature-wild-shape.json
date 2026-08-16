@@ -1,0 +1,20 @@
+{
+  "id": "feature-wild-shape",
+  "linkId": "wild-shape",
+  "name": "Wild Shape",
+  "featureType": "Class feature",
+  "grantedBy": "@class:druid|Druid",
+  "levelPrerequisite": "2",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Magically assume the shape of a beast you have seen.",
+  "description": "Starting at 2nd level, you can use your action to magically assume the shape of a beast that you have seen before. You can use this feature twice, regaining expended uses when you finish a short or long rest. Your druid level determines the beasts you can transform into (CR limits, and later swimming/flying forms). You retain personality and alignment; your game statistics are replaced by the beast's, though you keep your mental ability scores, proficiency bonus, and certain class features as stated in the rules. You can stay in beast shape for a number of hours equal to half your druid level (rounded down).",
+  "usesRecharge": "2 / short or long rest (improves with Archdruid)",
+  "notes": "Circle of the Moon improves combat forms and CR.",
+  "tags": [
+    "class",
+    "druid",
+    "transformation"
+  ],
+  "updatedAt": 1786753784142
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-hex",
+  "name": "Hex",
+  "level": "1",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Warlock",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 bonus action",
+  "range": "90 feet",
+  "components": "V, S, M (eye of newt)",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "Curse: +1d6 necrotic on your hits; disadvantage on one ability checks.",
+  "description": "Bonus action curse. Your attacks deal +1d6 necrotic. Target has disadvantage on checks with one chosen ability. If target drops to 0, reassign hex with bonus action.",
+  "higherLevels": "Duration up to 8 hours (3rd+) or 24 hours (5th+).",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

@@ -26,3 +26,9 @@
 [2026-08-15] Map pin hover tooltips are compact (no full summary). Landing Create new campaign → sandbox shell. See js/core/entity-ui.js, js/core/campaign-registry.js, campaigns/sandbox/
 [2026-08-15] File-backed persistence via local Node server (`npm start`) writing `/data`; browser import tool; assets on disk. See server/, js/core/local-api-client.js, docs/README/SERVER.md
 [2026-08-15] Hardened file persistence: per-key write serialization, static deny for /data|/server|/.git|/source|.env*, restored .gitignore, fixed boot CSS. See js/core/local-api-client.js, server/lib/static-guard.js
+[2026-08-15] Edit mode Link scene button + connection add/remove gated to edit mode. See js/campaign-app.js, js/core/scene-ui.js
+[2026-08-15] Added start-dm-screen.bat Windows launcher (find Node, start server, open browser). See start-dm-screen.bat, docs/README/START-DM-SCREEN.md
+[2026-08-16] Fixed catalogue images disappearing: empty autosave no longer deletes /data/assets; IDB always preloads for migrate; explicit clear only. See js/core/catalogue/images.js
+[2026-08-16] Fixed passage editor wipe on link-tag prompts: skip focus re-render while editing; preserve drafts across scene refreshes. See js/campaign-app.js
+[2026-08-16] Collapse bodies use recursive parseContent so nested read-aloud/dm-note/links render instead of escaped HTML. See js/core/parser.js
+[2026-08-16] Free-form scenes: section-structure.scenes[], one-shot booklet migrate, unified delete, edit-mode drag reorder. See js/core/editor.js, js/campaign-app.js

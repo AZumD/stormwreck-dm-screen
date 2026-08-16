@@ -1,0 +1,18 @@
+{
+  "id": "skill-religion",
+  "linkId": "religion",
+  "name": "Religion",
+  "defaultAbility": "Intelligence",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Knowledge of deities, rites, and holy symbols.",
+  "description": "Your Intelligence (Religion) check measures your ability to recall lore about deities, rites and prayers, religious hierarchies, holy symbols, and the practices of secret cults.",
+  "typicalUses": "Identify cults, holy symbols, rites, divine lore.",
+  "exampleChecks": "Recognize a desecrated altar; recall a god's dogma; identify undead origins.",
+  "notes": "",
+  "tags": [
+    "intelligence",
+    "divine"
+  ],
+  "updatedAt": 1786753783664
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-shield",
+  "name": "Shield",
+  "level": "1",
+  "school": "Abjuration",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 reaction",
+  "range": "Self",
+  "components": "V, S",
+  "duration": "1 round",
+  "summary": "+5 AC until your next turn; also blocks magic missile.",
+  "description": "Reaction when hit by an attack (or targeted by magic missile). +5 AC including against the triggering attack; magic missile deals no damage.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

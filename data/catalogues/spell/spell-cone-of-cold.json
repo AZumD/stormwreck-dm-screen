@@ -1,0 +1,19 @@
+{
+  "id": "spell-cone-of-cold",
+  "name": "Cone of Cold",
+  "level": "5",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Self (60-foot cone)",
+  "components": "V, S, M (crystal/glass cone)",
+  "duration": "Instantaneous",
+  "summary": "60-ft cone of cold; CON save half.",
+  "description": "Creatures in cone take 8d8 cold (CON half).",
+  "higherLevels": "+1d8 per slot above 5th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

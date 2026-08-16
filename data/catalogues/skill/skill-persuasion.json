@@ -1,0 +1,18 @@
+{
+  "id": "skill-persuasion",
+  "linkId": "persuasion",
+  "name": "Persuasion",
+  "defaultAbility": "Charisma",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Influence with tact and social grace.",
+  "description": "When you attempt to influence someone or a group of people with tact, social graces, or good nature, the GM might ask you to make a Charisma (Persuasion) check.",
+  "typicalUses": "Diplomacy, negotiation, appeals to reason or friendship.",
+  "exampleChecks": "Broker peace; convince a merchant to lower a price; sway a council.",
+  "notes": "",
+  "tags": [
+    "charisma",
+    "social"
+  ],
+  "updatedAt": 1786753783664
+}

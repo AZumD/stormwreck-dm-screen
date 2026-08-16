@@ -1,0 +1,19 @@
+{
+  "id": "spell-faerie-fire",
+  "name": "Faerie Fire",
+  "level": "1",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Bard, Druid",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Outline creatures/objects in light; attacks have advantage.",
+  "description": "20-ft cube; DEX save or outlined in colored light. Attack rolls against affected creatures have advantage; can't benefit from invisibility.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

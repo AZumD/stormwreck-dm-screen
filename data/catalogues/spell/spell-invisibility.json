@@ -1,0 +1,19 @@
+{
+  "id": "spell-invisibility",
+  "name": "Invisibility",
+  "level": "2",
+  "school": "Illusion",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S, M (eyelash in gum arabic)",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "Creature (and carried gear) turns invisible until it attacks or casts.",
+  "description": "Target becomes invisible. Ends early if target attacks or casts a spell.",
+  "higherLevels": "+1 target per slot above 2nd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

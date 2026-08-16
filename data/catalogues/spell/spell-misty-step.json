@@ -1,0 +1,19 @@
+{
+  "id": "spell-misty-step",
+  "name": "Misty Step",
+  "level": "2",
+  "school": "Conjuration",
+  "source": "Core rules",
+  "classes": "Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 bonus action",
+  "range": "Self",
+  "components": "V",
+  "duration": "Instantaneous",
+  "summary": "Bonus-action teleport up to 30 ft to a space you can see.",
+  "description": "Briefly surrounded by silvery mist, then teleport.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

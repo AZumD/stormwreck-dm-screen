@@ -5,8 +5,8 @@ Shared catalogue engine for PC / NPC / Race / Class / Skill / Feature / Spell / 
 
 ## Files
 - `js/core/catalogue/types.js` — declarative type list (linkable types for `@` links)
-- `js/core/catalogue/store.js` — localStorage CRUD
-- `js/core/catalogue/images.js` — IndexedDB image blobs
+- `js/core/catalogue/store.js` — file-backed CRUD (`/data/catalogues`, localStorage offline)
+- `js/core/catalogue/images.js` — file-backed portraits/maps (`/data/assets`, IndexedDB legacy)
 - `js/core/catalogue/configs.js` — field schemas
 - `js/core/catalogue/app.js` — list + wiki view + form editor
 
@@ -41,7 +41,7 @@ Monsters can store **catalogue links** (`skillRefs`, `traitRefs`, `actionRefs`, 
 | `portrait` | PC, NPC, Item, Monster, Race, Class, Spell | Auto-resized; shown in campaign tooltips/modals / wiki hero |
 | `mapImage` | Location | Auto-resized; drives campaign map panel |
 
-Uploads go to **IndexedDB** (much larger than localStorage). Entry metadata stays in `catalogue-{type}` localStorage; image bytes are keyed separately.
+Uploads go to **`/data/assets`** via the local server (same library as catalogue JSON). Entry fields store `/api/assets/…` URLs. IndexedDB is only used offline / for Import browser data.
 
 ## Seeds
 | File | Types |
@@ -52,11 +52,11 @@ Uploads go to **IndexedDB** (much larger than localStorage). Entry metadata stay
 | `js/catalogue-seeds/core-skills.js` | skill |
 | `js/catalogue-seeds/core-features.js` | feature |
 
-Source files up to 25 MB are accepted and lightly JPEG-compressed (portraits ≤1800px, maps ≤3200px). Legacy images previously stuck in localStorage are migrated automatically on catalogue open.
+Source files up to 25 MB are accepted and lightly JPEG-compressed (portraits ≤1800px, maps ≤3200px). Legacy browser images migrate into `/data/assets` on catalogue/campaign open when the server is running.
 
 ### Reliability
-- Image bytes go to IndexedDB **before** the form re-renders (avoids wiping uploads)
-- Entry JSON only keeps an `__idb__` marker, so localStorage stays small
+- Image bytes are written to disk **before** the form re-renders (avoids wiping uploads)
+- Blank image fields on text autosave **preserve** existing `/api/assets/…` URLs (only **Remove** deletes)
 - Quota / size failures show an alert instead of failing silently
 - Search no longer stringifies whole entries (including huge images)
 - `mergeSeeds` adds missing ids and fills empty `featureRefs` / `skillRefs` / `tags` from seeds without overwriting filled user data

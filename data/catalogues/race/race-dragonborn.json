@@ -1,0 +1,14 @@
+{
+  "id": "race-dragonborn",
+  "name": "Dragonborn",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Draconic humanoids with breath weapons and elemental resistance.",
+  "abilityScoreIncrease": "STR +2, CHA +1",
+  "traits": "Draconic Ancestry — choose a dragon type (damage type for breath & resistance).\nBreath Weapon — action; 15-ft cone or 30-ft line (by ancestry); DEX save; 2d6 then scales with level; 1/rest.\nDamage Resistance — matching ancestry damage type.",
+  "languages": "Common, Draconic",
+  "senses": "",
+  "notes": "Ancestry table: acid, lightning, fire, poison, or cold depending on color.",
+  "updatedAt": 1786753781208
+}

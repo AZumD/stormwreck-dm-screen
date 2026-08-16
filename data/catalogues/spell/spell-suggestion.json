@@ -1,0 +1,19 @@
+{
+  "id": "spell-suggestion",
+  "name": "Suggestion",
+  "level": "2",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "V, M (snake's tongue + honeycomb/sweet oil)",
+  "duration": "Concentration, up to 8 hours",
+  "summary": "Charm a creature into pursuing a reasonable course of action.",
+  "description": "WIS save. Suggest a course of activity worded to sound reasonable. Harmful acts auto-fail. Ends if you or allies harm the target.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

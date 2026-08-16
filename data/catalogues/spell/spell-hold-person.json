@@ -1,0 +1,19 @@
+{
+  "id": "spell-hold-person",
+  "name": "Hold Person",
+  "level": "2",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Cleric, Druid, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S, M (small straight piece of iron)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Paralyze a humanoid (WIS save).",
+  "description": "Humanoid WIS save or paralyzed. Repeat save at end of each of its turns.",
+  "higherLevels": "+1 humanoid per slot above 2nd.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

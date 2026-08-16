@@ -1,0 +1,19 @@
+{
+  "id": "spell-guidance",
+  "name": "Guidance",
+  "level": "Cantrip",
+  "school": "Divination",
+  "source": "Core rules",
+  "classes": "Cleric, Druid",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Ally adds 1d4 to one ability check.",
+  "description": "Touched willing creature can add 1d4 to one ability check of its choice before the spell ends.",
+  "higherLevels": "",
+  "notes": "Concentration — drops if you cast another concentration spell.",
+  "updatedAt": 1786753781779
+}

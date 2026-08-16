@@ -1,0 +1,25 @@
+{
+  "id": "class-rogue",
+  "name": "Rogue",
+  "hitDie": "d8",
+  "primaryAbility": "Dexterity",
+  "source": "Core rules",
+  "summary": "Skilled infiltrators who strike from advantage and excel at expertise.",
+  "savingThrows": "Dexterity, Intelligence",
+  "armorProficiencies": "Light armor",
+  "weaponProficiencies": "Simple weapons, hand crossbows, longswords, rapiers, shortswords",
+  "toolProficiencies": "Thieves' tools",
+  "skillChoices": "Choose 4 from Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Performance, Persuasion, Sleight of Hand, Stealth",
+  "featureRefs": [
+    "@feature:sneak-attack|Sneak Attack"
+  ],
+  "features": "1 — Expertise, @feature:sneak-attack|Sneak Attack, Thieves' Cant\n2 — Cunning Action\n3 — Roguish Archetype\n5 — Uncanny Dodge\n6 — Expertise\n7 — Evasion\n11 — Reliable Talent\n14 — Blindsense\n15 — Slippery Mind\n18 — Elusive\n20 — Stroke of Luck",
+  "spellcasting": "Arcane Trickster only (INT, 1/3 caster).",
+  "subclasses": [
+    "Thief",
+    "Assassin",
+    "Arcane Trickster"
+  ],
+  "notes": "Sneak Attack dice scale with level; need finesse/ranged + advantage or ally within 5 ft.",
+  "updatedAt": 1786753781456
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-minor-illusion",
+  "name": "Minor Illusion",
+  "level": "Cantrip",
+  "school": "Illusion",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "S, M (bit of fleece)",
+  "duration": "1 minute",
+  "summary": "Create a sound or an image of an object (not both).",
+  "description": "Image: 5-ft cube max, no sensory other than sight. Investigation vs your spell save DC reveals illusion. Sound: volume from whisper to scream.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

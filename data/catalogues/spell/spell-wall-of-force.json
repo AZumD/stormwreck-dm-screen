@@ -1,0 +1,19 @@
+{
+  "id": "spell-wall-of-force",
+  "name": "Wall of Force",
+  "level": "5",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S, M (pinch of powder from crushed clear gem)",
+  "duration": "Concentration, up to 10 minutes",
+  "summary": "Invisible wall/hemisphere immune to most damage; dispelled by disintegrate.",
+  "description": "Ten 10-ft panels or a spherical dome. Nothing physical/most magic passes. Immune to all damage; dispelled by disintegrate.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-greater-invisibility",
+  "name": "Greater Invisibility",
+  "level": "4",
+  "school": "Illusion",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Invisibility that persists through attacks and spells.",
+  "description": "Target stays invisible for the duration even if it attacks or casts.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

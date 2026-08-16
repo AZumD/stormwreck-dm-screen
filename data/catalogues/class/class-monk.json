@@ -1,0 +1,22 @@
+{
+  "id": "class-monk",
+  "name": "Monk",
+  "hitDie": "d8",
+  "primaryAbility": "Dexterity & Wisdom",
+  "source": "Core rules",
+  "summary": "Martial artists who turn ki into speed, strikes, and supernatural movement.",
+  "savingThrows": "Strength, Dexterity",
+  "armorProficiencies": "None",
+  "weaponProficiencies": "Simple weapons, shortswords",
+  "toolProficiencies": "One artisan tool or musical instrument",
+  "skillChoices": "Choose 2 from Acrobatics, Athletics, History, Insight, Religion, Stealth",
+  "features": "1 — Unarmored Defense, Martial Arts\n2 — Ki, Unarmored Movement\n3 — Monastic Tradition, Deflect Missiles\n5 — Extra Attack, Stunning Strike\n6 — Ki-Empowered Strikes / tradition\n7 — Evasion, Stillness of Mind\n10 — Purity of Body\n13 — Tongue of the Sun and Moon\n14 — Diamond Soul\n18 — Empty Body\n20 — Perfect Self",
+  "spellcasting": "Way of the Four Elements only (limited elemental disciplines).",
+  "subclasses": [
+    "Way of the Open Hand",
+    "Way of Shadow",
+    "Way of the Four Elements"
+  ],
+  "notes": "Martial Arts die and Unarmored Movement scale with level.",
+  "updatedAt": 1786753781456
+}

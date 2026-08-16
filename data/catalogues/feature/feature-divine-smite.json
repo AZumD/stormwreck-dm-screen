@@ -1,0 +1,21 @@
+{
+  "id": "feature-divine-smite",
+  "linkId": "divine-smite",
+  "name": "Divine Smite",
+  "featureType": "Class feature",
+  "grantedBy": "@class:paladin|Paladin",
+  "levelPrerequisite": "2",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Expend a spell slot to deal extra radiant damage on a melee hit.",
+  "description": "Starting at 2nd level, when you hit a creature with a melee weapon attack, you can expend one spell slot to deal radiant damage to the target, in addition to the weapon's damage. The extra damage is 2d8 for a 1st-level slot, plus 1d8 for each slot level higher than 1st, to a maximum. The damage increases against undead or fiends as stated in the rules.",
+  "usesRecharge": "Spell slots",
+  "notes": "",
+  "tags": [
+    "class",
+    "paladin",
+    "combat",
+    "radiant"
+  ],
+  "updatedAt": 1786753784142
+}

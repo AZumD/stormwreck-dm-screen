@@ -1,0 +1,22 @@
+{
+  "id": "class-warlock",
+  "name": "Warlock",
+  "hitDie": "d8",
+  "primaryAbility": "Charisma",
+  "source": "Core rules",
+  "summary": "Pact-bound casters with few slots that refresh on a short rest — plus invocations.",
+  "savingThrows": "Wisdom, Charisma",
+  "armorProficiencies": "Light armor",
+  "weaponProficiencies": "Simple weapons",
+  "toolProficiencies": "",
+  "skillChoices": "Choose 2 from Arcana, Deception, History, Intimidation, Investigation, Nature, Religion",
+  "features": "1 — Otherworldly Patron, Pact Magic\n2 — Eldritch Invocations\n3 — Pact Boon\n6+ — patron features\n11 — Mystic Arcanum (6th)\n17 — Mystic Arcanum (9th)\n20 — Eldritch Master",
+  "spellcasting": "Pact Magic (CHA). Few slots, all at same level, recover on short rest. Invocations expand options.",
+  "subclasses": [
+    "The Archfey",
+    "The Fiend",
+    "The Great Old One"
+  ],
+  "notes": "Pact Boons: Chain, Blade, or Tome.",
+  "updatedAt": 1786753781456
+}

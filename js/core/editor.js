@@ -1,4 +1,7 @@
-/** Section editing — localStorage overrides, custom passages, soft-deletes */
+/**
+ * Free-form campaign scenes — ordered list in section-structure (file-backed).
+ * Booklet ADVENTURE.sections is reference-only; not merged at runtime after migrate.
+ */
 window.SectionEditor = (function () {
   "use strict";
 
@@ -17,6 +20,33 @@ window.SectionEditor = (function () {
 
   function structureKey(campaignId) {
     return `${campaignId}-section-structure`;
+  }
+
+  function emptyStructure() {
+    return { scenes: [] };
+  }
+
+  function normalizeScene(raw) {
+    if (!raw || !raw.id) return null;
+    return {
+      id: String(raw.id),
+      title: String(raw.title || "Untitled"),
+      content: raw.content != null ? String(raw.content) : ""
+    };
+  }
+
+  function normalizeStructure(raw) {
+    if (Array.isArray(raw?.scenes)) {
+      return {
+        scenes: raw.scenes.map(normalizeScene).filter(Boolean)
+      };
+    }
+    /* Legacy shape kept only long enough for migrateLegacy */
+    return {
+      scenes: null,
+      deleted: Array.isArray(raw?.deleted) ? raw.deleted.filter(Boolean) : [],
+      custom: Array.isArray(raw?.custom) ? raw.custom.filter((s) => s && s.id) : []
+    };
   }
 
   function loadEdits(campaignId) {
@@ -50,14 +80,11 @@ window.SectionEditor = (function () {
     if (structureMem.has(campaignId)) return structureMem.get(campaignId);
     try {
       const raw = JSON.parse(localStorage.getItem(structureKey(campaignId)) || "{}");
-      const structure = {
-        deleted: Array.isArray(raw.deleted) ? raw.deleted.filter(Boolean) : [],
-        custom: Array.isArray(raw.custom) ? raw.custom.filter((s) => s && s.id) : []
-      };
+      const structure = normalizeStructure(raw);
       structureMem.set(campaignId, structure);
       return structure;
     } catch {
-      const structure = { deleted: [], custom: [] };
+      const structure = emptyStructure();
       structureMem.set(campaignId, structure);
       return structure;
     }
@@ -65,8 +92,7 @@ window.SectionEditor = (function () {
 
   function saveStructure(campaignId, structure) {
     const payload = {
-      deleted: structure.deleted || [],
-      custom: structure.custom || []
+      scenes: (structure.scenes || []).map(normalizeScene).filter(Boolean)
     };
     structureMem.set(campaignId, payload);
     if (useApi()) {
@@ -82,28 +108,101 @@ window.SectionEditor = (function () {
     }
   }
 
-  async function bootstrap(campaignId) {
+  /** One-shot: booklet − deleted + custom + edits → owned scenes[] */
+  function migrateLegacy(campaignId, baseSections) {
+    const structure = loadStructure(campaignId);
+    if (Array.isArray(structure.scenes)) return false;
+
+    const edits = loadEdits(campaignId);
+    const deleted = new Set(structure.deleted || []);
+    const result = (baseSections || [])
+      .filter((s) => s?.id && !deleted.has(s.id))
+      .map((s) => ({
+        ...normalizeScene({
+          id: s.id,
+          title: edits[s.id]?.title ?? s.title,
+          content: edits[s.id]?.content ?? s.content
+        }),
+        chapter: s.chapter || null
+      }));
+
+    const customs = [...(structure.custom || [])]
+      .filter((s) => s?.id && !deleted.has(s.id))
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+    for (const custom of customs) {
+      const override = edits[custom.id];
+      const entry = {
+        ...normalizeScene({
+          id: custom.id,
+          title: override?.title ?? custom.title,
+          content: override?.content ?? custom.content
+        }),
+        chapter: custom.chapter || null
+      };
+      if (!entry?.id) continue;
+
+      let inserted = false;
+      if (custom.afterId) {
+        const idx = result.findIndex((s) => s.id === custom.afterId);
+        if (idx !== -1) {
+          result.splice(idx + 1, 0, entry);
+          inserted = true;
+        }
+      }
+      if (!inserted && custom.chapter) {
+        let lastInChapter = -1;
+        for (let i = 0; i < result.length; i++) {
+          if (result[i].chapter === custom.chapter) lastInChapter = i;
+        }
+        if (lastInChapter !== -1) {
+          result.splice(lastInChapter + 1, 0, entry);
+          inserted = true;
+        }
+      }
+      if (!inserted) result.push(entry);
+    }
+
+    saveStructure(campaignId, {
+      scenes: result.map((s) => normalizeScene(s)).filter(Boolean)
+    });
+    saveEdits(campaignId, {});
+    return true;
+  }
+
+  function ensureScenes(campaignId, baseSections) {
+    const structure = loadStructure(campaignId);
+    if (!Array.isArray(structure.scenes)) {
+      migrateLegacy(campaignId, baseSections || []);
+    }
+    return loadStructure(campaignId);
+  }
+
+  async function bootstrap(campaignId, baseSections) {
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (!useApi()) {
       loadEdits(campaignId);
       loadStructure(campaignId);
+      ensureScenes(campaignId, baseSections || []);
       return;
     }
     try {
       const edits = await LocalApiClient.getCampaignDocument(campaignId, "section-edits");
-      editsMem.set(campaignId, edits && typeof edits === "object" ? edits : {});
+      editsMem.set(campaignId, edits && typeof edits === "object" && !Array.isArray(edits) ? edits : {});
     } catch {
       editsMem.set(campaignId, {});
     }
     try {
       const raw = await LocalApiClient.getCampaignDocument(campaignId, "section-structure");
-      structureMem.set(campaignId, {
-        deleted: Array.isArray(raw?.deleted) ? raw.deleted.filter(Boolean) : [],
-        custom: Array.isArray(raw?.custom) ? raw.custom.filter((s) => s && s.id) : []
-      });
+      structureMem.set(
+        campaignId,
+        normalizeStructure(raw && typeof raw === "object" ? raw : {})
+      );
     } catch {
-      structureMem.set(campaignId, { deleted: [], custom: [] });
+      /* Treat as missing doc so migrate can seed from booklet once */
+      structureMem.set(campaignId, { scenes: null, deleted: [], custom: [] });
     }
+    ensureScenes(campaignId, baseSections || []);
   }
 
   function slugify(title) {
@@ -116,121 +215,47 @@ window.SectionEditor = (function () {
   }
 
   function generateId(title) {
-    return `custom-${slugify(title)}-${Date.now().toString(36)}`;
+    return `scene-${slugify(title)}-${Date.now().toString(36)}`;
   }
 
-  function findCustom(campaignId, sectionId) {
-    return loadStructure(campaignId).custom.find((s) => s.id === sectionId) || null;
-  }
-
-  function isCustomSection(campaignId, sectionId) {
-    return !!findCustom(campaignId, sectionId);
-  }
-
-  function isBuiltInSection(baseSections, sectionId) {
-    return (baseSections || []).some((s) => s.id === sectionId);
+  function getSections(campaignId) {
+    const structure = ensureScenes(campaignId, []);
+    return (structure.scenes || []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      content: s.content
+    }));
   }
 
   function getSection(campaignId, sectionId, defaults) {
-    const custom = findCustom(campaignId, sectionId);
-    const edits = loadEdits(campaignId);
-    const override = edits[sectionId];
-
-    if (custom) {
+    const scene = getSections(campaignId).find((s) => s.id === sectionId);
+    if (scene) {
       return {
-        title: override?.title ?? custom.title,
-        content: override?.content ?? custom.content,
-        isEdited: !!override,
-        isCustom: true,
-        chapter: custom.chapter
+        title: scene.title,
+        content: scene.content,
+        isEdited: false,
+        isCustom: false
       };
     }
-
     return {
-      title: override?.title ?? defaults.title,
-      content: override?.content ?? defaults.content,
-      isEdited: !!override,
-      isCustom: false,
-      chapter: defaults.chapter
+      title: defaults?.title || "Untitled",
+      content: defaults?.content || "",
+      isEdited: false,
+      isCustom: false
     };
   }
 
   function saveSection(campaignId, sectionId, title, content) {
-    const structure = loadStructure(campaignId);
-    const customIdx = structure.custom.findIndex((s) => s.id === sectionId);
-
-    if (customIdx !== -1) {
-      structure.custom[customIdx] = {
-        ...structure.custom[customIdx],
-        title,
-        content,
-        updatedAt: Date.now()
-      };
-      saveStructure(campaignId, structure);
-
-      const edits = loadEdits(campaignId);
-      if (edits[sectionId]) {
-        delete edits[sectionId];
-        saveEdits(campaignId, edits);
-      }
-      return;
-    }
-
-    const edits = loadEdits(campaignId);
-    edits[sectionId] = { title, content, updatedAt: Date.now() };
-    saveEdits(campaignId, edits);
-  }
-
-  function resetSection(campaignId, sectionId) {
-    const edits = loadEdits(campaignId);
-    delete edits[sectionId];
-    saveEdits(campaignId, edits);
-  }
-
-  /**
-   * Merge booklet sections with soft-deletes + custom passages.
-   * Custom sections insert after `afterId` when possible.
-   */
-  function getSections(campaignId, baseSections) {
-    const structure = loadStructure(campaignId);
-    const deleted = new Set(structure.deleted);
-    const result = (baseSections || [])
-      .filter((s) => !deleted.has(s.id))
-      .map((s) => ({ ...s, isCustom: false }));
-
-    const customs = [...structure.custom]
-      .filter((s) => s?.id && !deleted.has(s.id))
-      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-
-    for (const custom of customs) {
-      const entry = {
-        id: custom.id,
-        chapter: custom.chapter,
-        title: custom.title,
-        content: custom.content,
-        isCustom: true
-      };
-
-      let inserted = false;
-      if (custom.afterId) {
-        const idx = result.findIndex((s) => s.id === custom.afterId);
-        if (idx !== -1) {
-          result.splice(idx + 1, 0, entry);
-          inserted = true;
-        }
-      }
-
-      if (!inserted) {
-        let lastInChapter = -1;
-        for (let i = 0; i < result.length; i++) {
-          if (result[i].chapter === custom.chapter) lastInChapter = i;
-        }
-        if (lastInChapter !== -1) result.splice(lastInChapter + 1, 0, entry);
-        else result.push(entry);
-      }
-    }
-
-    return result;
+    const structure = ensureScenes(campaignId, []);
+    const idx = structure.scenes.findIndex((s) => s.id === sectionId);
+    if (idx === -1) return false;
+    structure.scenes[idx] = normalizeScene({
+      id: sectionId,
+      title: (title || "").trim() || "Untitled",
+      content: content != null ? content : ""
+    });
+    saveStructure(campaignId, structure);
+    return true;
   }
 
   function addSection(campaignId, options) {
@@ -239,62 +264,53 @@ window.SectionEditor = (function () {
       options.content != null
         ? options.content
         : `<p>Write your notes here.</p>\n{{dm-note}}\nDM notes go here.\n{{/dm-note}}`;
-    const chapter = options.chapter;
-    if (!chapter) throw new Error("addSection requires chapter");
-
-    const structure = loadStructure(campaignId);
-    const section = {
+    const structure = ensureScenes(campaignId, []);
+    const section = normalizeScene({
       id: options.id || generateId(title),
-      chapter,
       title,
-      content,
-      afterId: options.afterId || null,
-      createdAt: Date.now()
-    };
+      content
+    });
 
-    structure.custom.push(section);
+    const afterId = options.afterId || null;
+    if (afterId) {
+      const idx = structure.scenes.findIndex((s) => s.id === afterId);
+      if (idx !== -1) {
+        structure.scenes.splice(idx + 1, 0, section);
+        saveStructure(campaignId, structure);
+        return section;
+      }
+    }
+
+    structure.scenes.push(section);
     saveStructure(campaignId, structure);
     return section;
   }
 
-  function deleteSection(campaignId, sectionId, baseSections) {
-    const structure = loadStructure(campaignId);
-    const customIdx = structure.custom.findIndex((s) => s.id === sectionId);
-
-    if (customIdx !== -1) {
-      structure.custom.splice(customIdx, 1);
-    } else if (isBuiltInSection(baseSections, sectionId)) {
-      if (!structure.deleted.includes(sectionId)) structure.deleted.push(sectionId);
-    } else {
-      return false;
-    }
-
+  function deleteSection(campaignId, sectionId) {
+    const structure = ensureScenes(campaignId, []);
+    const next = structure.scenes.filter((s) => s.id !== sectionId);
+    if (next.length === structure.scenes.length) return false;
+    structure.scenes = next;
     saveStructure(campaignId, structure);
-
-    const edits = loadEdits(campaignId);
-    if (edits[sectionId]) {
-      delete edits[sectionId];
-      saveEdits(campaignId, edits);
-    }
     return true;
   }
 
-  function restoreDeleted(campaignId, sectionId) {
-    const structure = loadStructure(campaignId);
-    structure.deleted = structure.deleted.filter((id) => id !== sectionId);
+  function reorderScenes(campaignId, orderedIds) {
+    const structure = ensureScenes(campaignId, []);
+    const byId = new Map(structure.scenes.map((s) => [s.id, s]));
+    const next = [];
+    const seen = new Set();
+    (orderedIds || []).forEach((id) => {
+      if (!byId.has(id) || seen.has(id)) return;
+      next.push(byId.get(id));
+      seen.add(id);
+    });
+    structure.scenes.forEach((s) => {
+      if (!seen.has(s.id)) next.push(s);
+    });
+    structure.scenes = next;
     saveStructure(campaignId, structure);
-  }
-
-  function restoreAllDeleted(campaignId) {
-    const structure = loadStructure(campaignId);
-    const count = structure.deleted.length;
-    structure.deleted = [];
-    saveStructure(campaignId, structure);
-    return count;
-  }
-
-  function getDeletedIds(campaignId) {
-    return loadStructure(campaignId).deleted.slice();
+    return getSections(campaignId);
   }
 
   function isEditMode() {
@@ -319,20 +335,18 @@ window.SectionEditor = (function () {
   return {
     getSection,
     saveSection,
-    resetSection,
     getSections,
     addSection,
     deleteSection,
-    restoreDeleted,
-    restoreAllDeleted,
-    getDeletedIds,
-    isCustomSection,
+    reorderScenes,
     isEditMode,
     setEditMode,
     exportEdits,
     loadEdits,
     loadStructure,
     generateId,
-    bootstrap
+    bootstrap,
+    migrateLegacy,
+    ensureScenes
   };
 })();

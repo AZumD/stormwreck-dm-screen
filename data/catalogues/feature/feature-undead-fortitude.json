@@ -1,0 +1,20 @@
+{
+  "id": "feature-undead-fortitude",
+  "linkId": "undead-fortitude",
+  "name": "Undead Fortitude",
+  "featureType": "Monster trait",
+  "grantedBy": "",
+  "levelPrerequisite": "",
+  "source": "Monster Manual / Basic Rules",
+  "page": "",
+  "summary": "If reduced to 0 HP by non-radiant, non-crit damage, DC CON save to drop to 1 HP instead.",
+  "description": "If damage reduces the creature to 0 hit points, it must make a Constitution saving throw with a DC of 5 + the damage taken, unless the damage is radiant or from a critical hit. On a success, the creature drops to 1 hit point instead.",
+  "usesRecharge": "Passive (on dropping to 0 HP)",
+  "notes": "Common on zombies.",
+  "tags": [
+    "monster",
+    "undead",
+    "rule"
+  ],
+  "updatedAt": 1786753784142
+}

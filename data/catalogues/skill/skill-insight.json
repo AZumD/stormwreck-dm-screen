@@ -1,0 +1,18 @@
+{
+  "id": "skill-insight",
+  "linkId": "insight",
+  "name": "Insight",
+  "defaultAbility": "Wisdom",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Read body language and motives.",
+  "description": "Your Wisdom (Insight) check decides whether you can determine the true intentions of a creature, such as when searching out a lie or predicting someone's next move.",
+  "typicalUses": "Detect lies, sense motives, read a room.",
+  "exampleChecks": "Spot a bluff; sense hostility behind polite words.",
+  "notes": "",
+  "tags": [
+    "wisdom",
+    "social"
+  ],
+  "updatedAt": 1786753783664
+}

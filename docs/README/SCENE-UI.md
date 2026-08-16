@@ -14,6 +14,7 @@ Renders **At this scene** (location + cast chips) and **Connections** for a scen
 - Chips open the normal entity modal via `.entity-link`
 - Removing a scene ref never deletes the catalogue entry
 - Connections jump via `api.jumpToSection` (does **not** auto-set Current)
+- **Edit mode:** section header **Link scene** + Connections **+ Add connection** / remove; play mode only shows jump links
 - Tray collapse is campaign-global (`SceneMeta.setTrayCollapsed`)
 
 ## Init

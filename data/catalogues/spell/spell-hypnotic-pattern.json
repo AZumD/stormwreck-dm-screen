@@ -1,0 +1,19 @@
+{
+  "id": "spell-hypnotic-pattern",
+  "name": "Hypnotic Pattern",
+  "level": "3",
+  "school": "Illusion",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "S, M (incense or crystal vial of phosphorescent material)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Twisting colors charm creatures in a 30-ft cube; incapacitated.",
+  "description": "WIS save or charmed and incapacitated with speed 0. Ends for a creature if it takes damage or someone uses an action to shake it.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

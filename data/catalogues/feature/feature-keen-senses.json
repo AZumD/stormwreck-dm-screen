@@ -1,0 +1,20 @@
+{
+  "id": "feature-keen-senses",
+  "linkId": "keen-senses",
+  "name": "Keen Senses",
+  "featureType": "Species feature",
+  "grantedBy": "@race:elf|Elf",
+  "levelPrerequisite": "",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Proficiency in the Perception skill.",
+  "description": "You have proficiency in the Perception skill.",
+  "usesRecharge": "Passive",
+  "notes": "",
+  "tags": [
+    "species",
+    "elf",
+    "skill"
+  ],
+  "updatedAt": 1786753784142
+}

@@ -1,0 +1,19 @@
+{
+  "id": "spell-sacred-flame",
+  "name": "Sacred Flame",
+  "level": "Cantrip",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Cleric",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "Radiant flame; DEX save, no cover bonus.",
+  "description": "Target must succeed on a DEX save or take 1d8 radiant (scales). Cover doesn't help the save.",
+  "higherLevels": "Damage increases at levels 5, 11, and 17.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

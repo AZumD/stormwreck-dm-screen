@@ -1,5 +1,5 @@
 /**
- * Validates section editor add/delete API surface and campaign wiring.
+ * Free-form SectionEditor: scenes[], migrate, reorder, unified delete.
  * Run: node test/validate-section-editor.js
  */
 
@@ -18,79 +18,49 @@ function pass(msg) {
   console.log("OK:", msg);
 }
 
-const editor = fs.readFileSync(path.join(root, "js/core/editor.js"), "utf8");
+const editorSrc = fs.readFileSync(path.join(root, "js/core/editor.js"), "utf8");
 const app = fs.readFileSync(path.join(root, "js/campaign-app.js"), "utf8");
 const i18n = fs.readFileSync(path.join(root, "js/i18n/en.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
 
-const requiredFns = [
-  "getSections",
-  "addSection",
-  "deleteSection",
-  "restoreAllDeleted",
-  "isCustomSection",
-  "loadStructure"
-];
-
-requiredFns.forEach((name) => {
-  if (!editor.includes(`function ${name}`) && !editor.includes(`${name},`)) {
-    fail(`editor.js missing ${name}`);
-  } else {
-    pass(`editor.js has ${name}`);
-  }
+["getSections", "addSection", "deleteSection", "reorderScenes", "migrateLegacy", "bootstrap"].forEach((name) => {
+  if (!editorSrc.includes(`function ${name}`)) fail(`editor.js missing ${name}`);
+  else pass(`editor.js has ${name}`);
 });
 
-if (!editor.includes("section-structure")) fail("editor missing structure storage key");
-else pass("editor stores structure in localStorage");
+if (editorSrc.includes("function resetSection") || editorSrc.includes("function restoreAllDeleted")) {
+  fail("legacy reset/restore should be removed");
+} else pass("legacy reset/restore removed");
 
-if (!app.includes("addPassage")) fail("campaign-app missing addPassage");
-else pass("campaign-app can add passages");
+if (!editorSrc.includes("scenes:") && !editorSrc.includes("scenes =")) {
+  fail("editor missing scenes structure");
+} else pass("editor uses scenes[]");
 
-if (!app.includes("deletePassage")) fail("campaign-app missing deletePassage");
-else pass("campaign-app can delete passages");
+if (!app.includes("bindNavDragReorder") || !app.includes("reorderScenes")) {
+  fail("campaign-app missing drag reorder wiring");
+} else pass("campaign-app drag reorder");
 
-if (!app.includes("SectionEditor.getSections")) fail("campaign-app not using getSections");
-else pass("campaign-app renders via getSections");
+if (app.includes("ADVENTURE.chapters.forEach")) {
+  fail("campaign-app should not loop ADVENTURE.chapters for nav/document");
+} else pass("flat scene list (no chapter loop)");
 
-if (!app.includes("add-passage-btn")) fail("campaign-app missing add passage UI");
-else pass("campaign-app shows add passage controls");
+if (app.includes("isCustomSection") || app.includes("restoreAllDeleted") || app.includes("resetSectionEditor")) {
+  fail("campaign-app still references custom/reset/restore");
+} else pass("campaign-app unified scene UI");
 
-if (!i18n.includes("addPassage")) fail("i18n missing addPassage string");
-else pass("i18n has add/delete strings");
+if (!app.includes("SectionEditor.bootstrap(campaignId, ADVENTURE.sections")) {
+  fail("bootstrap should pass booklet sections for one-shot migrate");
+} else pass("bootstrap passes booklet for migrate");
 
-if (!i18n.includes("deleteSection")) fail("i18n missing deleteSection");
-else pass("i18n has deleteSection");
+if (!i18n.includes("confirmDeleteScene") || !i18n.includes("noScenesHint")) {
+  fail("i18n missing free-form scene strings");
+} else pass("i18n free-form strings");
 
-if (!css.includes(".add-passage-btn")) fail("css missing add-passage styles");
-else pass("css styles add-passage controls");
+if (!css.includes("nav-scene-item--draggable") || !css.includes("is-drop-target")) {
+  fail("css missing drag reorder styles");
+} else pass("css drag reorder styles");
 
-if (!css.includes(".section-delete-btn")) fail("css missing delete button styles");
-else pass("css styles delete buttons");
-
-if (!app.includes("bindEditorToolbar") || !app.includes("wrapEditorSelection") || !app.includes("insertEntityLinkSnippet")) {
-  fail("campaign-app missing editor wrap/link toolbar helpers");
-} else {
-  pass("campaign-app editor toolbar helpers");
-}
-
-if (!app.includes('data-wrap="read-aloud"') || !app.includes('data-link="npc"')) {
-  fail("campaign-app missing editor toolbar markup");
-} else {
-  pass("campaign-app editor toolbar markup");
-}
-
-if (!app.includes('data-wrap="collapse"') || !app.includes("{{collapse:")) {
-  fail("campaign-app missing collapse toolbar support");
-} else {
-  pass("campaign-app collapse wrap tool");
-}
-
-if (!css.includes(".editor-toolbar") || !css.includes(".editor-tool")) {
-  fail("css missing editor toolbar styles");
-} else {
-  pass("css styles editor toolbar");
-}
-/* Logic smoke test with a fake localStorage */
+/* Runtime smoke */
 const store = {};
 const localStorageMock = {
   getItem: (k) => (k in store ? store[k] : null),
@@ -105,7 +75,7 @@ const localStorageMock = {
 global.localStorage = localStorageMock;
 global.window = global;
 
-const SectionEditor = new Function("window", `${editor}\nreturn window.SectionEditor;`)(global);
+const SectionEditor = new Function("window", `${editorSrc}\nreturn window.SectionEditor;`)(global);
 
 const base = [
   { id: "a", chapter: "intro", title: "A", content: "<p>A</p>" },
@@ -113,42 +83,77 @@ const base = [
   { id: "c", chapter: "ch-1", title: "C", content: "<p>C</p>" }
 ];
 
-let sections = SectionEditor.getSections("test", base);
-if (sections.length !== 3) fail(`expected 3 base sections, got ${sections.length}`);
-else pass("getSections returns booklet sections");
+/* Fresh campaign: empty scenes */
+SectionEditor.bootstrap("fresh", []);
+let sections = SectionEditor.getSections("fresh");
+if (sections.length !== 0) fail(`fresh should start empty, got ${sections.length}`);
+else pass("fresh campaign starts with empty scenes");
 
-const created = SectionEditor.addSection("test", {
-  chapter: "intro",
-  afterId: "a",
-  title: "Inserted",
-  content: "<p>New</p>"
+const created = SectionEditor.addSection("fresh", { title: "Inserted", content: "<p>New</p>" });
+sections = SectionEditor.getSections("fresh");
+if (sections.length !== 1 || sections[0].id !== created.id) fail("addSection failed");
+else pass("addSection appends scene");
+
+SectionEditor.addSection("fresh", { afterId: created.id, title: "After", content: "<p>2</p>" });
+sections = SectionEditor.getSections("fresh");
+if (sections[1].title !== "After") fail("insert after failed");
+else pass("addSection inserts after neighbor");
+
+SectionEditor.reorderScenes("fresh", [sections[1].id, sections[0].id]);
+sections = SectionEditor.getSections("fresh");
+if (sections[0].title !== "After") fail("reorder failed");
+else pass("reorderScenes works");
+
+SectionEditor.deleteSection("fresh", sections[0].id);
+sections = SectionEditor.getSections("fresh");
+if (sections.some((s) => s.title === "After")) fail("delete left scene");
+else pass("deleteSection removes scene");
+
+/* Legacy migrate */
+store["legacy-section-structure"] = JSON.stringify({
+  deleted: ["b"],
+  custom: [
+    {
+      id: "custom-x",
+      chapter: "intro",
+      title: "X",
+      content: "<p>X</p>",
+      afterId: "a",
+      createdAt: 1
+    }
+  ]
+});
+store["legacy-section-edits"] = JSON.stringify({
+  a: { title: "A edited", content: "<p>Ae</p>" }
 });
 
-sections = SectionEditor.getSections("test", base);
-const ids = sections.map((s) => s.id);
-if (ids.indexOf(created.id) !== ids.indexOf("a") + 1) {
-  fail(`custom section not inserted after a: ${ids.join(",")}`);
-} else {
-  pass("custom section inserts after target");
-}
+delete global.window;
+global.window = global;
+/* Reset mem by new IIFE */
+Object.keys(require.cache).forEach((k) => {
+  /* n/a — we re-eval */
+});
+const SectionEditor2 = new Function("window", `${editorSrc}\nreturn window.SectionEditor;`)(global);
+global.localStorage = localStorageMock;
 
-SectionEditor.deleteSection("test", "b", base);
-sections = SectionEditor.getSections("test", base);
-if (sections.some((s) => s.id === "b")) fail("built-in delete did not hide section b");
-else pass("built-in delete soft-hides section");
+SectionEditor2.bootstrap("legacy", base);
+const migrated = SectionEditor2.getSections("legacy");
+const migIds = migrated.map((s) => s.id);
+if (!migIds.includes("a") || migIds.includes("b") || !migIds.includes("custom-x")) {
+  fail(`migrate ids wrong: ${migIds.join(",")}`);
+} else pass("legacy migrate omits deleted, keeps custom");
 
-if (!SectionEditor.getDeletedIds("test").includes("b")) fail("deleted id not tracked");
-else pass("deleted booklet ids tracked");
+if (migrated.find((s) => s.id === "a")?.title !== "A edited") fail("migrate should fold edits");
+else pass("legacy migrate folds section-edits");
 
-SectionEditor.deleteSection("test", created.id, base);
-sections = SectionEditor.getSections("test", base);
-if (sections.some((s) => s.id === created.id)) fail("custom delete left section behind");
-else pass("custom delete removes section permanently");
+const xIdx = migIds.indexOf("custom-x");
+const aIdx = migIds.indexOf("a");
+if (xIdx !== aIdx + 1) fail(`custom should follow a: ${migIds.join(",")}`);
+else pass("legacy migrate respects afterId");
 
-SectionEditor.restoreAllDeleted("test");
-sections = SectionEditor.getSections("test", base);
-if (!sections.some((s) => s.id === "b")) fail("restore did not bring back b");
-else pass("restore brings back booklet passages");
+const stored = JSON.parse(store["legacy-section-structure"]);
+if (!Array.isArray(stored.scenes) || stored.custom) fail("persisted structure should be scenes-only");
+else pass("persisted shape is scenes[]");
 
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);

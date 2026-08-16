@@ -1,0 +1,19 @@
+{
+  "id": "spell-pass-without-trace",
+  "name": "Pass without Trace",
+  "level": "2",
+  "school": "Abjuration",
+  "source": "Core rules",
+  "classes": "Druid, Ranger",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "Self",
+  "components": "V, S, M (ashes of mistletoe / burned evergreen)",
+  "duration": "Concentration, up to 1 hour",
+  "summary": "You and allies within 30 ft get +10 Stealth and leave no tracks.",
+  "description": "Veil of shadows. +10 to Dexterity (Stealth) checks; can't be tracked except by magical means.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

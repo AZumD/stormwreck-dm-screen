@@ -1,0 +1,18 @@
+{
+  "id": "skill-stealth",
+  "linkId": "stealth",
+  "name": "Stealth",
+  "defaultAbility": "Dexterity",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Conceal yourself from enemies and observers.",
+  "description": "Make a Dexterity (Stealth) check when you attempt to conceal yourself from enemies, slink past guards, slip away without being noticed, or sneak up on someone without being seen or heard.",
+  "typicalUses": "Hide, sneak, ambush approach.",
+  "exampleChecks": "Slip past sentries; hide in underbrush; approach a camp unseen.",
+  "notes": "",
+  "tags": [
+    "dexterity",
+    "stealth"
+  ],
+  "updatedAt": 1786753783664
+}

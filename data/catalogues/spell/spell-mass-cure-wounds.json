@@ -1,0 +1,19 @@
+{
+  "id": "spell-mass-cure-wounds",
+  "name": "Mass Cure Wounds",
+  "level": "5",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Bard, Cleric, Druid",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "Heal up to 6 creatures in a 30-ft radius: 3d8 + mod.",
+  "description": "Choose up to six creatures in a 30-ft-radius sphere. Each regains 3d8 + spellcasting mod HP.",
+  "higherLevels": "+1d8 per slot above 5th.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

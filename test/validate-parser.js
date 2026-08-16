@@ -55,6 +55,30 @@ if (!collapse.includes("<details") || !collapse.includes("If the players lose") 
   pass("collapse block renders");
 }
 
+const nested = parseContent(
+  "{{collapse:Ask him}}\n{{read-aloud}}\nShipwrecks on the reef.\n{{/read-aloud}}\n{{/collapse}}"
+);
+if (
+  !nested.includes("collapse-block") ||
+  !nested.includes('class="read-aloud"') ||
+  nested.includes("&lt;div") ||
+  nested.includes("&lt;span")
+) {
+  fail("read-aloud inside collapse should render, not escape HTML: " + nested);
+} else {
+  pass("nested read-aloud inside collapse renders");
+}
+
+const nestedLink = parseContent(
+  "{{collapse:Cast}}\nTalk to @npc:sw-runara|Runara\n{{/collapse}}",
+  { "sw-runara": { name: "Elder Runara" } }
+);
+if (!nestedLink.includes("entity-link") || !nestedLink.includes("data-id=\"sw-runara\"")) {
+  fail("entity link inside collapse missing: " + nestedLink);
+} else {
+  pass("entity link inside collapse works");
+}
+
 if (typeof preserveLineBreaks !== "function") fail("preserveLineBreaks not exported");
 else pass("preserveLineBreaks exported");
 

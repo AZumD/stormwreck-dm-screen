@@ -1,0 +1,19 @@
+{
+  "id": "spell-light",
+  "name": "Light",
+  "level": "Cantrip",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Bard, Cleric, Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, M (firefly or phosphorescent moss)",
+  "duration": "1 hour",
+  "summary": "Object sheds bright light 20 ft, dim 20 ft more.",
+  "description": "Touched object (or object worn/carried by unwilling creature after DEX save) sheds light. Ends if cast again.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

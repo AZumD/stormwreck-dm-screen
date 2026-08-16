@@ -20,9 +20,9 @@ View mode persists in `{campaignId}-view-mode`.
 
 Toolbar uses compact icon buttons for navigation, edit mode, and Play/Document (labels via `aria-label` / `title`).
 
-Chapter ids still group passages internally; chapter titles are **not** auto-injected into the sidebar, Play view, or Document scroll (sandbox-authored content only).
+Scenes come from `SectionEditor.getSections` as one flat ordered list (no chapter grouping in nav/UI). Booklet `ADVENTURE.sections` / `chapters` are not used as live content after migrate.
 
-On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title from `ADVENTURE.meta` (used by booklet and sandbox campaigns).
+On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title from `ADVENTURE.meta`. `SectionEditor.bootstrap(campaignId, ADVENTURE.sections)` runs a one-shot legacy migrate when needed.
 
 ## Campaign play state
 - Scene status/notes via `CampaignStateUI` chrome on each section
@@ -33,8 +33,11 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 
 ## Edit mode
 - Toggle persists via `SectionEditor.setEditMode`
-- Passages come from `SectionEditor.getSections` (not raw `ADVENTURE.sections`)
-- Add / delete / restore controls only render while edit mode is on
+- Passages come from `SectionEditor.getSections`
+- Add / delete controls only while edit mode is on
+- **Link scene** opens the SceneUI connection picker (persists via SceneMeta)
+- Sidebar **drag-and-drop** reorders scenes (edit mode only)
+- Passage editor draft is preserved across window `focus` (link-tag `prompt()`), scene-meta refreshes, and soft re-renders
 
 ## Key helpers
 | Function | Role |
@@ -44,5 +47,6 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 | `renderScrollDocument` | Document HTML + scene extras |
 | `jumpToSection` | Play focus or document scroll |
 | `addPassage` / `deletePassage` | Create / remove passages |
+| `buildNav` / `bindNavDragReorder` | Sidebar list + edit-mode DnD |
 | `openSectionEditor` | Inline title/content editor |
 | `bindCatalogueSearch` | Live catalogue dropdown → entity modal |

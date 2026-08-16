@@ -1,0 +1,19 @@
+{
+  "id": "spell-fire-bolt",
+  "name": "Fire Bolt",
+  "level": "Cantrip",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "120 feet",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "Hurl a mote of fire; can ignite flammable objects.",
+  "description": "Ranged spell attack; 1d10 fire (scales 2d10/3d10/4d10). Unattended flammable objects ignite.",
+  "higherLevels": "Damage increases at levels 5, 11, and 17.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

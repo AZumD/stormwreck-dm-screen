@@ -1,9 +1,9 @@
 {
   "id": "sw-myconid",
   "name": "Myconid",
-  "size": "Medium",
-  "creatureType": "Plant",
-  "alignment": "Lawful neutral",
+  "size": "Medelstor",
+  "creatureType": "Växt",
+  "alignment": "Laglydig neutral",
   "cr": "1/4",
   "xp": "50",
   "str": 12,
@@ -20,11 +20,11 @@
   "damageImmunities": "",
   "senses": "Darkvision 120 ft., passive Perception 11",
   "languages": "—",
-  "traits": "Distress Spores. When myconid takes damage, all other myconids within 240 ft. can sense its pain.\n\nRapport Spores (3/day). 30-ft. radius. Creatures with Int 2+ gain telepathy with each other for 1 hour.\n\nNot evil — start hostile but can be parleyed (DC 20 Charisma).",
-  "actions": "Fist. +3 to hit, reach 5 ft. Hit: 4 (1d4+2) bludgeoning damage plus 5 (2d4) poison damage.\n\nPacifying Spores (3/day). 5-ft. radius. DC 11 Con save or stunned for 1 minute (repeat save).",
+  "traits": "Distress Spores. När myconiden tar skada känner alla andra myconider inom 240 ft. dess smärta.\n\nRapport Spores (3/day). Sporer sprids i en radie på 30 ft. Varelser med Int 2 eller högre kan kommunicera telepatiskt med varandra i 1 timme.\n\nMyconider är inte onda varelser och kan kommunicera och förhandla med andra genom sina sporer.",
+  "actions": "Näve. +3 to hit, räckvidd 5 ft. Träff: 4 (1d4+2) bludgeoning damage plus 5 (2d4) poison damage.\n\nPacifying Spores (3/day). Sporer sprids i en radie på 5 ft. Målet måste klara ett DC 11 Con save eller bli Stunned i 1 minut (nytt save i slutet av varje egen tur).",
   "bonusActions": "",
   "reactions": "",
   "legendaryActions": "",
-  "notes": "Seagrow Caves — fungus farm (B2) has sprouts + violet fungi disguised among mushrooms.\n\nMention Tarak or his offering → advantage on Charisma checks.",
+  "notes": "",
   "updatedAt": 1786752801503
 }

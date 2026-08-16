@@ -1,0 +1,19 @@
+{
+  "id": "spell-burning-hands",
+  "name": "Burning Hands",
+  "level": "1",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Self (15-foot cone)",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "15-ft cone of fire; DEX save for half.",
+  "description": "Each creature in a 15-ft cone takes 3d6 fire (DEX half).",
+  "higherLevels": "+1d6 per slot level above 1st.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

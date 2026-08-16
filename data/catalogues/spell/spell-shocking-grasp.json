@@ -1,0 +1,19 @@
+{
+  "id": "spell-shocking-grasp",
+  "name": "Shocking Grasp",
+  "level": "Cantrip",
+  "school": "Evocation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "Touch",
+  "components": "V, S",
+  "duration": "Instantaneous",
+  "summary": "Melee lightning; advantage vs metal armor; no reactions until next turn.",
+  "description": "Melee spell attack; 1d8 lightning (scales). Advantage if target wears metal armor. Hit: target can't take reactions until its next turn.",
+  "higherLevels": "Damage increases at levels 5, 11, and 17.",
+  "notes": "",
+  "updatedAt": 1786753781779
+}

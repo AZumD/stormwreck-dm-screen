@@ -1,0 +1,18 @@
+{
+  "id": "skill-investigation",
+  "linkId": "investigation",
+  "name": "Investigation",
+  "defaultAbility": "Intelligence",
+  "source": "Player's Handbook",
+  "page": "",
+  "summary": "Deduce clues and search carefully.",
+  "description": "When you look around for clues and make deductions based on those clues, you make an Intelligence (Investigation) check.",
+  "typicalUses": "Search rooms, deduce crime scenes, find hidden objects by reasoning.",
+  "exampleChecks": "Find a secret door by studying walls; deduce which cup was poisoned.",
+  "notes": "",
+  "tags": [
+    "intelligence",
+    "exploration"
+  ],
+  "updatedAt": 1786753783664
+}

@@ -1,0 +1,14 @@
+{
+  "id": "race-tiefling",
+  "name": "Tiefling",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Infernal heritage shows in horns, tails, and innate fire magic.",
+  "abilityScoreIncrease": "CHA +2, INT +1",
+  "traits": "Darkvision 60 ft.\nHellish Resistance — fire resistance.\nInfernal Legacy — thaumaturgy; at 3rd hellish rebuke (1/long rest); at 5th darkness (1/long rest); CHA spellcasting.",
+  "languages": "Common, Infernal",
+  "senses": "Darkvision 60 ft.",
+  "notes": "",
+  "updatedAt": 1786753781208
+}

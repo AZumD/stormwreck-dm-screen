@@ -1,0 +1,19 @@
+{
+  "id": "spell-haste",
+  "name": "Haste",
+  "level": "3",
+  "school": "Transmutation",
+  "source": "Core rules",
+  "classes": "Sorcerer, Wizard",
+  "ritual": false,
+  "concentration": true,
+  "castingTime": "1 action",
+  "range": "30 feet",
+  "components": "V, S, M (shaving of licorice root)",
+  "duration": "Concentration, up to 1 minute",
+  "summary": "Double speed, +2 AC, advantage on DEX saves, extra action (limited).",
+  "description": "Willing creature: speed doubled, +2 AC, DEX save advantage, one extra action (Attack one weapon attack only / Dash / Disengage / Hide). After spell: can't move or act for 1 turn (lethargy).",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

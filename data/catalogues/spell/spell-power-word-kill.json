@@ -1,0 +1,19 @@
+{
+  "id": "spell-power-word-kill",
+  "name": "Power Word Kill",
+  "level": "9",
+  "school": "Enchantment",
+  "source": "Core rules",
+  "classes": "Bard, Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 action",
+  "range": "60 feet",
+  "components": "V",
+  "duration": "Instantaneous",
+  "summary": "Kill a creature with 100 HP or fewer — no save.",
+  "description": "If current HP ≤ 100, it dies. Otherwise no effect.",
+  "higherLevels": "",
+  "notes": "",
+  "updatedAt": 1786753781780
+}

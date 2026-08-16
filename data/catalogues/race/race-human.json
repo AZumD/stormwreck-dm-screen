@@ -1,0 +1,14 @@
+{
+  "id": "race-human",
+  "name": "Human",
+  "size": "Medium",
+  "speed": "30 ft.",
+  "source": "Core rules",
+  "summary": "Versatile and ambitious — the most adaptable of the common folk.",
+  "abilityScoreIncrease": "All abilities +1 (variant: two +1s, one skill, one feat)",
+  "traits": "Standard: +1 to each ability score; one extra language.\nVariant (if allowed): +1 to two abilities, proficiency in one skill, one feat.",
+  "languages": "Common + one of your choice",
+  "senses": "",
+  "notes": "Ask whether the table uses standard or variant humans.",
+  "updatedAt": 1786753781208
+}

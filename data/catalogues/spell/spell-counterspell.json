@@ -1,0 +1,19 @@
+{
+  "id": "spell-counterspell",
+  "name": "Counterspell",
+  "level": "3",
+  "school": "Abjuration",
+  "source": "Core rules",
+  "classes": "Sorcerer, Warlock, Wizard",
+  "ritual": false,
+  "concentration": false,
+  "castingTime": "1 reaction",
+  "range": "60 feet",
+  "components": "S",
+  "duration": "Instantaneous",
+  "summary": "Interrupt a creature casting a spell within 60 ft.",
+  "description": "Auto-succeeds vs spells of 3rd level or lower. Higher: ability check with your spellcasting ability (DC 10 + spell level).",
+  "higherLevels": "Auto-counters spells of equal or lower level than the slot used.",
+  "notes": "",
+  "updatedAt": 1786753781780
+}
