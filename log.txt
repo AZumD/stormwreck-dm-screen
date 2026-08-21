@@ -34,3 +34,14 @@
 [2026-08-16] Free-form scenes: section-structure.scenes[], one-shot booklet migrate, unified delete, edit-mode drag reorder. See js/core/editor.js, js/campaign-app.js
 [2026-08-16] Nested collapse blocks via balanced open/close matching; allow {{collapse Title}} form. See js/core/parser.js
 [2026-08-17] Catalogue taxonomy: generic facets/groupBy/showWhen, item categories/tags, first-class subclasses & subspecies (flat storage). See js/core/catalogue/, test/validate-catalogue-taxonomy.js
+[2026-08-17] Catalogue ref pickers: search/add from item/skill/feature/spell catalogues; split PC/NPC equipment vs inventory and skills/features/spells. See js/core/catalogue/app.js, configs.js
+[2026-08-17] Fixed empty catalogue ref-results gap (hidden override); wiki/edit chips open entity modals for skills/items/spells/features.
+[2026-08-17] Fix EntityRegistry resolve for full catalogue ids (sw-…); modal links from PC equipment work again.
+[2026-08-17] Day/time tracker in campaign top chrome (tenday snap + continuous clock); persists in CampaignState.clock. See js/core/day-time-ui.js, docs/README/DAY-TIME-UI.md
+[2026-08-17] Sidebar scene groups: one-level collapsible folders in section-structure (groups[] + groupId); edit-mode create/rename/delete + drag. See js/core/editor.js, js/campaign-app.js, docs/README/EDITOR.md
+[2026-08-17] Group drag handle on sidebar folders (summary no longer blocks HTML5 drag). See js/campaign-app.js
+[2026-08-21] Fix YouTube ambience: visible 200px mini player (hidden 1x1 iframes blocked by YT autoplay); keep playlist URL + data-media-url. See js/core/media-bar.js
+[2026-08-21] YouTube unavailable fix: stop embedding truncated list=; use youtube.com/embed video-only. See js/core/media-bar.js
+[2026-08-21] Multi-track YouTube ambience: layered chips, stacked 200px dock, per-track stop + Stop all. See js/core/media-bar.js
+[2026-08-21] True multi-track YouTube: side-by-side visible players + IFrame API resume when YT pauses siblings. See js/core/media-bar.js
+[2026-08-21] Phase 1 DB foundation: Drizzle schema, SQL migration, item seed, optional DATABASE_URL. See docs/README/MIGRATION-RAILWAY.md, docs/README/DB.md

@@ -2,11 +2,22 @@
   "name": "stormwreck-dm-screen",
   "version": "1.0.0",
   "private": true,
-  "description": "Local DM Library — file-backed Node server + vanilla frontend",
+  "description": "Local DM Library — file-backed Node server + vanilla frontend (Postgres optional)",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node test/validate-server.js && node test/validate-persistence-client.js && node test/validate-write-queue.js && node test/validate-static-guard.js && node test/validate-landing.js && node test/validate-campaign-registry.js && node test/validate-scene-link.js && node test/validate-start-launcher.js && node test/validate-catalogue-images.js && node test/validate-asset-persist.js && node test/validate-editor-draft.js && node test/validate-section-editor.js && node test/validate-catalogues.js && node test/validate-catalogue-taxonomy.js"
+    "db:migrate": "node db/migrate.mjs",
+    "db:seed:items": "node db/seed-items.mjs",
+    "db:generate": "drizzle-kit generate",
+    "test": "node test/validate-server.js && node test/validate-persistence-client.js && node test/validate-write-queue.js && node test/validate-static-guard.js && node test/validate-landing.js && node test/validate-campaign-registry.js && node test/validate-scene-link.js && node test/validate-start-launcher.js && node test/validate-catalogue-images.js && node test/validate-asset-persist.js && node test/validate-editor-draft.js && node test/validate-section-editor.js && node test/validate-nav-groups.js && node test/validate-catalogues.js && node test/validate-catalogue-taxonomy.js && node test/validate-catalogue-ref-picker.js && node test/validate-day-time.js && node test/validate-maps-media.js && node test/validate-db-foundation.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.39.3",
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.4"
   },
   "engines": {
     "node": ">=18"

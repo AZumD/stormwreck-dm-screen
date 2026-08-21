@@ -23,7 +23,7 @@ const app = fs.readFileSync(path.join(root, "js/campaign-app.js"), "utf8");
 const i18n = fs.readFileSync(path.join(root, "js/i18n/en.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
 
-["getSections", "addSection", "deleteSection", "reorderScenes", "migrateLegacy", "bootstrap"].forEach((name) => {
+["getSections", "addSection", "deleteSection", "reorderScenes", "migrateLegacy", "bootstrap", "getGroups", "addGroup", "deleteGroup", "setSceneGroup", "moveScene", "reorderGroups"].forEach((name) => {
   if (!editorSrc.includes(`function ${name}`)) fail(`editor.js missing ${name}`);
   else pass(`editor.js has ${name}`);
 });
@@ -36,9 +36,17 @@ if (!editorSrc.includes("scenes:") && !editorSrc.includes("scenes =")) {
   fail("editor missing scenes structure");
 } else pass("editor uses scenes[]");
 
-if (!app.includes("bindNavDragReorder") || !app.includes("reorderScenes")) {
-  fail("campaign-app missing drag reorder wiring");
+if (!editorSrc.includes("groups") || !editorSrc.includes("groupId")) {
+  fail("editor missing nav groups support");
+} else pass("editor supports nav groups");
+
+if (!app.includes("bindNavDragReorder") || !app.includes("moveScene")) {
+  fail("campaign-app missing drag/moveScene wiring");
 } else pass("campaign-app drag reorder");
+
+if (!app.includes("buildNavItems") || !app.includes("nav-scene-group") || !app.includes("addNavGroup")) {
+  fail("campaign-app missing nav group UI");
+} else pass("campaign-app nav groups");
 
 if (app.includes("ADVENTURE.chapters.forEach")) {
   fail("campaign-app should not loop ADVENTURE.chapters for nav/document");
@@ -52,12 +60,12 @@ if (!app.includes("SectionEditor.bootstrap(campaignId, ADVENTURE.sections")) {
   fail("bootstrap should pass booklet sections for one-shot migrate");
 } else pass("bootstrap passes booklet for migrate");
 
-if (!i18n.includes("confirmDeleteScene") || !i18n.includes("noScenesHint")) {
-  fail("i18n missing free-form scene strings");
+if (!i18n.includes("confirmDeleteScene") || !i18n.includes("noScenesHint") || !i18n.includes("addGroup")) {
+  fail("i18n missing free-form scene/group strings");
 } else pass("i18n free-form strings");
 
-if (!css.includes("nav-scene-item--draggable") || !css.includes("is-drop-target")) {
-  fail("css missing drag reorder styles");
+if (!css.includes("nav-scene-item--draggable") || !css.includes("is-drop-target") || !css.includes("nav-scene-group")) {
+  fail("css missing drag/group styles");
 } else pass("css drag reorder styles");
 
 /* Runtime smoke */
@@ -152,8 +160,46 @@ if (xIdx !== aIdx + 1) fail(`custom should follow a: ${migIds.join(",")}`);
 else pass("legacy migrate respects afterId");
 
 const stored = JSON.parse(store["legacy-section-structure"]);
-if (!Array.isArray(stored.scenes) || stored.custom) fail("persisted structure should be scenes-only");
-else pass("persisted shape is scenes[]");
+if (!Array.isArray(stored.scenes) || stored.custom || !Array.isArray(stored.groups)) {
+  fail("persisted structure should be { groups, scenes }");
+} else pass("persisted shape is groups[] + scenes[]");
+
+/* Nav groups */
+SectionEditor.bootstrap("groups-camp", []);
+const g = SectionEditor.addGroup("groups-camp", { title: "Tarak", id: "grp-tarak" });
+if (!g || g.id !== "grp-tarak") fail("addGroup failed");
+else pass("addGroup creates group");
+
+const s1 = SectionEditor.addSection("groups-camp", { title: "Meet", content: "1" });
+const s2 = SectionEditor.addSection("groups-camp", { title: "Talk", content: "2" });
+const s3 = SectionEditor.addSection("groups-camp", { title: "Root", content: "3" });
+SectionEditor.setSceneGroup("groups-camp", s1.id, "grp-tarak");
+SectionEditor.setSceneGroup("groups-camp", s2.id, "grp-tarak");
+const grouped = SectionEditor.getSections("groups-camp");
+if (grouped.find((s) => s.id === s1.id)?.groupId !== "grp-tarak") fail("setSceneGroup failed");
+else pass("setSceneGroup assigns groupId");
+
+SectionEditor.moveScene("groups-camp", s3.id, { beforeId: s2.id, groupId: "grp-tarak" });
+const moved = SectionEditor.getSections("groups-camp");
+const m3 = moved.find((s) => s.id === s3.id);
+if (!m3 || m3.groupId !== "grp-tarak") fail("moveScene into group failed");
+else pass("moveScene sets group and order");
+
+SectionEditor.renameGroup("groups-camp", "grp-tarak", "Tarak & friends");
+if (SectionEditor.getGroups("groups-camp")[0].title !== "Tarak & friends") fail("renameGroup failed");
+else pass("renameGroup updates title");
+
+const beforeDelete = SectionEditor.getSections("groups-camp").length;
+SectionEditor.deleteGroup("groups-camp", "grp-tarak");
+const after = SectionEditor.getSections("groups-camp");
+if (SectionEditor.getGroups("groups-camp").length !== 0) fail("deleteGroup left group");
+else if (after.length !== beforeDelete) fail("deleteGroup removed scenes");
+else if (after.some((s) => s.groupId)) fail("deleteGroup did not clear groupId");
+else pass("deleteGroup ungroups without deleting scenes");
+
+const rawGroups = JSON.parse(store["groups-camp-section-structure"]);
+if (!Array.isArray(rawGroups.groups) || !Array.isArray(rawGroups.scenes)) fail("groups not persisted");
+else pass("groups persist in section-structure");
 
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);

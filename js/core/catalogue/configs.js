@@ -65,17 +65,84 @@ window.CatalogueConfigs = {
         title: "Proficiencies & skills",
         fields: [
           { id: "savingThrows", label: "Saving throws", type: "textarea", rows: 2, grid: "half" },
-          { id: "skills", label: "Skills", type: "textarea", rows: 3, grid: "half" },
+          {
+            id: "skillRefs",
+            label: "Skills",
+            type: "list",
+            refType: "skill",
+            grid: "full",
+            searchPlaceholder: "Search skill catalogue…",
+            placeholder: "Custom skill note…",
+            hint: "Link skills from the Skill Catalogue. Custom lines stay as plain text."
+          },
+          {
+            id: "skills",
+            label: "Skill notes (freeform)",
+            type: "textarea",
+            rows: 2,
+            grid: "full",
+            placeholder: "Optional extras — proficiency bonuses, expertise, etc."
+          },
           { id: "languages", label: "Languages", type: "textarea", rows: 2, grid: "full" }
         ]
       },
       {
-        title: "Equipment",
-        fields: [{ id: "equipment", label: "Gear & inventory", type: "list", grid: "full", placeholder: "Item name" }]
+        title: "Equipment & inventory",
+        fields: [
+          {
+            id: "equipment",
+            label: "Equipment",
+            type: "list",
+            refType: "item",
+            grid: "full",
+            searchPlaceholder: "Search item catalogue…",
+            placeholder: "Custom worn/ready item…",
+            hint: "Worn or ready-to-hand gear (weapons, armor, held items). Linked to the Item Catalogue."
+          },
+          {
+            id: "inventory",
+            label: "Inventory",
+            type: "list",
+            refType: "item",
+            grid: "full",
+            searchPlaceholder: "Search item catalogue…",
+            placeholder: "Custom carried item…",
+            hint: "Carried pack / stored goods. Linked to the Item Catalogue."
+          }
+        ]
       },
       {
         title: "Features & spells",
-        fields: [{ id: "featuresSpells", label: "Class features, spells, abilities", type: "textarea", rows: 6, grid: "full" }]
+        fields: [
+          {
+            id: "featureRefs",
+            label: "Features",
+            type: "list",
+            refType: "feature",
+            grid: "full",
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "Custom feature…",
+            hint: "Class features, feats, and other abilities from the Feature Catalogue."
+          },
+          {
+            id: "spellRefs",
+            label: "Spells",
+            type: "list",
+            refType: "spell",
+            grid: "full",
+            searchPlaceholder: "Search spell catalogue…",
+            placeholder: "Custom spell…",
+            hint: "Prepared or known spells from the Spell Catalogue."
+          },
+          {
+            id: "featuresSpells",
+            label: "Ability notes (freeform)",
+            type: "textarea",
+            rows: 3,
+            grid: "full",
+            placeholder: "Optional freeform notes that are not catalogue links."
+          }
+        ]
       },
       {
         title: "Story & notes",
@@ -110,9 +177,13 @@ window.CatalogueConfigs = {
       proficiencyBonus: "+2",
       hitDice: "1d8",
       savingThrows: "",
+      skillRefs: [],
       skills: "",
       languages: "",
       equipment: [],
+      inventory: [],
+      featureRefs: [],
+      spellRefs: [],
       featuresSpells: "",
       backstory: "",
       notes: ""
@@ -184,8 +255,64 @@ window.CatalogueConfigs = {
         ]
       },
       {
-        title: "Equipment",
-        fields: [{ id: "equipment", label: "Gear & inventory", type: "list", grid: "full", placeholder: "Item name" }]
+        title: "Skills, features & spells",
+        fields: [
+          {
+            id: "skillRefs",
+            label: "Skills",
+            type: "list",
+            refType: "skill",
+            grid: "full",
+            searchPlaceholder: "Search skill catalogue…",
+            placeholder: "Custom skill…",
+            hint: "Link skills from the Skill Catalogue."
+          },
+          {
+            id: "featureRefs",
+            label: "Features",
+            type: "list",
+            refType: "feature",
+            grid: "full",
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "Custom feature…",
+            hint: "Traits and abilities from the Feature Catalogue."
+          },
+          {
+            id: "spellRefs",
+            label: "Spells",
+            type: "list",
+            refType: "spell",
+            grid: "full",
+            searchPlaceholder: "Search spell catalogue…",
+            placeholder: "Custom spell…",
+            hint: "Spells from the Spell Catalogue."
+          }
+        ]
+      },
+      {
+        title: "Equipment & inventory",
+        fields: [
+          {
+            id: "equipment",
+            label: "Equipment",
+            type: "list",
+            refType: "item",
+            grid: "full",
+            searchPlaceholder: "Search item catalogue…",
+            placeholder: "Custom worn/ready item…",
+            hint: "Worn or ready-to-hand gear. Linked to the Item Catalogue."
+          },
+          {
+            id: "inventory",
+            label: "Inventory",
+            type: "list",
+            refType: "item",
+            grid: "full",
+            searchPlaceholder: "Search item catalogue…",
+            placeholder: "Custom carried item…",
+            hint: "Carried pack / stored goods. Linked to the Item Catalogue."
+          }
+        ]
       },
       {
         title: "Story & notes",
@@ -218,7 +345,11 @@ window.CatalogueConfigs = {
       ideals: "",
       bonds: "",
       flaws: "",
+      skillRefs: [],
+      featureRefs: [],
+      spellRefs: [],
       equipment: [],
+      inventory: [],
       summary: "",
       backstory: "",
       notes: ""
@@ -446,7 +577,9 @@ window.CatalogueConfigs = {
             type: "list",
             grid: "full",
             refType: "skill",
-            placeholder: "perception or @skill:perception|Perception"
+            searchPlaceholder: "Search skill catalogue…",
+            placeholder: "perception or custom skill text",
+            hint: "Search and link skills from the Skill Catalogue."
           },
           {
             id: "traitRefs",
@@ -454,7 +587,9 @@ window.CatalogueConfigs = {
             type: "list",
             grid: "full",
             refType: "feature",
-            placeholder: "undead-fortitude or @feature:undead-fortitude|Undead Fortitude"
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "undead-fortitude or custom trait",
+            hint: "Monster traits from the Feature Catalogue."
           },
           {
             id: "actionRefs",
@@ -462,7 +597,9 @@ window.CatalogueConfigs = {
             type: "list",
             grid: "full",
             refType: "feature",
-            placeholder: "slam or @feature:slam|Slam"
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "slam or custom action",
+            hint: "Shared actions from the Feature Catalogue."
           },
           {
             id: "bonusActionRefs",
@@ -470,7 +607,9 @@ window.CatalogueConfigs = {
             type: "list",
             grid: "full",
             refType: "feature",
-            placeholder: "@feature:…"
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "@feature:…",
+            hint: "Bonus actions from the Feature Catalogue."
           },
           {
             id: "reactionRefs",
@@ -478,7 +617,9 @@ window.CatalogueConfigs = {
             type: "list",
             grid: "full",
             refType: "feature",
-            placeholder: "@feature:…"
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "@feature:…",
+            hint: "Reactions from the Feature Catalogue."
           },
           {
             id: "legendaryActionRefs",
@@ -486,7 +627,19 @@ window.CatalogueConfigs = {
             type: "list",
             grid: "full",
             refType: "feature",
-            placeholder: "@feature:…"
+            searchPlaceholder: "Search feature catalogue…",
+            placeholder: "@feature:…",
+            hint: "Legendary actions from the Feature Catalogue."
+          },
+          {
+            id: "spellRefs",
+            label: "Spells (catalogue links)",
+            type: "list",
+            grid: "full",
+            refType: "spell",
+            searchPlaceholder: "Search spell catalogue…",
+            placeholder: "Custom spell…",
+            hint: "Innate or prepared spells from the Spell Catalogue."
           },
           {
             id: "traits",
@@ -543,6 +696,7 @@ window.CatalogueConfigs = {
       bonusActionRefs: [],
       reactionRefs: [],
       legendaryActionRefs: [],
+      spellRefs: [],
       traits: "",
       actions: "",
       bonusActions: "",

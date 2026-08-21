@@ -185,6 +185,7 @@
     });
 
     if (window.CampaignState) await CampaignState.init(campaignId);
+    if (window.DayTimeUI) DayTimeUI.init();
     if (window.ChronicleStore) await ChronicleStore.init(campaignId);
     if (window.PartyRoster) PartyRoster.init();
     if (window.SceneUI) {
@@ -301,44 +302,249 @@
     });
   }
 
+  function navGroupCollapsedKey() {
+    return `${campaignId}-nav-group-collapsed`;
+  }
+
+  function loadNavGroupCollapsed() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(navGroupCollapsedKey()) || "{}");
+      return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function setNavGroupCollapsed(groupId, collapsed) {
+    const map = loadNavGroupCollapsed();
+    if (collapsed) map[groupId] = true;
+    else delete map[groupId];
+    try {
+      localStorage.setItem(navGroupCollapsedKey(), JSON.stringify(map));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Interleave root scenes with group blocks (first occurrence emits full group). */
+  function buildNavItems(sections, groups, editMode) {
+    const groupById = new Map((groups || []).map((g) => [g.id, g]));
+    const members = new Map((groups || []).map((g) => [g.id, []]));
+    (sections || []).forEach((s) => {
+      if (s.groupId && members.has(s.groupId)) members.get(s.groupId).push(s);
+    });
+
+    const items = [];
+    const emitted = new Set();
+    (sections || []).forEach((s) => {
+      if (!s.groupId || !groupById.has(s.groupId)) {
+        items.push({ type: "scene", scene: s });
+        return;
+      }
+      if (emitted.has(s.groupId)) return;
+      emitted.add(s.groupId);
+      items.push({
+        type: "group",
+        group: groupById.get(s.groupId),
+        scenes: members.get(s.groupId) || []
+      });
+    });
+
+    (groups || []).forEach((g) => {
+      if (emitted.has(g.id)) return;
+      if (!editMode && !(members.get(g.id) || []).length) return;
+      emitted.add(g.id);
+      items.push({ type: "group", group: g, scenes: members.get(g.id) || [] });
+    });
+
+    return items;
+  }
+
+  function createNavSceneItem(section, editMode) {
+    const data = getSectionData(section);
+    const li = document.createElement("li");
+    li.className = "nav-scene-item";
+    li.dataset.section = section.id;
+    li.dataset.groupId = section.groupId || "";
+    if (editMode) {
+      li.draggable = true;
+      li.classList.add("nav-scene-item--draggable");
+    }
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "nav-btn nav-scene";
+    btn.dataset.section = section.id;
+    if (window.CampaignStateUI) {
+      const navCls = CampaignStateUI.navStatusClass(section.id).trim();
+      if (navCls) btn.className += ` ${navCls}`;
+    }
+    btn.textContent = data.title;
+    btn.addEventListener("click", () => jumpToSection(section.id));
+    li.appendChild(btn);
+    return li;
+  }
+
+  function createNavGroupItem(group, childScenes, editMode, forceOpen) {
+    const li = document.createElement("li");
+    li.className = "nav-scene-group";
+    li.dataset.groupId = group.id;
+    if (editMode) li.classList.add("nav-scene-group--draggable");
+
+    const details = document.createElement("details");
+    details.className = "nav-scene-group__details";
+    const collapsedMap = loadNavGroupCollapsed();
+    const userCollapsed = collapsedMap[group.id] === true;
+    if (forceOpen) {
+      details.open = true;
+      setNavGroupCollapsed(group.id, false);
+    } else {
+      details.open = !userCollapsed;
+    }
+
+    const summary = document.createElement("summary");
+    summary.className = "nav-scene-group__summary";
+
+    if (editMode) {
+      const handle = document.createElement("span");
+      handle.className = "nav-scene-group__drag";
+      handle.draggable = true;
+      handle.title = t.dragGroupHint || "Drag to reorder group";
+      handle.setAttribute("aria-label", t.dragGroupHint || "Drag to reorder group");
+      handle.setAttribute("role", "button");
+      handle.tabIndex = 0;
+      summary.appendChild(handle);
+    }
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "nav-scene-group__title";
+    titleSpan.textContent = group.title;
+    summary.appendChild(titleSpan);
+
+    if (editMode) {
+      const actions = document.createElement("span");
+      actions.className = "nav-scene-group__actions";
+
+      const renameBtn = document.createElement("button");
+      renameBtn.type = "button";
+      renameBtn.className = "nav-scene-group__action";
+      renameBtn.textContent = t.renameGroup || "Rename";
+      renameBtn.title = t.renameGroup || "Rename group";
+      renameBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        renameNavGroup(group.id, group.title);
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "nav-scene-group__action nav-scene-group__action--danger";
+      deleteBtn.textContent = t.deleteGroup || "Delete";
+      deleteBtn.title = t.deleteGroupHint || "Remove group (scenes stay)";
+      deleteBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteNavGroup(group.id, group.title);
+      });
+
+      actions.appendChild(renameBtn);
+      actions.appendChild(deleteBtn);
+      summary.appendChild(actions);
+    }
+
+    details.appendChild(summary);
+
+    const list = document.createElement("ul");
+    list.className = "nav-scene-group__list nav-list";
+    list.dataset.groupId = group.id;
+    childScenes.forEach((scene) => {
+      list.appendChild(createNavSceneItem(scene, editMode));
+    });
+    if (editMode && !childScenes.length) {
+      const empty = document.createElement("li");
+      empty.className = "nav-scene-group__empty";
+      empty.textContent = t.emptyGroupHint || "Drag scenes here";
+      list.appendChild(empty);
+    }
+    details.appendChild(list);
+
+    details.addEventListener("toggle", () => {
+      setNavGroupCollapsed(group.id, !details.open);
+    });
+
+    li.appendChild(details);
+    return li;
+  }
+
+  function renameNavGroup(groupId, currentTitle) {
+    const next = prompt(t.renameGroupPrompt || "Group name", currentTitle || "");
+    if (next == null) return;
+    const trimmed = next.trim();
+    if (!trimmed) return;
+    SectionEditor.renameGroup(campaignId, groupId, trimmed);
+    refreshDocument(focusedSceneId);
+  }
+
+  function deleteNavGroup(groupId, title) {
+    const message = (t.confirmDeleteGroup || 'Remove group "{title}"? Scenes stay in the list.').replace(
+      "{title}",
+      title || "group"
+    );
+    if (!confirm(message)) return;
+    SectionEditor.deleteGroup(campaignId, groupId);
+    refreshDocument(focusedSceneId);
+  }
+
+  function addNavGroup() {
+    const title = prompt(t.newGroupPrompt || "Group name", t.newGroupDefaultTitle || "New group");
+    if (title == null) return;
+    const trimmed = title.trim() || t.newGroupDefaultTitle || "New group";
+    const created = SectionEditor.addGroup(campaignId, { title: trimmed });
+    if (!created) return;
+    setNavGroupCollapsed(created.id, false);
+    refreshDocument(focusedSceneId);
+  }
+
   function buildNav() {
     sectionNav.innerHTML = "";
     const sections = getSections();
+    const groups = SectionEditor.getGroups ? SectionEditor.getGroups(campaignId) : [];
     const editMode = SectionEditor.isEditMode();
+    const activeId = focusedSceneId || null;
+    const activeGroupId = activeId
+      ? sections.find((s) => s.id === activeId)?.groupId || null
+      : null;
 
-    if (!sections.length && editMode) {
+    if (!sections.length && !groups.length && editMode) {
       const li = document.createElement("li");
       li.className = "nav-empty-hint";
       li.textContent = t.noScenesHint || "No scenes yet — add one below.";
       sectionNav.appendChild(li);
     }
 
-    sections.forEach((section) => {
-      const data = getSectionData(section);
-      const li = document.createElement("li");
-      li.className = "nav-scene-item";
-      li.dataset.section = section.id;
-      if (editMode) {
-        li.draggable = true;
-        li.classList.add("nav-scene-item--draggable");
+    const items = buildNavItems(sections, groups, editMode);
+    items.forEach((item) => {
+      if (item.type === "scene") {
+        sectionNav.appendChild(createNavSceneItem(item.scene, editMode));
+      } else {
+        const forceOpen = activeGroupId && item.group.id === activeGroupId;
+        sectionNav.appendChild(createNavGroupItem(item.group, item.scenes, editMode, forceOpen));
       }
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "nav-btn nav-scene";
-      btn.dataset.section = section.id;
-      if (window.CampaignStateUI) {
-        const navCls = CampaignStateUI.navStatusClass(section.id).trim();
-        if (navCls) btn.className += ` ${navCls}`;
-      }
-      btn.textContent = data.title;
-      btn.addEventListener("click", () => jumpToSection(section.id));
-      li.appendChild(btn);
-      sectionNav.appendChild(li);
     });
 
     if (editMode) {
       bindNavDragReorder();
+
+      const addGroupLi = document.createElement("li");
+      addGroupLi.className = "nav-add-group";
+      const addGroupBtn = document.createElement("button");
+      addGroupBtn.type = "button";
+      addGroupBtn.className = "nav-btn nav-add-group-btn";
+      addGroupBtn.textContent = `+ ${t.addGroup || "New group"}`;
+      addGroupBtn.addEventListener("click", () => addNavGroup());
+      addGroupLi.appendChild(addGroupBtn);
+      sectionNav.appendChild(addGroupLi);
+
       const addLi = document.createElement("li");
       addLi.className = "nav-add-scene";
       const addBtn = document.createElement("button");
@@ -351,45 +557,178 @@
     }
   }
 
+  function clearNavDropTargets() {
+    sectionNav
+      .querySelectorAll(".is-drop-target, .is-drop-target-group")
+      .forEach((el) => el.classList.remove("is-drop-target", "is-drop-target-group"));
+  }
+
   function bindNavDragReorder() {
     if (!sectionNav || !SectionEditor.isEditMode()) return;
-    let dragId = null;
+    let dragPayload = null;
+
+    function parseDrag(e) {
+      try {
+        const raw = e.dataTransfer.getData("application/x-nav-drag") || e.dataTransfer.getData("text/plain");
+        if (!raw) return dragPayload;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.kind) return parsed;
+        return { kind: "scene", id: raw };
+      } catch {
+        if (dragPayload) return dragPayload;
+        const plain = e.dataTransfer.getData("text/plain");
+        return plain ? { kind: "scene", id: plain } : null;
+      }
+    }
 
     sectionNav.querySelectorAll(".nav-scene-item--draggable").forEach((li) => {
       li.addEventListener("dragstart", (e) => {
-        dragId = li.dataset.section;
+        dragPayload = { kind: "scene", id: li.dataset.section };
         li.classList.add("is-dragging");
         e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", dragId);
+        e.dataTransfer.setData("application/x-nav-drag", JSON.stringify(dragPayload));
+        e.dataTransfer.setData("text/plain", dragPayload.id);
+        e.stopPropagation();
       });
       li.addEventListener("dragend", () => {
         li.classList.remove("is-dragging");
-        sectionNav.querySelectorAll(".nav-scene-item").forEach((el) => el.classList.remove("is-drop-target"));
-        dragId = null;
+        clearNavDropTargets();
+        dragPayload = null;
       });
       li.addEventListener("dragover", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         e.dataTransfer.dropEffect = "move";
-        sectionNav.querySelectorAll(".nav-scene-item").forEach((el) => el.classList.remove("is-drop-target"));
-        if (li.dataset.section !== dragId) li.classList.add("is-drop-target");
+        clearNavDropTargets();
+        const drag = dragPayload || parseDrag(e);
+        if (drag?.kind === "scene" && li.dataset.section !== drag.id) {
+          li.classList.add("is-drop-target");
+        }
       });
       li.addEventListener("dragleave", () => {
         li.classList.remove("is-drop-target");
       });
       li.addEventListener("drop", (e) => {
         e.preventDefault();
-        li.classList.remove("is-drop-target");
-        const fromId = e.dataTransfer.getData("text/plain") || dragId;
+        e.stopPropagation();
+        clearNavDropTargets();
+        const drag = parseDrag(e);
+        if (!drag || drag.kind !== "scene") return;
+        const fromId = drag.id;
         const toId = li.dataset.section;
         if (!fromId || !toId || fromId === toId) return;
-        const ids = getSections().map((s) => s.id);
-        const fromIdx = ids.indexOf(fromId);
-        const toIdx = ids.indexOf(toId);
-        if (fromIdx < 0 || toIdx < 0) return;
-        ids.splice(fromIdx, 1);
-        ids.splice(toIdx, 0, fromId);
-        SectionEditor.reorderScenes(campaignId, ids);
+        const targetGroup = li.dataset.groupId || null;
+        SectionEditor.moveScene(campaignId, fromId, {
+          beforeId: toId,
+          groupId: targetGroup || null
+        });
         refreshDocument(focusedSceneId || fromId);
+      });
+    });
+
+    sectionNav.querySelectorAll(".nav-scene-group").forEach((groupLi) => {
+      const groupId = groupLi.dataset.groupId;
+      const list = groupLi.querySelector(".nav-scene-group__list");
+      const summary = groupLi.querySelector(".nav-scene-group__summary");
+      const handle = groupLi.querySelector(".nav-scene-group__drag");
+
+      if (handle) {
+        handle.addEventListener("mousedown", (e) => {
+          e.stopPropagation();
+        });
+        handle.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+        handle.addEventListener("dragstart", (e) => {
+          e.stopPropagation();
+          dragPayload = { kind: "group", id: groupId };
+          groupLi.classList.add("is-dragging");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("application/x-nav-drag", JSON.stringify(dragPayload));
+          e.dataTransfer.setData("text/plain", JSON.stringify(dragPayload));
+        });
+        handle.addEventListener("dragend", () => {
+          groupLi.classList.remove("is-dragging");
+          clearNavDropTargets();
+          dragPayload = null;
+        });
+      }
+
+      const acceptOntoGroup = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        clearNavDropTargets();
+        const drag = dragPayload || parseDrag(e);
+        if (drag?.kind === "scene") groupLi.classList.add("is-drop-target-group");
+        else if (drag?.kind === "group" && drag.id !== groupId) groupLi.classList.add("is-drop-target-group");
+      };
+
+      [summary, list, groupLi].forEach((el) => {
+        if (!el) return;
+        el.addEventListener("dragover", acceptOntoGroup);
+        el.addEventListener("dragleave", (e) => {
+          if (!groupLi.contains(e.relatedTarget)) groupLi.classList.remove("is-drop-target-group");
+        });
+        el.addEventListener("drop", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          clearNavDropTargets();
+          const drag = parseDrag(e);
+          if (!drag) return;
+
+          if (drag.kind === "scene") {
+            SectionEditor.moveScene(campaignId, drag.id, {
+              beforeId: null,
+              groupId
+            });
+            setNavGroupCollapsed(groupId, false);
+            refreshDocument(focusedSceneId || drag.id);
+            return;
+          }
+
+          if (drag.kind === "group" && drag.id !== groupId) {
+            const ids = SectionEditor.getGroups(campaignId).map((g) => g.id);
+            const fromIdx = ids.indexOf(drag.id);
+            const toIdx = ids.indexOf(groupId);
+            if (fromIdx < 0 || toIdx < 0) return;
+            ids.splice(fromIdx, 1);
+            ids.splice(toIdx, 0, drag.id);
+            SectionEditor.reorderGroups(campaignId, ids);
+            refreshDocument(focusedSceneId);
+          }
+        });
+      });
+    });
+
+    /* Drop on root add-row / empty hint → ungroup scene, or append group to end */
+    sectionNav.querySelectorAll(".nav-add-scene, .nav-add-group, .nav-empty-hint").forEach((li) => {
+      li.addEventListener("dragover", (e) => {
+        const drag = dragPayload;
+        if (drag?.kind !== "scene" && drag?.kind !== "group") return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        clearNavDropTargets();
+        li.classList.add("is-drop-target");
+      });
+      li.addEventListener("dragleave", () => li.classList.remove("is-drop-target"));
+      li.addEventListener("drop", (e) => {
+        e.preventDefault();
+        clearNavDropTargets();
+        const drag = parseDrag(e);
+        if (!drag) return;
+        if (drag.kind === "scene") {
+          SectionEditor.moveScene(campaignId, drag.id, { beforeId: null, groupId: null });
+          refreshDocument(focusedSceneId || drag.id);
+          return;
+        }
+        if (drag.kind === "group") {
+          const ids = SectionEditor.getGroups(campaignId).map((g) => g.id).filter((id) => id !== drag.id);
+          ids.push(drag.id);
+          SectionEditor.reorderGroups(campaignId, ids);
+          refreshDocument(focusedSceneId);
+        }
       });
     });
   }
@@ -924,6 +1263,14 @@
     document.querySelectorAll(".nav-btn[data-section]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.section === id);
     });
+    if (!id) return;
+    const activeBtn = document.querySelector(`.nav-btn[data-section="${CSS.escape(id)}"]`);
+    const details = activeBtn?.closest("details.nav-scene-group__details");
+    if (details && !details.open) {
+      details.open = true;
+      const groupLi = details.closest(".nav-scene-group");
+      if (groupLi?.dataset.groupId) setNavGroupCollapsed(groupLi.dataset.groupId, false);
+    }
   }
 
   function updateNavActive() {

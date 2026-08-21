@@ -28,8 +28,14 @@ Catalogue configs may declare:
 
 `CatalogueApp` reads these generically (no per-type filter hardcoding). Search and facets combine; filtering does not mutate stored data.
 
-List fields with `refType` (e.g. `feature`, `skill`, `npc`) render as clickable entity links when the page loads EntityRegistry + EntityUI.
-Unresolved ids / legacy plain strings render as ordinary text (no broken links).
+List fields with `refType` (e.g. `feature`, `skill`, `item`, `spell`) render as clickable entity links in the wiki view.
+In edit mode they also get a **catalogue search picker**: type to search the related catalogue and add a linked `@type:id|Label` chip, or use **Add custom** for plain text. Unresolved / legacy plain strings stay readable (no broken links).
+
+### PC / NPC gear & abilities
+- **Equipment** — worn / ready-to-hand gear (item links)
+- **Inventory** — carried / stored goods (item links)
+- **Skills**, **Features**, and **Spells** are separate linked lists (not one combined textarea)
+- Optional freeform note fields remain for non-catalogue text
 
 Textarea wiki fields run through `ContentParser.markdownLite`, so `@feature:id|Label` and friends work in freeform prose.
 

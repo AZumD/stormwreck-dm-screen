@@ -58,6 +58,7 @@ window.EntityRegistry = (function () {
     return {
       ...entry,
       equipment: asArray(entry.equipment),
+      inventory: asArray(entry.inventory),
       npcs: asArray(entry.npcs),
       monsters: asArray(entry.monsters),
       itemsOfInterest: asArray(entry.itemsOfInterest),
@@ -65,6 +66,7 @@ window.EntityRegistry = (function () {
       subclasses: asArray(entry.subclasses),
       featureRefs: asArray(entry.featureRefs),
       skillRefs: asArray(entry.skillRefs),
+      spellRefs: asArray(entry.spellRefs),
       traitRefs: asArray(entry.traitRefs),
       actionRefs: asArray(entry.actionRefs),
       bonusActionRefs: asArray(entry.bonusActionRefs),
@@ -167,7 +169,13 @@ window.EntityRegistry = (function () {
       entry.ideals && `**Ideals:** ${entry.ideals}`,
       entry.bonds && `**Bonds:** ${entry.bonds}`,
       entry.flaws && `**Flaws:** ${entry.flaws}`,
-      entry.equipment.length && `**Equipment:**\n${entry.equipment.map((i) => `- ${i}`).join("\n")}`,
+      refsBlock("Skills", entry.skillRefs, "skill"),
+      refsBlock("Features", entry.featureRefs, "feature"),
+      refsBlock("Spells", entry.spellRefs, "spell"),
+      entry.equipment.length &&
+        `**Equipment:**\n${entry.equipment.map((i) => `- ${formatRefMarkdown(i, "item")}`).join("\n")}`,
+      entry.inventory.length &&
+        `**Inventory:**\n${entry.inventory.map((i) => `- ${formatRefMarkdown(i, "item")}`).join("\n")}`,
       entry.backstory && `**Backstory:**\n${entry.backstory}`,
       entry.notes && `**Notes:**\n${entry.notes}`
     ]);
@@ -201,6 +209,7 @@ window.EntityRegistry = (function () {
       refsBlock("Bonus Actions", entry.bonusActionRefs, "feature"),
       refsBlock("Reactions", entry.reactionRefs, "feature"),
       refsBlock("Legendary Actions", entry.legendaryActionRefs, "feature"),
+      refsBlock("Spells", entry.spellRefs, "spell"),
       entry.traits && `**Trait notes:**\n${entry.traits}`,
       entry.actions && `**Action notes:**\n${entry.actions}`,
       entry.bonusActions && `**Bonus Action notes:**\n${entry.bonusActions}`,
@@ -293,8 +302,15 @@ window.EntityRegistry = (function () {
     const id = linkId(entry);
     const bits = [entry.class, entry.level ? `Level ${entry.level}` : "", entry.race].filter(Boolean);
     const details = joinBlocks([
-      entry.featuresSpells && `**Features & spells:**\n${entry.featuresSpells}`,
-      entry.equipment.length && `**Equipment:**\n${entry.equipment.map((i) => `- ${i}`).join("\n")}`,
+      refsBlock("Skills", entry.skillRefs, "skill"),
+      entry.skills && `**Skill notes:**\n${entry.skills}`,
+      refsBlock("Features", entry.featureRefs, "feature"),
+      refsBlock("Spells", entry.spellRefs, "spell"),
+      entry.featuresSpells && `**Ability notes:**\n${entry.featuresSpells}`,
+      entry.equipment.length &&
+        `**Equipment:**\n${entry.equipment.map((i) => `- ${formatRefMarkdown(i, "item")}`).join("\n")}`,
+      entry.inventory.length &&
+        `**Inventory:**\n${entry.inventory.map((i) => `- ${formatRefMarkdown(i, "item")}`).join("\n")}`,
       entry.backstory && `**Backstory:**\n${entry.backstory}`,
       entry.notes && `**Notes:**\n${entry.notes}`
     ]);
@@ -506,7 +522,7 @@ window.EntityRegistry = (function () {
     const seeds = window.CatalogueSeeds?.[catalogueType] || [];
     let stored = [];
     try {
-      stored = CatalogueStore.loadAll(catalogueType);
+      stored = window.CatalogueStore?.loadAll?.(catalogueType) || [];
     } catch {
       stored = [];
     }
@@ -537,18 +553,46 @@ window.EntityRegistry = (function () {
   function resolveCatalogueEntry(linkKey) {
     if (!linkKey) return null;
 
+    /* Direct catalogue file id (e.g. sw-raven-chick-skull-focus, skill-perception) */
+    if (entriesByCatalogueId.has(linkKey)) {
+      return entriesByCatalogueId.get(linkKey);
+    }
+
     const aliasId = LINK_ALIASES[linkKey];
     if (aliasId && entriesByCatalogueId.has(aliasId)) {
       return entriesByCatalogueId.get(aliasId);
     }
 
-    const swId = `sw-${linkKey}`;
-    if (entriesByCatalogueId.has(swId)) {
-      return entriesByCatalogueId.get(swId);
+    /* Adventure link ids often omit the sw- prefix */
+    if (!String(linkKey).startsWith("sw-")) {
+      const swId = `sw-${linkKey}`;
+      if (entriesByCatalogueId.has(swId)) {
+        return entriesByCatalogueId.get(swId);
+      }
     }
 
     for (const entry of entriesByCatalogueId.values()) {
       if (linkId(entry) === linkKey) return entry;
+    }
+
+    /* Live store fallback — covers entries loaded after the last index */
+    if (window.CatalogueStore?.get) {
+      for (const catalogueType of Object.keys(TYPE_MAP)) {
+        const live = window.CatalogueStore.get(catalogueType, linkKey);
+        if (live?.id) {
+          const wrapped = { ...live, _catalogueType: catalogueType };
+          entriesByCatalogueId.set(live.id, wrapped);
+          return wrapped;
+        }
+        if (!String(linkKey).startsWith("sw-")) {
+          const swLive = window.CatalogueStore.get(catalogueType, `sw-${linkKey}`);
+          if (swLive?.id) {
+            const wrapped = { ...swLive, _catalogueType: catalogueType };
+            entriesByCatalogueId.set(swLive.id, wrapped);
+            return wrapped;
+          }
+        }
+      }
     }
 
     return null;
@@ -575,6 +619,7 @@ window.EntityRegistry = (function () {
         const entity = convert(normalized);
         entity.type = TYPE_MAP[type];
         entities[entity.id] = entity;
+        if (entry.id && entry.id !== entity.id) entities[entry.id] = entity;
       } catch (err) {
         console.warn("EntityRegistry: skipped entry", entry?.id, err);
       }
@@ -598,7 +643,10 @@ window.EntityRegistry = (function () {
       const convert = CONVERTERS[type];
       const entity = convert(normalizeEntry(entry));
       entity.type = TYPE_MAP[type];
-      window.ENTITIES[id] = entity;
+      window.ENTITIES = window.ENTITIES || {};
+      window.ENTITIES[entity.id] = entity;
+      if (entry.id) window.ENTITIES[entry.id] = entity;
+      if (id && id !== entity.id) window.ENTITIES[id] = entity;
       return entity;
     } catch {
       return null;

@@ -44,7 +44,8 @@ window.ContentParser = (function () {
       return `<span class="media-chip media-chip--invalid">Invalid YouTube link</span>`;
     }
     const label = (title || window.I18N?.mediaDefaultTitle || "Play music").trim();
-    return `<button type="button" class="media-chip" data-media-play data-media-id="${escapeHtml(id)}" data-media-title="${escapeHtml(label)}"><span class="media-chip__icon" aria-hidden="true"></span><span class="media-chip__label">${escapeHtml(label)}</span></button>`;
+    const rawUrl = String(raw || "").trim();
+    return `<button type="button" class="media-chip" data-media-play data-media-id="${escapeHtml(id)}" data-media-url="${escapeHtml(rawUrl)}" data-media-title="${escapeHtml(label)}"><span class="media-chip__icon" aria-hidden="true"></span><span class="media-chip__label">${escapeHtml(label)}</span></button>`;
   }
 
   function replaceYouTube(html) {

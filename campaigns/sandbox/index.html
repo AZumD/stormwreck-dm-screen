@@ -52,6 +52,7 @@
     </aside>
 
     <main class="main" id="main">
+      <div class="main-chrome">
       <div class="main-toolbar">
         <button type="button" id="sidebar-toggle" class="toolbar-btn toolbar-btn--icon sidebar-toggle" aria-label="Show navigation" title="Navigation" aria-expanded="false" aria-controls="sidebar">
           <span class="sidebar-toggle__icon" aria-hidden="true"></span>
@@ -77,6 +78,21 @@
         </button>
         <button type="button" id="current-scene-btn" class="toolbar-btn" title="Jump to current scene">Current scene</button>
         <span class="session-badge" id="session-badge">Session 1</span>
+      </div>
+      <div class="day-time-bar" id="day-time-bar" aria-label="Campaign day and time">
+        <div class="day-time-bar__group day-time-bar__group--day">
+          <label class="day-time-bar__label" for="day-time-day">Day <span id="day-time-day-label">1</span></label>
+          <input type="range" id="day-time-day" class="day-time-bar__slider day-time-bar__slider--day" min="1" max="10" step="1" value="1" list="day-time-day-ticks" aria-valuemin="1" aria-valuemax="10">
+          <datalist id="day-time-day-ticks">
+            <option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option>
+            <option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option><option value="10"></option>
+          </datalist>
+        </div>
+        <div class="day-time-bar__group day-time-bar__group--time">
+          <label class="day-time-bar__label" for="day-time-minute"><span id="day-time-clock-label">08:00</span></label>
+          <input type="range" id="day-time-minute" class="day-time-bar__slider day-time-bar__slider--time" min="0" max="1439" step="1" value="480" aria-valuemin="0" aria-valuemax="1439" aria-label="Time of day">
+        </div>
+      </div>
       </div>
       <p id="format-help" class="format-help-bar hidden">@npc:id|Name · &lt;b&gt;bold&lt;/b&gt; · {{read-aloud}}…{{/read-aloud}} · {{dm-note}}…{{/dm-note}}</p>
 
@@ -196,16 +212,14 @@
       <span class="media-bar__badge" aria-hidden="true"></span>
       <div class="media-bar__meta">
         <span class="media-bar__kicker">Ambience</span>
-        <span id="media-bar-title" class="media-bar__title">No track playing</span>
+        <span id="media-bar-status" class="media-bar__title">No track playing</span>
+        <div id="media-bar-tracks" class="media-bar__tracks" hidden></div>
       </div>
       <div class="media-bar__actions">
-        <a id="media-bar-open" class="media-bar__link hidden" href="#" target="_blank" rel="noopener noreferrer">YouTube</a>
-        <button type="button" id="media-bar-stop" class="media-bar__stop">Stop</button>
+        <button type="button" id="media-bar-stop" class="media-bar__stop">Stop all</button>
       </div>
     </div>
-    <div class="media-bar__frame-wrap" aria-hidden="true">
-      <iframe id="media-bar-frame" class="media-bar__frame" title="YouTube ambience player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-    </div>
+    <div id="media-bar-frames" class="media-bar__frame-wrap" aria-label="YouTube ambience players"></div>
   </div>
 
   <script src="../../js/i18n/en.js"></script>
@@ -224,6 +238,7 @@
   <script src="../../js/core/entity-registry.js"></script>
   <script src="../../js/core/entity-ui.js"></script>
   <script src="../../js/core/campaign-state.js"></script>
+  <script src="../../js/core/day-time-ui.js"></script>
   <script src="../../js/core/campaign-state-ui.js"></script>
   <script src="../../js/core/campaign-prefs.js"></script>
   <script src="../../js/core/campaign-map-state.js"></script>

@@ -7,7 +7,7 @@ Main controller for a campaign DM screen: scene Play view, Document reference sc
 `js/campaign-app.js`
 
 ## Depends on
-`ContentParser`, `SectionEditor`, `EntityUI`, `EntityRegistry`, `CampaignState`, `CampaignStateUI`, `ChronicleStore`, `ChronicleUI`, `SceneMeta`, `SceneUI`, `PartyRoster`, `MapPanel`, `LayoutPanels`, campaign `ADVENTURE` / `MAPS`, `I18N`
+`ContentParser`, `SectionEditor`, `EntityUI`, `EntityRegistry`, `CampaignState`, `CampaignStateUI`, `DayTimeUI`, `ChronicleStore`, `ChronicleUI`, `SceneMeta`, `SceneUI`, `PartyRoster`, `MapPanel`, `LayoutPanels`, campaign `ADVENTURE` / `MAPS`, `I18N`
 
 ## Views
 | Mode | Behavior |
@@ -20,12 +20,13 @@ View mode persists in `{campaignId}-view-mode`.
 
 Toolbar uses compact icon buttons for navigation, edit mode, and Play/Document (labels via `aria-label` / `title`).
 
-Scenes come from `SectionEditor.getSections` as one flat ordered list (no chapter grouping in nav/UI). Booklet `ADVENTURE.sections` / `chapters` are not used as live content after migrate.
+Scenes come from `SectionEditor.getSections` as one flat ordered list for Play/Document. The sidebar may nest scenes under one-level collapsible **groups** (`SectionEditor.getGroups` + scene `groupId`). Booklet `ADVENTURE.sections` / `chapters` are not used as live content after migrate.
 
 On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title from `ADVENTURE.meta`. `SectionEditor.bootstrap(campaignId, ADVENTURE.sections)` runs a one-shot legacy migrate when needed.
 
 ## Campaign play state
 - Scene status/notes via `CampaignStateUI` chrome on each section
+- **Day / time** bar under the toolbar (`DayTimeUI`) — tenday 1–10 + continuous time; persists in `CampaignState.clock`
 - **Current scene** toolbar jumps to the saved current section
 - On load: URL hash wins; otherwise restores current scene; else first scene
 - Session → **History** panel for timeline entries; **Chronicle** for authored story + key events
@@ -36,7 +37,8 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 - Passages come from `SectionEditor.getSections`
 - Add / delete controls only while edit mode is on
 - **Link scene** opens the SceneUI connection picker (persists via SceneMeta)
-- Sidebar **drag-and-drop** reorders scenes (edit mode only)
+- Sidebar **groups**: New group, rename/delete group, drag scenes into/out of groups
+- Sidebar **drag-and-drop** reorders scenes and groups (edit mode only)
 - Passage editor draft is preserved across window `focus` (link-tag `prompt()`), scene-meta refreshes, and soft re-renders
 
 ## Key helpers
@@ -47,6 +49,6 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 | `renderScrollDocument` | Document HTML + scene extras |
 | `jumpToSection` | Play focus or document scroll |
 | `addPassage` / `deletePassage` | Create / remove passages |
-| `buildNav` / `bindNavDragReorder` | Sidebar list + edit-mode DnD |
+| `buildNav` / `buildNavItems` / `bindNavDragReorder` | Sidebar list, groups, edit-mode DnD |
 | `openSectionEditor` | Inline title/content editor |
 | `bindCatalogueSearch` | Live catalogue dropdown → entity modal |

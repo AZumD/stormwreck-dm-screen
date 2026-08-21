@@ -1,8 +1,14 @@
 /**
  * Local DM Library server — static frontend + /api file-backed persistence.
- * Zero npm dependencies (Node built-ins only). Binds to 127.0.0.1 by default.
+ * Optional Postgres when DATABASE_URL is set (Phase 1). Binds to 127.0.0.1 by default.
  */
 "use strict";
+
+try {
+  require("dotenv").config();
+} catch {
+  /* dotenv optional until npm install */
+}
 
 const http = require("http");
 const fsp = require("fs/promises");

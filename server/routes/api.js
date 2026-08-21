@@ -6,6 +6,7 @@
 const catalogues = require("../lib/catalogues");
 const campaigns = require("../lib/campaigns");
 const assets = require("../lib/assets");
+const db = require("../lib/db");
 const { sendJson, sendError, readJsonBody } = require("../lib/http-util");
 const {
   assertCatalogueType,
@@ -23,11 +24,21 @@ function route(method, pattern, keys, handler) {
 function createApiRoutes() {
   return [
     route("GET", /^\/api\/health$/, [], async (_req, res) => {
+      const database = await db.health();
       sendJson(res, 200, {
         ok: true,
-        mode: "file-backed",
+        mode: database.configured && database.ok ? "file+postgres" : "file-backed",
         catalogueTypes: CATALOGUE_TYPES,
-        documentKinds: CAMPAIGN_DOC_KINDS
+        documentKinds: CAMPAIGN_DOC_KINDS,
+        database
+      });
+    }),
+
+    route("GET", /^\/api\/db\/health$/, [], async (_req, res) => {
+      const database = await db.health();
+      sendJson(res, database.ok || !database.configured ? 200 : 503, {
+        ok: database.ok || !database.configured,
+        database
       });
     }),
 

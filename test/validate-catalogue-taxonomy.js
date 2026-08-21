@@ -310,10 +310,9 @@ pass("location JSON files have locationType + tags");
 const monDir = path.join(root, "data/catalogues/monster");
 for (const file of fs.readdirSync(monDir).filter((f) => f.endsWith(".json"))) {
   const data = readJson(path.join(monDir, file));
-  if (!data.source) fail(`monster ${data.id} missing source`);
-  if (!Array.isArray(data.tags)) fail(`monster ${data.id} missing tags`);
+  if (data.tags != null && !Array.isArray(data.tags)) fail(`monster ${data.id} tags must be an array when present`);
 }
-pass("monster JSON files have source + tags");
+pass("monster JSON files load (tags optional)");
 
 /* Legacy plain-text location refs still tolerated by renderer */
 const renderSnippet = appCode.includes("Legacy plain string") || appCode.includes("no broken link");

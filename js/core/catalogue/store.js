@@ -60,11 +60,28 @@ window.CatalogueStore = (function () {
   }
 
   async function bootstrap(typeList) {
-    if (bootstrapped) return;
+    const list = typeList || types();
+    if (bootstrapped) {
+      const missing = list.filter((t) => !cache.has(t));
+      if (!missing.length) return;
+      if (useApi()) {
+        for (const type of missing) {
+          try {
+            const entries = await LocalApiClient.listCatalogue(type);
+            setEntries(type, Array.isArray(entries) ? entries.slice() : []);
+          } catch (err) {
+            console.warn("Catalogue bootstrap failed for", type, err);
+            setEntries(type, loadAllLocal(type));
+          }
+        }
+      } else {
+        missing.forEach((type) => setEntries(type, loadAllLocal(type)));
+      }
+      return;
+    }
     if (bootstrapPromise) return bootstrapPromise;
     bootstrapPromise = (async () => {
       if (window.LocalApiClient) await LocalApiClient.ready();
-      const list = typeList || types();
       if (useApi()) {
         for (const type of list) {
           try {
@@ -192,6 +209,8 @@ window.CatalogueStore = (function () {
         "locationType",
         "parentLocationRef",
         "classRefs",
+        "spellRefs",
+        "inventory",
         "source",
         "itemType",
         "rarity"

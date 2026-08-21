@@ -11,12 +11,15 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
 
+**Optional Postgres (Phase 1):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path until later phases; DB holds the multi-user foundation (users, campaigns, characters, items, inventory, notes). See `docs/README/MIGRATION-RAILWAY.md`.
+
 | Area | Path |
 |------|------|
 | Catalogues | `data/catalogues/<type>/<id>.json` |
 | Campaign docs | `data/campaigns/<id>/*.json` |
 | Campaign registry | `data/campaigns/index.json` |
 | Images | `data/assets/portraits|maps/<type>/<id>.<ext>` |
+| Postgres (optional) | `DATABASE_URL` → tables in `db/migrations/` |
 
 Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API is offline, and as the source for **Import browser data**.
 
@@ -27,6 +30,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 
 ## Campaign play state
 - **Scene state** — unseen / current / completed / skipped + per-scene notes (`campaign-state.json`)
+- **Day / time** — tenday (1–10) + time of day in the sticky top chrome; persists in `CampaignState.clock`
 - **NPC memory** — attitude, mood, last seen, notes, flags (separate from catalogue)
 - **History** — structured timeline entries; Session Notes remain freeform
 - **Chronicle** — authored Story So Far, session prose, and curated Key Events (`chronicle.json`) — separate from History
@@ -38,11 +42,11 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Scene cast + connections editable in UI; stored in `scene-meta.json`
 
 ## Campaign editing
-- **Edit mode** edits passage title/body; **drag** sidebar scenes to reorder
-- **Add passage** inserts a scene into the free-form ordered list
-- **Delete** removes a scene from the list (same for every scene)
+- **Edit mode** edits passage title/body; **drag** sidebar scenes to reorder or into groups
+- **Add passage** / **New group** — free-form ordered scenes + one-level sidebar folders
+- **Delete** removes a scene from the list (same for every scene); deleting a group only ungroups
 - Booklet `adventure.js` is reference only — not merged as live seed content after migrate
-- **YouTube** chips via `{{youtube:url|Label}}` play in the sticky media bar
+- **YouTube** chips via `{{youtube:url|Label}}` layer in the sticky media bar (multi-track)
 - Entity links (`@npc:…`, `@skill:…`, `@feature:…`, `@class:…`, `@race:…`, …) resolve through catalogues via `entity-registry.js`
 - Toolbar **Search catalogues** dropdown opens any built entity modal
 
@@ -64,15 +68,16 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/local-api-client.js` | Browser → `/api` |
 | `js/core/browser-import.js` | Import legacy browser data |
 | `js/core/catalogue/types.js` | Declarative catalogue type list |
-| `js/core/editor.js` | Free-form ordered scenes + edit-mode reorder |
+| `js/core/editor.js` | Free-form ordered scenes, nav groups, edit-mode reorder |
 | `js/core/parser.js` | `@` links (all linkable types), YouTube chips, read-aloud / DM-note |
-| `js/core/media-bar.js` | Sticky YouTube ambience bar |
+| `js/core/media-bar.js` | Sticky multi-track YouTube ambience bar |
 | `js/core/entity-ui.js` | Tooltips + modals (map pins use compact tooltips) |
 | `js/core/entity-registry.js` | Catalogue → `ENTITIES` (+ `register()` for new types) |
 | `js/core/campaign-registry.js` | User campaigns on the landing page |
 | `js/landing.js` | Create / list custom campaigns + import |
-| `js/core/campaign-state.js` | Scene / NPC memory / timeline / party persistence |
+| `js/core/campaign-state.js` | Scene / NPC memory / timeline / party / clock persistence |
 | `js/core/campaign-state-ui.js` | Scene chrome, memory modal, history panel |
+| `js/core/day-time-ui.js` | Tenday + time-of-day sliders in top chrome |
 | `js/core/chronicle-store.js` | Story So Far, session prose, Key Events |
 | `js/core/chronicle-ui.js` | Chronicle panel + key-event dialog |
 | `js/core/scene-meta.js` | Scene cast + connections (design data) |
@@ -82,6 +87,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/campaign-app.js` | Campaign screen controller |
+| `db/` + `server/lib/db.js` | Optional Postgres foundation (Phase 1) |
 
 ## Catalogues
 - Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)
@@ -93,5 +99,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Also: `test/validate-*.js` Node validators (`validate-catalogue-taxonomy`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
+Also: `test/validate-*.js` Node validators (`validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
 

@@ -67,8 +67,11 @@ if (!registry.includes("spellToEntity") || !registry.includes("raceToEntity")) {
 } else {
   pass("entity-registry converts race/class/spell/pc");
 }
-if (!registry.includes("LINK_ALIASES")) fail("entity-registry missing link alias map");
-else pass("entity-registry has explicit link aliases");
+if (!registry.includes("entriesByCatalogueId.has(linkKey)") && !registry.includes("Direct catalogue file id")) {
+  fail("resolveCatalogueEntry should look up full catalogue ids (sw-…)");
+} else {
+  pass("resolveCatalogueEntry supports full catalogue ids");
+}
 
 if (!registry.includes("normalizeEntry")) fail("entity-registry missing entry normalization");
 else pass("entity-registry normalizes list fields");

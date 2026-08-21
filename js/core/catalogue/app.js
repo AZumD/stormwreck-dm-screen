@@ -214,26 +214,63 @@ window.CatalogueApp = (function () {
 
   function resolveRefLabel(ref) {
     if (ref.label) return ref.label;
-    if (window.EntityRegistry?.resolve) {
-      const entity = EntityRegistry.resolve(ref.id);
-      if (entity?.name) return entity.name;
-    }
+    const entity = resolveEntityForRef(ref, ref.type);
+    if (entity?.name) return entity.name;
     return ref.id;
+  }
+
+  function listRowIsLinked(raw) {
+    return /^@[\w-]+:[\w-]+/.test(String(raw || "").trim()) || /^[\w-]+:[\w-]+/.test(String(raw || "").trim());
+  }
+
+  function formatStoredRef(type, entry) {
+    const id = entry?.id || "";
+    const name = entry?.name || id;
+    if (!id) return "";
+    return `@${type}:${id}|${name}`;
+  }
+
+  function resolveEntityForRef(ref, defaultType) {
+    if (!ref) return null;
+    const tryIds = [ref.id];
+    if (ref.id && /^(skill|feature|spell|item|class|race|pc|npc|monster|location)-/.test(ref.id)) {
+      tryIds.push(ref.id.replace(/^(?:skill|feature|spell|item|class|race|pc|npc|monster|location)-/, ""));
+    }
+    for (const id of tryIds) {
+      const hit =
+        window.EntityRegistry?.resolve?.(id) ||
+        window.ENTITIES?.[id] ||
+        null;
+      if (hit) return hit;
+    }
+    const type = ref.type || defaultType;
+    if (type && window.CatalogueStore?.get) {
+      const entry = CatalogueStore.get(type, ref.id);
+      if (entry?.id && window.EntityRegistry?.resolve) {
+        return (
+          EntityRegistry.resolve(entry.linkId || entry.id) ||
+          EntityRegistry.resolve(entry.id) ||
+          null
+        );
+      }
+    }
+    return null;
   }
 
   function renderEntityRefHtml(raw, defaultType) {
     const ref = parseEntityRef(raw, defaultType);
     if (!ref) return escapeHtml(String(raw || ""));
 
-    const entity = window.EntityRegistry?.resolve?.(ref.id) || window.ENTITIES?.[ref.id] || null;
-    if (!entity) {
-      /* Legacy plain string or unknown id — no broken link */
-      return escapeHtml(ref.label || raw || ref.id);
+    const entity = resolveEntityForRef(ref, defaultType);
+    const label = (entity && (entity.name || ref.label)) || ref.label || raw || ref.id;
+    const looksLinked = listRowIsLinked(raw) || !!entity;
+    if (!looksLinked) {
+      return escapeHtml(String(label));
     }
 
-    const label = ref.label || entity.name || ref.id;
-    const type = ref.type || entity.type || defaultType || "";
-    return `<button type="button" class="entity-link" data-type="${escapeHtml(type)}" data-id="${escapeHtml(entity.id || ref.id)}">${escapeHtml(label)}</button>`;
+    const type = (entity && entity.type) || ref.type || defaultType || "";
+    const id = (entity && (entity.id || entity.catalogueId)) || ref.id;
+    return `<button type="button" class="entity-link" data-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}">${escapeHtml(label)}</button>`;
   }
 
   function isEmptyFieldValue(value, field) {
@@ -366,9 +403,7 @@ window.CatalogueApp = (function () {
     config.sections.forEach((section) => {
       section.fields.forEach((field) => {
         if (field.type === "list") {
-          entry[field.id] = [...root.querySelectorAll(`[data-list-field="${field.id}"] .cat-list-row input`)]
-            .map((i) => i.value.trim())
-            .filter(Boolean);
+          entry[field.id] = readListFieldValues(root, field.id);
           return;
         }
         if (field.type === "image") {
@@ -385,24 +420,98 @@ window.CatalogueApp = (function () {
     return entry;
   }
 
-  function renderListField(field, values) {
-    const items = Array.isArray(values) ? values : [];
-    const rows = items.length ? items : [""];
+  function renderRefListRow(field, raw) {
+    const value = String(raw || "").trim();
+    const ref = parseEntityRef(value, field.refType);
+    const linked = !!(ref && (listRowIsLinked(value) || resolveEntityForRef(ref, field.refType)));
+    if (linked && ref) {
+      const stored = value.includes("@")
+        ? value
+        : formatStoredRef(field.refType, { id: ref.id, name: resolveRefLabel(ref) });
+      return `
+            <div class="cat-list-row cat-list-row--ref">
+              <input type="hidden" value="${escapeHtml(stored)}">
+              <span class="cat-ref-chip">${renderEntityRefHtml(stored, field.refType)}</span>
+              <button type="button" class="cat-list-remove" aria-label="Remove row">×</button>
+            </div>`;
+    }
     return `
-      <div class="cat-list-field" data-list-field="${field.id}">
-        <div class="cat-list-rows">
-          ${rows
-            .map(
-              (val) => `
+            <div class="cat-list-row">
+              <input type="text" value="${escapeHtml(value)}" placeholder="${escapeHtml(field.placeholder || "Custom entry…")}">
+              <button type="button" class="cat-list-remove" aria-label="Remove row">×</button>
+            </div>`;
+  }
+
+  function renderListField(field, values) {
+    const items = Array.isArray(values) ? values.filter((v) => String(v || "").trim()) : [];
+    const isRef = !!field.refType;
+    const rows = items.length
+      ? items.map((val) => (isRef ? renderRefListRow(field, val) : `
             <div class="cat-list-row">
               <input type="text" value="${escapeHtml(val)}" placeholder="${escapeHtml(field.placeholder || "")}">
               <button type="button" class="cat-list-remove" aria-label="Remove row">×</button>
+            </div>`))
+      : isRef
+        ? []
+        : [
+            `
+            <div class="cat-list-row">
+              <input type="text" value="" placeholder="${escapeHtml(field.placeholder || "")}">
+              <button type="button" class="cat-list-remove" aria-label="Remove row">×</button>
             </div>`
-            )
-            .join("")}
-        </div>
-        <button type="button" class="cat-list-add" data-add-list="${field.id}">+ Add row</button>
+          ];
+
+    const picker = isRef
+      ? `
+        <div class="cat-ref-picker" data-ref-picker="${escapeHtml(field.id)}">
+          <input type="search" class="cat-ref-search" placeholder="${escapeHtml(
+            field.searchPlaceholder || `Search ${field.refType} catalogue…`
+          )}" autocomplete="off">
+          <div class="cat-ref-results" hidden></div>
+        </div>`
+      : "";
+
+    const addLabel = isRef ? "+ Add custom" : "+ Add row";
+    const hint = field.hint
+      ? `<p class="cat-field-hint">${escapeHtml(field.hint)}</p>`
+      : isRef
+        ? `<p class="cat-field-hint">Search the ${field.refType} catalogue to link entries, or add a custom line.</p>`
+        : "";
+
+    const rowsHtml = rows.length
+      ? `<div class="cat-list-rows">${rows.join("")}</div>`
+      : `<div class="cat-list-rows cat-list-rows--empty" hidden></div>`;
+
+    return `
+      <div class="cat-list-field${isRef ? " cat-list-field--refs" : ""}" data-list-field="${field.id}"${
+        isRef ? ` data-ref-type="${escapeHtml(field.refType)}"` : ""
+      }>
+        ${picker}
+        ${rowsHtml}
+        <button type="button" class="cat-list-add" data-add-list="${field.id}">${addLabel}</button>
+        ${hint}
       </div>`;
+  }
+
+  function collectRelatedTypes(config) {
+    const types = new Set();
+    (config.sections || []).forEach((section) => {
+      (section.fields || []).forEach((field) => {
+        if (field.refType) types.add(field.refType);
+      });
+    });
+    return [...types];
+  }
+
+  function readListFieldValues(root, fieldId) {
+    return [...root.querySelectorAll(`[data-list-field="${fieldId}"] .cat-list-row`)]
+      .map((row) => {
+        const hidden = row.querySelector('input[type="hidden"]');
+        if (hidden) return hidden.value.trim();
+        const text = row.querySelector('input[type="text"]');
+        return text ? text.value.trim() : "";
+      })
+      .filter(Boolean);
   }
 
   function renderImageField(field, value) {
@@ -667,7 +776,8 @@ window.CatalogueApp = (function () {
     const start = async () => {
       document.body.classList.add("is-booting");
       if (window.LocalApiClient) await LocalApiClient.ready();
-      if (window.CatalogueStore) await CatalogueStore.bootstrap([type]);
+      const relatedTypes = collectRelatedTypes(config);
+      if (window.CatalogueStore) await CatalogueStore.bootstrap([type, ...relatedTypes]);
       if (window.CatalogueImages) {
         await CatalogueImages.preload(type);
         await CatalogueImages.migrateType(type);
@@ -677,8 +787,24 @@ window.CatalogueApp = (function () {
     };
 
     async function boot() {
+    const relatedTypes = collectRelatedTypes(config);
+    if (window.CatalogueStore && relatedTypes.length) {
+      await CatalogueStore.bootstrap([type, ...relatedTypes]);
+      for (const related of relatedTypes) {
+        if (window.CatalogueSeeds?.[related]) {
+          await CatalogueStore.mergeSeeds(related, CatalogueSeeds[related]);
+        }
+      }
+    }
     if (window.CatalogueSeeds?.[type]) {
       await CatalogueStore.mergeSeeds(type, CatalogueSeeds[type]);
+    }
+    if (window.EntityRegistry?.build) {
+      try {
+        await EntityRegistry.build();
+      } catch (err) {
+        console.warn("EntityRegistry.build failed on catalogue page", err);
+      }
     }
 
     const listEl = document.getElementById("cat-list");
@@ -995,16 +1121,22 @@ window.CatalogueApp = (function () {
         btn.addEventListener("click", () => {
           const fieldId = btn.dataset.addList;
           const host = form.querySelector(`[data-list-field="${fieldId}"] .cat-list-rows`);
+          const field = fieldConfig(fieldId);
+          const placeholder = escapeHtml(field?.placeholder || "Custom entry…");
+          if (host) {
+            host.hidden = false;
+            host.classList.remove("cat-list-rows--empty");
+          }
           host.insertAdjacentHTML(
             "beforeend",
-            `<div class="cat-list-row"><input type="text" placeholder="${escapeHtml(
-              btn.closest(".cat-list-field")?.querySelector("input")?.placeholder || ""
-            )}"><button type="button" class="cat-list-remove" aria-label="Remove row">×</button></div>`
+            `<div class="cat-list-row"><input type="text" placeholder="${placeholder}"><button type="button" class="cat-list-remove" aria-label="Remove row">×</button></div>`
           );
           bindListRowEvents(form);
           scheduleSave();
         });
       });
+
+      bindRefPickers(form, scheduleSave);
 
       form.querySelectorAll("[data-image-input]").forEach((input) => {
         input.addEventListener("change", async () => {
@@ -1126,13 +1258,136 @@ window.CatalogueApp = (function () {
         btn.onclick = () => {
           const row = btn.closest(".cat-list-row");
           const host = row?.parentElement;
+          const listField = host?.closest("[data-list-field]");
+          const isRefList = listField?.classList.contains("cat-list-field--refs");
           row?.remove();
           if (host && !host.querySelector(".cat-list-row")) {
-            form.querySelector(`[data-add-list="${host.closest("[data-list-field]")?.dataset.listField || ""}"]`)?.click();
+            if (isRefList) {
+              host.hidden = true;
+              host.classList.add("cat-list-rows--empty");
+            } else {
+              form.querySelector(`[data-add-list="${listField?.dataset.listField || ""}"]`)?.click();
+            }
           }
           clearTimeout(saveTimer);
           saveTimer = setTimeout(() => saveCurrent(form), 100);
         };
+      });
+    }
+
+    function selectedRefIds(listField) {
+      const ids = new Set();
+      listField.querySelectorAll(".cat-list-row").forEach((row) => {
+        const raw =
+          row.querySelector('input[type="hidden"]')?.value ||
+          row.querySelector('input[type="text"]')?.value ||
+          "";
+        const ref = parseEntityRef(raw, listField.dataset.refType);
+        if (ref?.id) ids.add(ref.id);
+      });
+      return ids;
+    }
+
+    function bindRefPickers(form, scheduleSave) {
+      form.querySelectorAll("[data-ref-picker]").forEach((picker) => {
+        const fieldId = picker.dataset.refPicker;
+        const listField = form.querySelector(`[data-list-field="${fieldId}"]`);
+        const search = picker.querySelector(".cat-ref-search");
+        const results = picker.querySelector(".cat-ref-results");
+        if (!listField || !search || !results) return;
+        const refType = listField.dataset.refType;
+        const field = fieldConfig(fieldId);
+
+        function hideResults() {
+          results.hidden = true;
+          results.innerHTML = "";
+        }
+
+        function addRef(entry) {
+          const stored = formatStoredRef(refType, entry);
+          if (!stored) return;
+          const already = [...selectedRefIds(listField)].includes(entry.id);
+          if (already) {
+            search.value = "";
+            hideResults();
+            return;
+          }
+          const rows = listField.querySelector(".cat-list-rows");
+          rows.hidden = false;
+          rows.classList.remove("cat-list-rows--empty");
+          rows.insertAdjacentHTML("beforeend", renderRefListRow(field, stored));
+          bindListRowEvents(form);
+          search.value = "";
+          hideResults();
+          scheduleSave();
+        }
+
+        function renderResults(query) {
+          const q = query.trim().toLowerCase();
+          if (!q) {
+            hideResults();
+            return;
+          }
+          const taken = selectedRefIds(listField);
+          const pool = CatalogueStore.list(refType) || [];
+          const matches = pool
+            .filter((e) => {
+              if (!e?.id || taken.has(e.id)) return false;
+              const hay = [e.name, e.itemType, e.category, e.summary, e.defaultAbility, e.featureType, e.school]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+              return hay.includes(q);
+            })
+            .slice(0, 8);
+          if (!matches.length) {
+            results.innerHTML = `<div class="cat-ref-empty">No matches in ${escapeHtml(refType)} catalogue</div>`;
+            results.hidden = false;
+            return;
+          }
+          results.innerHTML = matches
+            .map((e) => {
+              const meta = [e.category, e.itemType, e.defaultAbility, e.featureType, e.school, e.level]
+                .filter(Boolean)
+                .slice(0, 2)
+                .join(" · ");
+              return `<button type="button" class="cat-ref-option" data-id="${escapeHtml(e.id)}">
+                <span class="cat-ref-option__name">${escapeHtml(e.name || e.id)}</span>
+                ${meta ? `<span class="cat-ref-option__meta">${escapeHtml(meta)}</span>` : ""}
+              </button>`;
+            })
+            .join("");
+          results.hidden = false;
+          results.querySelectorAll(".cat-ref-option").forEach((btn) => {
+            btn.addEventListener("mousedown", (ev) => {
+              ev.preventDefault();
+              const entry = CatalogueStore.get(refType, btn.dataset.id);
+              if (entry) addRef(entry);
+            });
+          });
+        }
+
+        search.addEventListener("input", () => renderResults(search.value));
+        search.addEventListener("focus", () => {
+          if (search.value.trim()) renderResults(search.value);
+        });
+        search.addEventListener("blur", () => {
+          setTimeout(hideResults, 120);
+        });
+        search.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            hideResults();
+            search.blur();
+          }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const first = results.querySelector(".cat-ref-option");
+            if (first) {
+              const entry = CatalogueStore.get(refType, first.dataset.id);
+              if (entry) addRef(entry);
+            }
+          }
+        });
       });
     }
 
@@ -1179,7 +1434,11 @@ window.CatalogueApp = (function () {
       groupKeyForEntry,
       groupLabel,
       sortGroupKeys,
-      facetValue
+      facetValue,
+      formatStoredRef,
+      collectRelatedTypes,
+      parseEntityRef,
+      readListFieldValues
     }
   };
 })();

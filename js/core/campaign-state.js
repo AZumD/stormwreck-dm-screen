@@ -21,7 +21,8 @@ window.CampaignState = (function () {
       scenes: {},
       npcMemory: {},
       timeline: [],
-      party: []
+      party: [],
+      clock: normalizeClock(null)
     };
   }
 
@@ -30,6 +31,27 @@ window.CampaignState = (function () {
     const id = String(raw?.id || "").trim();
     if (!type || !id) return null;
     return { type, id };
+  }
+
+  /** Tenday day 1–10 + minute-of-day 0–1439 (00:00–23:59). */
+  function normalizeClock(raw) {
+    let day = Number(raw?.day);
+    if (!Number.isFinite(day)) day = 1;
+    day = Math.max(1, Math.min(10, Math.round(day)));
+
+    let minute = Number(raw?.minute);
+    if (!Number.isFinite(minute) && raw?.minutes != null) minute = Number(raw.minutes);
+    if (!Number.isFinite(minute)) minute = 8 * 60; /* default mid-morning */
+    minute = Math.max(0, Math.min(1439, Math.round(minute)));
+
+    return { day, minute };
+  }
+
+  function formatClockTime(minute) {
+    const m = normalizeClock({ day: 1, minute }).minute;
+    const hh = String(Math.floor(m / 60)).padStart(2, "0");
+    const mm = String(m % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
   }
 
   function normalizeScene(raw) {
@@ -113,7 +135,14 @@ window.CampaignState = (function () {
     const party = Array.isArray(parsed.party)
       ? parsed.party.map(normalizePartyMember).filter(Boolean)
       : [];
-    return { version: VERSION, scenes, npcMemory, timeline, party };
+    return {
+      version: VERSION,
+      scenes,
+      npcMemory,
+      timeline,
+      party,
+      clock: normalizeClock(parsed.clock)
+    };
   }
 
   function persist() {
@@ -432,6 +461,22 @@ window.CampaignState = (function () {
     return getParty().some((m) => partyMemberKey(m) === key);
   }
 
+  /* ── Clock (tenday + time of day) ───────────────────── */
+
+  function getClock() {
+    ensure();
+    if (!cache.clock) cache.clock = normalizeClock(null);
+    return normalizeClock(cache.clock);
+  }
+
+  function setClock(patch) {
+    ensure();
+    const next = normalizeClock({ ...getClock(), ...(patch || {}) });
+    cache.clock = next;
+    persist();
+    return getClock();
+  }
+
   return {
     VERSION,
     SCENE_STATUSES,
@@ -459,6 +504,10 @@ window.CampaignState = (function () {
     addPartyMember,
     removePartyMember,
     isInParty,
-    partyMemberKey
+    partyMemberKey,
+    getClock,
+    setClock,
+    formatClockTime,
+    normalizeClock
   };
 })();

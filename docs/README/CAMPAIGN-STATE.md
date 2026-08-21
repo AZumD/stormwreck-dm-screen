@@ -38,9 +38,12 @@ Single localStorage key: `{campaignId}-campaign-state`
   "party": [
     { "type": "pc", "id": "<catalogueId>" },
     { "type": "npc", "id": "<catalogueId>" }
-  ]
+  ],
+  "clock": { "day": 1, "minute": 480 }
 }
 ```
+
+`clock.day` is tenday **1–10**. `clock.minute` is minute-of-day **0–1439** (`00:00`–`23:59`). Default is Day 1 / 08:00.
 
 Does **not** replace `{campaignId}-notes`, `-checklist`, or `-session`.
 
@@ -51,6 +54,7 @@ Does **not** replace `{campaignId}-notes`, `-checklist`, or `-session`.
 | NPC memory | `getNpcMemory`, `updateNpcMemory`, `logInteraction` |
 | Timeline | `getTimeline`, `addTimelineEntry`, `updateTimelineEntry`, `deleteTimelineEntry` |
 | Party | `getParty`, `addPartyMember`, `removePartyMember`, `isInParty` |
+| Clock | `getClock`, `setClock`, `formatClockTime`, `normalizeClock` |
 
 Marking a scene **current** demotes any previous current scene to **completed** (change manually if needed).
 
