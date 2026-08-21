@@ -1438,6 +1438,7 @@ window.CatalogueApp = (function () {
       formatStoredRef,
       collectRelatedTypes,
       parseEntityRef,
+      renderEntityRefHtml,
       readListFieldValues
     }
   };

@@ -314,10 +314,23 @@ for (const file of fs.readdirSync(monDir).filter((f) => f.endsWith(".json"))) {
 }
 pass("monster JSON files load (tags optional)");
 
-/* Legacy plain-text location refs still tolerated by renderer */
-const renderSnippet = appCode.includes("Legacy plain string") || appCode.includes("no broken link");
-if (!renderSnippet) fail("entity ref renderer should tolerate unknown/plain strings");
-else pass("legacy plain-text refs remain readable");
+/* Legacy plain-text location/equipment refs: readable text, not a broken entity-link */
+if (!helpers?.renderEntityRefHtml) {
+  fail("entity ref renderer should tolerate unknown/plain strings");
+} else {
+  const plain = helpers.renderEntityRefHtml("Flint knife (custom)", "item");
+  const unknown = helpers.renderEntityRefHtml("totally-unknown-id", "item");
+  const linked = helpers.renderEntityRefHtml("@item:sw-torch|Torch", "item");
+  if (plain.includes("entity-link") || unknown.includes("entity-link")) {
+    fail("plain/unknown refs should not render as entity-link");
+  } else if (!linked.includes("entity-link") || !linked.includes("sw-torch")) {
+    fail("linked @item ref should render entity-link");
+  } else if (!plain.includes("Flint knife")) {
+    fail("plain string should remain readable");
+  } else {
+    pass("legacy plain-text refs remain readable");
+  }
+}
 
 const coreRules = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-rules.js"), "utf8");
 if (coreRules.includes("@species:")) fail("core-rules.js contains forbidden @species:");
