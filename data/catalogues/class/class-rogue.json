@@ -22,5 +22,10 @@
     "@class:subclass-rogue-thief|Thief",
     "@class:subclass-rogue-assassin|Assassin",
     "@class:subclass-rogue-arcane-trickster|Arcane Trickster"
+  ],
+  "subclasses": [
+    "Thief",
+    "Assassin",
+    "Arcane Trickster"
   ]
 }

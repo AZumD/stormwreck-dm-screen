@@ -33,5 +33,9 @@
   "subclassRefs": [
     "@class:subclass-druid-land|Circle of the Land",
     "@class:subclass-druid-moon|Circle of the Moon"
+  ],
+  "subclasses": [
+    "Circle of the Land",
+    "Circle of the Moon"
   ]
 }

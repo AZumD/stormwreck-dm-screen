@@ -18,5 +18,9 @@
   "subclassRefs": [
     "@class:subclass-bard-lore|College of Lore",
     "@class:subclass-bard-valor|College of Valor"
+  ],
+  "subclasses": [
+    "College of Lore",
+    "College of Valor"
   ]
 }

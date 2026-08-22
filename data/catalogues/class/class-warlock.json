@@ -19,5 +19,10 @@
     "@class:subclass-warlock-archfey|The Archfey",
     "@class:subclass-warlock-fiend|The Fiend",
     "@class:subclass-warlock-great-old-one|The Great Old One"
+  ],
+  "subclasses": [
+    "The Archfey",
+    "The Fiend",
+    "The Great Old One"
   ]
 }

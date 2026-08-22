@@ -18,5 +18,9 @@
   "subclassRefs": [
     "@class:subclass-sorcerer-draconic|Draconic Bloodline",
     "@class:subclass-sorcerer-wild-magic|Wild Magic"
+  ],
+  "subclasses": [
+    "Draconic Bloodline",
+    "Wild Magic"
   ]
 }

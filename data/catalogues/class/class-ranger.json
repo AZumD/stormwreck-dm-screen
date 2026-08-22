@@ -18,5 +18,9 @@
   "subclassRefs": [
     "@class:subclass-ranger-hunter|Hunter",
     "@class:subclass-ranger-beast-master|Beast Master"
+  ],
+  "subclasses": [
+    "Hunter",
+    "Beast Master"
   ]
 }

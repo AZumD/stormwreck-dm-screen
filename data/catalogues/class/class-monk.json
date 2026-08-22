@@ -19,5 +19,10 @@
     "@class:subclass-monk-open-hand|Way of the Open Hand",
     "@class:subclass-monk-shadow|Way of Shadow",
     "@class:subclass-monk-four-elements|Way of the Four Elements"
+  ],
+  "subclasses": [
+    "Way of the Open Hand",
+    "Way of Shadow",
+    "Way of the Four Elements"
   ]
 }

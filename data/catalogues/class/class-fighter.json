@@ -33,5 +33,10 @@
     "@class:subclass-fighter-champion|Champion",
     "@class:subclass-fighter-battle-master|Battle Master",
     "@class:subclass-fighter-eldritch-knight|Eldritch Knight"
+  ],
+  "subclasses": [
+    "Champion",
+    "Battle Master",
+    "Eldritch Knight"
   ]
 }

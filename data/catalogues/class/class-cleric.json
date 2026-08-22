@@ -23,5 +23,14 @@
     "@class:subclass-cleric-trickery|Trickery Domain",
     "@class:subclass-cleric-war|War Domain",
     "@class:subclass-cleric-knowledge|Knowledge Domain"
+  ],
+  "subclasses": [
+    "Life Domain",
+    "Light Domain",
+    "Nature Domain",
+    "Tempest Domain",
+    "Trickery Domain",
+    "War Domain",
+    "Knowledge Domain"
   ]
 }

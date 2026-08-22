@@ -24,5 +24,15 @@
     "@class:subclass-wizard-illusion|School of Illusion",
     "@class:subclass-wizard-necromancy|School of Necromancy",
     "@class:subclass-wizard-transmutation|School of Transmutation"
+  ],
+  "subclasses": [
+    "School of Abjuration",
+    "School of Conjuration",
+    "School of Divination",
+    "School of Enchantment",
+    "School of Evocation",
+    "School of Illusion",
+    "School of Necromancy",
+    "School of Transmutation"
   ]
 }

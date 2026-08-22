@@ -22,5 +22,10 @@
     "@class:subclass-paladin-devotion|Oath of Devotion",
     "@class:subclass-paladin-ancients|Oath of the Ancients",
     "@class:subclass-paladin-vengeance|Oath of Vengeance"
+  ],
+  "subclasses": [
+    "Oath of Devotion",
+    "Oath of the Ancients",
+    "Oath of Vengeance"
   ]
 }

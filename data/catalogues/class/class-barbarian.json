@@ -21,5 +21,9 @@
   "subclassRefs": [
     "@class:subclass-barbarian-berserker|Path of the Berserker",
     "@class:subclass-barbarian-totem-warrior|Path of the Totem Warrior"
+  ],
+  "subclasses": [
+    "Path of the Berserker",
+    "Path of the Totem Warrior"
   ]
 }
