@@ -1,7 +1,36 @@
 {
-  "activeMap": "dragons-rest",
+  "activeMap": "compass-rose",
   "filters": null,
-  "pinPositions": {},
-  "partyPositions": {},
+  "pinPositions": {
+    "dragons-rest": {
+      "p-tarak": {
+        "x": 25.2,
+        "y": 51
+      },
+      "p-myla": {
+        "x": 43.1,
+        "y": 49.4
+      },
+      "p-varnoth": {
+        "x": 55.4,
+        "y": 48.1
+      },
+      "p-runara": {
+        "x": 71.1,
+        "y": 47.1
+      },
+      "p-temple": {
+        "x": 45.6,
+        "y": 22.6
+      }
+    }
+  },
+  "partyPositions": {
+    "pc:pc-mswdvrcy-u6nnt": {
+      "mapId": "dragons-rest",
+      "x": 32.9,
+      "y": 70
+    }
+  },
   "customPins": {}
 }

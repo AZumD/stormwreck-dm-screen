@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "scenes": {},
+  "npcMemory": {},
+  "timeline": [],
+  "party": [
+    {
+      "type": "pc",
+      "id": "pc-mswdvrcy-u6nnt"
+    }
+  ],
+  "clock": {
+    "day": 1,
+    "minute": 408
+  }
+}
