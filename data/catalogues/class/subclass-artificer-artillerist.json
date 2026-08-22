@@ -1,0 +1,13 @@
+{
+  "id": "subclass-artificer-artillerist",
+  "name": "Artillerist",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-artificer|Artificer",
+  "source": "Tasha's Cauldron of Everything",
+  "summary": "Eldritch Cannon companion for battlefield firepower.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

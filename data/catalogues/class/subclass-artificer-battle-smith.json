@@ -1,0 +1,13 @@
+{
+  "id": "subclass-artificer-battle-smith",
+  "name": "Battle Smith",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-artificer|Artificer",
+  "source": "Tasha's Cauldron of Everything",
+  "summary": "Steel Defender companion and battle-ready infusions.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

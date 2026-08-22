@@ -1,0 +1,27 @@
+{
+  "id": "class-artificer",
+  "name": "Artificer",
+  "hitDie": "d8",
+  "primaryAbility": "Intelligence",
+  "source": "Tasha's Cauldron of Everything",
+  "summary": "Inventive magical specialists who combine arcane knowledge, crafted tools, and enchanted items.",
+  "savingThrows": "Constitution, Intelligence",
+  "armorProficiencies": "Light armor, medium armor, shields",
+  "weaponProficiencies": "Simple weapons",
+  "toolProficiencies": "Thieves' tools, tinker's tools, one type of artisan's tools",
+  "skillChoices": "Choose 2 from Arcana, History, Investigation, Medicine, Nature, Perception, Sleight of Hand",
+  "features": "1 — Magical Tinkering, Spellcasting\n2 — Infuse Item\n3 — Artificer Specialist, The Right Tool for the Job\n5 — Specialist feature\n6 — Tool Expertise\n7 — Flash of Genius\n9 — Specialist feature\n10 — Magic Item Adept\n11 — Spell-Storing Item\n14 — Magic Item Savant\n15 — Specialist feature\n18 — Magic Item Master\n20 — Soul of Artifice",
+  "spellcasting": "Intelligence-based prepared spellcasting. Artificers use tools as spellcasting focuses and gain access to cantrips and a specialized arcane spell list.",
+  "notes": "A half-caster focused heavily on magic items, tools, support, and customization through infusions. Individual subclasses can significantly change combat role.",
+  "updatedAt": 1786918974958,
+  "portrait": "",
+  "skillRefs": [],
+  "featureRefs": [],
+  "entryKind": "class",
+  "subclassRefs": [
+    "@class:subclass-artificer-alchemist|Alchemist",
+    "@class:subclass-artificer-armorer|Armorer",
+    "@class:subclass-artificer-artillerist|Artillerist",
+    "@class:subclass-artificer-battle-smith|Battle Smith"
+  ]
+}

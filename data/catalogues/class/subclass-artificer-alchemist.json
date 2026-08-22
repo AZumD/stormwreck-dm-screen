@@ -1,0 +1,13 @@
+{
+  "id": "subclass-artificer-alchemist",
+  "name": "Alchemist",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-artificer|Artificer",
+  "source": "Tasha's Cauldron of Everything",
+  "summary": "Experimental elixirs and restorative/alchemical spells.",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}

@@ -1,0 +1,13 @@
+{
+  "id": "subclass-artificer-armorer",
+  "name": "Armorer",
+  "entryKind": "subclass",
+  "parentClassRef": "@class:class-artificer|Artificer",
+  "source": "Tasha's Cauldron of Everything",
+  "summary": "Powered armor models (Guardian / Infiltrator).",
+  "featureRefs": [],
+  "features": "",
+  "spellcasting": "",
+  "notes": "",
+  "updatedAt": 1786918974958
+}
