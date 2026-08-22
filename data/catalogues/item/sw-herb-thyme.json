@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-thyme",
+    "name": "Timjan",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "5 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En tålig liten ört med vedartade stjälkar och små, starkt doftande blad.",
+    "properties": "Används i matlagning och som ingrediens i traditionella örtteer.",
+    "notes": "Trivs väl i de torra, steniga jordarna runt Dragon's Rest.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

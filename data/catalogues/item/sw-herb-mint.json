@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-mint",
+    "name": "Mynta",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "5 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En snabbväxande ört med tandade gröna blad och en stark, sval doft.",
+    "properties": "Kan användas som krydda eller bryggas till ett uppfriskande örtte.",
+    "notes": "Tarak håller den i en avgränsad bädd eftersom den annars tar över precis allt. Växtjävel.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

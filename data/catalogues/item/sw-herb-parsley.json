@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-parsley",
+    "name": "Persilja",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "3 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En lågväxande grön ört med flikiga blad och frisk, lätt bitter smak.",
+    "properties": "Används som krydda och i enkla stärkande örtblandningar.",
+    "notes": "En av de vanligaste örterna i Taraks köksträdgård.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-basil",
+    "name": "Basilika",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "5 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En aromatisk ört med mjuka gröna blad och en varm, lätt pepprig doft.",
+    "properties": "Används främst som krydda och kan ingå i enklare örtblandningar.",
+    "notes": "Odlas av Tarak i Dragon's Rest och används ofta i klostrets matlagning.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

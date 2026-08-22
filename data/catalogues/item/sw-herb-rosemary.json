@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-rosemary",
+    "name": "Rosmarin",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "1 sp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En vedartad, vintergrön ört med smala barrlika blad och kraftig hartsartad doft.",
+    "properties": "Används som krydda, rökelse och i vissa örtberedningar.",
+    "notes": "Tarak odlar den på en varm, vindskyddad plats nära klippväggen.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

@@ -1,0 +1,20 @@
+ {
+    "id": "sw-herb-chives",
+    "name": "Gräslök",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "3 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "Smala ihåliga blad med mild löksmak och små lila blommor.",
+    "properties": "Ätlig och vanligt förekommande som färsk krydda.",
+    "notes": "Växer i täta tuvor längs kanten av Taraks odlingslotter.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

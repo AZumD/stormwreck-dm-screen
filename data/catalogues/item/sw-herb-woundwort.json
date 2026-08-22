@@ -1,0 +1,20 @@
+ {
+    "id": "sw-herb-woundwort",
+    "name": "Sårört",
+    "itemType": "Råmaterial / Läkeört",
+    "rarity": "Vanlig",
+    "value": "2 sp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En anspråkslös blommande ört vars blad traditionellt används vid behandling av mindre sår.",
+    "properties": "Kan krossas och användas som ingrediens i omslag, salvor och andra icke-magiska läkeberedningar.",
+    "notes": "En erfaren överlevare eller druid känner vanligtvis igen växtens grundläggande användning.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "medicine",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

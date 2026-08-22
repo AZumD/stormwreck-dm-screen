@@ -1,0 +1,22 @@
+{
+    "id": "sw-herb-feverbalm",
+    "name": "Feberbalsam",
+    "itemType": "Råmaterial / Läkeört",
+    "rarity": "Ovanlig",
+    "value": "3 sp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En låg medicinalväxt med små blommor och aromatiska blad som avger en skarp doft när de krossas.",
+    "properties": "Blad och blommor kan torkas och bryggas till ett traditionellt örtte för sjuka och febriga.",
+    "notes": "Tarak skördar bara en del av varje planta åt gången så att beståndet snabbt återhämtar sig.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "medicine",
+      "alchemy",
+      "Forgotten Realms",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

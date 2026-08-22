@@ -1,0 +1,21 @@
+{
+    "id": "sw-herb-drace",
+    "name": "Drace",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Ovanlig",
+    "value": "2 sp",
+    "weight": "—",
+    "attunement": false,
+    "description": "Mörkgröna blad från bittergarbusken. Råa är de skarpt bittra och tämligen oaptitliga.",
+    "properties": "När bladen tillagas försvinner mycket av bitterheten och de förstärker smaken hos andra ingredienser.",
+    "notes": "En typiskt faerûnsk köksört. Tarak är petig med exakt när den ska tillsättas i en gryta.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Forgotten Realms",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

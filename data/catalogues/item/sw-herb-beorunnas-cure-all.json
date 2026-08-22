@@ -1,0 +1,22 @@
+{
+    "id": "sw-herb-beorunnas-cure-all",
+    "name": "Beorunnas universalmedel",
+    "itemType": "Råmaterial / Läkeört",
+    "rarity": "Ovanlig",
+    "value": "5 sp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En robust medicinalväxt från de nordliga delarna av Sword Coast, uppskattad för sina sega stjälkar.",
+    "properties": "Stjälkarna kan bryggas till ett te som används tillsammans med andra läkande behandlingar. Vanlig ingrediens för skickliga herbalister.",
+    "notes": "Namnet överdriver dess förmåga rejält; Tarak skulle påpeka detta varje gång någon kallar den ett faktiskt universalmedel.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "medicine",
+      "alchemy",
+      "Forgotten Realms",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

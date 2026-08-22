@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-oregano",
+    "name": "Oregano",
+    "itemType": "Råmaterial / Krydda",
+    "rarity": "Vanlig",
+    "value": "5 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En kraftigt doftande ört med små gröna blad och lätt bitter smak.",
+    "properties": "Används huvudsakligen som krydda, särskilt i soppor och grönsaksrätter.",
+    "notes": "Tarak torkar buntar av oregano och förvarar dem i köket.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "cooking",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }

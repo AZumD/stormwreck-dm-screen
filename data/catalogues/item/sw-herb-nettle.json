@@ -1,0 +1,20 @@
+{
+    "id": "sw-herb-nettle",
+    "name": "Brännässla",
+    "itemType": "Råmaterial / Läkeört",
+    "rarity": "Vanlig",
+    "value": "2 cp",
+    "weight": "—",
+    "attunement": false,
+    "description": "En hög grön ört vars blad och stjälkar är täckta av fina brännhår som irriterar huden vid beröring.",
+    "properties": "Kan kokas och ätas eller användas i traditionella örtberedningar. Brännhåren oskadliggörs genom upphettning.",
+    "notes": "Althariel känner igen den omedelbart. Tarak odlar den trots att den också växer vilt på ön.",
+    "updatedAt": 1787243220000,
+    "category": "Ingredient & Material",
+    "tags": [
+      "herbalism",
+      "medicine",
+      "Tarak",
+      "Stormwreck Isle"
+    ]
+  }
