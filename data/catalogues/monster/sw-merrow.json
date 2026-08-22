@@ -1,9 +1,9 @@
 {
   "id": "sw-merrow",
   "name": "Merrow",
-  "size": "Stor",
-  "creatureType": "Monstrositet",
-  "alignment": "Kaotiskt ond",
+  "size": "Large",
+  "creatureType": "Monstrosity",
+  "alignment": "Chaotic evil",
   "cr": "2",
   "xp": "450",
   "str": 18,
@@ -19,14 +19,13 @@
   "skills": "",
   "damageImmunities": "",
   "senses": "Darkvision 60 ft., passive Perception 10",
-  "languages": "Abyssal, Common",
-  "traits": "Amfibisk. Kan andas både luft och vatten.",
-  "actions": "Multiattack. Gör en Bett-attack och en Klo- eller Harpun-attack.\n\nBett. +6 to hit, räckvidd 5 ft. Träff: 8 (1d8+4) piercing damage.\n\nKlo. +6 to hit, räckvidd 5 ft. Träff: 7 (1d6+4) slashing damage.\n\nHarpun. +6 to hit, räckvidd 20/60 ft. Träff: 9 (1d10+4) piercing damage.",
+  "languages": "Abyssal, also speaks Common",
+  "traits": "Amphibious. Can breathe air and water.\n\nOptional prologue 'Voyage to Stormwreck Isle' — demands tribute for the Scaled Queen aboard the ship.",
+  "actions": "Multiattack: One bite attack and one claw or harpoon attack.\n\nBite. +6 to hit, reach 5 ft. Hit: 8 (1d8+4) piercing damage.\n\nClaw. +6 to hit, reach 5 ft. Hit: 7 (1d6+4) slashing damage.\n\nHarpoon. +6 to hit, range 20/60 ft. Hit: 9 (1d10+4) piercing damage.",
   "bonusActions": "",
   "reactions": "",
   "legendaryActions": "",
-  "notes": "",
-  "updatedAt": 1786918771752,
-  "source": "Stormwreck Isle",
-  "tags": []
+  "notes": "Optional prologue encounter only — skip if not running the voyage scene.",
+  "updatedAt": 1786919405675,
+  "source": "Stormwreck Isle"
 }

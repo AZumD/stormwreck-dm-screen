@@ -1,9 +1,9 @@
 {
   "id": "sw-violet-fungus",
   "name": "Violet Fungus",
-  "size": "Medelstor",
-  "creatureType": "Växt",
-  "alignment": "Oallierad",
+  "size": "Medium",
+  "creatureType": "Plant",
+  "alignment": "Unaligned",
   "cr": "1/4",
   "xp": "50",
   "str": 3,
@@ -20,13 +20,12 @@
   "damageImmunities": "",
   "senses": "Blindsight 30 ft., passive Perception 6",
   "languages": "—",
-  "traits": "Ser ut som en vanlig stor svamp tills den börjar röra sig. Den reagerar på närliggande levande varelser och angriper med sina förruttnande tentakler.",
-  "actions": "Multiattack. Gör två Rotter-attacker.\n\nRotter. +1 to hit, räckvidd 10 ft. Träff: 4 (1d8) necrotic damage.",
+  "traits": "Disguised among mushrooms in B2 fungus farm alongside myconid sprouts.",
+  "actions": "Multiattack: Two rotter tendril attacks.\n\nRotter. +1 to hit, reach 10 ft. Hit: 4 (1d8) necrotic damage.",
   "bonusActions": "",
   "reactions": "",
   "legendaryActions": "",
-  "notes": "",
-  "updatedAt": 1786918771752,
-  "source": "Stormwreck Isle",
-  "tags": []
+  "notes": "B2 Fungus Farm — hidden among harvestable mushrooms.",
+  "updatedAt": 1786919405675,
+  "source": "Stormwreck Isle"
 }

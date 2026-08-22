@@ -1,9 +1,9 @@
 {
   "id": "sw-stirge",
   "name": "Stirge",
-  "size": "Pytteliten",
-  "creatureType": "Best",
-  "alignment": "Oallierad",
+  "size": "Tiny",
+  "creatureType": "Beast",
+  "alignment": "Unaligned",
   "cr": "1/8",
   "xp": "25",
   "str": 4,
@@ -20,13 +20,12 @@
   "damageImmunities": "",
   "senses": "Darkvision 60 ft., passive Perception 9",
   "languages": "—",
-  "traits": "En liten flygande parasit som livnär sig på blod. När den väl har fäst sig vid ett offer sitter den kvar och suger blod tills den blir bortsliten eller själv släpper taget.",
-  "actions": "Blodsugning. +5 to hit, räckvidd 5 ft., en varelse. Träff: 6 (1d4+4) piercing damage, och stirgen fäster sig vid målet. När den sitter fast kan stirgen inte attackera och följer med målet när det rör sig. Den kan släppa taget genom att använda 5 ft. movement.\n\nFastklamrad. I början av stirgens tur förlorar målet 4 (1d4+2) HP på grund av blodförlust.",
+  "traits": "Blood-drinking bat-like vermin. Myla was injured by stirges.",
+  "actions": "Blood Drain. Melee Weapon Attack: +5 to hit, reach 5 ft., one creature. Hit: 6 (1d4+4) piercing damage, and the stirge attaches. While attached, stirge can't attack and moves with target. Can detach with 5 ft. move.\n\nAttached: At start of stirge's turn, target loses 4 (1d4+2) HP due to blood loss.",
   "bonusActions": "",
   "reactions": "",
   "legendaryActions": "",
-  "notes": "",
-  "updatedAt": 1786918771752,
-  "source": "Stormwreck Isle",
-  "tags": []
+  "notes": "Seagrow B1: 2 stirges in ceiling at level 2.\nObservatory D2: 6 stirges vs Mek and Minn.\nUse 2–4 for level 1 encounters.",
+  "updatedAt": 1786919405675,
+  "source": "Stormwreck Isle"
 }

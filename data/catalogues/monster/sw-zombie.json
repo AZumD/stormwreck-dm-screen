@@ -1,9 +1,9 @@
 {
   "id": "sw-zombie",
   "name": "Zombie",
-  "size": "Medelstor",
-  "creatureType": "Odöd",
-  "alignment": "Neutral ond",
+  "size": "Medium",
+  "creatureType": "Undead",
+  "alignment": "Neutral evil",
   "cr": "1/4",
   "xp": "50",
   "str": 13,
@@ -21,7 +21,7 @@
   "damageImmunities": "Poison",
   "conditionImmunities": "Poisoned",
   "senses": "Darkvision 60 ft., passive Perception 8",
-  "languages": "Förstår språken den kunde i livet men kan inte tala",
+  "languages": "Understands languages it knew in life but can't speak",
   "traitRefs": [
     "undead-fortitude"
   ],
@@ -29,12 +29,11 @@
     "slam"
   ],
   "traits": "",
-  "actions": "Slam. +3 to hit, räckvidd 5 ft., ett mål. Träff: 4 (1d6+1) bludgeoning damage.",
+  "actions": "Melee Weapon Attack: +3 to hit, reach 5 ft., one target. Hit: 4 (1d6+1) bludgeoning damage.",
   "bonusActions": "",
   "reactions": "",
   "legendaryActions": "",
-  "notes": "",
-  "updatedAt": 1786918771752,
-  "source": "Stormwreck Isle",
-  "tags": []
+  "notes": "Drowned sailors on the beach (Ch 1). Hard to put down without radiant damage or crits.\n\nCompass Rose: 2 in C4 captain's quarters; 1 in C8 lower deck. New zombies stop when hold curse is broken.",
+  "updatedAt": 1786919405675,
+  "source": "Stormwreck Isle"
 }

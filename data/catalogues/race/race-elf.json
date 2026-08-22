@@ -5,18 +5,18 @@
   "speed": "30 ft.",
   "source": "Core rules",
   "summary": "Graceful folk of keen senses and long lives — trance instead of sleep.",
-  "abilityScoreIncrease": "DEX +2 (see subspecies for additional ASI)",
+  "abilityScoreIncrease": "DEX +2 (see subspecies for the additional +1)",
   "featureRefs": [
     "@feature:darkvision|Darkvision",
     "@feature:keen-senses|Keen Senses",
     "@feature:fey-ancestry|Fey Ancestry",
     "@feature:trance|Trance"
   ],
-  "traits": "Base elf traits via featureRefs. Subspecies add weapon training, magic, or speed options.",
+  "traits": "Common elf traits are linked via Features. See subspecies entries for High Elf, Wood Elf, and Drow extras.",
   "languages": "Common, Elvish",
-  "senses": "Darkvision 60 ft. (drow: 120 ft. — see subspecies)",
+  "senses": "Darkvision 60 ft.",
   "notes": "Choose a subspecies: High Elf, Wood Elf, or Drow.",
-  "updatedAt": 1786918974958,
+  "updatedAt": 1786919748505,
   "entryKind": "species",
   "subspeciesRefs": [
     "@race:subspecies-elf-high|High Elf",
