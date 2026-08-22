@@ -7,6 +7,7 @@ const catalogues = require("../lib/catalogues");
 const campaigns = require("../lib/campaigns");
 const assets = require("../lib/assets");
 const db = require("../lib/db");
+const characters = require("../lib/characters");
 const { sendJson, sendError, readJsonBody } = require("../lib/http-util");
 const {
   assertCatalogueType,
@@ -41,6 +42,76 @@ function createApiRoutes() {
         database
       });
     }),
+
+    route("GET", /^\/api\/campaigns\/([^/]+)\/characters$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const list = await characters.listCharacters(id);
+      sendJson(res, 200, { ok: true, campaignId: id, characters: list });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const character = await characters.getCharacter(id, characterId);
+        sendJson(res, 200, { ok: true, campaignId: id, character });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/state$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const state = await characters.getCharacterState(id, characterId);
+        sendJson(res, 200, { ok: true, campaignId: id, characterId, state });
+      }
+    ),
+
+    route(
+      "PUT",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/state$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const state = await characters.updateCharacterState(id, characterId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, characterId, state });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/inventory$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const inventory = await characters.listInventory(id, characterId);
+        sendJson(res, 200, { ok: true, campaignId: id, characterId, inventory });
+      }
+    ),
 
     route("GET", /^\/api\/catalogues\/([^/]+)$/, ["type"], async (req, res, p) => {
       const type = assertCatalogueType(p.type);

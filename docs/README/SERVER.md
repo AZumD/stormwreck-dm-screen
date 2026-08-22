@@ -1,7 +1,7 @@
 # SERVER
 
 ## Purpose
-Local Node server that serves the vanilla DM Library frontend and persists user data under `/data`. Optional Postgres when `DATABASE_URL` is set (Phase 1 foundation).
+Local Node server that serves the vanilla DM Library frontend and persists user data under `/data`. Optional Postgres when `DATABASE_URL` is set (Phase 1–2: items + campaign characters).
 
 ## Start
 **Windows:** double-click `start-dm-screen.bat` (finds Node, starts the server, opens the browser).
@@ -18,7 +18,8 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library.
 | Path | Role |
 |------|------|
 | `server/index.js` | Native Node HTTP entry (binds `127.0.0.1` by default) |
-| `server/routes/api.js` | `/api` JSON routes (+ `/api/db/health`) |
+| `server/routes/api.js` | `/api` JSON routes (+ `/api/db/health`, campaign characters when DB configured) |
+| `server/lib/characters.js` | Campaign-scoped character/state/inventory (Postgres) |
 | `server/lib/db.js` | Optional Postgres pool |
 | `server/lib/http-util.js` | Body parsing / JSON responses |
 | `server/lib/static-guard.js` | Block static access to `/data`, `/server`, `/.git`, … |
@@ -27,7 +28,7 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library.
 | `server/lib/catalogues.js` | One JSON file per catalogue entry |
 | `server/lib/campaigns.js` | Campaign registry + documents |
 | `server/lib/assets.js` | Portrait / map image files |
-| `db/` | Schema, SQL migrations, item seed (see `docs/README/DB.md`) |
+| `db/` | Schema, migrations, item + character seed (see `docs/README/DB.md`) |
 
 ## Env
 | Variable | Default | Meaning |
