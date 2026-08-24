@@ -68,6 +68,19 @@ if (!html.includes("create-campaign-btn") || !html.includes("user-campaign-list"
   pass("create campaign hooks");
 }
 
+if (!html.includes('id="view-login"') || !html.includes('id="dm-login-form"')) {
+  fail("DM landing missing login gate");
+} else {
+  pass("DM landing login gate");
+}
+
+const landingJs = fs.readFileSync(path.join(root, "js/landing.js"), "utf8");
+if (!landingJs.includes("/api/auth/login") || !landingJs.includes("hasDmRole")) {
+  fail("landing.js missing DM auth flow");
+} else {
+  pass("landing.js DM auth flow");
+}
+
 if (html.includes("card-placeholder") && html.includes("Coming soon")) {
   fail("Coming soon placeholder still present");
 } else {

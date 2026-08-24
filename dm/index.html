@@ -9,15 +9,38 @@
 <body class="landing-page">
   <div class="landing-atmosphere" aria-hidden="true"></div>
 
-  <div class="landing">
+  <section id="view-login" class="dm-login-view" hidden>
+    <div class="dm-login-card">
+      <p class="eyebrow">Stormwreck</p>
+      <h1>DM login</h1>
+      <p class="lead">Sign in with your Dungeon Master account.</p>
+      <form id="dm-login-form" class="dm-login-form">
+        <label>Email<input type="email" name="email" autocomplete="username" required></label>
+        <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+        <p id="dm-login-error" class="dm-login-error" hidden></p>
+        <button class="dm-login-submit" type="submit">Sign in</button>
+      </form>
+      <p class="dm-login-back"><a href="/">← Back to gate</a></p>
+    </div>
+  </section>
+
+  <div id="view-library" class="landing" hidden>
     <header class="landing-header">
       <div class="header-mark" aria-hidden="true">
         <span class="header-mark__ring"></span>
         <span class="header-mark__core"></span>
       </div>
-      <p class="eyebrow">Personal tool</p>
-      <h1>DM Library</h1>
-      <p class="lead">Your private desk for campaigns, characters, and sessions. Everything runs locally in the browser.</p>
+      <div class="landing-header__row">
+        <div>
+          <p class="eyebrow">Personal tool</p>
+          <h1>DM Library</h1>
+          <p class="lead">Your private desk for campaigns, characters, and sessions. Everything runs locally in the browser.</p>
+        </div>
+        <div class="landing-session" id="landing-session" hidden>
+          <p id="dm-session-label" class="landing-session__label"></p>
+          <button type="button" class="landing-tool-btn" id="dm-logout">Log out</button>
+        </div>
+      </div>
       <div class="header-rule" aria-hidden="true"></div>
     </header>
 

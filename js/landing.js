@@ -1,8 +1,16 @@
 /**
- * Landing page: list user campaigns + create + import browser data.
+ * DM Library landing: auth gate + list user campaigns + create + import browser data.
  */
 (function () {
   "use strict";
+
+  const viewLogin = document.getElementById("view-login");
+  const viewLibrary = document.getElementById("view-library");
+  const loginForm = document.getElementById("dm-login-form");
+  const loginError = document.getElementById("dm-login-error");
+  const logoutBtn = document.getElementById("dm-logout");
+  const sessionBox = document.getElementById("landing-session");
+  const sessionLabel = document.getElementById("dm-session-label");
 
   const listEl = document.getElementById("user-campaign-list");
   const createBtn = document.getElementById("create-campaign-btn");
@@ -14,12 +22,75 @@
   const importBtn = document.getElementById("import-browser-data");
   const importReport = document.getElementById("import-browser-report");
 
+  let authMode = "unknown"; /* session | open | login */
+
   function escapeHtml(str) {
     return String(str ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  async function authJson(method, path, body) {
+    const opts = {
+      method,
+      credentials: "include",
+      headers: { Accept: "application/json" }
+    };
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(path, opts);
+    const text = await res.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = { ok: false, error: text || "Invalid response" };
+    }
+    if (!res.ok || data?.ok === false) {
+      const err = new Error(data?.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function hasDmRole(memberships) {
+    return (memberships || []).some((m) => String(m.role || "").toLowerCase() === "dm");
+  }
+
+  function showLogin(message) {
+    authMode = "login";
+    if (viewLogin) viewLogin.hidden = false;
+    if (viewLibrary) viewLibrary.hidden = true;
+    if (loginError) {
+      if (message) {
+        loginError.hidden = false;
+        loginError.textContent = message;
+      } else {
+        loginError.hidden = true;
+        loginError.textContent = "";
+      }
+    }
+  }
+
+  function showLibrary(user) {
+    authMode = user ? "session" : "open";
+    if (viewLogin) viewLogin.hidden = true;
+    if (viewLibrary) viewLibrary.hidden = false;
+    if (sessionBox && sessionLabel && logoutBtn) {
+      if (user) {
+        sessionBox.hidden = false;
+        sessionLabel.textContent = user.name || user.email || "Signed in";
+        logoutBtn.hidden = false;
+      } else {
+        sessionBox.hidden = true;
+      }
+    }
   }
 
   function renderUserCampaigns() {
@@ -105,7 +176,8 @@
           "Open the old URL once, or copy localStorage from DevTools → Application, then import again from http://127.0.0.1:3000."
         );
       }
-      if (importReport) importReport.textContent = lines.join("\n");      await CampaignRegistry.bootstrap();
+      if (importReport) importReport.textContent = lines.join("\n");
+      await CampaignRegistry.bootstrap();
       renderUserCampaigns();
     } catch (err) {
       if (importReport) importReport.textContent = `Import failed: ${err.message || err}`;
@@ -114,7 +186,7 @@
     }
   }
 
-  function bind() {
+  function bindLibrary() {
     createBtn?.addEventListener("click", () => openCreateDialog());
     cancelBtn?.addEventListener("click", () => dialog?.close());
     form?.addEventListener("submit", (e) => {
@@ -138,13 +210,11 @@
     importBtn?.addEventListener("click", () => runImport());
   }
 
-  async function start() {
-    document.body.classList.add("is-booting");
-    bind();
+  async function enterLibrary(user) {
+    showLibrary(user || null);
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (window.CampaignRegistry?.bootstrap) await CampaignRegistry.bootstrap();
     renderUserCampaigns();
-    document.body.classList.remove("is-booting");
     if (!window.LocalApiClient?.isAvailable()) {
       if (importReport) {
         importReport.hidden = false;
@@ -152,6 +222,70 @@
           "Local API offline. Run npm start and open http://127.0.0.1:3000 for file-backed storage.";
       }
     }
+  }
+
+  async function resolveSession() {
+    try {
+      const data = await authJson("GET", "/api/auth/me");
+      if (!hasDmRole(data.memberships)) {
+        showLogin("This account is not a DM for any campaign. Use Player login, or ask for a DM membership.");
+        return;
+      }
+      await enterLibrary(data.user);
+    } catch (err) {
+      if (err.status === 503) {
+        /* No Postgres — local file-backed DM mode */
+        await enterLibrary(null);
+        return;
+      }
+      showLogin();
+    }
+  }
+
+  loginForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (loginError) {
+      loginError.hidden = true;
+      loginError.textContent = "";
+    }
+    const fd = new FormData(loginForm);
+    try {
+      const data = await authJson("POST", "/api/auth/login", {
+        email: String(fd.get("email") || ""),
+        password: String(fd.get("password") || "")
+      });
+      if (!hasDmRole(data.memberships)) {
+        await authJson("POST", "/api/auth/logout", {}).catch(() => {});
+        showLogin("Signed in, but this account has no DM role. Use Player login instead.");
+        return;
+      }
+      await enterLibrary(data.user);
+    } catch (err) {
+      showLogin(
+        err.status === 401 ? "Invalid email or password." : err.message || "Sign-in failed."
+      );
+    }
+  });
+
+  logoutBtn?.addEventListener("click", async () => {
+    try {
+      await authJson("POST", "/api/auth/logout", {});
+    } catch {
+      /* ignore */
+    }
+    showLogin();
+  });
+
+  async function start() {
+    document.body.classList.add("is-booting");
+    bindLibrary();
+    /* Prefer login UI until session resolves (avoids flash of library) */
+    if (viewLogin && viewLibrary) {
+      viewLogin.hidden = false;
+      viewLibrary.hidden = true;
+    }
+    await resolveSession();
+    document.body.classList.remove("is-booting");
   }
 
   start();
