@@ -899,7 +899,7 @@ function createApiRoutes() {
         await authorize.requireAnyDmIfAuthRequired(req);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
-        const body = await readJsonBody(req, UVTT_BODY_LIMIT);
+        const body = await readJsonBody(req, { limit: UVTT_BODY_LIMIT });
         const text = body?.text;
         if (!text || typeof text !== "string") {
           const err = new Error("text required (UVTT file contents)");

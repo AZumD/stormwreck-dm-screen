@@ -52,11 +52,12 @@ function readBody(req, limit = DEFAULT_BODY_LIMIT) {
 }
 
 async function readJsonBody(req, options = {}) {
+  const opts = typeof options === "number" ? { limit: options } : options;
   const limit =
-    options.limit != null
-      ? Number(options.limit)
-      : options.maxBytes != null
-        ? Number(options.maxBytes)
+    opts.limit != null
+      ? Number(opts.limit)
+      : opts.maxBytes != null
+        ? Number(opts.maxBytes)
         : DEFAULT_BODY_LIMIT;
   const buf = await readBody(req, limit);
   if (!buf.length) return undefined;

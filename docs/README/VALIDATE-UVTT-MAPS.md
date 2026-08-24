@@ -23,4 +23,5 @@ Included in `npm test`.
 - Token coordinates in `map-state.tokens`
 - Legacy location `mapImage` PNG upload still works
 - Map panel / MapSpatial UVTT UI wiring
-- UVTT import route uses `UVTT_BODY_LIMIT` (64MB) so large `.dd2vtt` files do not hit the default 25MB cap
+- Campaign and catalogue UVTT import routes use `UVTT_BODY_LIMIT` (64MB) so large `.dd2vtt` files do not hit the default 25MB cap
+- HTTP check: 26MB POST to catalogue UVTT route must not return 413

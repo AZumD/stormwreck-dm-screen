@@ -261,10 +261,10 @@ else pass("distance uses scale.distancePerGrid");
   const mapDistClient = fs.readFileSync(path.join(root, "js/core/map-distance.js"), "utf8");
   if (!mapDistClient.includes("distanceBetween")) fail("client MapDistance missing");
   else pass("client MapDistance module");
-  if (!mapSpatial.includes("importUvttMap") || !mapSpatial.includes("map-uvtt-file")) {
+  if (!mapSpatial.includes("map-uvtt-file") || !mapSpatial.includes("Location catalogue")) {
     fail("map spatial UVTT UI missing");
   } else pass("map spatial UVTT import UI");
-  if (!mapPanel.includes("calibratedSummaries") || !mapPanel.includes("MapSpatial")) {
+  if (!mapPanel.includes("getEffectiveMaps") || !mapPanel.includes("MapSpatial")) {
     fail("map-panel calibrated integration missing");
   } else pass("map-panel calibrated / UVTT integration");
   if (!mapSpatial.includes("objects_line_of_sight") && !fixtureText.includes("objects_line_of_sight")) {
@@ -276,9 +276,57 @@ else pass("distance uses scale.distancePerGrid");
   if (!httpUtilSrc.includes("UVTT_BODY_LIMIT") || !httpUtilSrc.includes("64 * 1024 * 1024")) {
     fail("http-util missing UVTT_BODY_LIMIT (64MB)");
   } else pass("UVTT body limit constant");
-  if (!apiSrc.includes("UVTT_BODY_LIMIT") || !apiSrc.includes("import-uvtt")) {
-    fail("import-uvtt route should use UVTT_BODY_LIMIT");
-  } else pass("import-uvtt uses raised body limit");
+  const uvttLimitCalls = (apiSrc.match(/readJsonBody\(req,\s*\{\s*limit:\s*UVTT_BODY_LIMIT\s*\}/g) || [])
+    .length;
+  if (uvttLimitCalls < 2) {
+    fail("import-uvtt and catalogue uvtt routes must use readJsonBody(req, { limit: UVTT_BODY_LIMIT })");
+  } else pass("UVTT routes use raised body limit");
+
+  const bigPayload = JSON.stringify({
+    text: "x".repeat(26 * 1024 * 1024),
+    filename: "oversize.uvtt"
+  });
+  const bigRes = await new Promise((resolve, reject) => {
+    const server = http.createServer(async (req, res) => {
+      const u = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      const handled = await handleApi(req, res, u.pathname, routes);
+      if (!handled) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Not found" }));
+      }
+    });
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address();
+      const req = http.request(
+        {
+          hostname: "127.0.0.1",
+          port,
+          path: "/api/catalogue-assets/location/loc-oversize/uvtt",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(bigPayload)
+          }
+        },
+        (res) => {
+          const chunks = [];
+          res.on("data", (c) => chunks.push(c));
+          res.on("end", () => {
+            server.close();
+            resolve({ status: res.statusCode });
+          });
+        }
+      );
+      req.on("error", (err) => {
+        server.close();
+        reject(err);
+      });
+      req.write(bigPayload);
+      req.end();
+    });
+  });
+  if (bigRes.status === 413) fail("catalogue uvtt rejected 26MB body (25MB cap bug)");
+  else pass("catalogue uvtt accepts body > 25MB");
 
   /* dd2vtt filename path */
   const importedDd = await campaignMaps.importUvtt(campaignId, {
