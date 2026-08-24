@@ -7,10 +7,17 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 `js/core/map-panel.js` → `window.MapPanel`
 
 ## Image resolution
-1. Look up `map.locationId` (or `map.id`) in Location catalogue
-2. If `entry.mapImage` (`/api/assets/…` or hydrated legacy value) exists → use it
-3. Else use `map.image` placeholder path
-4. Locations with an upload but no `MAPS` entry are added to the dropdown automatically
+1. Calibrated / UVTT maps use campaign-scoped `imageUrl` (`/api/campaigns/…/maps/…/image`)
+2. Else look up `map.locationId` (or `map.id`) in Location catalogue
+3. If `entry.mapImage` exists → use that URL
+4. Else use `map.image` placeholder path
+5. Locations with an upload but no `MAPS` entry are added to the dropdown automatically
+
+## Spatial tools (calibrated / UVTT)
+- Import `.dd2vtt` / `.uvtt` via map panel
+- Optional grid overlay, measure tool, editable ft/grid
+- DM tokens (world coordinates); select two for distance
+- See `docs/README/UVTT.md`
 
 ## Pin persistence
 | Key | Contents |

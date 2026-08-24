@@ -1,0 +1,58 @@
+{
+  "format": 0.3,
+  "resolution": {
+    "map_origin": { "x": 0, "y": 0 },
+    "map_size": { "x": 4, "y": 3 },
+    "pixels_per_grid": 70
+  },
+  "line_of_sight": [
+    [
+      { "x": 0.5, "y": 0.5 },
+      { "x": 3.5, "y": 0.5 },
+      { "x": 3.5, "y": 2.5 }
+    ]
+  ],
+  "objects_line_of_sight": [
+    [
+      { "x": 1.25, "y": 1.25 },
+      { "x": 1.75, "y": 1.25 },
+      { "x": 1.75, "y": 1.75 },
+      { "x": 1.25, "y": 1.75 }
+    ]
+  ],
+  "portals": [
+    {
+      "position": { "x": 2, "y": 0.5 },
+      "bounds": [
+        { "x": 1.8, "y": 0.4 },
+        { "x": 2.2, "y": 0.4 },
+        { "x": 2.2, "y": 0.6 },
+        { "x": 1.8, "y": 0.6 }
+      ],
+      "rotation": 0,
+      "closed": true,
+      "freestanding": false
+    }
+  ],
+  "lights": [
+    {
+      "position": { "x": 1, "y": 1 },
+      "range": 2.5,
+      "intensity": 1,
+      "color": "#ffcc66",
+      "shadows": true
+    },
+    {
+      "position": { "x": 3, "y": 2 },
+      "range": 1,
+      "intensity": 0.5,
+      "color": "#88aaff",
+      "shadows": false
+    }
+  ],
+  "environment": {
+    "baked_lighting": false,
+    "ambient_light": "#000000"
+  },
+  "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+}

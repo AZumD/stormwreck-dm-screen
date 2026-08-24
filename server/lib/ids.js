@@ -25,6 +25,7 @@ const CAMPAIGN_DOC_KINDS = Object.freeze([
   "notes",
   "checklist",
   "map-state",
+  "maps",
   "prefs"
 ]);
 

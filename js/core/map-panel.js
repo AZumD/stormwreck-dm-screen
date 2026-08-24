@@ -109,15 +109,24 @@ window.MapPanel = (function () {
   }
 
   function resolveMapImage(map) {
+    if (map?.calibrated && (map.imageUrl || map.image)) {
+      return {
+        src: map.imageUrl || map.image,
+        source: "calibrated",
+        locationName: map.title
+      };
+    }
     const locId = map.locationId || map.id;
     const entry = findLocationEntry(locId);
     if (entry?.mapImage) return { src: entry.mapImage, source: "catalogue", locationName: entry.name };
     return { src: map.image || "", source: "placeholder", locationName: entry?.name || map.title };
   }
 
+  let calibratedSummaries = [];
+
   /**
    * Built-in MAPS plus catalogue locations that have an uploaded map
-   * but no matching campaign map definition.
+   * but no matching campaign map definition, plus UVTT/calibrated maps.
    */
   function getEffectiveMaps() {
     const maps = {};
@@ -138,6 +147,26 @@ window.MapPanel = (function () {
         pins: [],
         fromCatalogue: true
       };
+    });
+
+    calibratedSummaries.forEach((summary) => {
+      const def = window.MapSpatial
+        ? MapSpatial.summaryToMapDef(summary)
+        : {
+            id: summary.id,
+            title: summary.name,
+            kind: summary.kind,
+            image: summary.imageUrl,
+            imageUrl: summary.imageUrl,
+            calibrated: true,
+            pins: [],
+            grid: summary.grid,
+            scale: summary.scale,
+            display: summary.display,
+            widthPx: summary.widthPx,
+            heightPx: summary.heightPx
+          };
+      maps[def.id] = def;
     });
 
     return maps;
@@ -162,7 +191,8 @@ window.MapPanel = (function () {
 
   function init(campaignId) {
     const panel = document.getElementById("map-panel");
-    if (!panel || !window.MAPS) return;
+    if (!panel) return;
+    window.MAPS = window.MAPS || {};
 
     const mapSelect = document.getElementById("map-select");
     const mapStage = document.getElementById("map-stage");
@@ -185,8 +215,9 @@ window.MapPanel = (function () {
     let activeMapId =
       (window.CampaignMapState?.get(campaignId)?.activeMap) ||
       Object.keys(maps)[0];
-    if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0];
+    if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0] || null;
 
+    let spatialApi = null;
     let zoom = 1;
     let panX = 0;
     let panY = 0;
@@ -252,7 +283,8 @@ window.MapPanel = (function () {
     function canStartPan(e) {
       if (zoom <= 1.01) return false;
       if (e.button != null && e.button !== 0) return false;
-      if (e.target.closest?.(".map-pin")) return false;
+      if (e.target.closest?.(".map-pin, .map-token")) return false;
+      if (document.getElementById("map-measure-btn")?.getAttribute("aria-pressed") === "true") return false;
       return true;
     }
 
@@ -305,11 +337,16 @@ window.MapPanel = (function () {
 
     function rebuildMapSelect() {
       maps = getEffectiveMaps();
-      if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0];
+      if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0] || null;
       mapSelect.innerHTML = Object.values(maps)
         .map((m) => {
-          const hasUpload = resolveMapImage(m).source === "catalogue";
-          const mark = hasUpload ? " ●" : "";
+          const resolved = resolveMapImage(m);
+          const mark =
+            m.calibrated || m.kind === "uvtt"
+              ? " ▦"
+              : resolved.source === "catalogue"
+                ? " ●"
+                : "";
           return `<option value="${m.id}"${m.id === activeMapId ? " selected" : ""}>${escape(m.title)}${mark}</option>`;
         })
         .join("");
@@ -342,12 +379,24 @@ window.MapPanel = (function () {
     function renderMap() {
       maps = getEffectiveMaps();
       const map = maps[activeMapId];
-      if (!map) return;
+      if (!map) {
+        mapStage.classList.add("map-stage--error");
+        mapImage.classList.add("hidden");
+        spatialApi?.refreshChrome?.();
+        return;
+      }
 
       const resolved = resolveMapImage(map);
       mapStage.classList.add("map-stage--loading");
-      mapStage.classList.remove("map-stage--error", "map-stage--catalogue", "map-stage--placeholder");
-      mapStage.classList.add(resolved.source === "catalogue" ? "map-stage--catalogue" : "map-stage--placeholder");
+      mapStage.classList.remove(
+        "map-stage--error",
+        "map-stage--catalogue",
+        "map-stage--placeholder",
+        "map-stage--calibrated"
+      );
+      if (resolved.source === "calibrated") mapStage.classList.add("map-stage--calibrated");
+      else if (resolved.source === "catalogue") mapStage.classList.add("map-stage--catalogue");
+      else mapStage.classList.add("map-stage--placeholder");
 
       if (resolved.src) {
         mapImage.src = resolved.src;
@@ -363,6 +412,7 @@ window.MapPanel = (function () {
 
       applyMapTransform();
       renderPins();
+      spatialApi?.refreshChrome?.();
     }
 
     function getCustomPinsForMap() {
@@ -735,6 +785,33 @@ window.MapPanel = (function () {
     if (window.PartyRoster) PartyRoster.render(partyList);
     else renderParty(partyList);
 
+    if (window.MapSpatial) {
+      spatialApi = MapSpatial.bind({
+        campaignId,
+        mapWorld,
+        mapImage,
+        mapViewport,
+        getActiveMapId: () => activeMapId,
+        getMaps: () => maps,
+        refreshPins: renderPins,
+        onMapsChanged: async (newId) => {
+          calibratedSummaries = await MapSpatial.loadCalibratedMaps(campaignId);
+          if (newId) activeMapId = newId;
+          if (window.CampaignMapState) {
+            CampaignMapState.patch(campaignId, { activeMap: activeMapId });
+          }
+          rebuildMapSelect();
+          resetZoom();
+          renderMap();
+        }
+      });
+      MapSpatial.loadCalibratedMaps(campaignId).then((list) => {
+        calibratedSummaries = list || [];
+        rebuildMapSelect();
+        renderMap();
+      });
+    }
+
     activeInstance = {
       refresh() {
         rebuildMapSelect();
@@ -745,6 +822,11 @@ window.MapPanel = (function () {
         } else {
           renderParty(partyList);
         }
+        MapSpatial?.loadCalibratedMaps?.(campaignId).then((list) => {
+          calibratedSummaries = list || [];
+          rebuildMapSelect();
+          renderMap();
+        });
       }
     };
   }

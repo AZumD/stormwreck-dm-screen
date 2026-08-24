@@ -8,6 +8,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
+- Campaign maps — image + Universal VTT import, measure, DM tokens (see `docs/README/UVTT.md`)
 - Player companion (`/player/`) — mobile-first sheet / party / library / notes (Phase 5A–5C; see `docs/README/PHASE5-PLAYER-SHEET.md`)
 
 ## Persistence (authoritative)

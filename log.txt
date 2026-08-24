@@ -55,3 +55,4 @@
 [2026-08-24] Phase 5B editable player sheet: PATCH sheet/inventory/portrait, hp_max, Edit sheet UI. See docs/README/PLAYER.md
 [2026-08-24] Phase 5C player Library tab: browse/search catalogues (not npc/pc), detail views, library-attach to controlled characters. See docs/README/PLAYER.md
 [2026-08-24] Root gate landing (DM/Player) with castle art; DM Library moved to /dm/; player sheet + add modal with catalogue search. See docs/README/HOME.md
+[2026-08-24] UVTT/dd2vtt import (M1–M3-lite): normalized maps, campaign-scoped images, measure, DM tokens. See docs/README/UVTT.md
