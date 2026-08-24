@@ -13,7 +13,7 @@ Root gate at `/` — choose DM Library or Player companion before entering eithe
 ## Links
 | Button | Destination |
 |--------|-------------|
-| DM login | `/dm/` (DM sign-in, then Library) |
+| DM login | `/dm/` (Library; sign-in only when `AUTH_REQUIRED=1`) |
 | Player login | `/player/` |
 
 ## Related

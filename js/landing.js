@@ -32,7 +32,7 @@
       .replace(/"/g, "&quot;");
   }
 
-  async function authJson(method, path, body) {
+  async function authJson(method, path, body, { timeoutMs = 12000 } = {}) {
     const opts = {
       method,
       credentials: "include",
@@ -42,21 +42,38 @@
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    const res = await fetch(path, opts);
-    const text = await res.text();
-    let data = null;
+    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timer =
+      ctrl && timeoutMs > 0
+        ? setTimeout(() => ctrl.abort(), timeoutMs)
+        : null;
+    if (ctrl) opts.signal = ctrl.signal;
     try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = { ok: false, error: text || "Invalid response" };
-    }
-    if (!res.ok || data?.ok === false) {
-      const err = new Error(data?.error || `HTTP ${res.status}`);
-      err.status = res.status;
-      err.data = data;
+      const res = await fetch(path, opts);
+      const text = await res.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = { ok: false, error: text || "Invalid response" };
+      }
+      if (!res.ok || data?.ok === false) {
+        const err = new Error(data?.error || `HTTP ${res.status}`);
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        const timeoutErr = new Error("Request timed out");
+        timeoutErr.status = 408;
+        throw timeoutErr;
+      }
       throw err;
+    } finally {
+      if (timer) clearTimeout(timer);
     }
-    return data;
   }
 
   function hasDmRole(memberships) {
@@ -224,31 +241,63 @@
     }
   }
 
+  async function readAuthRequired() {
+    try {
+      const data = await authJson("GET", "/api/health", undefined, { timeoutMs: 8000 });
+      return Boolean(data?.authRequired);
+    } catch {
+      /* Offline / health failed — treat as local open mode */
+      return false;
+    }
+  }
+
   async function resolveSession() {
+    const authRequired = await readAuthRequired();
+
+    /* Local default: file DM APIs are open — skip login wall entirely. */
+    if (!authRequired) {
+      try {
+        const data = await authJson("GET", "/api/auth/me", undefined, { timeoutMs: 4000 });
+        if (hasDmRole(data.memberships)) {
+          await enterLibrary(data.user);
+          return;
+        }
+      } catch {
+        /* 401/503/timeout — open without session */
+      }
+      await enterLibrary(null);
+      return;
+    }
+
     try {
       const data = await authJson("GET", "/api/auth/me");
-      if (!hasDmRole(data.memberships)) {
-        showLogin("This account is not a DM for any campaign. Use Player login, or ask for a DM membership.");
+      if (hasDmRole(data.memberships)) {
+        await enterLibrary(data.user);
         return;
       }
-      await enterLibrary(data.user);
+      await authJson("POST", "/api/auth/logout", {}).catch(() => {});
+      showLogin("That account is a player, not a DM. Sign in with a DM account.");
     } catch (err) {
       if (err.status === 503) {
-        /* No Postgres — local file-backed DM mode */
         await enterLibrary(null);
         return;
       }
-      showLogin();
+      showLogin(err.status === 408 ? "Server timed out. Try signing in again." : undefined);
     }
   }
 
   loginForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
     if (loginError) {
       loginError.hidden = true;
       loginError.textContent = "";
     }
     const fd = new FormData(loginForm);
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Signing in…";
+    }
     try {
       const data = await authJson("POST", "/api/auth/login", {
         email: String(fd.get("email") || ""),
@@ -262,8 +311,17 @@
       await enterLibrary(data.user);
     } catch (err) {
       showLogin(
-        err.status === 401 ? "Invalid email or password." : err.message || "Sign-in failed."
+        err.status === 401
+          ? "Invalid email or password."
+          : err.status === 408
+            ? "Sign-in timed out. Is the server reachable?"
+            : err.message || "Sign-in failed."
       );
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Sign in";
+      }
     }
   });
 
@@ -273,19 +331,25 @@
     } catch {
       /* ignore */
     }
-    showLogin();
+    const authRequired = await readAuthRequired();
+    if (authRequired) showLogin();
+    else await enterLibrary(null);
   });
 
   async function start() {
     document.body.classList.add("is-booting");
     bindLibrary();
-    /* Prefer login UI until session resolves (avoids flash of library) */
-    if (viewLogin && viewLibrary) {
-      viewLogin.hidden = false;
-      viewLibrary.hidden = true;
+    /* Keep both views hidden under the boot overlay — showing login here made
+       the form look clickable while the overlay swallowed every click. */
+    if (viewLogin) viewLogin.hidden = true;
+    if (viewLibrary) viewLibrary.hidden = true;
+    try {
+      await resolveSession();
+    } catch (err) {
+      showLogin(err.message || "Unable to open the library.");
+    } finally {
+      document.body.classList.remove("is-booting");
     }
-    await resolveSession();
-    document.body.classList.remove("is-booting");
   }
 
   start();

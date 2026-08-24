@@ -939,6 +939,11 @@ body.is-booting::before {
   font-size: 1.15rem;
 }
 
+/* Author display rules must not override the hidden attribute */
+[hidden] {
+  display: none !important;
+}
+
 /* ── DM login gate ───────────────────────────────────── */
 .dm-login-view {
   position: relative;
@@ -947,6 +952,11 @@ body.is-booting::before {
   display: grid;
   place-items: center;
   padding: 2rem 1.25rem;
+}
+
+.dm-login-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .dm-login-card {

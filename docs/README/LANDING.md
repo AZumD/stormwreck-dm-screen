@@ -7,12 +7,15 @@ DM Library landing page: session gate for DM accounts, then campaigns + catalogu
 `js/landing.js` (loaded from `dm/index.html` after `campaign-registry.js`)
 
 ## Auth
+Uses `/api/health` → `authRequired` plus `/api/auth/me`.
+
 | State | UI |
 |-------|-----|
-| No session (Postgres configured) | `#view-login` email/password → `POST /api/auth/login` |
+| `authRequired=false` (local default) | Open `#view-library` without forcing login (player cookies do not block) |
+| `authRequired=true`, no session | `#view-login` → `POST /api/auth/login` |
 | Session with DM membership | `#view-library` + Log out |
-| Player-only account | Stay on login with error (no DM role) |
-| No `DATABASE_URL` (503) | Open library without session (local file mode) |
+| `authRequired=true`, player-only session | Logout, then login with error |
+| No `DATABASE_URL` (503) | Open library without session |
 
 ## Behavior
 | Action | Result |
@@ -21,7 +24,7 @@ DM Library landing page: session gate for DM accounts, then campaigns + catalogu
 | Page load (signed in) | Lists `CampaignRegistry` entries under Stormwreck |
 | **Create new campaign** | Dialog → create registry entry → open sandbox |
 | Open user card | Navigates to `campaigns/sandbox/index.html?id=` |
-| Log out | Clears session cookie → login view |
+| Log out | Clears session; returns to login when `AUTH_REQUIRED=1`, else stays on library |
 
 ## Markup hooks
 - `#view-login` / `#dm-login-form` / `#dm-login-error`

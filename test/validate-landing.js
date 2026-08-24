@@ -80,6 +80,26 @@ if (!landingJs.includes("/api/auth/login") || !landingJs.includes("hasDmRole")) 
 } else {
   pass("landing.js DM auth flow");
 }
+if (!landingJs.includes("/api/health") || !landingJs.includes("authRequired") || !landingJs.includes("readAuthRequired")) {
+  fail("landing.js should gate on /api/health authRequired");
+} else {
+  pass("landing.js respects authRequired");
+}
+if (!landingJs.includes("AbortController") || !landingJs.includes("is-booting")) {
+  fail("landing.js missing fetch timeout / boot finally guard");
+} else {
+  pass("landing.js boot + timeout guards");
+}
+if (!landingJs.includes("Keep both views hidden") && !landingJs.includes("both views hidden")) {
+  fail("landing.js should hide views during boot overlay");
+} else {
+  pass("landing.js hides views during boot");
+}
+if (!css.includes("[hidden]") || !css.includes("display: none !important")) {
+  fail("landing.css missing [hidden] override guard");
+} else {
+  pass("landing.css [hidden] guard");
+}
 
 if (html.includes("card-placeholder") && html.includes("Coming soon")) {
   fail("Coming soon placeholder still present");
