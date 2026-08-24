@@ -11,6 +11,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | `js/core/player-api-client.js` | Cookie-authenticated fetch helper |
 | `css/player.css` | Mobile-first fairy-forest styles |
 | `assets/player/fairy-forest-bg.jpg` | Static theme wallpaper (deploys with app) |
+| `assets/grunge-stained-old-paper-texture-130-752543118.png` | Stained paper — player notes + campaign read-aloud |
 | `server/lib/player.js` | Player DTOs + authorization-scoped queries |
 | `server/lib/pc-catalogue-mirror.js` | Bidirectional PC catalogue ↔ campaign character sync |
 | `server/lib/revealed-npcs.js` | Phase 5D revealed NPC queries |
@@ -46,6 +47,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - Inline **+** opens add modal with catalogue search (skills/features/spells/items); custom text still available; conditions use a short text modal
 - Inspiration toggle
 - Layered forest wallpaper (`assets/player/fairy-forest-bg.jpg`); no horizontal overflow; ≥44px taps
+- **Notes** tab cards and note editor use stained-paper texture; campaign **read-aloud** blocks use the same asset
 
 ## Library UI (Phase 5C)
 - Fourth tab: browse/search item, spell, skill, feature, race, class, monster, location

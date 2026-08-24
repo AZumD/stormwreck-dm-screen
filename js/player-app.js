@@ -204,6 +204,7 @@
     document.querySelectorAll(".tab").forEach((btn) => {
       btn.classList.toggle("is-active", btn.getAttribute("data-tab") === state.tab);
     });
+    if (els.shell) els.shell.setAttribute("data-active-tab", state.tab);
     els.shellTitle.textContent =
       {
         characters: "Character sheet",
@@ -554,8 +555,10 @@
           .join("")}</ul>`
       : `<p class="empty">No notes yet.</p>`;
     els.main.innerHTML = `
-      <p><button type="button" class="btn btn-primary" data-note-new>New note</button></p>
-      ${list}`;
+      <div class="notes-panel">
+        <p><button type="button" class="btn btn-primary" data-note-new>New note</button></p>
+        ${list}
+      </div>`;
   }
 
   function libraryMetaLine(entry) {

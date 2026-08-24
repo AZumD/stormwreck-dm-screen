@@ -29,6 +29,7 @@ Included in `npm test`.
 - Expired session → 401
 - Player shell: no `prompt()`/`confirm()`; in-app note dialog; tab-bar scroll clearance; 44px pills; empty portraits collapse
 - Phase 5A: fantasy theme CSS + static `/assets/player/fairy-forest-bg.jpg`; sticky vitals; collapsible sheet sections; inspiration toggle
+- Stained paper texture on notes (`--paper-texture`, `.notes-panel`) and campaign `.read-aloud` blocks
 - Phase 5B: sheet PATCH whitelist; inventory CRUD; portrait PUT; Edit sheet dialog; `hp_max` mutable
 - Phase 5C: Library tab; player catalogue list/search; attach APIs; monster/location allowed; npc/pc blocked
 - Phase 5D: `campaign_revealed_npcs`; DM reveal/unreveal; player People list/detail; outsider denied; unrevealed 404

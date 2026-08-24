@@ -277,6 +277,7 @@ window.CatalogueApp = (function () {
     if (field.type === "checkbox") return !value;
     if (field.type === "list") return !Array.isArray(value) || !value.filter(Boolean).length;
     if (field.type === "image") return !value;
+    if (field.type === "uvtt") return !value || typeof value !== "object";
     return value === undefined || value === null || String(value).trim() === "";
   }
 
@@ -408,6 +409,18 @@ window.CatalogueApp = (function () {
         }
         if (field.type === "image") {
           entry[field.id] = root.querySelector(`[data-image-value="${field.id}"]`)?.value || "";
+          return;
+        }
+        if (field.type === "uvtt") {
+          const raw = root.querySelector(`[data-uvtt-value="${field.id}"]`)?.value || "";
+          if (!raw) entry[field.id] = null;
+          else {
+            try {
+              entry[field.id] = JSON.parse(raw);
+            } catch {
+              entry[field.id] = null;
+            }
+          }
           return;
         }
         const el = root.querySelector(`[name="${field.id}"]`);
@@ -547,6 +560,31 @@ window.CatalogueApp = (function () {
       </div>`;
   }
 
+  function renderUvttField(field, value) {
+    const cal = value && typeof value === "object" ? value : null;
+    const status = cal?.grid
+      ? `${cal.grid.sizeX}×${cal.grid.sizeY} grid · ${cal.grid.pixelsPerGrid}px/grid · ${cal.sourceFormat || "uvtt"}`
+      : field.emptyLabel || "No UVTT imported";
+    const uploadLabel = field.uploadLabel || "Import UVTT / dd2vtt";
+    const clearLabel = field.clearLabel || "Remove UVTT calibration";
+    const hint =
+      field.hint ||
+      "Imports grid geometry and map image. Large .dd2vtt files require the local server (npm start).";
+    return `
+      <div class="cat-uvtt-field" data-uvtt-field="${field.id}">
+        <input type="hidden" name="${field.id}" data-uvtt-value="${field.id}" value="${escapeHtml(cal ? JSON.stringify(cal) : "")}">
+        <p class="cat-uvtt-status">${escapeHtml(status)}</p>
+        <div class="cat-image-actions">
+          <label class="cat-upload-btn">
+            ${escapeHtml(uploadLabel)}
+            <input type="file" accept=".dd2vtt,.uvtt,application/json" data-uvtt-input="${field.id}" hidden>
+          </label>
+          ${cal ? `<button type="button" class="cat-btn cat-btn--ghost" data-clear-uvtt="${field.id}">${escapeHtml(clearLabel)}</button>` : ""}
+        </div>
+        <p class="cat-field-hint">${escapeHtml(hint)}</p>
+      </div>`;
+  }
+
   function renderField(field, entry) {
     const value = entry[field.id];
     const gridClass = `cat-field cat-field--${field.grid || "full"}`;
@@ -557,6 +595,10 @@ window.CatalogueApp = (function () {
 
     if (field.type === "image") {
       return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${renderImageField(field, value)}</div>`;
+    }
+
+    if (field.type === "uvtt") {
+      return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${renderUvttField(field, value)}</div>`;
     }
 
     if (field.type === "checkbox") {
@@ -1069,7 +1111,7 @@ window.CatalogueApp = (function () {
       };
 
       form.addEventListener("input", (e) => {
-        if (e.target.matches("[data-image-input]")) return;
+        if (e.target.matches("[data-image-input]") || e.target.matches("[data-uvtt-input]")) return;
         if (e.target.matches('[name="str"],[name="dex"],[name="con"],[name="int"],[name="wis"],[name="cha"]')) {
           const modEl = form.querySelector(`[data-mod-for="${e.target.name}"]`);
           if (modEl) modEl.textContent = mod(e.target.value) ? `(${mod(e.target.value)})` : "";
@@ -1078,7 +1120,7 @@ window.CatalogueApp = (function () {
       });
 
       form.addEventListener("change", (e) => {
-        if (e.target.matches("[data-image-input]")) return;
+        if (e.target.matches("[data-image-input]") || e.target.matches("[data-uvtt-input]")) return;
         const name = e.target.getAttribute("name");
         const showWhenFields = new Set();
         config.sections.forEach((section) => {
@@ -1246,6 +1288,67 @@ window.CatalogueApp = (function () {
           } catch {
             setStatus("Save failed");
             alert("Could not remove the image.");
+          }
+        });
+      });
+
+      form.querySelectorAll("[data-uvtt-input]").forEach((input) => {
+        input.addEventListener("change", async () => {
+          const file = input.files?.[0];
+          input.value = "";
+          if (!file) return;
+          if (!window.LocalApiClient?.importLocationUvtt) {
+            alert("UVTT import requires the local server (npm start).");
+            return;
+          }
+          const fieldId = input.dataset.uvttInput;
+          clearTimeout(saveTimer);
+          setStatus("Importing UVTT…");
+          try {
+            const text = await file.text();
+            const result = await LocalApiClient.importLocationUvtt(type, form.dataset.entryId, {
+              text,
+              filename: file.name
+            });
+            const existingRaw = CatalogueStore.get(type, form.dataset.entryId) || {};
+            const fromForm = readForm(form, config);
+            const merged = {
+              ...existingRaw,
+              ...fromForm,
+              mapImage: result.mapImage || fromForm.mapImage || existingRaw.mapImage,
+              mapCalibration: result.mapCalibration || null
+            };
+            if (!merged.name?.trim()) merged.name = config.defaults.name;
+            await CatalogueStore.upsert(type, merged);
+            if (window.EntityRegistry?.build) EntityRegistry.build();
+            setStatus("Saved");
+            renderEditor(activeId, { mode: "edit" });
+          } catch (err) {
+            setStatus("UVTT import failed");
+            console.error(err);
+            alert(err?.message || "UVTT import failed. Confirm npm start is running.");
+          }
+        });
+      });
+
+      form.querySelectorAll("[data-clear-uvtt]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Remove UVTT calibration? The map image is kept unless you remove it separately.")) return;
+          clearTimeout(saveTimer);
+          try {
+            if (window.LocalApiClient?.deleteLocationUvtt) {
+              await LocalApiClient.deleteLocationUvtt(type, form.dataset.entryId);
+            }
+            const existingRaw = CatalogueStore.get(type, form.dataset.entryId) || {};
+            const fromForm = readForm(form, config);
+            const merged = { ...existingRaw, ...fromForm, mapCalibration: null };
+            await CatalogueStore.upsert(type, merged);
+            if (window.EntityRegistry?.build) EntityRegistry.build();
+            setStatus("Saved");
+            renderEditor(activeId, { mode: "edit" });
+          } catch {
+            setStatus("Save failed");
+            alert("Could not remove UVTT calibration.");
           }
         });
       });

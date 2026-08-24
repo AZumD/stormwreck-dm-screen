@@ -145,6 +145,7 @@
     if (window.CatalogueStore) await CatalogueStore.bootstrap();
     if (window.CampaignPrefs) await CampaignPrefs.bootstrap(campaignId);
     if (window.CampaignMapState) await CampaignMapState.bootstrap(campaignId);
+    if (window.CampaignLocations) await CampaignLocations.bootstrap(campaignId);
     if (window.SectionEditor?.bootstrap) {
       await SectionEditor.bootstrap(campaignId, ADVENTURE.sections || []);
     }
@@ -1191,7 +1192,12 @@
         panelView.innerHTML = `<h1>${t.headings.monsters}</h1>${renderEntityGrid("monster")}`;
         break;
       case "locations":
-        panelView.innerHTML = `<h1>${t.headings.locations}</h1>${renderEntityGrid("location")}`;
+        panelView.innerHTML = `<h1>${t.headings.locations}</h1><div id="campaign-locations-panel"></div>`;
+        if (window.CampaignLocationsUI) {
+          CampaignLocationsUI.mount(document.getElementById("campaign-locations-panel"), campaignId);
+        } else {
+          panelView.innerHTML += renderEntityGrid("location");
+        }
         break;
       case "notes":
         panelView.innerHTML = renderNotesView();

@@ -199,6 +199,33 @@ window.LocalApiClient = (function () {
     );
   }
 
+  async function importLocationUvtt(type, id, payload) {
+    return trackWrite(`uvtt:${type}:${id}`, () =>
+      request(
+        "POST",
+        `/api/catalogue-assets/${encodeURIComponent(type)}/${encodeURIComponent(id)}/uvtt`,
+        payload
+      )
+    );
+  }
+
+  async function getLocationUvttMap(id) {
+    const data = await request(
+      "GET",
+      `/api/catalogue-assets/location/${encodeURIComponent(id)}/uvtt`
+    );
+    return data.map;
+  }
+
+  async function deleteLocationUvtt(type, id) {
+    return trackWrite(`uvtt:${type}:${id}:del`, () =>
+      request(
+        "DELETE",
+        `/api/catalogue-assets/${encodeURIComponent(type)}/${encodeURIComponent(id)}/uvtt`
+      )
+    );
+  }
+
   async function exportAll() {
     return request("GET", "/api/export");
   }
@@ -337,6 +364,9 @@ window.LocalApiClient = (function () {
     putCampaignDocument,
     putCatalogueAsset,
     deleteCatalogueAsset,
+    importLocationUvtt,
+    getLocationUvttMap,
+    deleteLocationUvtt,
     exportAll,
     listCampaignMaps,
     getCampaignMap,

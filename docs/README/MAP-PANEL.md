@@ -13,15 +13,15 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 - Expand uses `LayoutPanels.setMapMode("expanded")` — same MapPanel instance (zoom/pan/tokens preserved)
 
 ## Image resolution
-1. Calibrated / UVTT maps use campaign-scoped `imageUrl` (`/api/campaigns/…/maps/…/image`)
-2. Else look up `map.locationId` (or `map.id`) in Location catalogue
-3. If `entry.mapImage` exists → use that URL
-4. Else use `map.image` placeholder path
-5. Locations with an upload but no `MAPS` entry are added to the dropdown automatically
+1. Map must be a **campaign location** (see `docs/README/CAMPAIGN-LOCATIONS.md`)
+2. Location catalogue `mapImage` or UVTT `mapCalibration` (+ extracted image)
+3. Else static placeholder from `js/campaigns/*/maps.js` when `locationId` matches
+4. UVTT geometry served from `/api/catalogue-assets/location/{id}/uvtt`
 
 ## Spatial tools (calibrated / UVTT)
-- Import `.dd2vtt` / `.uvtt` via Map settings
-- Optional grid overlay, measure tool, editable ft/grid
+- Import `.dd2vtt` / `.uvtt` in the **Location catalogue** (not per-campaign)
+- Add that location to the campaign under **Locations**
+- Optional grid overlay, measure tool, editable ft/grid on calibrated maps
 - DM tokens (world coordinates); select two for distance
 - **Add monster** places a **combat token** (independent HP/AC), not a wiki pin — requires a calibrated map
 - PC / NPC pin clicks open the **combat sheet**; POI / item / freeform still use the wiki modal

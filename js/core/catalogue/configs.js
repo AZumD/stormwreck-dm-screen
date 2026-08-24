@@ -764,10 +764,20 @@ window.CatalogueConfigs = {
             type: "image",
             kind: "map",
             grid: "full",
-            uploadLabel: "Upload map",
+            uploadLabel: "Upload map image",
             clearLabel: "Remove map",
             emptyLabel: "No map uploaded",
-            hint: "Stored in this browser. Large files are resized automatically."
+            hint: "Simple raster map. For grid/measure tools, import UVTT below instead."
+          },
+          {
+            id: "mapCalibration",
+            label: "UVTT / calibrated map",
+            type: "uvtt",
+            grid: "full",
+            uploadLabel: "Import UVTT / dd2vtt",
+            clearLabel: "Remove UVTT calibration",
+            emptyLabel: "No UVTT imported",
+            hint: "Embeds grid + map image on this location. Requires npm start. Used by campaign maps when this location is added."
           },
           {
             id: "locationType",
@@ -848,6 +858,7 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed location",
       mapImage: "",
+      mapCalibration: null,
       locationType: "",
       parentLocationRef: "",
       tags: [],

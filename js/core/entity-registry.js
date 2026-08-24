@@ -659,7 +659,14 @@ window.EntityRegistry = (function () {
   }
 
   function byType(type) {
-    return Object.values(getAll()).filter((e) => e.type === type);
+    const seen = new Set();
+    return Object.values(getAll()).filter((e) => {
+      if (e.type !== type) return false;
+      const key = e.catalogueId || e.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   build();

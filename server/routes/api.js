@@ -12,6 +12,7 @@ const player = require("../lib/player");
 const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
 const campaignMaps = require("../lib/campaign-maps");
+const catalogueLocationMaps = require("../lib/catalogue-location-maps");
 const mapDistance = require("../lib/map-distance");
 const revealedNpcs = require("../lib/revealed-npcs");
 const { sendJson, sendError, readJsonBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
@@ -887,6 +888,56 @@ function createApiRoutes() {
         const id = assertSafeId(p.id, "entry id");
         const removed = await assets.deleteAsset(kind, type, id);
         sendJson(res, 200, { ok: true, removed });
+      }
+    ),
+
+    route(
+      "POST",
+      /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/uvtt$/,
+      ["type", "id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const type = assertCatalogueType(p.type);
+        const id = assertSafeId(p.id, "entry id");
+        const body = await readJsonBody(req, UVTT_BODY_LIMIT);
+        const text = body?.text;
+        if (!text || typeof text !== "string") {
+          const err = new Error("text required (UVTT file contents)");
+          err.status = 400;
+          throw err;
+        }
+        const result = await catalogueLocationMaps.importUvtt(type, id, {
+          text,
+          filename: body?.filename,
+          name: body?.name
+        });
+        sendJson(res, 200, { ok: true, ...result });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/uvtt$/,
+      ["type", "id"],
+      async (req, res, p) => {
+        const type = assertCatalogueType(p.type);
+        const id = assertSafeId(p.id, "entry id");
+        const map = await catalogueLocationMaps.getFullMap(type, id);
+        if (!map) return sendJson(res, 404, { ok: false, error: "No UVTT map for this entry" });
+        sendJson(res, 200, { ok: true, map });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/uvtt$/,
+      ["type", "id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const type = assertCatalogueType(p.type);
+        const id = assertSafeId(p.id, "entry id");
+        await catalogueLocationMaps.deleteUvtt(type, id);
+        sendJson(res, 200, { ok: true, removed: true });
       }
     ),
 

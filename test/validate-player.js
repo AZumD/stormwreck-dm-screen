@@ -88,6 +88,20 @@ if (!fs.existsSync(path.join(root, "assets/player/fairy-forest-bg.jpg"))) {
   fail("missing static assets/player/fairy-forest-bg.jpg");
 } else pass("static fairy-forest wallpaper present");
 
+const paperAsset = "assets/grunge-stained-old-paper-texture-130-752543118.png";
+if (!fs.existsSync(path.join(root, paperAsset))) {
+  fail("missing stained paper texture asset");
+} else pass("stained paper texture present");
+if (!playerCss.includes("--paper-texture") || !playerCss.includes(".notes-panel")) {
+  fail("player.css missing paper texture notes styling");
+} else pass("player.css paper notes styling");
+const styleCss = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
+if (!styleCss.includes("grunge-stained-old-paper-texture") || !styleCss.includes(".read-aloud")) {
+  fail("style.css read-aloud missing paper texture");
+} else pass("style.css read-aloud paper texture");
+if (!appSrc.includes("notes-panel")) fail("player-app missing notes-panel wrapper");
+else pass("player-app notes-panel wrapper");
+
 if (!fs.existsSync(path.join(root, "docs/README/PHASE5-PLAYER-SHEET.md"))) {
   fail("missing PHASE5-PLAYER-SHEET.md");
 } else pass("PHASE5-PLAYER-SHEET.md present");

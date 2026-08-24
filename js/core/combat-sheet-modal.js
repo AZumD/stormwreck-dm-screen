@@ -67,6 +67,72 @@ window.CombatSheetModal = (function () {
     el.classList.toggle("is-error", Boolean(isError));
   }
 
+  function formatStatValue(value) {
+    const raw = String(value ?? "");
+    if (!raw) return "";
+    if (raw.includes("@") || raw.includes("[[")) {
+      const registry = window.EntityRegistry?.getAll?.() || window.ENTITIES || {};
+      if (window.ContentParser?.replaceLinks) return ContentParser.replaceLinks(raw, registry);
+    }
+    return escapeHtml(raw);
+  }
+
+  function resolveCombatEntity({ entityId, catalogueId }) {
+    if (entityId && window.EntityRegistry?.resolve) {
+      const hit = EntityRegistry.resolve(entityId);
+      if (hit) return hit;
+    }
+    if (catalogueId && window.EntityRegistry?.resolve) {
+      const hit = EntityRegistry.resolve(catalogueId);
+      if (hit) return hit;
+    }
+    if (catalogueId && window.EntityRegistry?.getAll) {
+      return (
+        Object.values(EntityRegistry.getAll()).find(
+          (e) => e.catalogueId === catalogueId || e.id === catalogueId
+        ) || null
+      );
+    }
+    return null;
+  }
+
+  function fillCombatReference({ entityId, catalogueId }) {
+    const el = bodyEl?.querySelector("[data-combat-reference]");
+    if (!el) return;
+    const entity = resolveCombatEntity({ entityId, catalogueId });
+    if (!entity) {
+      el.innerHTML = "";
+      el.hidden = true;
+      return;
+    }
+
+    const skipStats = new Set(["HP", "AC"]);
+    const statEntries = Object.entries(entity.stats || {}).filter(
+      ([label, value]) => value != null && value !== "" && !skipStats.has(label)
+    );
+    const detailsHtml = entity.details
+      ? window.ContentParser?.markdownLite?.(entity.details) || ""
+      : "";
+
+    if (!statEntries.length && !detailsHtml) {
+      el.innerHTML = "";
+      el.hidden = true;
+      return;
+    }
+
+    let html = `<h3 class="combat-sheet__reference-title">Combat reference</h3>`;
+    if (statEntries.length) {
+      html += `<div class="stat-block">`;
+      for (const [label, value] of statEntries) {
+        html += `<div class="stat-row"><span class="stat-label">${escapeHtml(label)}</span><span class="stat-value">${formatStatValue(value)}</span></div>`;
+      }
+      html += `</div>`;
+    }
+    if (detailsHtml) html += `<div class="combat-sheet__reference-body">${detailsHtml}</div>`;
+    el.innerHTML = html;
+    el.hidden = false;
+  }
+
   function readForm() {
     if (!bodyEl) return null;
     const hpCurrent = bodyEl.querySelector("[name=hpCurrent]")?.value;
@@ -163,6 +229,10 @@ window.CombatSheetModal = (function () {
             <input type="number" name="hpTemp" value="${escapeHtml(model.hpTemp ?? 0)}" step="1">
           </label>`
         : "";
+    const removeFromMapBtn =
+      model.removeFromMap
+        ? `<button type="button" class="btn btn-danger combat-sheet__remove" data-remove-from-map>Remove from map</button>`
+        : "";
     const catalogueLink = model.catalogueOpen
       ? `<button type="button" class="btn combat-sheet__link" data-open-catalogue>Open full catalogue</button>`
       : "";
@@ -199,8 +269,10 @@ window.CombatSheetModal = (function () {
             <textarea name="conditions" rows="2" placeholder="poisoned, prone…">${escapeHtml(model.conditions || "")}</textarea>
           </label>
         </div>
+        <div class="combat-sheet__reference-wrap" data-combat-reference hidden></div>
         <div class="combat-sheet__footer">
           <button type="button" class="btn" data-combat-save>Save</button>
+          ${removeFromMapBtn}
           ${catalogueLink}
           <span class="combat-sheet__status" data-combat-status></span>
         </div>
@@ -223,6 +295,23 @@ window.CombatSheetModal = (function () {
     bodyEl.querySelector("[data-open-catalogue]")?.addEventListener("click", () => {
       model.catalogueOpen?.();
     });
+    bodyEl.querySelector("[data-remove-from-map]")?.addEventListener("click", () => {
+      if (!window.confirm(`Remove “${model.name || "this monster"}” from this map?`)) return;
+      removeMonsterFromMap().catch(() => undefined);
+    });
+  }
+
+  async function removeMonsterFromMap() {
+    if (!current || current.kind !== "monster-token") return;
+    const cid = current.campaignId;
+    const mapId = current.mapId;
+    if (!cid || !mapId || !window.CampaignMapState) throw new Error("Map state unavailable");
+    const all = { ...(CampaignMapState.get(cid)?.tokens || {}) };
+    const list = Array.isArray(all[mapId]) ? all[mapId].filter((t) => t.id !== current.tokenId) : [];
+    all[mapId] = list;
+    CampaignMapState.patch(cid, { tokens: all });
+    current.onRemoved?.();
+    close();
   }
 
   async function resolvePcCharacter(catalogueId) {
@@ -276,6 +365,7 @@ window.CombatSheetModal = (function () {
       inspiration: Boolean(state.inspiration),
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "pc")
     });
+    fillCombatReference({ entityId: opts.entityId, catalogueId });
     show();
   }
 
@@ -305,6 +395,7 @@ window.CombatSheetModal = (function () {
       conditions: entry.combatConditions || "",
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "npc")
     });
+    fillCombatReference({ entityId: opts.entityId, catalogueId });
     const extra = bodyEl.querySelector("[data-combat-extra]");
     if (extra && window.CampaignStateUI?.enrichEntityModal) {
       const entity =
@@ -326,7 +417,8 @@ window.CombatSheetModal = (function () {
       tokenId: token.id,
       campaignId: opts.campaignId || campaignId(),
       name: token.label || "Monster",
-      catalogueId: token.catalogueId || null
+      catalogueId: token.catalogueId || null,
+      onRemoved: typeof opts.onRemoved === "function" ? opts.onRemoved : null
     };
     renderShell({
       kind: "monster",
@@ -338,10 +430,12 @@ window.CombatSheetModal = (function () {
       hpMax: token.hpMax ?? null,
       ac: token.ac ?? null,
       conditions: token.conditions || "",
+      removeFromMap: true,
       catalogueOpen: token.catalogueId
         ? () => openCatalogueEntity(null, token.catalogueId, "monster")
         : null
     });
+    fillCombatReference({ catalogueId: token.catalogueId });
     show();
   }
 

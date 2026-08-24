@@ -65,3 +65,7 @@
 [2026-08-24] Map UX: default cursor when zoomed (grab only while panning); live measure tape line + distance preview. See js/core/map-spatial.js, css/style.css, docs/README/MAP-SPATIAL.md
 [2026-08-24] Player PC create + bidirectional PC catalogue sync (Postgres sheet <-> DM catalogue). See server/lib/pc-catalogue-mirror.js, docs/README/PC-CATALOGUE-MIRROR.md
 [2026-08-24] Map combat sheets: shared CombatSheetModal for PC (Postgres), NPC (catalogue), monster instance tokens; map Add Monster spawns combat tokens. See js/core/combat-sheet-modal.js, docs/README/COMBAT-SHEET-MODAL.md
+[2026-08-24] Monster combat tokens render as compact map pin dots; combat sheet adds Remove from map. See js/core/map-spatial.js, js/core/combat-sheet-modal.js
+[2026-08-24] Combat sheet shows catalogue combat reference (actions, spells, gear); EntityRegistry.byType dedupes add-monster/NPC pickers. See js/core/combat-sheet-modal.js, js/core/entity-registry.js
+[2026-08-24] Fix DM Library back links (/dm/); location catalogue UVTT upload; campaign location membership drives map picker. See js/core/campaign-locations.js, server/lib/catalogue-location-maps.js
+[2026-08-24] Stained paper texture on player notes and campaign read-aloud blocks. See css/player.css, css/style.css, assets/grunge-stained-old-paper-texture-130-752543118.png

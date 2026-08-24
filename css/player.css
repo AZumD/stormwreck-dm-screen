@@ -23,6 +23,7 @@
   --vitals-sticky-top: 0;
   --space: 0.55rem;
   --space-lg: 0.85rem;
+  --paper-texture: url("/assets/grunge-stained-old-paper-texture-130-752543118.png");
 }
 
 * { box-sizing: border-box; }
@@ -631,6 +632,58 @@ textarea { min-height: 6.5rem; resize: vertical; }
   background: rgba(208, 128, 122, 0.1);
 }
 .confirm-box p { margin: 0 0 0.55rem; }
+
+/* Player notes — stained paper */
+.notes-panel .card {
+  background-image:
+    linear-gradient(rgba(248, 242, 228, 0.93), rgba(235, 226, 208, 0.9)),
+    var(--paper-texture);
+  background-size: auto, cover;
+  background-position: center;
+  color: #2c261c;
+  border-color: rgba(110, 90, 60, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+.notes-panel .card h3 {
+  color: #1f1a12;
+  font-family: var(--display);
+}
+.notes-panel .card .meta {
+  color: #5a5040;
+}
+.notes-panel .btn-ghost {
+  border-color: rgba(110, 90, 60, 0.4);
+  color: #3d3428;
+}
+
+.dialog-note .dialog-inner {
+  background-image:
+    linear-gradient(rgba(248, 242, 228, 0.96), rgba(235, 226, 208, 0.94)),
+    var(--paper-texture);
+  background-size: auto, cover;
+  background-position: center;
+  color: #2c261c;
+}
+.dialog-note .dialog-inner header {
+  border-bottom-color: rgba(110, 90, 60, 0.3);
+  background: rgba(248, 242, 228, 0.55);
+}
+.dialog-note .dialog-inner h2 {
+  color: #1f1a12;
+}
+.dialog-note label {
+  color: #5a5040;
+}
+.dialog-note input,
+.dialog-note textarea,
+.dialog-note select {
+  background: rgba(255, 252, 245, 0.82);
+  color: #2c261c;
+  border-color: rgba(110, 90, 60, 0.35);
+}
+.dialog-note .meta {
+  color: #5a5040;
+}
 
 @media (min-width: 720px) {
   .stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }

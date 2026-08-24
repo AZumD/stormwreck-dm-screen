@@ -1239,13 +1239,18 @@ body[data-nav-collapsed="true"] .sidebar {
 
 /* ?? Read-aloud & DM notes ????????????????????????????? */
 .read-aloud {
-  background: linear-gradient(135deg, rgba(24, 34, 50, 0.9) 0%, rgba(18, 26, 38, 0.95) 100%);
-  border: 1px solid var(--border);
-  border-left: 2px solid rgba(196, 160, 53, 0.5);
+  background-color: #ebe4d4;
+  background-image:
+    linear-gradient(rgba(248, 242, 228, 0.9), rgba(232, 222, 200, 0.88)),
+    url("/assets/grunge-stained-old-paper-texture-130-752543118.png");
+  background-size: auto, cover;
+  background-position: center;
+  border: 1px solid rgba(110, 90, 60, 0.32);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
   padding: 1.1rem 1.3rem;
   margin: 1.25rem 0;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .read-aloud-label {
@@ -1254,7 +1259,7 @@ body[data-nav-collapsed="true"] .sidebar {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--accent);
+  color: #6b5a30;
   margin-bottom: 0.55rem;
 }
 
@@ -1263,7 +1268,7 @@ body[data-nav-collapsed="true"] .sidebar {
   font-family: var(--font-serif);
   font-style: italic;
   line-height: 1.65;
-  color: var(--text);
+  color: #2a241c;
 }
 
 .dm-note {
@@ -3284,6 +3289,11 @@ body[data-map-collapsed="true"] .map-panel {
 .map-pin--item { background: var(--entity-item); }
 .map-pin--monster { background: var(--entity-monster); }
 
+.map-pin.is-selected {
+  box-shadow: 0 0 0 3px #e8c86a, 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
 .map-pin--dragging {
   cursor: grabbing;
   transform: scale(calc(var(--map-pin-scale, 1) * 1.35));
@@ -4268,7 +4278,7 @@ body.is-booting::before {
 
 /* DM combat sheet modal */
 .combat-sheet-modal {
-  max-width: 420px;
+  max-width: min(560px, 92vw);
 }
 .combat-sheet__head {
   display: flex;
@@ -4368,6 +4378,75 @@ body.is-booting::before {
 }
 .combat-sheet__status.is-error { color: var(--danger); }
 .combat-sheet__extra { margin-top: 0.85rem; }
-.map-token--monster {
-  box-shadow: 0 0 0 2px rgba(212, 132, 122, 0.55);
+.combat-sheet__reference-wrap {
+  margin: 0.85rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.combat-sheet__reference-wrap[hidden] { display: none; }
+.combat-sheet__reference-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+}
+.combat-sheet__reference-body {
+  margin-top: 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.combat-sheet__reference-body p { margin: 0.35rem 0; }
+.combat-sheet__remove { margin-left: auto; }
+
+/* Campaign locations panel */
+.campaign-locations__lede {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  margin: 0 0 0.85rem;
+}
+.campaign-locations__toolbar {
+  margin-bottom: 0.75rem;
+}
+.campaign-loc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.campaign-loc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-raised, rgba(255, 255, 255, 0.02));
+}
+.campaign-loc-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.campaign-loc-row__meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.campaign-loc-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.cat-uvtt-status {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
 }

@@ -23,7 +23,7 @@ Falls back to injecting chrome if older pages lack the slots.
 Snap measure (Map settings) applies to both preview and final distance when checked.
 
 ## Monster combat tokens
-`bind()` returns `spawnMonsterToken(entry)` — copies HP/AC once from the monster catalogue via `CombatSheetModal.buildMonsterToken`. Click (no drag, no Shift) opens the combat sheet for that instance only. Shift-click still selects for distance.
+`bind()` returns `spawnMonsterToken(entry)` — copies HP/AC once from the monster catalogue via `CombatSheetModal.buildMonsterToken`. Monsters render as compact **map pin dots** (same footprint as PC/NPC). Click opens the combat sheet (with **Remove from map**); Shift-click selects for distance; right-click also removes.
 
 ## API
 `loadCalibratedMaps(campaignId)`, `summaryToMapDef(summary)`, `bind(ctx)`, `attachChrome(panelBody)`, `ensureLayers(mapWorld)`

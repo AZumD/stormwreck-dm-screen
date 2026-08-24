@@ -113,6 +113,12 @@ if (!css.includes(".card-create") || !css.includes(".create-campaign-dialog")) {
   pass("create campaign styles");
 }
 
+["campaigns/stormwreck-isle/index.html", "location-katalog/index.html", "npc-katalog/index.html"].forEach((rel) => {
+  const page = fs.readFileSync(path.join(root, rel), "utf8");
+  if (!page.includes('href="/dm/">← DM Library')) fail(`${rel} back link must point to /dm/`);
+  else pass(`${rel} DM Library back link`);
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

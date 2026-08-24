@@ -8,7 +8,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
-- Campaign maps — image + Universal VTT import, measure, DM tokens (see `docs/README/UVTT.md`)
+- Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`)
 
 ## Persistence (authoritative)
@@ -54,8 +54,10 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Toolbar **Search catalogues** dropdown opens any built entity modal
 
 ## Maps
-- Upload images in the **Location catalogue** (`mapImage` → `/data/assets/maps/…`)
-- Campaign map panel prefers catalogue uploads over placeholder SVGs
+- **Location catalogue** holds place metadata, raster `mapImage`, and optional **UVTT** (`mapCalibration`)
+- Each campaign stores which locations are active (`locations.json`) — map picker lists only those
+- Upload maps / UVTT in Location catalogue; add/remove locations in campaign **Locations** panel
+- Static pin definitions remain in `js/campaigns/*/maps.js` keyed by `locationId`
 - Drag pins to save custom positions in `map-state.json`
 - Mouse-wheel zoom / pan when zoomed (default cursor until dragging; measure shows a live tape line)
 - **+** under the map adds NPC / item / PC pins; **monster** places a combat token (instance HP/AC) on calibrated maps
@@ -88,6 +90,8 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/scene-meta.js` | Scene cast + connections (design data) |
 | `js/core/scene-ui.js` | At this scene tray + connection UI (edit-mode Link scene) |
 | `js/core/party.js` | Party roster UI from catalogue refs |
+| `js/core/campaign-locations.js` | Which location catalogue entries belong to a campaign |
+| `js/core/campaign-locations-ui.js` | Locations panel add/remove UI |
 | `js/core/map-panel.js` | Map rail tabs, pins, expand mode, Layers popover |
 | `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |

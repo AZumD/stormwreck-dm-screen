@@ -181,6 +181,18 @@ window.MapSpatial = (function () {
 
     async function ensureFull(mapId) {
       if (fullMapCache[mapId]) return fullMapCache[mapId];
+      const summary = activeMap();
+      if (summary?.catalogueId && window.LocalApiClient?.getLocationUvttMap) {
+        try {
+          const full = await LocalApiClient.getLocationUvttMap(summary.catalogueId);
+          if (full) {
+            fullMapCache[mapId] = { ...full, id: mapId, name: summary.title || full.name };
+            return fullMapCache[mapId];
+          }
+        } catch {
+          /* fall through */
+        }
+      }
       if (!window.LocalApiClient?.isAvailable?.()) return null;
       try {
         const map = await LocalApiClient.getCampaignMap(campaignId, mapId);
@@ -272,6 +284,17 @@ window.MapSpatial = (function () {
       els.tokenDist.innerHTML = `<strong>${escape(a.label || a.id)}</strong><span class="map-token-dist-arrow">↕ ${escape(d.label)}</span><strong>${escape(b.label || b.id)}</strong>`;
     }
 
+    function tokenTitle(t) {
+      if (t.kind !== "monster") return t.label || t.id;
+      const hp =
+        t.hpMax != null && t.hpMax !== ""
+          ? `${t.hpCurrent ?? "?"}/${t.hpMax}`
+          : t.hpCurrent != null && t.hpCurrent !== ""
+            ? String(t.hpCurrent)
+            : "?";
+      return `${t.label || "Monster"} · HP ${hp} · AC ${t.ac ?? "?"}`;
+    }
+
     function renderTokens(map) {
       const el = layers.tokens;
       if (!el) return;
@@ -284,15 +307,19 @@ window.MapSpatial = (function () {
         .map((t) => {
           const pos = worldToStyle(t.x, t.y, map);
           const sel = selectedTokenIds.includes(t.id) ? " is-selected" : "";
+          if (t.kind === "monster") {
+            return `<button type="button" class="map-pin map-pin--monster${sel}" data-token-id="${escape(t.id)}"
+            style="left:${pos.left};top:${pos.top}"
+            title="${escape(tokenTitle(t))}" aria-label="${escape(tokenTitle(t))}"></button>`;
+          }
           const size = Math.max(0.5, Number(t.size) || 1);
-          const mon = t.kind === "monster" ? " map-token--monster" : "";
-          return `<button type="button" class="map-token${sel}${mon}" data-token-id="${escape(t.id)}"
+          return `<button type="button" class="map-token${sel}" data-token-id="${escape(t.id)}"
             style="left:${pos.left};top:${pos.top};--token-size:${size}"
             title="${escape(t.label || t.id)}">${escape((t.label || "?").slice(0, 2))}</button>`;
         })
         .join("");
 
-      el.querySelectorAll(".map-token").forEach((btn) => {
+      el.querySelectorAll("[data-token-id]").forEach((btn) => {
         const id = btn.getAttribute("data-token-id");
         let dragging = false;
         let moved = false;
@@ -331,7 +358,12 @@ window.MapSpatial = (function () {
                 kind: "monster-token",
                 token: tok,
                 mapId: map.id,
-                campaignId
+                campaignId,
+                onRemoved: () => {
+                  selectedTokenIds = selectedTokenIds.filter((x) => x !== id);
+                  renderTokens(map);
+                  updateTokenDistance(map);
+                }
               });
               return;
             }
@@ -352,7 +384,9 @@ window.MapSpatial = (function () {
         });
         btn.addEventListener("contextmenu", (e) => {
           e.preventDefault();
-          if (!window.confirm("Remove this token?")) return;
+          const tok = tokensForMap(map.id).find((t) => t.id === id);
+          const label = tok?.label || tok?.id || "this token";
+          if (!window.confirm(`Remove “${label}” from this map?`)) return;
           setTokensForMap(
             map.id,
             tokensForMap(map.id).filter((t) => t.id !== id)
@@ -443,49 +477,9 @@ window.MapSpatial = (function () {
       els.file.addEventListener("change", async () => {
         const file = els.file.files && els.file.files[0];
         els.file.value = "";
-        if (!file || !window.LocalApiClient?.importUvttMap) return;
-        const sizeMb = file.size / (1024 * 1024);
-        try {
-          if (els.importBtn) {
-            els.importBtn.setAttribute("aria-busy", "true");
-            els.importBtn.dataset.label = els.importBtn.dataset.label || els.importBtn.textContent;
-            els.importBtn.textContent =
-              sizeMb >= 1 ? `Importing (${sizeMb.toFixed(1)} MB)…` : "Importing…";
-          }
-          const text = await file.text();
-          const result = await LocalApiClient.importUvttMap(campaignId, {
-            text,
-            filename: file.name
-          });
-          fullMapCache[result.map.id] = result.map;
-          await onMapsChanged?.(result.map.id);
-          window.alert(
-            [
-              result.map.name,
-              `${result.map.grid.sizeX} × ${result.map.grid.sizeY} grid`,
-              `${result.map.grid.pixelsPerGrid} px/grid`,
-              `Scale: ${result.map.scale.distancePerGrid} ${result.map.scale.unit}/grid`,
-              `${result.map.import?.stats?.walls ?? 0} LOS segments`,
-              `${result.map.import?.stats?.portals ?? 0} portals`,
-              `${result.map.import?.stats?.lights ?? 0} lights`
-            ].join("\n")
-          );
-        } catch (err) {
-          const networkFail =
-            err?.name === "TypeError" ||
-            /failed to fetch|networkerror|load failed/i.test(String(err?.message || err));
-          const msg = networkFail
-            ? `UVTT import failed to reach the server (${sizeMb.toFixed(1)} MB file). Hard-refresh after updating, confirm npm start is running, and retry.`
-            : err.message || "UVTT import failed";
-          window.alert(msg);
-        } finally {
-          if (els.importBtn) {
-            els.importBtn.removeAttribute("aria-busy");
-            if (els.importBtn.dataset.label) {
-              els.importBtn.textContent = els.importBtn.dataset.label;
-            }
-          }
-        }
+        window.alert(
+          "Import UVTT in the Location catalogue for this place, then add that location to this campaign under Locations."
+        );
       });
     }
 

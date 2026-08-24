@@ -13,7 +13,7 @@
     <aside class="sidebar" id="sidebar" aria-label="Campaign navigation">
       <header class="sidebar-header">
         <div class="sidebar-header__row">
-          <a class="back-link" href="../../index.html">← DM Library</a>
+          <a class="back-link" href="/dm/">← DM Library</a>
           <button type="button" id="sidebar-collapse" class="sidebar-collapse" aria-label="Hide navigation" aria-expanded="true" aria-controls="sidebar">
             <span class="sidebar-collapse__icon" aria-hidden="true"></span>
           </button>
@@ -153,8 +153,8 @@
             <div id="map-settings-body" class="map-settings__body">
               <div id="map-spatial-chrome" class="map-spatial-chrome">
                 <div class="map-spatial-row">
-                  <label class="map-uvtt-import btn-like">
-                    Import UVTT
+                  <label class="map-uvtt-import btn-like" title="Import UVTT in the Location catalogue, then add that location here">
+                    UVTT via Location catalogue
                     <input type="file" id="map-uvtt-file" accept=".dd2vtt,.uvtt,application/json" hidden>
                   </label>
                   <span id="map-kind-badge" class="map-kind-badge" hidden></span>
@@ -196,6 +196,14 @@
       <button type="button" class="modal-close" id="map-pin-dialog-close" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body" id="map-pin-dialog-body"></div>
+  </dialog>
+
+  <dialog id="campaign-location-picker" class="map-pin-dialog">
+    <div class="modal-header">
+      <h2>Add location to campaign</h2>
+      <button type="button" class="modal-close" id="campaign-location-picker-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body"></div>
   </dialog>
 
   <div id="entity-tooltip" class="entity-tooltip hidden" role="tooltip"></div>
@@ -286,6 +294,8 @@
   <script src="../../js/core/campaign-state-ui.js"></script>
   <script src="../../js/core/campaign-prefs.js"></script>
   <script src="../../js/core/campaign-map-state.js"></script>
+  <script src="../../js/core/campaign-locations.js"></script>
+  <script src="../../js/core/campaign-locations-ui.js"></script>
   <script src="../../js/core/chronicle-store.js"></script>
   <script src="../../js/core/chronicle-ui.js"></script>
   <script src="../../js/core/scene-meta.js"></script>

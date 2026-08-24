@@ -27,6 +27,7 @@ const party = read("js/core/party.js");
 const mapPanel = read("js/core/map-panel.js");
 const mapSpatial = read("js/core/map-spatial.js");
 const configs = read("js/core/catalogue/configs.js");
+const registry = read("js/core/entity-registry.js");
 const isle = read("campaigns/stormwreck-isle/index.html");
 const sandbox = read("campaigns/sandbox/index.html");
 const docs = read("docs/README/COMBAT-SHEET-MODAL.md");
@@ -78,9 +79,21 @@ if (!mapPanel.includes("CombatSheetModal.open") || !mapPanel.includes("spawnMons
   fail("MapPanel must open combat sheet + spawn monster tokens");
 } else pass("MapPanel combat wiring");
 
-if (!mapSpatial.includes("spawnMonsterToken") || !mapSpatial.includes('kind === "monster"')) {
-  fail("MapSpatial must spawn/open monster combat tokens");
-} else pass("MapSpatial monster tokens");
+if (!modal.includes("data-remove-from-map") || !modal.includes("removeMonsterFromMap")) {
+  fail("CombatSheetModal missing remove-from-map for monster tokens");
+} else pass("Monster remove from map");
+
+if (!modal.includes("fillCombatReference") || !modal.includes("data-combat-reference")) {
+  fail("CombatSheetModal missing combat reference stat block section");
+} else pass("Combat reference section");
+
+if (!registry.includes("catalogueId") || !registry.includes("seen.has(key)")) {
+  fail("EntityRegistry.byType must dedupe catalogue alias keys");
+} else pass("EntityRegistry byType dedupe");
+
+if (!mapSpatial.includes("map-pin map-pin--monster") || mapSpatial.includes("map-token--monster")) {
+  fail("Monster tokens should render as map-pin dots, not large map-token");
+} else pass("Monster pin dot rendering");
 
 if (!configs.includes("combatConditions")) {
   fail("NPC catalogue schema missing combatConditions");

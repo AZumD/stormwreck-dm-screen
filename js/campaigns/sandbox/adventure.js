@@ -28,7 +28,7 @@
           chapter: "main",
           title: "Campaign not found",
           content:
-            "<p>This campaign does not exist in your local library. Return to the <a href=\"../../index.html\">DM Library</a> and create one.</p>"
+            "<p>This campaign does not exist in your local library. Return to the <a href=\"/dm/\">DM Library</a> and create one.</p>"
         }
       ]
     };

@@ -122,53 +122,63 @@ window.MapPanel = (function () {
     return { src: map.image || "", source: "placeholder", locationName: entry?.name || map.title };
   }
 
-  let calibratedSummaries = [];
+  function normalizeAllowedLocationIds(campaignId) {
+    const ids = window.CampaignLocations?.listIds?.(campaignId) || [];
+    const allowed = new Set();
+    ids.forEach((raw) => {
+      allowed.add(raw);
+      allowed.add(raw.replace(/^sw-/, ""));
+      const entry = findLocationEntry(raw);
+      if (entry) allowed.add(locationLinkId(entry));
+    });
+    return allowed;
+  }
+
+  function locationEntryToMapDef(entry) {
+    const linkId = locationLinkId(entry);
+    const staticMap = window.MAPS?.[linkId];
+    const def = {
+      id: linkId,
+      title: entry.name || staticMap?.title || linkId,
+      locationId: linkId,
+      catalogueId: entry.id,
+      image: entry.mapImage || staticMap?.image || "",
+      pins: [...(staticMap?.pins || [])],
+      fromCatalogue: true
+    };
+    const cal = entry.mapCalibration;
+    if (cal && cal.grid) {
+      def.calibrated = true;
+      def.kind = cal.kind || "uvtt";
+      def.sourceFormat = cal.sourceFormat;
+      def.imageUrl = entry.mapImage;
+      def.image = entry.mapImage;
+      def.widthPx = cal.widthPx;
+      def.heightPx = cal.heightPx;
+      def.grid = cal.grid;
+      def.scale = cal.scale;
+      def.display = cal.display;
+      def.import = cal.import;
+    }
+    return def;
+  }
 
   /**
-   * Built-in MAPS plus catalogue locations that have an uploaded map
-   * but no matching campaign map definition, plus UVTT/calibrated maps.
+   * Maps for this campaign — only locations added via CampaignLocations,
+   * backed by the global location catalogue (map image / UVTT calibration).
    */
-  function getEffectiveMaps() {
+  function getEffectiveMaps(campaignId) {
+    const allowed = normalizeAllowedLocationIds(campaignId);
     const maps = {};
-    Object.values(window.MAPS || {}).forEach((m) => {
-      maps[m.id] = { ...m, pins: [...(m.pins || [])] };
-    });
+    if (!allowed.size) return maps;
 
     loadLocationEntries().forEach((entry) => {
-      if (!entry.mapImage) return;
       const linkId = locationLinkId(entry);
-      const already = Object.values(maps).some((m) => m.id === linkId || m.locationId === linkId || m.id === entry.id);
-      if (already) return;
-      maps[linkId] = {
-        id: linkId,
-        title: entry.name || linkId,
-        locationId: linkId,
-        image: "",
-        pins: [],
-        fromCatalogue: true
-      };
+      const inCampaign =
+        allowed.has(entry.id) || allowed.has(linkId) || window.CampaignLocations?.has?.(campaignId, entry.id);
+      if (!inCampaign) return;
+      maps[linkId] = locationEntryToMapDef(entry);
     });
-
-    calibratedSummaries.forEach((summary) => {
-      const def = window.MapSpatial
-        ? MapSpatial.summaryToMapDef(summary)
-        : {
-            id: summary.id,
-            title: summary.name,
-            kind: summary.kind,
-            image: summary.imageUrl,
-            imageUrl: summary.imageUrl,
-            calibrated: true,
-            pins: [],
-            grid: summary.grid,
-            scale: summary.scale,
-            display: summary.display,
-            widthPx: summary.widthPx,
-            heightPx: summary.heightPx
-          };
-      maps[def.id] = def;
-    });
-
     return maps;
   }
 
@@ -211,7 +221,7 @@ window.MapPanel = (function () {
     const modalBody = document.getElementById("modal-body");
 
     let filters = loadFilters(campaignId);
-    let maps = getEffectiveMaps();
+    let maps = getEffectiveMaps(campaignId);
     let activeMapId =
       (window.CampaignMapState?.get(campaignId)?.activeMap) ||
       Object.keys(maps)[0];
@@ -355,20 +365,23 @@ window.MapPanel = (function () {
     });
 
     function rebuildMapSelect() {
-      maps = getEffectiveMaps();
+      maps = getEffectiveMaps(campaignId);
       if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0] || null;
-      mapSelect.innerHTML = Object.values(maps)
-        .map((m) => {
-          const resolved = resolveMapImage(m);
-          const mark =
-            m.calibrated || m.kind === "uvtt"
-              ? " ▦"
-              : resolved.source === "catalogue"
-                ? " ●"
-                : "";
-          return `<option value="${m.id}"${m.id === activeMapId ? " selected" : ""}>${escape(m.title)}${mark}</option>`;
-        })
-        .join("");
+      const options = Object.values(maps).map((m) => {
+        const resolved = resolveMapImage(m);
+        const mark =
+          m.calibrated || m.kind === "uvtt"
+            ? " ▦"
+            : resolved.source === "catalogue"
+              ? " ●"
+              : "";
+        return `<option value="${m.id}"${m.id === activeMapId ? " selected" : ""}>${escape(m.title)}${mark}</option>`;
+      });
+      if (!options.length) {
+        mapSelect.innerHTML = `<option value="">Add locations in the Locations panel</option>`;
+        return;
+      }
+      mapSelect.innerHTML = options.join("");
     }
 
     if (filtersEl) {
@@ -460,7 +473,7 @@ window.MapPanel = (function () {
     });
 
     function renderMap() {
-      maps = getEffectiveMaps();
+      maps = getEffectiveMaps(campaignId);
       const map = maps[activeMapId];
       if (!map) {
         mapStage.classList.add("map-stage--error");
@@ -939,7 +952,6 @@ window.MapPanel = (function () {
         getMaps: () => maps,
         refreshPins: renderPins,
         onMapsChanged: async (newId) => {
-          calibratedSummaries = await MapSpatial.loadCalibratedMaps(campaignId);
           if (newId) activeMapId = newId;
           if (window.CampaignMapState) {
             CampaignMapState.patch(campaignId, { activeMap: activeMapId });
@@ -948,11 +960,6 @@ window.MapPanel = (function () {
           resetZoom();
           renderMap();
         }
-      });
-      MapSpatial.loadCalibratedMaps(campaignId).then((list) => {
-        calibratedSummaries = list || [];
-        rebuildMapSelect();
-        renderMap();
       });
     }
 
@@ -966,11 +973,6 @@ window.MapPanel = (function () {
         } else {
           renderParty(partyList);
         }
-        MapSpatial?.loadCalibratedMaps?.(campaignId).then((list) => {
-          calibratedSummaries = list || [];
-          rebuildMapSelect();
-          renderMap();
-        });
       },
       onLayoutChange
     };
