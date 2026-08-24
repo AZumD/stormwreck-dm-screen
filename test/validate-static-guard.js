@@ -115,6 +115,16 @@ if (isDeniedStaticPath("/api/assets/portraits/npc/x")) {
   if (css.status !== 200 || !css.body.includes("--bg-deep")) fail("frontend css broken");
   else pass("frontend css ok");
 
+  for (const p of [
+    "/assets/campaign/left-sidebar.png",
+    "/assets/campaign/main-body.png",
+    "/assets/campaign/right-sidebar.png"
+  ]) {
+    const res = await get(p);
+    if (res.status !== 200 || res.body.length < 1000) fail(`static asset missing ${p}`);
+    else pass(`static asset ${p}`);
+  }
+
   const asset = await get("/api/assets/portraits/npc/guard-test");
   if (asset.status !== 200 || !asset.body.length) fail("API asset route broken");
   else pass("API asset route ok");

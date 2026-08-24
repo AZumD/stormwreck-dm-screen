@@ -9,6 +9,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
+- Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
 - Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`)
 
 ## Persistence (authoritative)
