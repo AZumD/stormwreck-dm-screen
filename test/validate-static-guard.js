@@ -104,8 +104,12 @@ if (isDeniedStaticPath("/api/assets/portraits/npc/x")) {
   }
 
   const index = await get("/index.html");
-  if (index.status !== 200 || !index.body.includes("DM Library")) fail("frontend index.html broken");
-  else pass("frontend index.html ok");
+  if (index.status !== 200 || !index.body.includes("Stormwreck") || !index.body.includes("DM login")) {
+    fail("frontend index.html gate broken");
+  } else pass("frontend index.html ok");
+  const dm = await get("/dm/");
+  if (dm.status !== 200 || !dm.body.includes("DM Library")) fail("DM landing /dm/ broken");
+  else pass("DM landing /dm/ ok");
 
   const css = await get("/css/style.css");
   if (css.status !== 200 || !css.body.includes("--bg-deep")) fail("frontend css broken");

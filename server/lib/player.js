@@ -11,7 +11,27 @@ const authorize = require("./authorize");
 const { parseEntityRef } = require("./entity-ref");
 const { assertSafeId, assertCatalogueType } = require("./ids");
 
-const PLAYER_CATALOGUE_TYPES = new Set(["item", "skill", "feature", "spell", "race", "class"]);
+const PLAYER_CATALOGUE_TYPES = new Set([
+  "item",
+  "skill",
+  "feature",
+  "spell",
+  "race",
+  "class",
+  "monster",
+  "location"
+]);
+
+const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc"]);
+
+const LIBRARY_ATTACH_ACTIONS = new Set([
+  "inventory",
+  "skill",
+  "feature",
+  "spell",
+  "race",
+  "class"
+]);
 
 /** Mutable play-state fields players may patch on characters they control. */
 const PLAYER_STATE_WHITELIST = new Set([
@@ -683,42 +703,7 @@ async function listParty(req, campaignId) {
   return result.rows.map(toPartyCardDto);
 }
 
-async function resolveCatalogue(req, campaignId, type, id) {
-  requireDb();
-  const { user } = await authorize.requireCampaignMember(req, campaignId);
-  const safeType = assertCatalogueType(type);
-  const safeId = assertSafeId(id, "entry id");
-  if (!PLAYER_CATALOGUE_TYPES.has(safeType)) {
-    const err = new Error("Catalogue type not available to players");
-    err.status = 403;
-    throw err;
-  }
-
-  const controlledIds = await listControlledCharacterIds(user.id, campaignId);
-  if (!controlledIds.length) {
-    const err = new Error("No controlled characters in this campaign");
-    err.status = 403;
-    throw err;
-  }
-
-  let authorized = false;
-  for (const characterId of controlledIds) {
-    const bundle = await loadControlledCharacterBundle(campaignId, characterId);
-    const keys = collectAuthorizedCatalogueKeys(bundle.character.sheet, bundle.inventory);
-    if (keys.has(`${safeType}:${safeId}`)) {
-      authorized = true;
-      break;
-    }
-    /* Also allow race/class catalogue id matching sheet text id if sheet stores plain names — only by ref */
-  }
-
-  if (!authorized) {
-    const err = new Error("Catalogue entry is not linked to your characters");
-    err.status = 403;
-    throw err;
-  }
-
-  /* Prefer Postgres items table for items; fall back to file catalogue */
+async function toPlayerCatalogueDto(safeType, safeId) {
   if (safeType === "item") {
     const itemResult = await db.query(
       `SELECT id, name, item_type, rarity, value, weight, attunement, description,
@@ -734,32 +719,53 @@ async function resolveCatalogue(req, campaignId, type, id) {
         name: row.name,
         itemType: row.item_type,
         rarity: row.rarity,
+        value: row.value,
+        weight: row.weight,
+        attunement: row.attunement,
         description: row.description || "",
         properties: row.properties || "",
         notes: row.notes || "",
-        portraitUrl: row.portrait_url || null
+        category: row.category || null,
+        tags: row.tags || [],
+        portraitUrl: row.portrait_url || null,
+        actions: ["inventory"]
       };
     }
   }
 
   const entry = await catalogues.get(safeType, safeId);
-  if (!entry) {
-    const err = new Error("Not found");
-    err.status = 404;
-    throw err;
-  }
+  if (!entry) return null;
+
+  const actions = [];
+  if (safeType === "item") actions.push("inventory");
+  if (safeType === "spell") actions.push("spell");
+  if (safeType === "skill") actions.push("skill");
+  if (safeType === "feature") actions.push("feature");
+  if (safeType === "race") actions.push("race");
+  if (safeType === "class") actions.push("class");
 
   return {
     type: safeType,
     id: entry.id || safeId,
     name: entry.name || entry.title || safeId,
-    description: entry.description || entry.text || entry.rules || "",
-    summary: entry.summary || entry.effect || "",
-    level: entry.level ?? null,
+    description: entry.description || entry.text || entry.rules || entry.notes || "",
+    summary: entry.summary || entry.effect || entry.trait || "",
+    level: entry.level ?? entry.spellLevel ?? null,
     school: entry.school || null,
-    portraitUrl: entry.portrait || entry.portraitUrl || entry.image || null,
+    category: entry.category || entry.locationType || entry.itemType || null,
+    rarity: entry.rarity || null,
+    tags: Array.isArray(entry.tags) ? entry.tags : [],
+    portraitUrl: entry.portrait || entry.portraitUrl || entry.image || entry.mapImage || null,
+    cr: entry.cr || entry.challengeRating || null,
+    size: entry.size || null,
+    typeLabel: entry.monsterType || entry.type || null,
+    parentLocationRef: entry.parentLocationRef || null,
+    castingTime: entry.castingTime || null,
+    range: entry.range || null,
+    components: entry.components || null,
+    duration: entry.duration || null,
+    actions,
     rawSafe: {
-      /* Only pass non-sensitive display fields already present on the entry */
       castingTime: entry.castingTime || null,
       range: entry.range || null,
       components: entry.components || null,
@@ -767,6 +773,154 @@ async function resolveCatalogue(req, campaignId, type, id) {
       rarity: entry.rarity || null
     }
   };
+}
+
+function entrySearchBlob(entry) {
+  return [
+    entry.name,
+    entry.id,
+    entry.description,
+    entry.summary,
+    entry.category,
+    entry.school,
+    entry.rarity,
+    entry.itemType,
+    entry.locationType,
+    ...(Array.isArray(entry.tags) ? entry.tags : [])
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+async function listPlayerCatalogue(req, campaignId, type, query = {}) {
+  requireDb();
+  await authorize.requireCampaignMember(req, campaignId);
+  const safeType = assertCatalogueType(type);
+  if (PLAYER_BLOCKED_CATALOGUE_TYPES.has(safeType) || !PLAYER_CATALOGUE_TYPES.has(safeType)) {
+    const err = new Error("Catalogue type not available to players");
+    err.status = 403;
+    throw err;
+  }
+
+  const q = String(query.q || "").trim().toLowerCase();
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 40));
+  const offset = Math.max(0, Number(query.offset) || 0);
+
+  let entries = await catalogues.list(safeType);
+  if (q) {
+    entries = entries.filter((e) => entrySearchBlob(e).includes(q));
+  }
+  const total = entries.length;
+  const page = entries.slice(offset, offset + limit).map((e) => ({
+    type: safeType,
+    id: e.id,
+    name: e.name || e.title || e.id,
+    summary: e.summary || e.effect || e.description || "",
+    category: e.category || e.locationType || e.itemType || e.school || null,
+    level: e.level ?? e.spellLevel ?? null,
+    rarity: e.rarity || null,
+    cr: e.cr || e.challengeRating || null,
+    tags: Array.isArray(e.tags) ? e.tags.slice(0, 8) : []
+  }));
+
+  return { type: safeType, total, limit, offset, entries: page };
+}
+
+async function resolveCatalogue(req, campaignId, type, id) {
+  requireDb();
+  await authorize.requireCampaignMember(req, campaignId);
+  const safeType = assertCatalogueType(type);
+  const safeId = assertSafeId(id, "entry id");
+  if (PLAYER_BLOCKED_CATALOGUE_TYPES.has(safeType) || !PLAYER_CATALOGUE_TYPES.has(safeType)) {
+    const err = new Error("Catalogue type not available to players");
+    err.status = 403;
+    throw err;
+  }
+
+  const dto = await toPlayerCatalogueDto(safeType, safeId);
+  if (!dto) {
+    const err = new Error("Not found");
+    err.status = 404;
+    throw err;
+  }
+  return dto;
+}
+
+function formatAttachRef(type, id, name) {
+  const label = String(name || id).replace(/\|/g, "/");
+  return `@${type}:${id}|${label}`;
+}
+
+async function attachLibraryEntry(req, campaignId, characterId, body) {
+  requireDb();
+  await authorize.requireCharacterControl(req, campaignId, characterId);
+  const payload = body && typeof body === "object" ? body : {};
+  const safeType = assertCatalogueType(payload.type);
+  const safeId = assertSafeId(payload.id, "entry id");
+  const action = String(payload.action || "").trim();
+
+  if (PLAYER_BLOCKED_CATALOGUE_TYPES.has(safeType) || !PLAYER_CATALOGUE_TYPES.has(safeType)) {
+    const err = new Error("Catalogue type not available to players");
+    err.status = 403;
+    throw err;
+  }
+  if (!LIBRARY_ATTACH_ACTIONS.has(action)) {
+    const err = new Error("Invalid attach action");
+    err.status = 400;
+    throw err;
+  }
+
+  const expected = {
+    inventory: "item",
+    skill: "skill",
+    feature: "feature",
+    spell: "spell",
+    race: "race",
+    class: "class"
+  };
+  if (expected[action] !== safeType) {
+    const err = new Error(`Action ${action} does not apply to type ${safeType}`);
+    err.status = 400;
+    throw err;
+  }
+
+  const entry = await toPlayerCatalogueDto(safeType, safeId);
+  if (!entry) {
+    const err = new Error("Not found");
+    err.status = 404;
+    throw err;
+  }
+
+  if (action === "inventory") {
+    return addInventoryEntry(req, campaignId, characterId, {
+      itemId: safeId,
+      customName: entry.name,
+      quantity: 1
+    });
+  }
+
+  const ref = formatAttachRef(safeType, safeId, entry.name);
+  if (action === "race" || action === "class") {
+    const character = await patchMyCharacter(req, campaignId, characterId, {
+      [action]: ref
+    });
+    return { character, attached: ref, action };
+  }
+
+  const field =
+    action === "skill" ? "skillRefs" : action === "feature" ? "featureRefs" : "spellRefs";
+  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const sheet =
+    bundle.character.sheet && typeof bundle.character.sheet === "object"
+      ? bundle.character.sheet
+      : {};
+  const current = Array.isArray(sheet[field]) ? sheet[field].map(String) : [];
+  if (!current.includes(ref) && !current.some((r) => String(r).includes(`:${safeId}|`) || String(r).endsWith(`:${safeId}`))) {
+    current.push(ref);
+  }
+  const character = await patchMyCharacter(req, campaignId, characterId, { [field]: current });
+  return { character, attached: ref, action };
 }
 
 async function listNotes(req, campaignId) {
@@ -920,8 +1074,10 @@ async function readCataloguePortrait(req, campaignId, type, id) {
 
 module.exports = {
   PLAYER_CATALOGUE_TYPES,
+  PLAYER_BLOCKED_CATALOGUE_TYPES,
   PLAYER_STATE_WHITELIST,
   PLAYER_SHEET_WHITELIST,
+  LIBRARY_ATTACH_ACTIONS,
   abilityModifier,
   toMechanicalDto,
   toPartyCardDto,
@@ -935,7 +1091,9 @@ module.exports = {
   removeInventoryEntry,
   putMyCharacterPortrait,
   listParty,
+  listPlayerCatalogue,
   resolveCatalogue,
+  attachLibraryEntry,
   listNotes,
   createNote,
   updateNote,

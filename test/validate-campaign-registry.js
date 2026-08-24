@@ -26,7 +26,7 @@ function read(rel) {
 const registrySrc = read("js/core/campaign-registry.js");
 const landingSrc = read("js/landing.js");
 const adventureSrc = read("js/campaigns/sandbox/adventure.js");
-const indexHtml = read("index.html");
+const indexHtml = read("dm/index.html");
 const sandboxHtml = read("campaigns/sandbox/index.html");
 const entityUi = read("js/core/entity-ui.js");
 const campaignApp = read("js/campaign-app.js");

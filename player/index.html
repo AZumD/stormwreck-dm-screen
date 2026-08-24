@@ -49,6 +49,7 @@
       <nav class="tabs" aria-label="Sections">
         <button type="button" class="tab is-active" data-tab="characters">Sheet</button>
         <button type="button" class="tab" data-tab="party">Party</button>
+        <button type="button" class="tab" data-tab="library">Library</button>
         <button type="button" class="tab" data-tab="notes">Notes</button>
       </nav>
     </section>
@@ -155,6 +156,35 @@
         </label>
         <div class="row" id="sheet-actions">
           <button class="btn btn-primary" type="submit">Save sheet</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="add-dialog" class="dialog dialog-note dialog-add">
+    <form id="add-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="add-dialog-title">Add</h2>
+        <button type="button" class="btn btn-ghost" id="add-cancel">Cancel</button>
+      </header>
+      <div class="dialog-body">
+        <div id="add-catalogue-panel">
+          <label>Search catalogue
+            <input type="search" id="add-search" name="q" autocomplete="off" placeholder="Type to search…">
+          </label>
+          <ul id="add-results" class="add-results" role="listbox"></ul>
+          <p id="add-empty" class="empty" hidden>No matches.</p>
+          <div class="row add-custom-row">
+            <button type="button" class="btn btn-ghost" id="add-custom" hidden>Add as custom text</button>
+          </div>
+        </div>
+        <div id="add-condition-panel" hidden>
+          <label>Condition
+            <input name="condition" id="add-condition-input" maxlength="80" autocomplete="off" placeholder="e.g. prone">
+          </label>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Add condition</button>
+          </div>
         </div>
       </div>
     </form>

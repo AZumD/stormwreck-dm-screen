@@ -8,7 +8,7 @@ Evolve the player companion into a trusted, fully editable fantasy character she
 |-------|--------|
 | **5A** (this) | Fantasy visual/UX, sticky vitals, collapsible sections, theme background |
 | **5B** (done) | Full sheet edit APIs + UI (identity, abilities, lists, inventory, portrait, currency, hp_max) |
-| **5C** | Player catalogue browser (all types except NPC/PC) + attach to sheet |
+| **5C** (done) | Player catalogue browser (all types except NPC/PC) + attach to sheet |
 | **5D** | DM-controlled NPC reveal table + player Contacts directory |
 
 ## Authority model
@@ -19,6 +19,13 @@ Controllers (or campaign DM) may write whitelisted identity, sheet scalars/lists
 
 ## Catalogue browser (5C)
 Allowlist: item, spell, skill, feature, race, class, monster, location. Exclude: npc, pc.
+
+Player-only routes (membership for browse/detail; character control for attach):
+- `GET /api/player/campaigns/:id/catalogues/:type?q=&limit=&offset=`
+- `GET /api/player/campaigns/:id/catalogues/:type/:entryId`
+- `POST /api/player/campaigns/:id/characters/:characterId/library-attach` `{ action, type, id }`
+
+UI: Library tab with type chips, debounced search, detail dialog, attach buttons. Custom freeform refs remain via sheet editor.
 
 ## NPC reveal (5D)
 Table `campaign_revealed_npcs (campaign_id, npc_id, …)`. Players list/get revealed only. Minimal DM toggle later.

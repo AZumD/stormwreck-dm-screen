@@ -1,7 +1,7 @@
 # PLAYER.md
 
 ## Purpose
-Authenticated, mobile-first player companion: character sheet, party cards, private notes, and restricted catalogue lookups. Phase 5A adds a fantasy forest visual overhaul and compact collapsible sheet layout (full edit / catalogue browser / NPC reveal land in 5B–5D — see `PHASE5-PLAYER-SHEET.md`).
+Authenticated, mobile-first player companion: character sheet, party cards, private notes, and player catalogue library. Phase 5A–5C: fantasy sheet UI, full edit, and catalogue browser (NPC reveal is 5D — see `PHASE5-PLAYER-SHEET.md`).
 
 ## Surfaces
 | Path | Role |
@@ -24,7 +24,9 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | POST/PATCH/DELETE | `/api/player/campaigns/:id/characters/:characterId/inventory[/:entryId]` |
 | PUT | `/api/player/campaigns/:id/portraits/characters/:characterId` | portrait `dataUrl` |
 | GET | `/api/player/campaigns/:id/party` |
-| GET | `/api/player/campaigns/:id/catalogues/:type/:entryId` |
+| GET | `/api/player/campaigns/:id/catalogues/:type` | library browse (`q`, `limit`, `offset`) |
+| GET | `/api/player/campaigns/:id/catalogues/:type/:entryId` | entry detail |
+| POST | `/api/player/campaigns/:id/characters/:characterId/library-attach` | attach entry to sheet |
 | GET/POST | `/api/player/campaigns/:id/notes` |
 | PUT/DELETE | `/api/player/notes/:noteId` |
 | GET | `/api/player/campaigns/:id/portraits/characters/:characterId` |
@@ -34,9 +36,16 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - Sticky vitals bar: portrait, name, race/class/subclass/level, HP ±
 - Combat chips + currency row
 - Collapsible sections; **Edit sheet** dialog for identity, abilities, combat, HP, currency, ref lists, portrait upload
-- Inline add for skills/features/spells/inventory; remove inventory rows
+- Inline **+** opens add modal with catalogue search (skills/features/spells/items); custom text still available; conditions use a short text modal
 - Inspiration toggle
 - Layered forest wallpaper (`assets/player/fairy-forest-bg.jpg`); no horizontal overflow; ≥44px taps
+
+## Library UI (Phase 5C)
+- Fourth tab: browse/search item, spell, skill, feature, race, class, monster, location
+- Debounced search; horizontal type chips; detail dialog with rules text
+- Attach actions (controlled character): inventory / spell / skill / feature / set race / set class
+- Custom freeform sheet lines still work via Edit sheet / inline add
+- NPC and PC catalogues blocked; DM `/api/catalogues/*` still unavailable to players
 
 ## Sheet whitelist (trusted player)
 `name`, `level`, `race`, `class`, `subclass`, `background`, `alignment`, `abilities`, `ac`, `speed`, `initiative`, `proficiencyBonus`, `hitDice`, `savingThrows`, `languages`, `skills`, `skillRefs`, `featureRefs`, `spellRefs`, `currency`
@@ -56,7 +65,8 @@ Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional 
 - Full mechanical DTO only for characters in `character_controllers`.
 - Party returns `type='player'` cards only (name/race/class/level/portrait).
 - Notes are private to `user_id` (DM does not auto-read).
-- Catalogue resolve allowlist: item, skill, feature, spell, race, class — and only when linked to a controlled character.
+- Catalogue browse/detail allowlist: item, skill, feature, spell, race, class, monster, location. Blocked: npc, pc.
+- Library attach requires character control; action must match entry type.
 - Mutable state whitelist: `hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`.
 - Sheet whitelist: see Sheet whitelist section above.
 - Live tests use isolated fixtures; they must not mutate imported Althariel. See `docs/README/VALIDATE-PLAYER.md`.

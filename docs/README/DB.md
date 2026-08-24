@@ -80,7 +80,7 @@ All routes scope by campaign id. When `AUTH_REQUIRED=1` or `NODE_ENV=production`
 
 ## Player API (Phase 3B)
 
-See `docs/README/PLAYER.md`. Session-authenticated routes under `/api/player/…` for bootstrap, controlled characters, whitelisted state patches, party cards (`type=player` only), restricted catalogue resolve, private notes, and player-safe portraits.
+See `docs/README/PLAYER.md`. Session-authenticated routes under `/api/player/…` for bootstrap, controlled characters, whitelisted state/sheet patches, party cards (`type=player` only), player catalogue browse/detail (not npc/pc), library-attach, private notes, and player-safe portraits.
 
 ## Tables
 `users` (+ `password_hash`), `sessions`, `campaigns`, `campaign_memberships`, `characters`, `character_controllers`, `character_state`, `items`, `inventory_entries`, `player_notes`

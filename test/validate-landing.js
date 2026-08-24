@@ -18,8 +18,26 @@ function pass(msg) {
   console.log("OK:", msg);
 }
 
-const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const gate = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const html = fs.readFileSync(path.join(root, "dm/index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "css/landing.css"), "utf8");
+const homeCss = fs.readFileSync(path.join(root, "css/home.css"), "utf8");
+
+if (!gate.includes("DM login") || !gate.includes("/dm/") || !gate.includes("/player/")) {
+  fail("root gate missing DM/Player entry links");
+} else {
+  pass("root gate DM/Player links");
+}
+if (!homeCss.includes("medieval-fantasy-krvphc5yb1whovd1.jpg")) {
+  fail("home.css missing gate background image");
+} else {
+  pass("home gate background");
+}
+if (!fs.existsSync(path.join(root, "assets/medieval-fantasy-krvphc5yb1whovd1.jpg"))) {
+  fail("missing gate background asset");
+} else {
+  pass("gate background asset present");
+}
 
 if (!html.includes("landing-sidebar") || !html.includes("landing-nav")) {
   fail("landing missing catalogue sidebar markup");

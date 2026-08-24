@@ -34,7 +34,46 @@
     noteConfirmNo: document.getElementById("note-confirm-no"),
     sheetDialog: document.getElementById("sheet-dialog"),
     sheetForm: document.getElementById("sheet-form"),
-    sheetCancel: document.getElementById("sheet-cancel")
+    sheetCancel: document.getElementById("sheet-cancel"),
+    addDialog: document.getElementById("add-dialog"),
+    addForm: document.getElementById("add-form"),
+    addTitle: document.getElementById("add-dialog-title"),
+    addCancel: document.getElementById("add-cancel"),
+    addSearch: document.getElementById("add-search"),
+    addResults: document.getElementById("add-results"),
+    addEmpty: document.getElementById("add-empty"),
+    addCustom: document.getElementById("add-custom"),
+    addCataloguePanel: document.getElementById("add-catalogue-panel"),
+    addConditionPanel: document.getElementById("add-condition-panel"),
+    addConditionInput: document.getElementById("add-condition-input")
+  };
+
+  const LIBRARY_TYPES = [
+    "item",
+    "spell",
+    "skill",
+    "feature",
+    "race",
+    "class",
+    "monster",
+    "location"
+  ];
+
+  const ATTACH_LABELS = {
+    inventory: "Add to inventory",
+    spell: "Add spell",
+    skill: "Add skill",
+    feature: "Add feature",
+    race: "Set race",
+    class: "Set class"
+  };
+
+  const ADD_KINDS = {
+    skill: { title: "Add skill", catalogue: "skill", action: "skill", custom: true },
+    feature: { title: "Add feature", catalogue: "feature", action: "feature", custom: true },
+    spell: { title: "Add spell", catalogue: "spell", action: "spell", custom: true },
+    item: { title: "Add item", catalogue: "item", action: "inventory", custom: true },
+    condition: { title: "Add condition", catalogue: null, action: null, custom: false }
   };
 
   const state = {
@@ -46,7 +85,16 @@
     notes: [],
     tab: "characters",
     editingNoteId: null,
-    collapsed: loadCollapsed()
+    collapsed: loadCollapsed(),
+    libraryType: "item",
+    libraryQ: "",
+    libraryEntries: [],
+    libraryTotal: 0,
+    libraryBusy: false,
+    librarySearchTimer: null,
+    addKind: null,
+    addSearchTimer: null,
+    addResults: []
   };
 
   function collapseKey() {
@@ -151,7 +199,12 @@
       btn.classList.toggle("is-active", btn.getAttribute("data-tab") === state.tab);
     });
     els.shellTitle.textContent =
-      { characters: "Character sheet", party: "Party", notes: "Notes" }[state.tab] || "Companion";
+      {
+        characters: "Character sheet",
+        party: "Party",
+        library: "Library",
+        notes: "Notes"
+      }[state.tab] || "Companion";
   }
 
   function renderSwitcher() {
@@ -316,10 +369,7 @@
           .join("")}</div>`
       : `<p class="empty">Pack is empty.</p>`;
     const invBlock = `${inv}
-        <form id="inv-add-form" class="row-form">
-          <input name="customName" maxlength="120" placeholder="Add custom item" aria-label="Add custom item">
-          <button class="btn" type="submit">Add</button>
-        </form>`;
+        <p class="section-add"><button type="button" class="btn btn-add" data-open-add="item" aria-label="Add item">+</button></p>`;
     const condList = Array.isArray(c.state?.conditions) ? c.state.conditions : [];
     const conditionPills = condList.length
       ? `<div class="pills">${condList
@@ -366,10 +416,7 @@
         "conditions",
         "Conditions",
         `${conditionPills}
-        <form id="condition-form" class="row-form">
-          <input name="condition" maxlength="80" placeholder="Add condition" aria-label="Add condition">
-          <button class="btn" type="submit">Add</button>
-        </form>`
+        <p class="section-add"><button type="button" class="btn btn-add" data-open-add="condition" aria-label="Add condition">+</button></p>`
       )}
       ${section("abilities", "Abilities", `<div class="stats">${abilityHtml}</div>`)}
       ${section(
@@ -385,28 +432,19 @@
         "skills",
         "Skills",
         `${pills(c.skillRefs)}
-        <form id="skill-add-form" class="row-form" data-ref-field="skillRefs">
-          <input name="line" maxlength="200" placeholder="Add skill (@skill:id|Label or text)" aria-label="Add skill">
-          <button class="btn" type="submit">Add</button>
-        </form>`
+        <p class="section-add"><button type="button" class="btn btn-add" data-open-add="skill" aria-label="Add skill">+</button></p>`
       )}
       ${section(
         "features",
         "Features",
         `${pills(c.featureRefs)}
-        <form id="feature-add-form" class="row-form" data-ref-field="featureRefs">
-          <input name="line" maxlength="200" placeholder="Add feature" aria-label="Add feature">
-          <button class="btn" type="submit">Add</button>
-        </form>`
+        <p class="section-add"><button type="button" class="btn btn-add" data-open-add="feature" aria-label="Add feature">+</button></p>`
       )}
       ${section(
         "spells",
         "Spells",
         `${pills(c.spellRefs)}
-        <form id="spell-add-form" class="row-form" data-ref-field="spellRefs">
-          <input name="line" maxlength="200" placeholder="Add spell" aria-label="Add spell">
-          <button class="btn" type="submit">Add</button>
-        </form>`
+        <p class="section-add"><button type="button" class="btn btn-add" data-open-add="spell" aria-label="Add spell">+</button></p>`
       )}
       ${section("inventory", "Inventory", invBlock)}`;
   }
@@ -490,6 +528,139 @@
       ${list}`;
   }
 
+  function libraryMetaLine(entry) {
+    const bits = [
+      entry.category,
+      entry.level != null ? `Lv ${entry.level}` : null,
+      entry.rarity,
+      entry.cr != null ? `CR ${entry.cr}` : null
+    ].filter(Boolean);
+    return bits.join(" · ");
+  }
+
+  function renderLibrary() {
+    const types = LIBRARY_TYPES.map((t) => {
+      const on = t === state.libraryType ? " is-active" : "";
+      return `<button type="button" class="chip${on}" data-library-type="${esc(t)}">${esc(t)}</button>`;
+    }).join("");
+    const list = state.libraryBusy
+      ? `<p class="empty">Searching…</p>`
+      : state.libraryEntries.length
+        ? `<ul class="library-list">${state.libraryEntries
+            .map((e) => {
+              const meta = libraryMetaLine(e);
+              const summary = String(e.summary || "").slice(0, 120);
+              return `<li>
+              <button type="button" class="card library-item" data-type="${esc(e.type)}" data-id="${esc(e.id)}">
+                <h3>${esc(e.name || e.id)}</h3>
+                ${meta ? `<p class="meta">${esc(meta)}</p>` : ""}
+                ${summary ? `<p class="meta">${esc(summary)}${String(e.summary || "").length > 120 ? "…" : ""}</p>` : ""}
+              </button>
+            </li>`;
+            })
+            .join("")}</ul>`
+        : `<p class="empty">No entries match.</p>`;
+    const charHint = currentCharacter()
+      ? `Attach actions use <strong>${esc(currentCharacter().name)}</strong>.`
+      : "Select a character on the Sheet tab to attach entries.";
+    els.main.innerHTML = `
+      <label class="library-search">Search
+        <input type="search" id="library-q" value="${esc(state.libraryQ)}" placeholder="Name, tag, school…" autocomplete="off">
+      </label>
+      <div class="library-types" role="tablist" aria-label="Catalogue type">${types}</div>
+      <p class="meta">${charHint} Showing ${state.libraryEntries.length} of ${state.libraryTotal}.</p>
+      ${list}`;
+    const input = document.getElementById("library-q");
+    if (input) {
+      input.focus();
+      const len = input.value.length;
+      try {
+        input.setSelectionRange(len, len);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  async function loadLibrary(opts = {}) {
+    if (!state.campaignId) return;
+    const silent = Boolean(opts.silent);
+    if (!silent) {
+      state.libraryBusy = true;
+      if (state.tab === "library") renderLibrary();
+    }
+    const data = await safe(() =>
+      api.library(state.campaignId, state.libraryType, {
+        q: state.libraryQ,
+        limit: 40,
+        offset: 0
+      })
+    );
+    state.libraryBusy = false;
+    if (!data) {
+      state.libraryEntries = [];
+      state.libraryTotal = 0;
+      if (state.tab === "library") renderLibrary();
+      return;
+    }
+    state.libraryEntries = data.entries || [];
+    state.libraryTotal = data.total || 0;
+    if (state.tab === "library") renderLibrary();
+  }
+
+  function scheduleLibrarySearch(q) {
+    state.libraryQ = q;
+    if (state.librarySearchTimer) clearTimeout(state.librarySearchTimer);
+    state.librarySearchTimer = setTimeout(() => {
+      state.librarySearchTimer = null;
+      loadLibrary({ silent: true });
+    }, 180);
+  }
+
+  function detailFieldHtml(entry) {
+    const lines = [
+      entry.summary,
+      entry.description,
+      entry.properties,
+      entry.notes,
+      entry.school ? `School: ${entry.school}` : "",
+      entry.level != null ? `Level: ${entry.level}` : "",
+      entry.category ? `Category: ${entry.category}` : "",
+      entry.rarity ? `Rarity: ${entry.rarity}` : "",
+      entry.itemType ? `Item type: ${entry.itemType}` : "",
+      entry.cr != null ? `CR: ${entry.cr}` : "",
+      entry.size ? `Size: ${entry.size}` : "",
+      entry.typeLabel ? `Type: ${entry.typeLabel}` : "",
+      entry.castingTime || entry.rawSafe?.castingTime
+        ? `Casting time: ${entry.castingTime || entry.rawSafe.castingTime}`
+        : "",
+      entry.range || entry.rawSafe?.range ? `Range: ${entry.range || entry.rawSafe.range}` : "",
+      entry.components || entry.rawSafe?.components
+        ? `Components: ${entry.components || entry.rawSafe.components}`
+        : "",
+      entry.duration || entry.rawSafe?.duration
+        ? `Duration: ${entry.duration || entry.rawSafe.duration}`
+        : "",
+      entry.value != null && entry.value !== "" ? `Value: ${entry.value}` : "",
+      entry.weight != null && entry.weight !== "" ? `Weight: ${entry.weight}` : "",
+      entry.attunement ? "Requires attunement" : "",
+      Array.isArray(entry.tags) && entry.tags.length ? `Tags: ${entry.tags.join(", ")}` : ""
+    ].filter(Boolean);
+    if (!lines.length) return `<p class="empty">No description available.</p>`;
+    return lines.map((l) => `<p class="detail-block">${esc(l)}</p>`).join("");
+  }
+
+  function attachButtonsHtml(entry) {
+    const actions = Array.isArray(entry.actions) ? entry.actions : [];
+    if (!actions.length || !currentCharacter()) return "";
+    return `<div class="library-actions">${actions
+      .map(
+        (a) =>
+          `<button type="button" class="btn btn-primary" data-library-attach="${esc(a)}" data-attach-type="${esc(entry.type)}" data-attach-id="${esc(entry.id)}">${esc(ATTACH_LABELS[a] || a)}</button>`
+      )
+      .join("")}</div>`;
+  }
+
   async function render() {
     if (state.tab === "characters") {
       renderCharacter();
@@ -500,6 +671,10 @@
       if (!data) return;
       state.party = data.party || [];
       renderParty();
+      return;
+    }
+    if (state.tab === "library") {
+      await loadLibrary();
       return;
     }
     const data = await safe(() => api.notes(state.campaignId));
@@ -551,19 +726,161 @@
     if (!data) return;
     const entry = data.entry || {};
     els.detailTitle.textContent = entry.name || id;
-    els.detailBody.textContent =
-      [
-        entry.description || entry.summary || "",
-        entry.school ? `School: ${entry.school}` : "",
-        entry.level != null ? `Level: ${entry.level}` : "",
-        entry.rawSafe?.castingTime ? `Casting time: ${entry.rawSafe.castingTime}` : "",
-        entry.rawSafe?.range ? `Range: ${entry.rawSafe.range}` : "",
-        entry.rawSafe?.duration ? `Duration: ${entry.rawSafe.duration}` : "",
-        entry.properties || ""
-      ]
-        .filter(Boolean)
-        .join("\n\n") || "No description available.";
+    const meta = libraryMetaLine(entry);
+    els.detailBody.innerHTML = `
+      ${meta ? `<p class="detail-meta">${esc(meta)}</p>` : ""}
+      ${detailFieldHtml(entry)}
+      ${attachButtonsHtml(entry)}`;
     els.dialog.showModal();
+  }
+
+  async function attachFromLibrary(action, type, id) {
+    const c = currentCharacter();
+    if (!c) {
+      window.alert("Select a character on the Sheet tab first.");
+      return;
+    }
+    const data = await safe(() =>
+      api.libraryAttach(state.campaignId, c.id, { action, type, id })
+    );
+    if (!data) return;
+    if (data.character) applyCharacter(data.character);
+    if (els.dialog.open) els.dialog.close();
+  }
+
+  function closeAddDialog() {
+    state.addKind = null;
+    state.addResults = [];
+    if (state.addSearchTimer) {
+      clearTimeout(state.addSearchTimer);
+      state.addSearchTimer = null;
+    }
+    if (els.addDialog && els.addDialog.open) els.addDialog.close();
+  }
+
+  function renderAddResults() {
+    if (!els.addResults) return;
+    const kind = ADD_KINDS[state.addKind];
+    if (!kind || !kind.catalogue) {
+      els.addResults.innerHTML = "";
+      if (els.addEmpty) els.addEmpty.hidden = true;
+      return;
+    }
+    const rows = state.addResults;
+    if (!rows.length) {
+      els.addResults.innerHTML = "";
+      if (els.addEmpty) els.addEmpty.hidden = false;
+      return;
+    }
+    if (els.addEmpty) els.addEmpty.hidden = true;
+    els.addResults.innerHTML = rows
+      .map((e) => {
+        const meta = libraryMetaLine(e);
+        return `<li>
+          <button type="button" class="add-result" data-pick-id="${esc(e.id)}" data-pick-name="${esc(e.name || e.id)}" role="option">
+            <span class="add-result__name">${esc(e.name || e.id)}</span>
+            ${meta ? `<span class="add-result__meta">${esc(meta)}</span>` : ""}
+          </button>
+        </li>`;
+      })
+      .join("");
+  }
+
+  async function loadAddSearch(q) {
+    const kind = ADD_KINDS[state.addKind];
+    if (!kind || !kind.catalogue || !state.campaignId) return;
+    const data = await safe(() =>
+      api.library(state.campaignId, kind.catalogue, { q, limit: 30, offset: 0 })
+    );
+    state.addResults = data?.entries || [];
+    renderAddResults();
+  }
+
+  function scheduleAddSearch(q) {
+    const kind = ADD_KINDS[state.addKind];
+    if (els.addCustom) {
+      els.addCustom.hidden = !(kind && kind.custom && String(q || "").trim());
+      els.addCustom.textContent =
+        kind?.catalogue === "item" ? "Add as custom item" : "Add as custom text";
+    }
+    if (state.addSearchTimer) clearTimeout(state.addSearchTimer);
+    state.addSearchTimer = setTimeout(() => {
+      state.addSearchTimer = null;
+      loadAddSearch(String(q || "").trim());
+    }, 160);
+  }
+
+  function openAddDialog(kindKey) {
+    const kind = ADD_KINDS[kindKey];
+    if (!kind || !els.addDialog) return;
+    if (!currentCharacter()) {
+      window.alert("No controlled character selected.");
+      return;
+    }
+    state.addKind = kindKey;
+    state.addResults = [];
+    els.addTitle.textContent = kind.title;
+    const isCondition = kindKey === "condition";
+    els.addCataloguePanel.hidden = isCondition;
+    els.addConditionPanel.hidden = !isCondition;
+    if (els.addSearch) els.addSearch.value = "";
+    if (els.addConditionInput) els.addConditionInput.value = "";
+    if (els.addCustom) els.addCustom.hidden = true;
+    renderAddResults();
+    if (!els.addDialog.open) els.addDialog.showModal();
+    if (isCondition) {
+      els.addConditionInput?.focus();
+    } else {
+      els.addSearch?.focus();
+      loadAddSearch("");
+    }
+  }
+
+  async function pickCatalogueEntry(id) {
+    const kind = ADD_KINDS[state.addKind];
+    const c = currentCharacter();
+    if (!kind || !kind.catalogue || !kind.action || !c) return;
+    const data = await safe(() =>
+      api.libraryAttach(state.campaignId, c.id, {
+        action: kind.action,
+        type: kind.catalogue,
+        id
+      })
+    );
+    if (!data) return;
+    if (data.character) applyCharacter(data.character);
+    closeAddDialog();
+    renderCharacter();
+  }
+
+  async function addCustomFromDialog() {
+    const kind = ADD_KINDS[state.addKind];
+    const c = currentCharacter();
+    const text = String(els.addSearch?.value || "").trim();
+    if (!kind || !c || !text) return;
+    if (kind.catalogue === "item") {
+      const data = await safe(() =>
+        api.addInventory(state.campaignId, c.id, { customName: text, quantity: 1 })
+      );
+      if (!data) return;
+      applyCharacter(data.character);
+    } else {
+      const field =
+        kind.action === "skill"
+          ? "skillRefs"
+          : kind.action === "feature"
+            ? "featureRefs"
+            : "spellRefs";
+      const existing = (c[field] || []).map(
+        (r) => r.raw || (r.type && r.id ? `@${r.type}:${r.id}|${r.label || r.id}` : r.label || "")
+      );
+      existing.push(text);
+      const data = await safe(() => api.patchSheet(state.campaignId, c.id, { [field]: existing }));
+      if (!data) return;
+      applyCharacter(data.character);
+    }
+    closeAddDialog();
+    renderCharacter();
   }
 
   async function patchConditions(next) {
@@ -649,7 +966,19 @@
     await render();
   });
 
+  els.main.addEventListener("input", (e) => {
+    if (e.target && e.target.id === "library-q") {
+      scheduleLibrarySearch(String(e.target.value || ""));
+    }
+  });
+
   els.main.addEventListener("click", async (e) => {
+    const libType = e.target.closest("[data-library-type]");
+    if (libType) {
+      state.libraryType = libType.getAttribute("data-library-type");
+      await loadLibrary();
+      return;
+    }
     const toggle = e.target.closest("[data-toggle-section]");
     if (toggle) {
       const id = toggle.getAttribute("data-toggle-section");
@@ -665,6 +994,11 @@
     }
     if (e.target.closest("[data-edit-sheet]")) {
       openSheetEditor();
+      return;
+    }
+    const openAdd = e.target.closest("[data-open-add]");
+    if (openAdd) {
+      openAddDialog(openAdd.getAttribute("data-open-add"));
       return;
     }
     const inspire = e.target.closest("[data-inspiration]");
@@ -713,54 +1047,42 @@
     }
   });
 
-  els.main.addEventListener("submit", async (e) => {
-    if (!(e.target instanceof HTMLFormElement)) return;
-    if (e.target.id === "condition-form") {
+  if (els.addCancel) {
+    els.addCancel.addEventListener("click", () => closeAddDialog());
+  }
+  if (els.addSearch) {
+    els.addSearch.addEventListener("input", () => scheduleAddSearch(els.addSearch.value));
+  }
+  if (els.addResults) {
+    els.addResults.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-pick-id]");
+      if (!btn) return;
+      await pickCatalogueEntry(btn.getAttribute("data-pick-id"));
+    });
+  }
+  if (els.addCustom) {
+    els.addCustom.addEventListener("click", () => addCustomFromDialog());
+  }
+  if (els.addForm) {
+    els.addForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
-      const name = String(fd.get("condition") || "").trim();
+      if (state.addKind !== "condition") return;
+      const name = String(els.addConditionInput?.value || "").trim();
       if (!name) return;
       const c = currentCharacter();
       const current = Array.isArray(c?.state?.conditions) ? c.state.conditions.slice() : [];
       if (!current.includes(name)) current.push(name);
       await patchConditions(current);
-      return;
-    }
-    if (e.target.id === "inv-add-form") {
-      e.preventDefault();
-      const c = currentCharacter();
-      if (!c) return;
-      const fd = new FormData(e.target);
-      const customName = String(fd.get("customName") || "").trim();
-      if (!customName) return;
-      const data = await safe(() =>
-        api.addInventory(state.campaignId, c.id, { customName, quantity: 1 })
-      );
-      if (!data) return;
-      applyCharacter(data.character);
+      closeAddDialog();
       renderCharacter();
-      return;
-    }
-    const refField = e.target.getAttribute("data-ref-field");
-    if (refField) {
-      e.preventDefault();
-      const c = currentCharacter();
-      if (!c) return;
-      const fd = new FormData(e.target);
-      const line = String(fd.get("line") || "").trim();
-      if (!line) return;
-      const existing = (c[refField] || []).map(
-        (r) => r.raw || (r.type && r.id ? `@${r.type}:${r.id}|${r.label || r.id}` : r.label || "")
-      );
-      existing.push(line);
-      const data = await safe(() =>
-        api.patchSheet(state.campaignId, c.id, { [refField]: existing })
-      );
-      if (!data) return;
-      applyCharacter(data.character);
-      renderCharacter();
-    }
-  });
+    });
+  }
+  if (els.addDialog) {
+    els.addDialog.addEventListener("close", () => {
+      state.addKind = null;
+      state.addResults = [];
+    });
+  }
 
   if (els.sheetForm) {
     els.sheetForm.addEventListener("submit", async (e) => {
@@ -863,6 +1185,17 @@
   els.noteDialog.addEventListener("close", () => {
     state.editingNoteId = null;
     setNoteConfirm(false);
+  });
+
+  els.dialog.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-library-attach]");
+    if (!btn) return;
+    e.preventDefault();
+    await attachFromLibrary(
+      btn.getAttribute("data-library-attach"),
+      btn.getAttribute("data-attach-type"),
+      btn.getAttribute("data-attach-id")
+    );
   });
 
   (async function boot() {

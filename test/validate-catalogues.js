@@ -35,7 +35,7 @@ function pass(msg) {
 const configsCode = fs.readFileSync(path.join(root, "js/core/catalogue/configs.js"), "utf8");
 const appCode = fs.readFileSync(path.join(root, "js/core/catalogue/app.js"), "utf8");
 const storeCode = fs.readFileSync(path.join(root, "js/core/catalogue/store.js"), "utf8");
-const landing = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const landing = fs.readFileSync(path.join(root, "dm/index.html"), "utf8");
 
 const seedsCode = fs.readFileSync(path.join(root, "js/catalogue-seeds/stormwreck-isle.js"), "utf8");
 

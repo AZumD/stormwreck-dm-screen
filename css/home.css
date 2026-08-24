@@ -1,0 +1,180 @@
+/**
+ * Root gate: DM vs Player entry.
+ * Background: assets/medieval-fantasy-krvphc5yb1whovd1.jpg
+ */
+
+:root {
+  --home-ink: #f4efe4;
+  --home-muted: rgba(244, 239, 228, 0.82);
+  --home-btn: #1a2a24;
+  --home-btn-border: rgba(232, 205, 140, 0.55);
+  --home-btn-hover: #243830;
+  --home-gold: #e8cd8c;
+  --home-display: "Cinzel", "Palatino Linotype", Palatino, serif;
+  --home-body: "Source Sans 3", "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+.home-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--home-ink);
+  font-family: var(--home-body);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    url("/assets/medieval-fantasy-krvphc5yb1whovd1.jpg") center / cover no-repeat;
+  transform: scale(1.02);
+  animation: home-drift 28s ease-in-out infinite alternate;
+}
+
+.home-veil {
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 14, 18, 0.28) 0%, rgba(8, 14, 18, 0.45) 55%, rgba(8, 14, 18, 0.72) 100%),
+    radial-gradient(ellipse 70% 50% at 50% 70%, rgba(8, 20, 28, 0.35), transparent 70%);
+  pointer-events: none;
+}
+
+.home {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.home-brand {
+  margin: 0 0 0.35rem;
+  font-family: var(--home-display);
+  font-size: clamp(2.4rem, 8vw, 3.6rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+  animation: home-rise 0.9s ease-out both;
+}
+
+.home-title {
+  margin: 0;
+  font-family: var(--home-display);
+  font-size: clamp(1.15rem, 3.5vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--home-gold);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+  animation: home-rise 0.9s ease-out 0.12s both;
+}
+
+.home-lede {
+  margin: 0.55rem 0 1.5rem;
+  max-width: 28rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--home-muted);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+  animation: home-rise 0.9s ease-out 0.22s both;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  width: 100%;
+  animation: home-rise 0.9s ease-out 0.34s both;
+}
+
+.home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10.5rem;
+  min-height: 3.1rem;
+  padding: 0.75rem 1.4rem;
+  border: 1px solid var(--home-btn-border);
+  border-radius: 4px;
+  background: var(--home-btn);
+  color: var(--home-ink);
+  font-family: var(--home-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.home-btn:hover,
+.home-btn:focus-visible {
+  background: var(--home-btn-hover);
+  border-color: var(--home-gold);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.home-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes home-drift {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.06) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-bg,
+  .home-brand,
+  .home-title,
+  .home-lede,
+  .home-actions {
+    animation: none;
+  }
+}
+
+@media (min-width: 720px) {
+  .home {
+    justify-content: center;
+    padding-bottom: 2rem;
+  }
+}

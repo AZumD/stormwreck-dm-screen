@@ -111,6 +111,31 @@ if (!clientSrc.includes("patchSheet") || !clientSrc.includes("addInventory") || 
   fail("player-api-client missing sheet edit helpers");
 } else pass("player-api-client sheet edit helpers");
 
+if (!playerHtml.includes('data-tab="library"') || !appSrc.includes("loadLibrary")) {
+  fail("player library tab UI missing");
+} else pass("player library tab UI");
+if (!clientSrc.includes("libraryAttach") || !clientSrc.includes("library:")) {
+  fail("player-api-client missing library helpers");
+} else pass("player-api-client library helpers");
+if (
+  !player.PLAYER_CATALOGUE_TYPES?.has("monster") ||
+  !player.PLAYER_CATALOGUE_TYPES?.has("location") ||
+  !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("npc") ||
+  !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("pc")
+) {
+  fail("player catalogue allow/deny sets");
+} else pass("player catalogue allow/deny sets");
+if (!apiSrc.includes("listPlayerCatalogue") || !apiSrc.includes("library-attach")) {
+  fail("api missing player library routes");
+} else pass("api player library routes");
+
+if (!playerHtml.includes('id="add-dialog"') || !appSrc.includes("openAddDialog") || !appSrc.includes("data-open-add")) {
+  fail("player add-from-catalogue dialog missing");
+} else pass("player add-from-catalogue dialog");
+if (appSrc.includes('id="inv-add-form"') || appSrc.includes('id="skill-add-form"')) {
+  fail("inline add forms should be replaced by + modal");
+} else pass("inline add forms removed");
+
 if (!playerHtml.includes('id="sheet-dialog"') || !appSrc.includes("openSheetEditor")) {
   fail("player sheet editor UI missing");
 } else pass("player sheet editor UI");
@@ -286,7 +311,8 @@ async function liveTests() {
   function httpRequest(method, urlPath, { body, cookie } = {}) {
     return new Promise((resolve, reject) => {
       const server = http.createServer(async (req, res) => {
-        const handled = await handleApi(req, res, urlPath, routes);
+        const u = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+        const handled = await handleApi(req, res, u.pathname, routes);
         if (!handled) {
           res.writeHead(404, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ ok: false, error: "Not found" }));
@@ -531,7 +557,27 @@ async function liveTests() {
     { cookie: c1 }
   );
   if (catOk.status !== 200) fail(`catalogue resolve ${catOk.status}`);
-  else pass("restricted catalogue entity resolution works");
+  else pass("player catalogue entity resolution works");
+
+  const catList = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/item?q=flint&limit=20`,
+    { cookie: c1 }
+  );
+  if (
+    catList.status !== 200 ||
+    !(catList.data.entries || []).some((e) => e.id === "sw-flint-knife")
+  ) {
+    fail(`catalogue browse/search ${catList.status}`);
+  } else pass("player catalogue browse/search returns entries");
+
+  const catMonster = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/monster?limit=5`,
+    { cookie: c1 }
+  );
+  if (catMonster.status !== 200) fail(`monster catalogue browse ${catMonster.status}`);
+  else pass("monster catalogue browse allowed for players");
 
   const catNpc = await httpRequest(
     "GET",
@@ -539,11 +585,71 @@ async function liveTests() {
     { cookie: c1 }
   );
   if (catNpc.status !== 403 && catNpc.status !== 400) fail("npc catalogue type blocked");
-  else pass("NPC/monster catalogue type blocked for players");
+  else pass("NPC catalogue type blocked for players");
+
+  const catNpcList = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/npc`,
+    { cookie: c1 }
+  );
+  if (catNpcList.status !== 403 && catNpcList.status !== 400) fail("npc catalogue list blocked");
+  else pass("NPC catalogue list blocked for players");
+
+  const catPcList = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/pc`,
+    { cookie: c1 }
+  );
+  if (catPcList.status !== 403 && catPcList.status !== 400) fail("pc catalogue list blocked");
+  else pass("PC catalogue list blocked for players");
+
+  const catOut = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/item`,
+    { cookie: cOut }
+  );
+  if (catOut.status !== 403) fail(`outsider catalogue expected 403 got ${catOut.status}`);
+  else pass("outsider denied player catalogue browse");
+
+  const attachSpell = await httpRequest(
+    "POST",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}/library-attach`,
+    {
+      cookie: c1,
+      body: { action: "spell", type: "spell", id: "spell-healing-word" }
+    }
+  );
+  const attachedSpell =
+    attachSpell.status === 200 &&
+    JSON.stringify(attachSpell.data.character?.spellRefs || []).includes("spell-healing-word");
+  if (!attachedSpell) fail(`library attach spell ${attachSpell.status}`);
+  else pass("library attach adds spell to controlled character");
+
+  const attachDeny = await httpRequest(
+    "POST",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}/library-attach`,
+    {
+      cookie: c2,
+      body: { action: "spell", type: "spell", id: "spell-healing-word" }
+    }
+  );
+  if (attachDeny.status !== 403) fail(`uncontrolled attach expected 403 got ${attachDeny.status}`);
+  else pass("library attach denied for uncontrolled character");
+
+  const attachNpc = await httpRequest(
+    "POST",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}/library-attach`,
+    {
+      cookie: c1,
+      body: { action: "inventory", type: "npc", id: "anything" }
+    }
+  );
+  if (attachNpc.status !== 403 && attachNpc.status !== 400) fail("npc attach blocked");
+  else pass("library attach blocked for NPC catalogue type");
 
   const catEnum = await httpRequest("GET", "/api/catalogues/npc", { cookie: c1 });
   if (catEnum.status !== 403) fail(`catalogue enum expected 403 got ${catEnum.status}`);
-  else pass("NPC/monster catalogue enumeration remains unavailable");
+  else pass("DM catalogue enumeration remains unavailable to players");
 
   const portrait = await httpRequest(
     "GET",

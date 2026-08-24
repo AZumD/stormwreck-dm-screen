@@ -81,6 +81,23 @@ window.PlayerApiClient = (function () {
         "GET",
         `/api/player/campaigns/${enc(campaignId)}/catalogues/${enc(type)}/${enc(id)}`
       ),
+    library: (campaignId, type, { q = "", limit = 40, offset = 0 } = {}) => {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      params.set("limit", String(limit));
+      params.set("offset", String(offset));
+      const qs = params.toString();
+      return request(
+        "GET",
+        `/api/player/campaigns/${enc(campaignId)}/catalogues/${enc(type)}${qs ? `?${qs}` : ""}`
+      );
+    },
+    libraryAttach: (campaignId, characterId, payload) =>
+      request(
+        "POST",
+        `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}/library-attach`,
+        payload
+      ),
     notes: (campaignId) => request("GET", `/api/player/campaigns/${enc(campaignId)}/notes`),
     createNote: (campaignId, payload) =>
       request("POST", `/api/player/campaigns/${enc(campaignId)}/notes`, payload),

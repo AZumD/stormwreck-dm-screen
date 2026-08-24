@@ -250,6 +250,25 @@ function createApiRoutes() {
 
     route(
       "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/catalogues\/([^/]+)$/,
+      ["id", "type"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+        const result = await player.listPlayerCatalogue(req, id, p.type, {
+          q: url.searchParams.get("q") || "",
+          limit: url.searchParams.get("limit"),
+          offset: url.searchParams.get("offset")
+        });
+        sendJson(res, 200, { ok: true, campaignId: id, ...result });
+      }
+    ),
+
+    route(
+      "GET",
       /^\/api\/player\/campaigns\/([^/]+)\/catalogues\/([^/]+)\/([^/]+)$/,
       ["id", "type", "entryId"],
       async (req, res, p) => {
@@ -259,6 +278,29 @@ function createApiRoutes() {
         }
         const entry = await player.resolveCatalogue(req, id, p.type, p.entryId);
         sendJson(res, 200, { ok: true, campaignId: id, entry });
+      }
+    ),
+
+    route(
+      "POST",
+      /^\/api\/player\/campaigns\/([^/]+)\/characters\/([^/]+)\/library-attach$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const result = await player.attachLibraryEntry(req, id, characterId, body || {});
+        sendJson(res, 200, {
+          ok: true,
+          campaignId: id,
+          character: result.character,
+          attached: result.attached || null,
+          action: result.action || "inventory",
+          entryId: result.entryId || null
+        });
       }
     ),
 

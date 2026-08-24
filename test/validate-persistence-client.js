@@ -25,7 +25,7 @@ const store = read("js/core/catalogue/store.js");
 const images = read("js/core/catalogue/images.js");
 const client = read("js/core/local-api-client.js");
 const campaignApp = read("js/campaign-app.js");
-const landing = read("index.html");
+const landing = read("dm/index.html");
 const importSrc = read("js/core/browser-import.js");
 const gitignore = read(".gitignore");
 

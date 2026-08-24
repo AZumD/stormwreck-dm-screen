@@ -136,6 +136,60 @@ textarea { min-height: 6.5rem; resize: vertical; }
   font-size: 1.15rem;
   line-height: 1;
 }
+.btn-add {
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 1.35rem;
+  line-height: 1;
+  background: var(--accent-soft);
+  border-color: var(--border);
+  color: var(--accent);
+}
+.section-add {
+  margin: 0.55rem 0 0;
+}
+.add-results {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  max-height: min(42vh, 18rem);
+  overflow: auto;
+  display: grid;
+  gap: 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+.add-result {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: 0.15rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--elev);
+  color: inherit;
+  font: inherit;
+  padding: 0.65rem 0.75rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.add-result:hover,
+.add-result:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+.add-result__name {
+  font-weight: 600;
+}
+.add-result__meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.add-custom-row {
+  margin-top: 0.65rem;
+}
 
 .topbar {
   display: flex;
@@ -449,7 +503,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   position: fixed;
   left: 0; right: 0; bottom: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.2rem;
   padding: 0.35rem 0.35rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
   background: rgba(10, 16, 12, 0.92);
@@ -462,7 +516,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   min-height: 48px;
   border-radius: 10px;
@@ -471,6 +525,53 @@ textarea { min-height: 6.5rem; resize: vertical; }
 .tab.is-active {
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+.library-search {
+  margin-bottom: var(--space);
+}
+.library-types {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  margin-bottom: var(--space);
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.15rem;
+}
+.library-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.library-item {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.library-item h3 {
+  margin: 0 0 0.2rem;
+  font-family: var(--display);
+  font-size: 1.05rem;
+}
+.library-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+.dialog-body .detail-meta {
+  margin: 0 0 0.55rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.dialog-body .detail-block {
+  margin: 0.65rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .dialog {
