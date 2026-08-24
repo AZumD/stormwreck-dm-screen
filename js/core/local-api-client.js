@@ -21,7 +21,19 @@ window.LocalApiClient = (function () {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    const res = await fetch(`${base()}${path}`, opts);
+    let res;
+    try {
+      res = await fetch(`${base()}${path}`, opts);
+    } catch (err) {
+      const wrapped = new Error(
+        err?.message === "Failed to fetch"
+          ? "Failed to fetch (connection dropped — often a body larger than the server limit, or the API is offline)"
+          : err?.message || "Network request failed"
+      );
+      wrapped.cause = err;
+      wrapped.name = err?.name || "TypeError";
+      throw wrapped;
+    }
     let data = null;
     const text = await res.text();
     try {

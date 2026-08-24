@@ -58,3 +58,4 @@
 [2026-08-24] UVTT/dd2vtt import (M1–M3-lite): normalized maps, campaign-scoped images, measure, DM tokens. See docs/README/UVTT.md
 [2026-08-24] DM Library at /dm/ now requires DM account sign-in before showing the library. See docs/README/LANDING.md
 [2026-08-24] Fixed DM /dm/ boot: loading overlay no longer blocks clicks; AUTH_REQUIRED=0 opens library without login wall. See js/landing.js
+[2026-08-24] UVTT import: raise import body limit to 64MB so large .dd2vtt files no longer fail as Failed to fetch. See server/lib/http-util.js

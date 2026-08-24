@@ -13,7 +13,7 @@ const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
 const campaignMaps = require("../lib/campaign-maps");
 const mapDistance = require("../lib/map-distance");
-const { sendJson, sendError, readJsonBody } = require("../lib/http-util");
+const { sendJson, sendError, readJsonBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
 const {
   assertCatalogueType,
   assertSafeId,
@@ -601,7 +601,8 @@ function createApiRoutes() {
         const id = assertSafeId(p.id, "campaign id");
         await authorize.requireDmIfAuthRequired(req, id);
         authorize.assertMutationSafety(req);
-        const body = await readJsonBody(req);
+        /* Embedded map images routinely push UVTT JSON past the default 25MB cap. */
+        const body = await readJsonBody(req, { limit: UVTT_BODY_LIMIT });
         const text = body?.text != null ? String(body.text) : body?.content != null ? String(body.content) : "";
         if (!text.trim()) {
           return sendJson(res, 400, { ok: false, error: "UVTT text/content required" });

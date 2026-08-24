@@ -400,7 +400,14 @@ window.MapSpatial = (function () {
         const file = els.file.files && els.file.files[0];
         els.file.value = "";
         if (!file || !window.LocalApiClient?.importUvttMap) return;
+        const sizeMb = file.size / (1024 * 1024);
         try {
+          if (els.importBtn) {
+            els.importBtn.setAttribute("aria-busy", "true");
+            els.importBtn.dataset.label = els.importBtn.dataset.label || els.importBtn.textContent;
+            els.importBtn.textContent =
+              sizeMb >= 1 ? `Importing (${sizeMb.toFixed(1)} MB)…` : "Importing…";
+          }
           const text = await file.text();
           const result = await LocalApiClient.importUvttMap(campaignId, {
             text,
@@ -420,7 +427,20 @@ window.MapSpatial = (function () {
             ].join("\n")
           );
         } catch (err) {
-          window.alert(err.message || "UVTT import failed");
+          const networkFail =
+            err?.name === "TypeError" ||
+            /failed to fetch|networkerror|load failed/i.test(String(err?.message || err));
+          const msg = networkFail
+            ? `UVTT import failed to reach the server (${sizeMb.toFixed(1)} MB file). Hard-refresh after updating, confirm npm start is running, and retry.`
+            : err.message || "UVTT import failed";
+          window.alert(msg);
+        } finally {
+          if (els.importBtn) {
+            els.importBtn.removeAttribute("aria-busy");
+            if (els.importBtn.dataset.label) {
+              els.importBtn.textContent = els.importBtn.dataset.label;
+            }
+          }
         }
       });
     }

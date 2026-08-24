@@ -271,6 +271,15 @@ else pass("distance uses scale.distancePerGrid");
     fail("objects_line_of_sight fixture missing");
   } else pass("objects_line_of_sight fixture present");
 
+  const httpUtilSrc = fs.readFileSync(path.join(root, "server/lib/http-util.js"), "utf8");
+  const apiSrc = fs.readFileSync(path.join(root, "server/routes/api.js"), "utf8");
+  if (!httpUtilSrc.includes("UVTT_BODY_LIMIT") || !httpUtilSrc.includes("64 * 1024 * 1024")) {
+    fail("http-util missing UVTT_BODY_LIMIT (64MB)");
+  } else pass("UVTT body limit constant");
+  if (!apiSrc.includes("UVTT_BODY_LIMIT") || !apiSrc.includes("import-uvtt")) {
+    fail("import-uvtt route should use UVTT_BODY_LIMIT");
+  } else pass("import-uvtt uses raised body limit");
+
   /* dd2vtt filename path */
   const importedDd = await campaignMaps.importUvtt(campaignId, {
     text: fixtureText,

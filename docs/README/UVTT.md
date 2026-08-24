@@ -25,10 +25,12 @@ Images are **not** stored as base64 in JSON. Served via:
 | Method | Path |
 |--------|------|
 | GET | `/api/campaigns/:id/maps` |
-| POST | `/api/campaigns/:id/maps/import-uvtt` `{ text, filename?, mapName? }` |
+| POST | `/api/campaigns/:id/maps/import-uvtt` `{ text, filename?, mapName? }` (body limit **64MB**) |
 | GET/PATCH/DELETE | `/api/campaigns/:id/maps/:mapId` |
 | GET | `/api/campaigns/:id/maps/:mapId/image` |
 | POST | `/api/campaigns/:id/maps/:mapId/distance` |
+
+Large `.dd2vtt` files (tens of MB with embedded images) need the UVTT body limit; the default API cap is 25MB and used to surface as browser **Failed to fetch**.
 
 ## Client
 | File | Role |

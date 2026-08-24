@@ -3,26 +3,62 @@
  */
 "use strict";
 
-function readBody(req, limit = 25 * 1024 * 1024) {
+const DEFAULT_BODY_LIMIT = 25 * 1024 * 1024;
+/** UVTT embeds a full map image as base64 — real files often exceed 25MB. */
+const UVTT_BODY_LIMIT = 64 * 1024 * 1024;
+
+function readBody(req, limit = DEFAULT_BODY_LIMIT) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
+    let settled = false;
+
+    function fail(err) {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    }
+
+    function ok(value) {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    }
+
     req.on("data", (chunk) => {
+      if (settled) return;
       size += chunk.length;
       if (size > limit) {
-        reject(Object.assign(new Error("Body too large"), { status: 413 }));
-        req.destroy();
+        /* Drain the rest so the connection can still send a JSON 413. */
+        req.resume();
+        fail(
+          Object.assign(
+            new Error(
+              `Body too large (max ${Math.floor(limit / (1024 * 1024))}MB). UVTT maps with embedded images can be large — try a smaller export or raise the server limit.`
+            ),
+            { status: 413 }
+          )
+        );
         return;
       }
       chunks.push(chunk);
     });
-    req.on("end", () => resolve(Buffer.concat(chunks)));
-    req.on("error", reject);
+    req.on("end", () => {
+      if (settled) return;
+      ok(Buffer.concat(chunks));
+    });
+    req.on("error", fail);
   });
 }
 
-async function readJsonBody(req) {
-  const buf = await readBody(req);
+async function readJsonBody(req, options = {}) {
+  const limit =
+    options.limit != null
+      ? Number(options.limit)
+      : options.maxBytes != null
+        ? Number(options.maxBytes)
+        : DEFAULT_BODY_LIMIT;
+  const buf = await readBody(req, limit);
   if (!buf.length) return undefined;
   try {
     return JSON.parse(buf.toString("utf8"));
@@ -34,6 +70,7 @@ async function readJsonBody(req) {
 }
 
 function sendJson(res, status, data) {
+  if (res.headersSent || res.writableEnded) return;
   const body = JSON.stringify(data);
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -62,6 +99,8 @@ function matchRoute(method, pathname, routes) {
 }
 
 module.exports = {
+  DEFAULT_BODY_LIMIT,
+  UVTT_BODY_LIMIT,
   readBody,
   readJsonBody,
   sendJson,
