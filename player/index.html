@@ -191,6 +191,24 @@
     </form>
   </dialog>
 
+  <dialog id="create-character-dialog" class="dialog dialog-note">
+    <form id="create-character-form" class="dialog-inner stack-form">
+      <div class="dialog-head">
+        <h2 id="create-character-title">Create character</h2>
+        <button type="button" class="btn btn-ghost" id="create-character-cancel">Cancel</button>
+      </div>
+      <div class="dialog-body">
+        <label class="field">
+          <span>Name</span>
+          <input name="name" id="create-character-name" required maxlength="80" autocomplete="off" placeholder="Character name">
+        </label>
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Create</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <script src="/js/core/player-api-client.js"></script>
   <script src="/js/player-app.js"></script>
 </body>

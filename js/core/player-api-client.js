@@ -39,6 +39,8 @@ window.PlayerApiClient = (function () {
     bootstrap: () => request("GET", "/api/player/bootstrap"),
     myCharacters: (campaignId) =>
       request("GET", `/api/player/campaigns/${enc(campaignId)}/characters/mine`),
+    createCharacter: (campaignId, payload) =>
+      request("POST", `/api/player/campaigns/${enc(campaignId)}/characters`, payload || {}),
     patchState: (campaignId, characterId, patch) =>
       request(
         "PATCH",

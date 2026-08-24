@@ -12,7 +12,7 @@ Evolve the player companion into a trusted, fully editable fantasy character she
 | **5D** (done) | DM-controlled NPC reveal table + player People directory |
 
 ## Authority model
-Campaign character in Postgres is authoritative (`characters`, `character_state`, `inventory_entries`). Catalogue PC JSON remains import source only — sheet edits do not auto-write catalogue files.
+Campaign character in Postgres is authoritative for play (`characters`, `character_state`, `inventory_entries`). Linked PC catalogue JSON (`catalogue_pc_id`) is the DM-facing projection/editor: player create and sheet edits remirror into the catalogue; DM catalogue saves for linked PCs write back into Postgres. See `docs/README/PC-CATALOGUE-MIRROR.md`.
 
 ## Player edit permissions (5B+)
 Controllers (or campaign DM) may write whitelisted identity, sheet scalars/lists, state (incl. `hp_max`), inventory, portrait. Cannot write catalogues, other players’ notes, or unrevealed NPCs.

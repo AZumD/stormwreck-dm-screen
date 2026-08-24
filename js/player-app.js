@@ -45,7 +45,11 @@
     addCustom: document.getElementById("add-custom"),
     addCataloguePanel: document.getElementById("add-catalogue-panel"),
     addConditionPanel: document.getElementById("add-condition-panel"),
-    addConditionInput: document.getElementById("add-condition-input")
+    addConditionInput: document.getElementById("add-condition-input"),
+    createCharacterDialog: document.getElementById("create-character-dialog"),
+    createCharacterForm: document.getElementById("create-character-form"),
+    createCharacterName: document.getElementById("create-character-name"),
+    createCharacterCancel: document.getElementById("create-character-cancel")
   };
 
   const LIBRARY_TYPES = [
@@ -348,7 +352,11 @@
   function renderCharacter() {
     const c = currentCharacter();
     if (!c) {
-      els.main.innerHTML = `<p class="empty">No controlled characters in this campaign.</p>`;
+      els.main.innerHTML = `
+        <p class="empty">No controlled characters in this campaign.</p>
+        <p class="section-add">
+          <button type="button" class="btn btn-primary" data-create-character>Create character</button>
+        </p>`;
       return;
     }
     const abs = c.abilities || {};
@@ -490,6 +498,26 @@
     state.editingNoteId = null;
     setNoteConfirm(false);
     if (els.noteDialog.open) els.noteDialog.close();
+  }
+
+  function openCreateCharacterDialog() {
+    if (!els.createCharacterDialog || !els.createCharacterForm) return;
+    els.createCharacterForm.reset();
+    els.createCharacterDialog.showModal();
+    els.createCharacterName?.focus();
+  }
+
+  async function submitCreateCharacter(e) {
+    e.preventDefault();
+    const name = String(els.createCharacterName?.value || "").trim();
+    if (!name || !state.campaignId) return;
+    const data = await safe(() => api.createCharacter(state.campaignId, { name }));
+    if (!data?.character) return;
+    applyCharacter(data.character);
+    state.characterId = data.character.id;
+    els.createCharacterDialog?.close();
+    renderSwitcher();
+    renderCharacter();
   }
 
   function openNoteEditor(note) {
@@ -980,6 +1008,13 @@
     show("login");
   }
 
+  els.createCharacterCancel?.addEventListener("click", () => {
+    els.createCharacterDialog?.close();
+  });
+  els.createCharacterForm?.addEventListener("submit", (e) => {
+    submitCreateCharacter(e);
+  });
+
   els.loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     els.loginError.hidden = true;
@@ -1029,6 +1064,10 @@
   });
 
   els.main.addEventListener("click", async (e) => {
+    if (e.target.closest("[data-create-character]")) {
+      openCreateCharacterDialog();
+      return;
+    }
     const libType = e.target.closest("[data-library-type]");
     if (libType) {
       state.libraryType = libType.getAttribute("data-library-type");

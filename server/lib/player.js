@@ -8,6 +8,7 @@ const db = require("./db");
 const catalogues = require("./catalogues");
 const assets = require("./assets");
 const authorize = require("./authorize");
+const pcCatalogueMirror = require("./pc-catalogue-mirror");
 const { parseEntityRef } = require("./entity-ref");
 const { assertSafeId, assertCatalogueType } = require("./ids");
 
@@ -378,6 +379,91 @@ async function getMyCharacter(req, campaignId, characterId) {
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
+/**
+ * Player creates a PC in a campaign they belong to. Writes Postgres + mirrors to DM PC catalogue.
+ */
+async function createMyCharacter(req, campaignId, body) {
+  requireDb();
+  const { user } = await authorize.requireCampaignMember(req, campaignId);
+  const payload = body && typeof body === "object" ? body : {};
+  const name = String(payload.name || "").trim();
+  if (!name) {
+    const err = new Error("name is required");
+    err.status = 400;
+    throw err;
+  }
+
+  const id = pcCatalogueMirror.generatePcId();
+  const level = Number.isFinite(Number(payload.level))
+    ? Math.max(1, Math.min(30, Math.floor(Number(payload.level))))
+    : 1;
+  const race = String(payload.race || "").trim();
+  const klass = String(payload.class || "").trim();
+  const subclass = String(payload.subclass || "").trim();
+  const background = String(payload.background || "").trim();
+  const alignment = String(payload.alignment || "").trim();
+  const abilities =
+    payload.abilities && typeof payload.abilities === "object" && !Array.isArray(payload.abilities)
+      ? normalizeAbilities(payload.abilities)
+      : {};
+  const hpMax = Number.isFinite(Number(payload.hpMax))
+    ? Math.max(1, Math.floor(Number(payload.hpMax)))
+    : 10;
+  const hpCurrent = Number.isFinite(Number(payload.hpCurrent))
+    ? Math.floor(Number(payload.hpCurrent))
+    : hpMax;
+  const ac = Number.isFinite(Number(payload.ac)) ? Number(payload.ac) : 10;
+
+  const sheet = {
+    race,
+    class: klass,
+    subclass,
+    background,
+    alignment,
+    abilities,
+    ac,
+    speed: payload.speed != null ? String(payload.speed) : "30 ft.",
+    proficiencyBonus: "+2",
+    hitDice: payload.hitDice != null ? String(payload.hitDice) : "1d8",
+    skillRefs: [],
+    featureRefs: [],
+    spellRefs: [],
+    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+    updatedAt: Date.now()
+  };
+
+  try {
+    await db.query(
+      `INSERT INTO characters (
+        id, campaign_id, name, type, level, portrait_url, sheet, catalogue_pc_id, updated_at
+      ) VALUES ($1, $2, $3, 'player', $4, NULL, $5::jsonb, $1, now())`,
+      [id, campaignId, name, level, JSON.stringify(sheet)]
+    );
+    await db.query(
+      `INSERT INTO character_state (
+        character_id, hp_current, hp_max, hp_temp, conditions, death_saves,
+        spell_slots, class_resources, inspiration, extras, updated_at
+      ) VALUES ($1, $2, $3, 0, '[]'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, false, '{}'::jsonb, now())`,
+      [id, hpCurrent, hpMax]
+    );
+    await db.query(
+      `INSERT INTO character_controllers (character_id, user_id) VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [id, user.id]
+    );
+    await pcCatalogueMirror.mirrorCharacterToCatalogue(id);
+  } catch (err) {
+    await db.query("DELETE FROM characters WHERE id = $1 AND campaign_id = $2", [id, campaignId]).catch(
+      () => false
+    );
+    await catalogues.remove("pc", id).catch(() => false);
+    throw err;
+  }
+
+  const bundle = await loadControlledCharacterBundle(campaignId, id);
+  return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+}
+
 async function patchMyCharacterState(req, campaignId, characterId, body) {
   requireDb();
   await authorize.requireCharacterControl(req, campaignId, characterId);
@@ -459,6 +545,7 @@ async function patchMyCharacterState(req, campaignId, characterId, body) {
     ]
   );
 
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
@@ -566,6 +653,7 @@ async function patchMyCharacter(req, campaignId, characterId, body) {
     [name, level, JSON.stringify(sheet), characterId, campaignId]
   );
 
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
@@ -607,6 +695,7 @@ async function addInventoryEntry(req, campaignId, characterId, body) {
     ]
   );
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   return {
     entryId: result.rows[0].id,
     character: toMechanicalDto(bundle.character, bundle.state, bundle.inventory)
@@ -648,6 +737,7 @@ async function updateInventoryEntry(req, campaignId, characterId, entryId, body)
      WHERE id = $5`,
     [quantity, equipped, notes, customName, id]
   );
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
@@ -668,6 +758,7 @@ async function removeInventoryEntry(req, campaignId, characterId, entryId) {
     err.status = 404;
     throw err;
   }
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
@@ -686,6 +777,7 @@ async function putMyCharacterPortrait(req, campaignId, characterId, body) {
     `UPDATE characters SET portrait_url = $1, updated_at = now() WHERE id = $2 AND campaign_id = $3`,
     [saved.url, characterId, campaignId]
   );
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
@@ -1084,6 +1176,7 @@ module.exports = {
   getBootstrap,
   listMyCharacters,
   getMyCharacter,
+  createMyCharacter,
   patchMyCharacterState,
   patchMyCharacter,
   addInventoryEntry,

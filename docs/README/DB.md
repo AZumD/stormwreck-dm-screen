@@ -48,7 +48,7 @@ See `docs/README/AUTH.md` for authentication details and `docs/README/DEPLOY.md`
 |---------|---------------------|--------|
 | Party roster refs (`type` + catalogue id) | File `campaign-state.json` | DM UI / `CampaignState` unchanged |
 | Scene status, NPC memory, timeline, clock | File `campaign-state.json` | Unchanged |
-| Global PC catalogue JSON | File `data/catalogues/pc/*.json` | Import **source**; not auto-synced after import |
+| Global PC catalogue JSON | File `data/catalogues/pc/*.json` | DM projection/editor for linked campaign PCs; mirrored both ways via `pc-catalogue-mirror` (see `PC-CATALOGUE-MIRROR.md`) |
 | Campaign character row + sheet | Postgres `characters` | Scoped by `campaign_id`; `id` preserves legacy PC id |
 | Character display name | Postgres `characters.name` | Trimmed from catalogue `name`; raw import string kept in `sheet.sourceName` |
 | HP, conditions, resources | Postgres `character_state` | Updated via character state API |

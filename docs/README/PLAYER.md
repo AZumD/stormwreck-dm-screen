@@ -12,6 +12,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | `css/player.css` | Mobile-first fairy-forest styles |
 | `assets/player/fairy-forest-bg.jpg` | Static theme wallpaper (deploys with app) |
 | `server/lib/player.js` | Player DTOs + authorization-scoped queries |
+| `server/lib/pc-catalogue-mirror.js` | Bidirectional PC catalogue ↔ campaign character sync |
 | `server/lib/revealed-npcs.js` | Phase 5D revealed NPC queries |
 
 ## Player API (session required)
@@ -19,6 +20,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 |--------|------|
 | GET | `/api/player/bootstrap` |
 | GET | `/api/player/campaigns/:id/characters/mine` |
+| POST | `/api/player/campaigns/:id/characters` | create PC (mirrors into DM PC catalogue) |
 | GET | `/api/player/campaigns/:id/characters/:characterId` |
 | PATCH | `/api/player/campaigns/:id/characters/:characterId` | sheet / identity (5B) |
 | PATCH | `/api/player/campaigns/:id/characters/:characterId/state` | play state incl. `hp_max` |
@@ -36,6 +38,8 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | GET | `/api/player/campaigns/:id/portraits/catalogues/:type/:entryId` |
 
 ## Sheet UI (Phase 5A–5B)
+- Empty campaign: **Create character** opens an in-app dialog (no `prompt`)
+- Created PCs are written to Postgres and mirrored into the DM PC catalogue (see `PC-CATALOGUE-MIRROR.md`)
 - Sticky vitals bar: portrait, name, race/class/subclass/level, HP ±
 - Combat chips + currency row
 - Collapsible sections; **Edit sheet** dialog for identity, abilities, combat, HP, currency, ref lists, portrait upload

@@ -63,3 +63,4 @@
 [2026-08-24] DM UI cleanup: Map|Party tabs, Layers popover, expanded map mode shell, compact multi-track ambience strip+dock. See docs/README/MAP-PANEL.md, MEDIA-BAR.md, LAYOUT-PANELS.md
 [2026-08-24] Fixed map expand distortion: --map-aspect from image; expanded stage no longer aspect-ratio:auto/flex-grow. See js/core/map-panel.js, css/style.css, test/validate-map-aspect.js
 [2026-08-24] Map UX: default cursor when zoomed (grab only while panning); live measure tape line + distance preview. See js/core/map-spatial.js, css/style.css, docs/README/MAP-SPATIAL.md
+[2026-08-24] Player PC create + bidirectional PC catalogue sync (Postgres sheet <-> DM catalogue). See server/lib/pc-catalogue-mirror.js, docs/README/PC-CATALOGUE-MIRROR.md

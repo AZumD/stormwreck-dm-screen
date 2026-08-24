@@ -126,6 +126,16 @@ function createApiRoutes() {
       sendJson(res, 200, { ok: true, campaignId: id, characters: list });
     }),
 
+    route("POST", /^\/api\/player\/campaigns\/([^/]+)\/characters$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const body = await readJsonBody(req);
+      const character = await player.createMyCharacter(req, id, body || {});
+      sendJson(res, 201, { ok: true, campaignId: id, character });
+    }),
+
     route(
       "GET",
       /^\/api\/player\/campaigns\/([^/]+)\/characters\/([^/]+)$/,
@@ -461,7 +471,31 @@ function createApiRoutes() {
         await authorize.requireDmIfAuthRequired(req, id);
         const body = await readJsonBody(req);
         const state = await characters.updateCharacterState(id, characterId, body || {});
+        try {
+          const pcCatalogueMirror = require("../lib/pc-catalogue-mirror");
+          await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
+        } catch {
+          /* mirror is best-effort after DM state writes */
+        }
         sendJson(res, 200, { ok: true, campaignId: id, characterId, state });
+      }
+    ),
+
+    route(
+      "POST",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/mirror-to-catalogue$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        await authorize.requireDmIfAuthRequired(req, id);
+        await characters.getCharacter(id, characterId);
+        const pcCatalogueMirror = require("../lib/pc-catalogue-mirror");
+        const entry = await pcCatalogueMirror.mirrorCharacterToCatalogue(characterId);
+        sendJson(res, 200, { ok: true, campaignId: id, characterId, entry });
       }
     ),
 
@@ -542,7 +576,13 @@ function createApiRoutes() {
       const type = assertCatalogueType(p.type);
       const id = assertSafeId(p.id, "entry id");
       const body = await readJsonBody(req);
-      const entry = await catalogues.upsert(type, id, body || {});
+      let entry;
+      if (type === "pc" && db.isDbConfigured()) {
+        const pcCatalogueMirror = require("../lib/pc-catalogue-mirror");
+        entry = await pcCatalogueMirror.upsertPcFromDm(id, body || {});
+      } else {
+        entry = await catalogues.upsert(type, id, body || {});
+      }
       sendJson(res, 200, { ok: true, entry });
     }),
 
