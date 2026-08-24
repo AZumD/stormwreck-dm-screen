@@ -154,6 +154,91 @@ function createApiRoutes() {
       }
     ),
 
+    route(
+      "PATCH",
+      /^\/api\/player\/campaigns\/([^/]+)\/characters\/([^/]+)$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const character = await player.patchMyCharacter(req, id, characterId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, character });
+      }
+    ),
+
+    route(
+      "POST",
+      /^\/api\/player\/campaigns\/([^/]+)\/characters\/([^/]+)\/inventory$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const result = await player.addInventoryEntry(req, id, characterId, body || {});
+        sendJson(res, 201, { ok: true, campaignId: id, entryId: result.entryId, character: result.character });
+      }
+    ),
+
+    route(
+      "PATCH",
+      /^\/api\/player\/campaigns\/([^/]+)\/characters\/([^/]+)\/inventory\/([^/]+)$/,
+      ["id", "characterId", "entryId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const character = await player.updateInventoryEntry(
+          req,
+          id,
+          characterId,
+          p.entryId,
+          body || {}
+        );
+        sendJson(res, 200, { ok: true, campaignId: id, character });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/player\/campaigns\/([^/]+)\/characters\/([^/]+)\/inventory\/([^/]+)$/,
+      ["id", "characterId", "entryId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const character = await player.removeInventoryEntry(req, id, characterId, p.entryId);
+        sendJson(res, 200, { ok: true, campaignId: id, character });
+      }
+    ),
+
+    route(
+      "PUT",
+      /^\/api\/player\/campaigns\/([^/]+)\/portraits\/characters\/([^/]+)$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const character = await player.putMyCharacterPortrait(req, id, characterId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, character });
+      }
+    ),
+
     route("GET", /^\/api\/player\/campaigns\/([^/]+)\/party$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
       if (!db.isDbConfigured()) {

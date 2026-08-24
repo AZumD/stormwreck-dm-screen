@@ -45,6 +45,36 @@ window.PlayerApiClient = (function () {
         `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}/state`,
         patch
       ),
+    patchSheet: (campaignId, characterId, patch) =>
+      request(
+        "PATCH",
+        `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}`,
+        patch
+      ),
+    addInventory: (campaignId, characterId, payload) =>
+      request(
+        "POST",
+        `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}/inventory`,
+        payload
+      ),
+    updateInventory: (campaignId, characterId, entryId, payload) =>
+      request(
+        "PATCH",
+        `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}/inventory/${enc(entryId)}`,
+        payload
+      ),
+    removeInventory: (campaignId, characterId, entryId) =>
+      request(
+        "DELETE",
+        `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}/inventory/${enc(entryId)}`,
+        {}
+      ),
+    putPortrait: (campaignId, characterId, dataUrl) =>
+      request(
+        "PUT",
+        `/api/player/campaigns/${enc(campaignId)}/portraits/characters/${enc(characterId)}`,
+        { dataUrl }
+      ),
     party: (campaignId) => request("GET", `/api/player/campaigns/${enc(campaignId)}/party`),
     catalogue: (campaignId, type, id) =>
       request(

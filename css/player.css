@@ -403,6 +403,48 @@ textarea { min-height: 6.5rem; resize: vertical; }
 }
 .inspire-row .meta { margin: 0; }
 
+.sheet-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: var(--space);
+}
+.sheet-form-heading {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.form-grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.form-grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.currency-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: var(--space);
+}
+.inv-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+.dialog-sheet .dialog-body {
+  max-height: calc(90dvh - 4.5rem);
+}
+
+@media (min-width: 720px) {
+  .form-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
 .tabs {
   position: fixed;
   left: 0; right: 0; bottom: 0;

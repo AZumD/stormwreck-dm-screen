@@ -19,7 +19,10 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | GET | `/api/player/bootstrap` |
 | GET | `/api/player/campaigns/:id/characters/mine` |
 | GET | `/api/player/campaigns/:id/characters/:characterId` |
-| PATCH | `/api/player/campaigns/:id/characters/:characterId/state` |
+| PATCH | `/api/player/campaigns/:id/characters/:characterId` | sheet / identity (5B) |
+| PATCH | `/api/player/campaigns/:id/characters/:characterId/state` | play state incl. `hp_max` |
+| POST/PATCH/DELETE | `/api/player/campaigns/:id/characters/:characterId/inventory[/:entryId]` |
+| PUT | `/api/player/campaigns/:id/portraits/characters/:characterId` | portrait `dataUrl` |
 | GET | `/api/player/campaigns/:id/party` |
 | GET | `/api/player/campaigns/:id/catalogues/:type/:entryId` |
 | GET/POST | `/api/player/campaigns/:id/notes` |
@@ -27,13 +30,19 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | GET | `/api/player/campaigns/:id/portraits/characters/:characterId` |
 | GET | `/api/player/campaigns/:id/portraits/catalogues/:type/:entryId` |
 
-## Sheet UI (Phase 5A)
-- Sticky vitals bar: portrait, name, race/class/level, HP ±
-- Combat chips: AC, speed, proficiency, hit dice
-- Collapsible sections (skills/features/spells/inventory default collapsed); preference in `localStorage`
-- Inspiration toggle (uses existing state whitelist)
-- Layered forest wallpaper + parchment panels; no horizontal overflow; ≥44px taps
+## Sheet UI (Phase 5A–5B)
+- Sticky vitals bar: portrait, name, race/class/subclass/level, HP ±
+- Combat chips + currency row
+- Collapsible sections; **Edit sheet** dialog for identity, abilities, combat, HP, currency, ref lists, portrait upload
+- Inline add for skills/features/spells/inventory; remove inventory rows
+- Inspiration toggle
+- Layered forest wallpaper (`assets/player/fairy-forest-bg.jpg`); no horizontal overflow; ≥44px taps
 
+## Sheet whitelist (trusted player)
+`name`, `level`, `race`, `class`, `subclass`, `background`, `alignment`, `abilities`, `ac`, `speed`, `initiative`, `proficiencyBonus`, `hitDice`, `savingThrows`, `languages`, `skills`, `skillRefs`, `featureRefs`, `spellRefs`, `currency`
+
+## State whitelist
+`hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`
 ## Notes UI
 Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional character, Save, Cancel, and Delete with an in-sheet confirmation. No `prompt()` / `confirm()`. List and editor show created/updated timestamps.
 
@@ -48,7 +57,8 @@ Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional 
 - Party returns `type='player'` cards only (name/race/class/level/portrait).
 - Notes are private to `user_id` (DM does not auto-read).
 - Catalogue resolve allowlist: item, skill, feature, spell, race, class — and only when linked to a controlled character.
-- Mutable state whitelist: `hp_current`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`.
+- Mutable state whitelist: `hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`.
+- Sheet whitelist: see Sheet whitelist section above.
 - Live tests use isolated fixtures; they must not mutate imported Althariel. See `docs/README/VALIDATE-PLAYER.md`.
 
 ## Local login

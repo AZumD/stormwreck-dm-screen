@@ -93,8 +93,27 @@ if (!fs.existsSync(path.join(root, "docs/README/PHASE5-PLAYER-SHEET.md"))) {
 } else pass("PHASE5-PLAYER-SHEET.md present");
 
 const player = require(path.join(root, "server/lib/player.js"));
-if (!player.PLAYER_STATE_WHITELIST?.has("hp_current")) fail("PLAYER_STATE_WHITELIST");
-else pass("PLAYER_STATE_WHITELIST");
+if (!player.PLAYER_STATE_WHITELIST?.has("hp_current") || !player.PLAYER_STATE_WHITELIST?.has("hp_max")) {
+  fail("PLAYER_STATE_WHITELIST");
+} else pass("PLAYER_STATE_WHITELIST");
+if (!player.PLAYER_SHEET_WHITELIST?.has("name") || !player.PLAYER_SHEET_WHITELIST?.has("currency")) {
+  fail("PLAYER_SHEET_WHITELIST");
+} else pass("PLAYER_SHEET_WHITELIST");
+
+if (!apiSrc.includes("characters\\/([^/]+)\\/inventory") && !apiSrc.includes("characters/([^/]+)/inventory")) {
+  fail("api missing player inventory routes");
+} else pass("api player inventory routes");
+if (!apiSrc.includes("patchMyCharacter")) fail("api missing patchMyCharacter wiring");
+else pass("api patchMyCharacter wiring");
+
+const clientSrc = fs.readFileSync(path.join(root, "js/core/player-api-client.js"), "utf8");
+if (!clientSrc.includes("patchSheet") || !clientSrc.includes("addInventory") || !clientSrc.includes("putPortrait")) {
+  fail("player-api-client missing sheet edit helpers");
+} else pass("player-api-client sheet edit helpers");
+
+if (!playerHtml.includes('id="sheet-dialog"') || !appSrc.includes("openSheetEditor")) {
+  fail("player sheet editor UI missing");
+} else pass("player sheet editor UI");
 if (player.abilityModifier(16) !== 3 || player.abilityModifier(6) !== -2) fail("abilityModifier");
 else pass("abilityModifier");
 
@@ -404,6 +423,65 @@ async function liveTests() {
   );
   if (patchBad.status !== 400) fail("non-whitelist fields should 400");
   else pass("state update rejects non-whitelisted sheet fields");
+
+  const sheetOk = await httpRequest("PATCH", `/api/player/campaigns/${campaignId}/characters/${pcAId}`, {
+    cookie: c1,
+    body: {
+      name: "Renamed Hero",
+      level: 2,
+      race: "Elf",
+      class: "Wizard",
+      subclass: "Evoker",
+      ac: 13,
+      abilities: { str: 8, dex: 14, con: 12, int: 16, wis: 10, cha: 12 },
+      skillRefs: ["@skill:skill-arcana|Arcana", "Custom Lore"],
+      currency: { gp: 15, sp: 4 }
+    }
+  });
+  if (
+    sheetOk.status !== 200 ||
+    sheetOk.data.character?.name !== "Renamed Hero" ||
+    sheetOk.data.character?.level !== 2 ||
+    sheetOk.data.character?.subclass !== "Evoker" ||
+    sheetOk.data.character?.currency?.gp !== 15
+  ) {
+    fail(`sheet patch failed ${sheetOk.status} ${JSON.stringify(sheetOk.data)}`);
+  } else pass("player sheet patch updates identity and currency");
+
+  const hpMaxOk = await httpRequest(
+    "PATCH",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}/state`,
+    { cookie: c1, body: { hp_max: 12, hp_current: 10 } }
+  );
+  if (hpMaxOk.status !== 200 || hpMaxOk.data.character?.state?.hpMax !== 12) {
+    fail(`hp_max patch failed ${hpMaxOk.status}`);
+  } else pass("player can patch hp_max");
+
+  const invAdd = await httpRequest(
+    "POST",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}/inventory`,
+    { cookie: c1, body: { customName: "Lucky rock", quantity: 1 } }
+  );
+  if (invAdd.status !== 201 || !(invAdd.data.character?.inventory || []).some((i) => i.customName === "Lucky rock")) {
+    fail(`inventory add failed ${invAdd.status}`);
+  } else pass("player inventory add custom item");
+  const entryId = invAdd.data.entryId;
+  const invDel = await httpRequest(
+    "DELETE",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}/inventory/${entryId}`,
+    { cookie: c1, body: {} }
+  );
+  if (invDel.status !== 200 || (invDel.data.character?.inventory || []).some((i) => i.id === entryId)) {
+    fail(`inventory delete failed ${invDel.status}`);
+  } else pass("player inventory remove");
+
+  const sheetDeny = await httpRequest(
+    "PATCH",
+    `/api/player/campaigns/${campaignId}/characters/${pcAId}`,
+    { cookie: c2, body: { name: "Nope" } }
+  );
+  if (sheetDeny.status !== 403) fail("uncontrolled sheet patch should 403");
+  else pass("player sheet patch denied for uncontrolled character");
 
   const partyRes = await httpRequest("GET", `/api/player/campaigns/${campaignId}/party`, {
     cookie: c1

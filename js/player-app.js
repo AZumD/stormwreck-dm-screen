@@ -31,7 +31,10 @@
     noteCancel: document.getElementById("note-cancel"),
     noteConfirmBox: document.getElementById("note-confirm-delete"),
     noteConfirmYes: document.getElementById("note-confirm-yes"),
-    noteConfirmNo: document.getElementById("note-confirm-no")
+    noteConfirmNo: document.getElementById("note-confirm-no"),
+    sheetDialog: document.getElementById("sheet-dialog"),
+    sheetForm: document.getElementById("sheet-form"),
+    sheetCancel: document.getElementById("sheet-cancel")
   };
 
   const state = {
@@ -195,17 +198,96 @@
     return `${updated || created} · ${scope}`;
   }
 
-  function pills(refs) {
+  function pills(refs, removeAttr) {
     if (!refs || !refs.length) return `<p class="empty">Nothing here yet.</p>`;
     return `<div class="pills">${refs
-      .map((r) => {
+      .map((r, index) => {
         const label = esc(r.label || r.id || r.raw);
+        const removeBtn = removeAttr
+          ? `<button type="button" class="pill" data-remove-ref="${esc(removeAttr)}" data-index="${index}" aria-label="Remove">× ${label}</button>`
+          : null;
+        if (removeBtn) return removeBtn;
         if (r.type && r.id) {
           return `<button type="button" class="pill" data-type="${esc(r.type)}" data-id="${esc(r.id)}">${label}</button>`;
         }
         return `<span class="pill static">${label}</span>`;
       })
       .join("")}</div>`;
+  }
+
+  function refsToLines(refs) {
+    return (refs || [])
+      .map((r) => r.raw || (r.type && r.id ? `@${r.type}:${r.id}|${r.label || r.id}` : r.label || ""))
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  function linesToRefs(text) {
+    return String(text || "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+  }
+
+  function currencyLine(c) {
+    const cur = c.currency || {};
+    const parts = ["pp", "gp", "ep", "sp", "cp"]
+      .map((k) => {
+        const n = Number(cur[k]);
+        return Number.isFinite(n) && n > 0 ? `${n} ${k.toUpperCase()}` : null;
+      })
+      .filter(Boolean);
+    return parts.length ? parts.join(" · ") : "No coins tracked.";
+  }
+
+  function applyCharacter(dataCharacter) {
+    if (!dataCharacter) return;
+    const idx = state.characters.findIndex((x) => x.id === dataCharacter.id);
+    if (idx >= 0) state.characters[idx] = dataCharacter;
+    else state.characters.push(dataCharacter);
+    state.characterId = dataCharacter.id;
+  }
+
+  function openSheetEditor() {
+    const c = currentCharacter();
+    if (!c || !els.sheetForm) return;
+    const f = els.sheetForm;
+    f.name.value = c.name || "";
+    f.race.value = c.race || "";
+    f.class.value = c.class || "";
+    f.subclass.value = c.subclass || "";
+    f.level.value = c.level ?? "";
+    f.background.value = c.background || "";
+    f.alignment.value = c.alignment || "";
+    const abs = c.abilities || {};
+    ["str", "dex", "con", "int", "wis", "cha"].forEach((k) => {
+      f[k].value = abs[k]?.score ?? "";
+    });
+    f.ac.value = c.ac ?? "";
+    f.speed.value = c.speed || "";
+    f.proficiencyBonus.value = c.proficiencyBonus || "";
+    f.hitDice.value = c.hitDice || "";
+    f.hpCurrent.value = c.state?.hpCurrent ?? "";
+    f.hpMax.value = c.state?.hpMax ?? "";
+    f.hpTemp.value = c.state?.hpTemp ?? 0;
+    const cur = c.currency || {};
+    ["cp", "sp", "ep", "gp", "pp"].forEach((k) => {
+      f[k].value = cur[k] ?? 0;
+    });
+    f.skillRefs.value = refsToLines(c.skillRefs);
+    f.featureRefs.value = refsToLines(c.featureRefs);
+    f.spellRefs.value = refsToLines(c.spellRefs);
+    f.portrait.value = "";
+    if (!els.sheetDialog.open) els.sheetDialog.showModal();
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("Could not read image"));
+      reader.readAsDataURL(file);
+    });
   }
 
   function renderCharacter() {
@@ -222,16 +304,22 @@
       })
       .join("");
     const inv = (c.inventory || []).length
-      ? `<div class="pills">${c.inventory
+      ? `<div class="inv-list">${c.inventory
           .map((item) => {
             const label = esc(item.itemName || item.customName || item.itemId || "Item");
-            if (item.itemId) {
-              return `<button type="button" class="pill" data-type="item" data-id="${esc(item.itemId)}">${label}${item.equipped ? " · eq" : ""}</button>`;
-            }
-            return `<span class="pill static">${label}</span>`;
+            const eq = item.equipped ? " · eq" : "";
+            const open = item.itemId
+              ? `<button type="button" class="pill" data-type="item" data-id="${esc(item.itemId)}">${label}${eq}</button>`
+              : `<span class="pill static">${label}${eq}</span>`;
+            return `<div class="inv-row">${open}<button type="button" class="btn btn-ghost" data-remove-inv="${esc(item.id)}">Remove</button></div>`;
           })
           .join("")}</div>`
       : `<p class="empty">Pack is empty.</p>`;
+    const invBlock = `${inv}
+        <form id="inv-add-form" class="row-form">
+          <input name="customName" maxlength="120" placeholder="Add custom item" aria-label="Add custom item">
+          <button class="btn" type="submit">Add</button>
+        </form>`;
     const condList = Array.isArray(c.state?.conditions) ? c.state.conditions : [];
     const conditionPills = condList.length
       ? `<div class="pills">${condList
@@ -243,11 +331,15 @@
       : `<p class="empty">No conditions.</p>`;
     const inspired = Boolean(c.state?.inspiration);
     const temp = c.state?.hpTemp ? ` · temp ${esc(c.state.hpTemp)}` : "";
-    const metaLine = `${c.race || "—"} · ${c.class || "—"} · L${c.level}`;
+    const subclassBit = c.subclass ? ` (${c.subclass})` : "";
+    const metaLine = `${c.race || "—"} · ${c.class || "—"}${subclassBit} · L${c.level}`;
 
     els.main.innerHTML = `
+      <div class="sheet-toolbar">
+        <button type="button" class="btn btn-primary" data-edit-sheet>Edit sheet</button>
+      </div>
       <div class="vitals">
-        <img class="portrait" src="${esc(api.portraitUrl(state.campaignId, c.id))}" alt="" onerror="window.PlayerAppDropPortrait(this)">
+        <img class="portrait" src="${esc(api.portraitUrl(state.campaignId, c.id))}?t=${Date.now()}" alt="" onerror="window.PlayerAppDropPortrait(this)">
         <div class="vitals-text">
           <h2 class="sheet-name">${esc(c.name)}</h2>
           <p class="vitals-meta">${esc(metaLine)}</p>
@@ -266,6 +358,9 @@
         <span class="combat-chip">Speed <strong>${esc(c.speed || "—")}</strong></span>
         <span class="combat-chip">Prof <strong>${esc(c.proficiencyBonus || "—")}</strong></span>
         <span class="combat-chip">HD <strong>${esc(c.hitDice || "—")}</strong></span>
+      </div>
+      <div class="currency-row" aria-label="Currency">
+        <span class="combat-chip">${esc(currencyLine(c))}</span>
       </div>
       ${section(
         "conditions",
@@ -286,10 +381,34 @@
           <button type="button" class="btn ${inspired ? "btn-primary" : ""}" data-inspiration="${inspired ? "0" : "1"}" aria-pressed="${inspired ? "true" : "false"}">${inspired ? "Inspired" : "Mark inspiration"}</button>
         </div>`
       )}
-      ${section("skills", "Skills", pills(c.skillRefs))}
-      ${section("features", "Features", pills(c.featureRefs))}
-      ${section("spells", "Spells", pills(c.spellRefs))}
-      ${section("inventory", "Inventory", inv)}`;
+      ${section(
+        "skills",
+        "Skills",
+        `${pills(c.skillRefs)}
+        <form id="skill-add-form" class="row-form" data-ref-field="skillRefs">
+          <input name="line" maxlength="200" placeholder="Add skill (@skill:id|Label or text)" aria-label="Add skill">
+          <button class="btn" type="submit">Add</button>
+        </form>`
+      )}
+      ${section(
+        "features",
+        "Features",
+        `${pills(c.featureRefs)}
+        <form id="feature-add-form" class="row-form" data-ref-field="featureRefs">
+          <input name="line" maxlength="200" placeholder="Add feature" aria-label="Add feature">
+          <button class="btn" type="submit">Add</button>
+        </form>`
+      )}
+      ${section(
+        "spells",
+        "Spells",
+        `${pills(c.spellRefs)}
+        <form id="spell-add-form" class="row-form" data-ref-field="spellRefs">
+          <input name="line" maxlength="200" placeholder="Add spell" aria-label="Add spell">
+          <button class="btn" type="submit">Add</button>
+        </form>`
+      )}
+      ${section("inventory", "Inventory", invBlock)}`;
   }
 
   function renderParty() {
@@ -454,8 +573,7 @@
       api.patchState(state.campaignId, c.id, { conditions: next })
     );
     if (!data) return;
-    const idx = state.characters.findIndex((x) => x.id === c.id);
-    if (idx >= 0) state.characters[idx] = data.character;
+    applyCharacter(data.character);
     renderCharacter();
   }
 
@@ -468,8 +586,7 @@
       api.patchState(state.campaignId, c.id, { hp_current: current + delta })
     );
     if (!data) return;
-    const idx = state.characters.findIndex((x) => x.id === c.id);
-    if (idx >= 0) state.characters[idx] = data.character;
+    applyCharacter(data.character);
     renderCharacter();
   }
 
@@ -480,8 +597,7 @@
       api.patchState(state.campaignId, c.id, { inspiration: Boolean(on) })
     );
     if (!data) return;
-    const idx = state.characters.findIndex((x) => x.id === c.id);
-    if (idx >= 0) state.characters[idx] = data.character;
+    applyCharacter(data.character);
     renderCharacter();
   }
 
@@ -547,9 +663,25 @@
       }
       return;
     }
+    if (e.target.closest("[data-edit-sheet]")) {
+      openSheetEditor();
+      return;
+    }
     const inspire = e.target.closest("[data-inspiration]");
     if (inspire) {
       await setInspiration(inspire.getAttribute("data-inspiration") === "1");
+      return;
+    }
+    const removeInv = e.target.closest("[data-remove-inv]");
+    if (removeInv) {
+      const c = currentCharacter();
+      if (!c) return;
+      const data = await safe(() =>
+        api.removeInventory(state.campaignId, c.id, removeInv.getAttribute("data-remove-inv"))
+      );
+      if (!data) return;
+      applyCharacter(data.character);
+      renderCharacter();
       return;
     }
     const removeCond = e.target.closest("[data-remove-condition]");
@@ -592,8 +724,113 @@
       const current = Array.isArray(c?.state?.conditions) ? c.state.conditions.slice() : [];
       if (!current.includes(name)) current.push(name);
       await patchConditions(current);
+      return;
+    }
+    if (e.target.id === "inv-add-form") {
+      e.preventDefault();
+      const c = currentCharacter();
+      if (!c) return;
+      const fd = new FormData(e.target);
+      const customName = String(fd.get("customName") || "").trim();
+      if (!customName) return;
+      const data = await safe(() =>
+        api.addInventory(state.campaignId, c.id, { customName, quantity: 1 })
+      );
+      if (!data) return;
+      applyCharacter(data.character);
+      renderCharacter();
+      return;
+    }
+    const refField = e.target.getAttribute("data-ref-field");
+    if (refField) {
+      e.preventDefault();
+      const c = currentCharacter();
+      if (!c) return;
+      const fd = new FormData(e.target);
+      const line = String(fd.get("line") || "").trim();
+      if (!line) return;
+      const existing = (c[refField] || []).map(
+        (r) => r.raw || (r.type && r.id ? `@${r.type}:${r.id}|${r.label || r.id}` : r.label || "")
+      );
+      existing.push(line);
+      const data = await safe(() =>
+        api.patchSheet(state.campaignId, c.id, { [refField]: existing })
+      );
+      if (!data) return;
+      applyCharacter(data.character);
+      renderCharacter();
     }
   });
+
+  if (els.sheetForm) {
+    els.sheetForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const c = currentCharacter();
+      if (!c) return;
+      const f = els.sheetForm;
+      const sheetPatch = {
+        name: f.name.value.trim(),
+        race: f.race.value,
+        class: f.class.value,
+        subclass: f.subclass.value,
+        level: Number(f.level.value),
+        background: f.background.value,
+        alignment: f.alignment.value,
+        abilities: {
+          str: Number(f.str.value),
+          dex: Number(f.dex.value),
+          con: Number(f.con.value),
+          int: Number(f.int.value),
+          wis: Number(f.wis.value),
+          cha: Number(f.cha.value)
+        },
+        ac: Number(f.ac.value),
+        speed: f.speed.value,
+        proficiencyBonus: f.proficiencyBonus.value,
+        hitDice: f.hitDice.value,
+        skillRefs: linesToRefs(f.skillRefs.value),
+        featureRefs: linesToRefs(f.featureRefs.value),
+        spellRefs: linesToRefs(f.spellRefs.value),
+        currency: {
+          cp: Number(f.cp.value) || 0,
+          sp: Number(f.sp.value) || 0,
+          ep: Number(f.ep.value) || 0,
+          gp: Number(f.gp.value) || 0,
+          pp: Number(f.pp.value) || 0
+        }
+      };
+      const statePatch = {
+        hp_current: Number(f.hpCurrent.value),
+        hp_max: Number(f.hpMax.value),
+        hp_temp: Number(f.hpTemp.value) || 0
+      };
+      const sheetData = await safe(() => api.patchSheet(state.campaignId, c.id, sheetPatch));
+      if (!sheetData) return;
+      applyCharacter(sheetData.character);
+      const stateData = await safe(() => api.patchState(state.campaignId, c.id, statePatch));
+      if (stateData) applyCharacter(stateData.character);
+      const file = f.portrait.files && f.portrait.files[0];
+      if (file) {
+        try {
+          const dataUrl = await fileToDataUrl(file);
+          const portraitData = await safe(() =>
+            api.putPortrait(state.campaignId, c.id, dataUrl)
+          );
+          if (portraitData) applyCharacter(portraitData.character);
+        } catch (err) {
+          window.alert(err.message || "Portrait upload failed");
+        }
+      }
+      if (els.sheetDialog.open) els.sheetDialog.close();
+      renderCharacter();
+    });
+  }
+
+  if (els.sheetCancel) {
+    els.sheetCancel.addEventListener("click", () => {
+      if (els.sheetDialog.open) els.sheetDialog.close();
+    });
+  }
 
   els.noteForm.addEventListener("submit", async (e) => {
     e.preventDefault();

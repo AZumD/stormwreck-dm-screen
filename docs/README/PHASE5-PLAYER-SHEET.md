@@ -7,7 +7,7 @@ Evolve the player companion into a trusted, fully editable fantasy character she
 | Phase | Scope |
 |-------|--------|
 | **5A** (this) | Fantasy visual/UX, sticky vitals, collapsible sections, theme background |
-| **5B** | Full sheet edit APIs + UI (identity, abilities, lists, inventory, portrait) |
+| **5B** (done) | Full sheet edit APIs + UI (identity, abilities, lists, inventory, portrait, currency, hp_max) |
 | **5C** | Player catalogue browser (all types except NPC/PC) + attach to sheet |
 | **5D** | DM-controlled NPC reveal table + player Contacts directory |
 

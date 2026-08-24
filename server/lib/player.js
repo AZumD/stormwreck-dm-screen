@@ -16,6 +16,7 @@ const PLAYER_CATALOGUE_TYPES = new Set(["item", "skill", "feature", "spell", "ra
 /** Mutable play-state fields players may patch on characters they control. */
 const PLAYER_STATE_WHITELIST = new Set([
   "hp_current",
+  "hp_max",
   "hp_temp",
   "conditions",
   "class_resources",
@@ -23,6 +24,78 @@ const PLAYER_STATE_WHITELIST = new Set([
   "inspiration",
   "death_saves"
 ]);
+
+/** Structural sheet / identity fields players may patch (trusted). */
+const PLAYER_SHEET_WHITELIST = new Set([
+  "name",
+  "level",
+  "race",
+  "class",
+  "subclass",
+  "background",
+  "alignment",
+  "abilities",
+  "ac",
+  "speed",
+  "initiative",
+  "proficiencyBonus",
+  "hitDice",
+  "savingThrows",
+  "languages",
+  "skills",
+  "skillRefs",
+  "featureRefs",
+  "spellRefs",
+  "currency"
+]);
+
+const CURRENCY_KEYS = ["cp", "sp", "ep", "gp", "pp"];
+
+function normalizeCurrency(raw) {
+  if (raw == null) return null;
+  if (typeof raw !== "object" || Array.isArray(raw)) {
+    const err = new Error("currency must be an object");
+    err.status = 400;
+    throw err;
+  }
+  const out = {};
+  CURRENCY_KEYS.forEach((k) => {
+    if (!Object.prototype.hasOwnProperty.call(raw, k)) return;
+    const n = Number(raw[k]);
+    if (!Number.isFinite(n) || n < 0 || Math.floor(n) !== n) {
+      const err = new Error(`currency.${k} must be a non-negative integer`);
+      err.status = 400;
+      throw err;
+    }
+    out[k] = n;
+  });
+  return out;
+}
+
+function normalizeRefList(raw, fieldName) {
+  if (!Array.isArray(raw)) {
+    const err = new Error(`${fieldName} must be an array`);
+    err.status = 400;
+    throw err;
+  }
+  return raw.map((item) => String(item ?? "").trim()).filter(Boolean);
+}
+
+function normalizeAbilities(raw) {
+  if (raw == null) return null;
+  if (typeof raw !== "object" || Array.isArray(raw)) {
+    const err = new Error("abilities must be an object");
+    err.status = 400;
+    throw err;
+  }
+  const out = {};
+  ["str", "dex", "con", "int", "wis", "cha"].forEach((k) => {
+    if (!Object.prototype.hasOwnProperty.call(raw, k)) return;
+    const n = Number(raw[k]);
+    out[k] = Number.isFinite(n) ? n : raw[k];
+  });
+  return out;
+}
 
 function requireDb() {
   if (!db.isDbConfigured()) {
@@ -107,6 +180,7 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
     portraitUrl: characterRow.portrait_url || null,
     race: sheet.race != null ? String(sheet.race) : "",
     class: sheet.class != null ? String(sheet.class) : "",
+    subclass: sheet.subclass != null ? String(sheet.subclass) : "",
     background: sheet.background != null ? String(sheet.background) : "",
     alignment: sheet.alignment != null ? String(sheet.alignment) : "",
     abilities,
@@ -117,6 +191,10 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
     savingThrows: sheet.savingThrows != null ? String(sheet.savingThrows) : "",
     languages: sheet.languages != null ? String(sheet.languages) : "",
     skillsText: sheet.skills != null ? String(sheet.skills) : "",
+    currency:
+      sheet.currency && typeof sheet.currency === "object" && !Array.isArray(sheet.currency)
+        ? sheet.currency
+        : null,
     skillRefs: parseRefList(sheet.skillRefs),
     featureRefs: parseRefList(sheet.featureRefs),
     spellRefs: parseRefList(sheet.spellRefs),
@@ -137,7 +215,8 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
       quantity: row.quantity,
       equipped: Boolean(row.equipped),
       notes: row.notes || "",
-      customName: row.custom_name || null
+      customName: row.custom_name || null,
+      custom: !row.item_id
     }))
   };
 }
@@ -311,7 +390,7 @@ async function patchMyCharacterState(req, campaignId, characterId, body) {
     hp_current: Object.prototype.hasOwnProperty.call(patch, "hp_current")
       ? patch.hp_current
       : current.hp_current,
-    hp_max: current.hp_max,
+    hp_max: Object.prototype.hasOwnProperty.call(patch, "hp_max") ? patch.hp_max : current.hp_max,
     hp_temp: Object.prototype.hasOwnProperty.call(patch, "hp_temp") ? patch.hp_temp : current.hp_temp ?? 0,
     conditions: Object.prototype.hasOwnProperty.call(patch, "conditions")
       ? patch.conditions
@@ -338,6 +417,7 @@ async function patchMyCharacterState(req, campaignId, characterId, body) {
     ) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9,$10::jsonb, now())
     ON CONFLICT (character_id) DO UPDATE SET
       hp_current = EXCLUDED.hp_current,
+      hp_max = EXCLUDED.hp_max,
       hp_temp = EXCLUDED.hp_temp,
       conditions = EXCLUDED.conditions,
       death_saves = EXCLUDED.death_saves,
@@ -359,6 +439,233 @@ async function patchMyCharacterState(req, campaignId, characterId, body) {
     ]
   );
 
+  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+}
+
+async function patchMyCharacter(req, campaignId, characterId, body) {
+  requireDb();
+  await authorize.requireCharacterControl(req, campaignId, characterId);
+
+  const patch = body && typeof body === "object" ? body : {};
+  const unknown = Object.keys(patch).filter((k) => !PLAYER_SHEET_WHITELIST.has(k));
+  if (unknown.length) {
+    const err = new Error(`Non-whitelisted sheet fields: ${unknown.join(", ")}`);
+    err.status = 400;
+    throw err;
+  }
+  if (!Object.keys(patch).length) {
+    const err = new Error("No sheet fields provided");
+    err.status = 400;
+    throw err;
+  }
+
+  const rowResult = await db.query(
+    `SELECT id, name, level, sheet FROM characters WHERE id = $1 AND campaign_id = $2`,
+    [characterId, campaignId]
+  );
+  if (!rowResult.rows.length) {
+    const err = new Error("Not found");
+    err.status = 404;
+    throw err;
+  }
+  const row = rowResult.rows[0];
+  const sheet =
+    row.sheet && typeof row.sheet === "object" && !Array.isArray(row.sheet) ? { ...row.sheet } : {};
+
+  let name = row.name;
+  let level = row.level;
+
+  if (Object.prototype.hasOwnProperty.call(patch, "name")) {
+    name = String(patch.name || "").trim();
+    if (!name) {
+      const err = new Error("name is required");
+      err.status = 400;
+      throw err;
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "level")) {
+    const n = Number(patch.level);
+    if (!Number.isFinite(n) || n < 1 || n > 30 || Math.floor(n) !== n) {
+      const err = new Error("level must be an integer from 1 to 30");
+      err.status = 400;
+      throw err;
+    }
+    level = n;
+  }
+
+  const stringFields = [
+    "race",
+    "class",
+    "subclass",
+    "background",
+    "alignment",
+    "speed",
+    "initiative",
+    "proficiencyBonus",
+    "hitDice",
+    "savingThrows",
+    "languages",
+    "skills"
+  ];
+  stringFields.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(patch, key)) {
+      sheet[key] = String(patch[key] ?? "");
+    }
+  });
+
+  if (Object.prototype.hasOwnProperty.call(patch, "ac")) {
+    const n = Number(patch.ac);
+    sheet.ac = Number.isFinite(n) ? n : patch.ac;
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "abilities")) {
+    const abilities = normalizeAbilities(patch.abilities);
+    sheet.abilities = { ...(sheet.abilities || {}), ...abilities };
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "skillRefs")) {
+    sheet.skillRefs = normalizeRefList(patch.skillRefs, "skillRefs");
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "featureRefs")) {
+    sheet.featureRefs = normalizeRefList(patch.featureRefs, "featureRefs");
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "spellRefs")) {
+    sheet.spellRefs = normalizeRefList(patch.spellRefs, "spellRefs");
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "currency")) {
+    const currency = normalizeCurrency(patch.currency);
+    if (currency && Object.keys(currency).length) sheet.currency = { ...(sheet.currency || {}), ...currency };
+    else if (patch.currency === null) delete sheet.currency;
+    else sheet.currency = { ...(sheet.currency || {}), ...currency };
+  }
+
+  sheet.updatedAt = Date.now();
+
+  await db.query(
+    `UPDATE characters SET name = $1, level = $2, sheet = $3::jsonb, updated_at = now()
+     WHERE id = $4 AND campaign_id = $5`,
+    [name, level, JSON.stringify(sheet), characterId, campaignId]
+  );
+
+  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+}
+
+async function addInventoryEntry(req, campaignId, characterId, body) {
+  requireDb();
+  await authorize.requireCharacterControl(req, campaignId, characterId);
+  const payload = body && typeof body === "object" ? body : {};
+  const itemId = payload.itemId ? assertSafeId(String(payload.itemId), "item id") : null;
+  const customName = String(payload.customName || payload.name || "").trim();
+  if (!itemId && !customName) {
+    const err = new Error("itemId or customName required");
+    err.status = 400;
+    throw err;
+  }
+  if (itemId) {
+    const item = await db.query("SELECT id FROM items WHERE id = $1", [itemId]);
+    if (!item.rows.length) {
+      /* Allow dangling catalogue refs that exist as files but not items table */
+    }
+  }
+  const quantity = Number(payload.quantity);
+  const qty = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
+  const equipped = Boolean(payload.equipped);
+  const notes = String(payload.notes || "");
+  const result = await db.query(
+    `INSERT INTO inventory_entries (
+      character_id, item_id, quantity, equipped, notes, custom_name, custom_item, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, now())
+    RETURNING id`,
+    [
+      characterId,
+      itemId,
+      qty,
+      equipped,
+      notes,
+      customName || null,
+      JSON.stringify(itemId ? { source: "player" } : { source: "player", custom: true })
+    ]
+  );
+  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  return {
+    entryId: result.rows[0].id,
+    character: toMechanicalDto(bundle.character, bundle.state, bundle.inventory)
+  };
+}
+
+async function updateInventoryEntry(req, campaignId, characterId, entryId, body) {
+  requireDb();
+  await authorize.requireCharacterControl(req, campaignId, characterId);
+  const id = assertSafeId(String(entryId), "inventory id");
+  const existing = await db.query(
+    `SELECT ie.* FROM inventory_entries ie
+     JOIN characters c ON c.id = ie.character_id
+     WHERE ie.id = $1 AND ie.character_id = $2 AND c.campaign_id = $3`,
+    [id, characterId, campaignId]
+  );
+  if (!existing.rows.length) {
+    const err = new Error("Not found");
+    err.status = 404;
+    throw err;
+  }
+  const row = existing.rows[0];
+  const patch = body && typeof body === "object" ? body : {};
+  const quantity = Object.prototype.hasOwnProperty.call(patch, "quantity")
+    ? Math.max(1, Math.floor(Number(patch.quantity)) || 1)
+    : row.quantity;
+  const equipped = Object.prototype.hasOwnProperty.call(patch, "equipped")
+    ? Boolean(patch.equipped)
+    : Boolean(row.equipped);
+  const notes = Object.prototype.hasOwnProperty.call(patch, "notes")
+    ? String(patch.notes || "")
+    : row.notes || "";
+  const customName = Object.prototype.hasOwnProperty.call(patch, "customName")
+    ? String(patch.customName || "").trim() || null
+    : row.custom_name;
+  await db.query(
+    `UPDATE inventory_entries
+     SET quantity = $1, equipped = $2, notes = $3, custom_name = $4, updated_at = now()
+     WHERE id = $5`,
+    [quantity, equipped, notes, customName, id]
+  );
+  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+}
+
+async function removeInventoryEntry(req, campaignId, characterId, entryId) {
+  requireDb();
+  await authorize.requireCharacterControl(req, campaignId, characterId);
+  const id = assertSafeId(String(entryId), "inventory id");
+  const result = await db.query(
+    `DELETE FROM inventory_entries ie
+     USING characters c
+     WHERE ie.id = $1 AND ie.character_id = $2 AND c.id = ie.character_id AND c.campaign_id = $3
+     RETURNING ie.id`,
+    [id, characterId, campaignId]
+  );
+  if (!result.rows.length) {
+    const err = new Error("Not found");
+    err.status = 404;
+    throw err;
+  }
+  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+}
+
+async function putMyCharacterPortrait(req, campaignId, characterId, body) {
+  requireDb();
+  await authorize.requireCharacterControl(req, campaignId, characterId);
+  const dataUrl = body?.dataUrl || body?.image || "";
+  if (!dataUrl) {
+    const err = new Error("dataUrl required");
+    err.status = 400;
+    throw err;
+  }
+  const saved = await assets.putFromDataUrl("portraits", "pc", characterId, dataUrl);
+  await db.query(
+    `UPDATE characters SET portrait_url = $1, updated_at = now() WHERE id = $2 AND campaign_id = $3`,
+    [saved.url, characterId, campaignId]
+  );
   const bundle = await loadControlledCharacterBundle(campaignId, characterId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
@@ -614,6 +921,7 @@ async function readCataloguePortrait(req, campaignId, type, id) {
 module.exports = {
   PLAYER_CATALOGUE_TYPES,
   PLAYER_STATE_WHITELIST,
+  PLAYER_SHEET_WHITELIST,
   abilityModifier,
   toMechanicalDto,
   toPartyCardDto,
@@ -621,6 +929,11 @@ module.exports = {
   listMyCharacters,
   getMyCharacter,
   patchMyCharacterState,
+  patchMyCharacter,
+  addInventoryEntry,
+  updateInventoryEntry,
+  removeInventoryEntry,
+  putMyCharacterPortrait,
   listParty,
   resolveCatalogue,
   listNotes,

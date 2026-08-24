@@ -94,6 +94,72 @@
     </form>
   </dialog>
 
+  <dialog id="sheet-dialog" class="dialog dialog-note dialog-sheet">
+    <form id="sheet-form" class="dialog-inner stack-form">
+      <header>
+        <h2>Edit character</h2>
+        <button type="button" class="btn btn-ghost" id="sheet-cancel">Cancel</button>
+      </header>
+      <div class="dialog-body">
+        <label>Name<input name="name" required maxlength="120"></label>
+        <label>Portrait
+          <input type="file" name="portrait" accept="image/*">
+        </label>
+        <div class="form-grid">
+          <label>Race<input name="race" maxlength="120"></label>
+          <label>Class<input name="class" maxlength="120"></label>
+          <label>Subclass<input name="subclass" maxlength="120"></label>
+          <label>Level<input name="level" type="number" min="1" max="30" step="1"></label>
+        </div>
+        <div class="form-grid">
+          <label>Background<input name="background" maxlength="120"></label>
+          <label>Alignment<input name="alignment" maxlength="80"></label>
+        </div>
+        <p class="sheet-form-heading">Abilities</p>
+        <div class="form-grid form-grid-6">
+          <label>STR<input name="str" type="number" min="1" max="30"></label>
+          <label>DEX<input name="dex" type="number" min="1" max="30"></label>
+          <label>CON<input name="con" type="number" min="1" max="30"></label>
+          <label>INT<input name="int" type="number" min="1" max="30"></label>
+          <label>WIS<input name="wis" type="number" min="1" max="30"></label>
+          <label>CHA<input name="cha" type="number" min="1" max="30"></label>
+        </div>
+        <p class="sheet-form-heading">Combat</p>
+        <div class="form-grid">
+          <label>AC<input name="ac" type="number" min="0" max="40"></label>
+          <label>Speed<input name="speed" maxlength="40"></label>
+          <label>Proficiency<input name="proficiencyBonus" maxlength="20"></label>
+          <label>Hit dice<input name="hitDice" maxlength="40"></label>
+        </div>
+        <div class="form-grid">
+          <label>HP current<input name="hpCurrent" type="number"></label>
+          <label>HP max<input name="hpMax" type="number" min="1"></label>
+          <label>Temp HP<input name="hpTemp" type="number" min="0"></label>
+        </div>
+        <p class="sheet-form-heading">Currency</p>
+        <div class="form-grid form-grid-5">
+          <label>CP<input name="cp" type="number" min="0" step="1"></label>
+          <label>SP<input name="sp" type="number" min="0" step="1"></label>
+          <label>EP<input name="ep" type="number" min="0" step="1"></label>
+          <label>GP<input name="gp" type="number" min="0" step="1"></label>
+          <label>PP<input name="pp" type="number" min="0" step="1"></label>
+        </div>
+        <label>Skills (one per line; use @skill:id|Label for catalogue links)
+          <textarea name="skillRefs" rows="4"></textarea>
+        </label>
+        <label>Features (one per line)
+          <textarea name="featureRefs" rows="4"></textarea>
+        </label>
+        <label>Spells (one per line)
+          <textarea name="spellRefs" rows="4"></textarea>
+        </label>
+        <div class="row" id="sheet-actions">
+          <button class="btn btn-primary" type="submit">Save sheet</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <script src="/js/core/player-api-client.js"></script>
   <script src="/js/player-app.js"></script>
 </body>
