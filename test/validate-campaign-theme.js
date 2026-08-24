@@ -43,6 +43,18 @@ if (!css.includes(".main-scroll") || !css.includes("var(--campaign-main-bg)")) {
   fail("main-scroll should use campaign main background");
 } else pass("main-scroll background wiring");
 
+if (!css.includes(".campaign-page .sidebar") || !css.includes("scrollbar-width: thin")) {
+  fail("sidebar missing thin scrollbar styling");
+} else pass("sidebar scrollbar styling");
+
+if (css.includes("rgba(18, 26, 38, 0.86)")) {
+  fail("sidebar/map overlay still too opaque for dark textures");
+} else pass("sidebar/map overlay lightness");
+
+if (!css.includes(".campaign-page .main-chrome") || !css.includes("rgba(10, 14, 20, 0.15)")) {
+  fail("campaign topbar should use ~15% overlay");
+} else pass("campaign topbar overlay");
+
 for (const html of ["campaigns/stormwreck-isle/index.html", "campaigns/sandbox/index.html"]) {
   const page = fs.readFileSync(path.join(root, html), "utf8");
   if (!page.includes('class="campaign-page"')) fail(`${html} missing campaign-page class`);

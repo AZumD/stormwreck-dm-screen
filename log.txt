@@ -70,3 +70,5 @@
 [2026-08-24] Fix DM Library back links (/dm/); location catalogue UVTT upload; campaign location membership drives map picker. See js/core/campaign-locations.js, server/lib/catalogue-location-maps.js
 [2026-08-24] Stained paper texture on player notes and campaign read-aloud blocks. See css/player.css, css/style.css, assets/grunge-stained-old-paper-texture-130-752543118.png
 [2026-08-24] Campaign view panel backgrounds (nav / main / map rail) from assets/campaign/*.png. See css/style.css, test/validate-campaign-theme.js
+[2026-08-24] Lighten sidebar/map texture overlays; thin gold scrollbar on campaign nav. See css/style.css
+[2026-08-24] Campaign topbar overlay lowered to ~15% so main-body texture shows through. See css/style.css
