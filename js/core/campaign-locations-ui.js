@@ -97,7 +97,8 @@ window.CampaignLocationsUI = (function () {
     });
   }
 
-  function openPicker(campaignId, panelRoot) {
+  function openPicker(campaignId, panelRoot, options = {}) {
+    const { onAdded } = options;
     const inCampaign = new Set(CampaignLocations.listIds(campaignId));
     const all = window.CatalogueStore?.loadAll?.("location") || window.CatalogueSeeds?.location || [];
     const candidates = all
@@ -129,7 +130,8 @@ window.CampaignLocationsUI = (function () {
 
     body.querySelectorAll(".party-pick-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
-        CampaignLocations.add(campaignId, btn.dataset.id);
+        const id = btn.dataset.id;
+        CampaignLocations.add(campaignId, id);
         try {
           dlg.close();
         } catch {
@@ -140,6 +142,7 @@ window.CampaignLocationsUI = (function () {
           bindPanel(panelRoot, campaignId);
         }
         window.MapPanel?.refresh?.();
+        onAdded?.(id);
       });
     });
 
@@ -158,13 +161,17 @@ window.CampaignLocationsUI = (function () {
     } catch {
       dlg.setAttribute("open", "");
     }
-    dlg.querySelector("#campaign-location-picker-close")?.addEventListener("click", () => {
-      try {
-        dlg.close();
-      } catch {
-        dlg.removeAttribute("open");
-      }
-    });
+    dlg.querySelector("#campaign-location-picker-close")?.addEventListener(
+      "click",
+      () => {
+        try {
+          dlg.close();
+        } catch {
+          dlg.removeAttribute("open");
+        }
+      },
+      { once: true }
+    );
   }
 
   function mount(panelRoot, campaignId) {

@@ -54,6 +54,14 @@ if (!mapPanel.includes("CampaignLocations") || !mapPanel.includes("locationEntry
   fail("MapPanel must filter maps by campaign locations");
 } else pass("MapPanel campaign location maps");
 
+if (!mapPanel.includes("Add location") || !mapPanel.includes("__add_location__")) {
+  fail("MapPanel map dropdown missing Add location option");
+} else pass("MapPanel Add location dropdown");
+
+if (!campaignLocsUi.includes("onAdded")) {
+  fail("CampaignLocationsUI openPicker should support onAdded callback");
+} else pass("CampaignLocationsUI onAdded callback");
+
 if (!configs.includes('type: "uvtt"') || !configs.includes("mapCalibration")) {
   fail("Location catalogue config missing UVTT field");
 } else pass("Location UVTT catalogue field");

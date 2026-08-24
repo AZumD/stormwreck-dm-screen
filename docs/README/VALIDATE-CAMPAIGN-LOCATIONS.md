@@ -15,6 +15,7 @@ node test/validate-campaign-locations.js
 - `locations` campaign document kind
 - `catalogue-location-maps.js` + API UVTT routes
 - `CampaignLocations`, `CampaignLocationsUI`, `MapPanel` integration
+- Map dropdown **+ Add location…** opens catalogue picker
 - Location catalogue `uvtt` field + `LocalApiClient` helpers
 - Campaign HTML script tags
 - Sample back links point to `/dm/`

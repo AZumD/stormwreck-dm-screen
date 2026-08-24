@@ -15,6 +15,9 @@ Campaign **Locations** nav panel:
 - **Remove** — drops from campaign (catalogue entry unchanged)
 - **Details** — opens entity modal
 
+Map panel **Map** dropdown:
+- **+ Add location…** — same catalogue picker modal; newly added location is selected automatically
+
 ## Map integration
 `MapPanel.getEffectiveMaps(campaignId)` builds one map per campaign location from:
 - Location catalogue `mapImage` / `mapCalibration` (UVTT)

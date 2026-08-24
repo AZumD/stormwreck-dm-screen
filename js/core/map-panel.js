@@ -3,6 +3,7 @@ window.MapPanel = (function () {
   "use strict";
 
   const PIN_TYPES = ["pc", "npc", "poi", "item", "monster"];
+  const MAP_ADD_LOCATION_VALUE = "__add_location__";
   const FILTER_LABELS = {
     pc: "PCs",
     npc: "NPCs",
@@ -377,11 +378,37 @@ window.MapPanel = (function () {
               : "";
         return `<option value="${m.id}"${m.id === activeMapId ? " selected" : ""}>${escape(m.title)}${mark}</option>`;
       });
-      if (!options.length) {
-        mapSelect.innerHTML = `<option value="">Add locations in the Locations panel</option>`;
+      options.push(
+        `<option value="${MAP_ADD_LOCATION_VALUE}">+ Add location…</option>`
+      );
+      if (!Object.values(maps).length) {
+        mapSelect.innerHTML = `<option value="" disabled selected>No maps yet</option>${options.join("")}`;
         return;
       }
       mapSelect.innerHTML = options.join("");
+    }
+
+    function openAddLocationPicker() {
+      if (!window.CampaignLocationsUI?.openPicker) {
+        window.alert("Location picker unavailable.");
+        return;
+      }
+      if (activeMapId && maps[activeMapId]) mapSelect.value = activeMapId;
+      else rebuildMapSelect();
+
+      CampaignLocationsUI.openPicker(campaignId, null, {
+        onAdded(catalogueId) {
+          const entry = findLocationEntry(catalogueId);
+          activeMapId = entry ? locationLinkId(entry) : String(catalogueId).replace(/^sw-/, "");
+          rebuildMapSelect();
+          maps = getEffectiveMaps(campaignId);
+          if (maps[activeMapId]) mapSelect.value = activeMapId;
+          if (window.CampaignMapState) CampaignMapState.patch(campaignId, { activeMap: activeMapId });
+          resetZoom();
+          renderMap();
+          syncExpandedTitle();
+        }
+      });
     }
 
     if (filtersEl) {
@@ -465,6 +492,11 @@ window.MapPanel = (function () {
     }
 
     mapSelect.addEventListener("change", () => {
+      if (mapSelect.value === MAP_ADD_LOCATION_VALUE) {
+        openAddLocationPicker();
+        return;
+      }
+      if (!mapSelect.value) return;
       activeMapId = mapSelect.value;
       if (window.CampaignMapState) CampaignMapState.patch(campaignId, { activeMap: activeMapId });
       resetZoom();

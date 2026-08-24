@@ -74,3 +74,4 @@
 [2026-08-24] Campaign topbar overlay lowered to ~15% so main-body texture shows through. See css/style.css
 [2026-08-24] Left sidebar legibility pass: navy scrim over artwork, brighter nav hierarchy, bookmark active row. See css/style.css
 [2026-08-24] Fix catalogue UVTT upload body limit (readJsonBody options object). See server/routes/api.js
+[2026-08-25] Map dropdown "+ Add location…" opens catalogue picker modal. See js/core/map-panel.js, js/core/campaign-locations-ui.js
