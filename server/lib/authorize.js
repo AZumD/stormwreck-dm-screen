@@ -1,0 +1,164 @@
+/**
+ * Phase 3A authorization helpers. Every check derives from the authenticated user.
+ * Never authorize from campaign/character id possession alone.
+ */
+"use strict";
+
+const db = require("./db");
+const auth = require("./auth");
+
+function deny(status, message) {
+  const err = new Error(message);
+  err.status = status;
+  throw err;
+}
+
+/**
+ * CSRF hardening for authenticated mutations:
+ * - Content-Type must be application/json
+ * - If Origin is present, it must match the request Host (same-origin)
+ */
+function assertMutationSafety(req) {
+  const method = (req.method || "GET").toUpperCase();
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) return;
+
+  const contentType = String(req.headers["content-type"] || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (!contentType || (!contentType.includes("json") && contentType !== "application/json")) {
+    deny(415, "Content-Type must be application/json");
+  }
+
+  const origin = req.headers.origin;
+  if (origin) {
+    let originHost;
+    try {
+      originHost = new URL(origin).host;
+    } catch {
+      deny(403, "Invalid Origin");
+    }
+    const host = String(req.headers.host || "").split(",")[0].trim();
+    if (!host || originHost !== host) {
+      deny(403, "Cross-origin request rejected");
+    }
+  }
+}
+
+async function requireUser(req) {
+  assertMutationSafety(req);
+  const user = await auth.resolveSessionUser(req);
+  if (!user) deny(401, "Authentication required");
+  req.user = user;
+  return user;
+}
+
+/**
+ * When auth is required, demand a session user. When not required (local DM), return null.
+ */
+async function requireUserIfAuthRequired(req) {
+  if (!auth.isAuthRequired()) {
+    if (["POST", "PUT", "PATCH", "DELETE"].includes((req.method || "GET").toUpperCase())) {
+      /* Still apply mutation Content-Type when a session cookie is present */
+      const cookies = auth.parseCookies(req);
+      if (cookies[auth.COOKIE_NAME]) assertMutationSafety(req);
+    }
+    return null;
+  }
+  return requireUser(req);
+}
+
+async function getMembership(userId, campaignId) {
+  const result = await db.query(
+    `SELECT id, campaign_id, user_id, role, created_at
+     FROM campaign_memberships
+     WHERE user_id = $1 AND campaign_id = $2
+     LIMIT 1`,
+    [userId, campaignId]
+  );
+  return result.rows[0] || null;
+}
+
+async function requireCampaignMember(req, campaignId) {
+  const user = await requireUser(req);
+  const membership = await getMembership(user.id, campaignId);
+  if (!membership) deny(403, "Not a member of this campaign");
+  req.membership = membership;
+  return { user, membership };
+}
+
+async function requireDm(req, campaignId) {
+  const { user, membership } = await requireCampaignMember(req, campaignId);
+  if (membership.role !== "dm") deny(403, "DM access required");
+  return { user, membership };
+}
+
+/**
+ * Global DM-library endpoints (catalogues, export) have no campaignId.
+ * Require the user to be a DM of at least one campaign.
+ */
+async function requireAnyDm(req) {
+  const user = await requireUser(req);
+  const result = await db.query(
+    `SELECT campaign_id, role
+     FROM campaign_memberships
+     WHERE user_id = $1 AND role = 'dm'
+     LIMIT 1`,
+    [user.id]
+  );
+  if (!result.rows.length) deny(403, "DM access required");
+  req.dmMembership = result.rows[0];
+  return { user, membership: result.rows[0] };
+}
+
+/**
+ * Gate a campaign-scoped DM API: when auth required, user must be DM of that campaign.
+ * When auth not required (local), no-op.
+ */
+async function requireDmIfAuthRequired(req, campaignId) {
+  if (!auth.isAuthRequired()) return null;
+  return requireDm(req, campaignId);
+}
+
+/**
+ * Gate a global DM API: when auth required, user must be DM of any campaign.
+ */
+async function requireAnyDmIfAuthRequired(req) {
+  if (!auth.isAuthRequired()) return null;
+  return requireAnyDm(req);
+}
+
+async function userControlsCharacter(userId, characterId) {
+  const result = await db.query(
+    `SELECT 1 FROM character_controllers
+     WHERE user_id = $1 AND character_id = $2
+     LIMIT 1`,
+    [userId, characterId]
+  );
+  return result.rows.length > 0;
+}
+
+async function requireCharacterControl(req, campaignId, characterId) {
+  const { user, membership } = await requireCampaignMember(req, campaignId);
+  if (membership.role === "dm") {
+    return { user, membership, asDm: true };
+  }
+  const controls = await userControlsCharacter(user.id, characterId);
+  if (!controls) deny(403, "You do not control this character");
+  return { user, membership, asDm: false };
+}
+
+module.exports = {
+  assertMutationSafety,
+  requireUser,
+  requireUserIfAuthRequired,
+  getMembership,
+  requireCampaignMember,
+  requireDm,
+  requireAnyDm,
+  requireDmIfAuthRequired,
+  requireAnyDmIfAuthRequired,
+  userControlsCharacter,
+  requireCharacterControl,
+  deny
+};

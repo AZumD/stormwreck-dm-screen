@@ -100,7 +100,8 @@ Migrations on release. No secrets in git. See `.env.example`.
 | **0** | Audit (this doc) |
 | **1** | Postgres + Drizzle schema/migrations + item seed + db health (files still work) |
 | **2** | Characters + state in DB; DM can switch PCs |
-| **3** | Player view + auth-ready membership checks |
+| **3A** | Auth + membership/controller gates (fail-closed production) |
+| **3B** | Player shell: My Character(s) / Party / Notes |
 | **4** | DM inventory/party wired to DB; reduce file dual-write |
 
 ### Risks

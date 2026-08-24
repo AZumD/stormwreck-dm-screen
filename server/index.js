@@ -116,6 +116,13 @@ async function serveStatic(req, res, root, pathname) {
 
 async function main() {
   await ensureDataLayout();
+  const auth = require("./lib/auth");
+  try {
+    auth.requireAuthConfig();
+  } catch (err) {
+    console.error(err.message || err);
+    process.exit(1);
+  }
   const root = projectRoot();
   const apiRoutes = createApiRoutes();
 

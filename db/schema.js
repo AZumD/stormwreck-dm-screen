@@ -22,13 +22,31 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   email: text("email"),
+  passwordHash: text("password_hash"),
   authSubject: text("auth_subject"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 }, (t) => ({
+  /* Unique on lower(btrim(email)) is enforced in SQL migration 0002 */
   emailUq: uniqueIndex("users_email_uq").on(t.email),
   authSubjectUq: uniqueIndex("users_auth_subject_uq").on(t.authSubject)
 }));
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tokenHash: text("token_hash").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (t) => ({
+    tokenHashUq: uniqueIndex("sessions_token_hash_uq").on(t.tokenHash)
+  })
+);
 
 export const campaigns = pgTable("campaigns", {
   id: text("id").primaryKey(), /* slug, e.g. stormwreck-isle */

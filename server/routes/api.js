@@ -8,6 +8,8 @@ const campaigns = require("../lib/campaigns");
 const assets = require("../lib/assets");
 const db = require("../lib/db");
 const characters = require("../lib/characters");
+const auth = require("../lib/auth");
+const authorize = require("../lib/authorize");
 const { sendJson, sendError, readJsonBody } = require("../lib/http-util");
 const {
   assertCatalogueType,
@@ -31,7 +33,8 @@ function createApiRoutes() {
         mode: database.configured && database.ok ? "file+postgres" : "file-backed",
         catalogueTypes: CATALOGUE_TYPES,
         documentKinds: CAMPAIGN_DOC_KINDS,
-        database
+        database,
+        authRequired: auth.isAuthRequired()
       });
     }),
 
@@ -43,11 +46,58 @@ function createApiRoutes() {
       });
     }),
 
+    route("POST", /^\/api\/auth\/login$/, [], async (req, res) => {
+      authorize.assertMutationSafety(req);
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const body = await readJsonBody(req);
+      const email = body?.email;
+      const password = body?.password;
+      if (!email || password == null || password === "") {
+        return sendJson(res, 400, { ok: false, error: "email and password required" });
+      }
+      const result = await auth.loginWithPassword(email, password);
+      const memberships = await auth.listMemberships(result.user.id);
+      auth.appendSetCookie(res, auth.buildSessionCookie(result.rawToken));
+      sendJson(res, 200, {
+        ok: true,
+        user: result.user,
+        memberships,
+        expiresAt: result.expiresAt
+      });
+    }),
+
+    route("POST", /^\/api\/auth\/logout$/, [], async (req, res) => {
+      authorize.assertMutationSafety(req);
+      const cookies = auth.parseCookies(req);
+      const rawToken = cookies[auth.COOKIE_NAME];
+      if (rawToken) await auth.destroySessionByToken(rawToken);
+      await auth.cleanupExpiredSessions();
+      auth.appendSetCookie(res, auth.buildSessionCookie("", { clear: true }));
+      sendJson(res, 200, { ok: true });
+    }),
+
+    route("GET", /^\/api\/auth\/me$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const user = await auth.resolveSessionUser(req);
+      if (!user) return sendJson(res, 401, { ok: false, error: "Authentication required" });
+      const memberships = await auth.listMemberships(user.id);
+      sendJson(res, 200, {
+        ok: true,
+        user: { id: user.id, name: user.name, email: user.email },
+        memberships
+      });
+    }),
+
     route("GET", /^\/api\/campaigns\/([^/]+)\/characters$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
       if (!db.isDbConfigured()) {
         return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
       }
+      await authorize.requireDmIfAuthRequired(req, id);
       const list = await characters.listCharacters(id);
       sendJson(res, 200, { ok: true, campaignId: id, characters: list });
     }),
@@ -62,6 +112,7 @@ function createApiRoutes() {
         if (!db.isDbConfigured()) {
           return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
         }
+        await authorize.requireDmIfAuthRequired(req, id);
         const character = await characters.getCharacter(id, characterId);
         sendJson(res, 200, { ok: true, campaignId: id, character });
       }
@@ -77,6 +128,7 @@ function createApiRoutes() {
         if (!db.isDbConfigured()) {
           return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
         }
+        await authorize.requireDmIfAuthRequired(req, id);
         const state = await characters.getCharacterState(id, characterId);
         sendJson(res, 200, { ok: true, campaignId: id, characterId, state });
       }
@@ -92,6 +144,7 @@ function createApiRoutes() {
         if (!db.isDbConfigured()) {
           return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
         }
+        await authorize.requireDmIfAuthRequired(req, id);
         const body = await readJsonBody(req);
         const state = await characters.updateCharacterState(id, characterId, body || {});
         sendJson(res, 200, { ok: true, campaignId: id, characterId, state });
@@ -108,18 +161,21 @@ function createApiRoutes() {
         if (!db.isDbConfigured()) {
           return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
         }
+        await authorize.requireDmIfAuthRequired(req, id);
         const inventory = await characters.listInventory(id, characterId);
         sendJson(res, 200, { ok: true, campaignId: id, characterId, inventory });
       }
     ),
 
     route("GET", /^\/api\/catalogues\/([^/]+)$/, ["type"], async (req, res, p) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const type = assertCatalogueType(p.type);
       const entries = await catalogues.list(type);
       sendJson(res, 200, { ok: true, type, entries });
     }),
 
     route("GET", /^\/api\/catalogues\/([^/]+)\/([^/]+)$/, ["type", "id"], async (req, res, p) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const type = assertCatalogueType(p.type);
       const id = assertSafeId(p.id, "entry id");
       const entry = await catalogues.get(type, id);
@@ -128,6 +184,7 @@ function createApiRoutes() {
     }),
 
     route("PUT", /^\/api\/catalogues\/([^/]+)\/([^/]+)$/, ["type", "id"], async (req, res, p) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const type = assertCatalogueType(p.type);
       const id = assertSafeId(p.id, "entry id");
       const body = await readJsonBody(req);
@@ -136,6 +193,7 @@ function createApiRoutes() {
     }),
 
     route("DELETE", /^\/api\/catalogues\/([^/]+)\/([^/]+)$/, ["type", "id"], async (req, res, p) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const type = assertCatalogueType(p.type);
       const id = assertSafeId(p.id, "entry id");
       const removed = await catalogues.remove(type, id);
@@ -144,12 +202,14 @@ function createApiRoutes() {
       sendJson(res, 200, { ok: true, removed });
     }),
 
-    route("GET", /^\/api\/campaigns$/, [], async (_req, res) => {
+    route("GET", /^\/api\/campaigns$/, [], async (req, res) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const list = await campaigns.listCampaigns();
       sendJson(res, 200, { ok: true, campaigns: list });
     }),
 
     route("POST", /^\/api\/campaigns$/, [], async (req, res) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const body = await readJsonBody(req);
       const entry = await campaigns.createCampaign(body || {});
       sendJson(res, 201, { ok: true, campaign: entry });
@@ -157,6 +217,7 @@ function createApiRoutes() {
 
     route("PUT", /^\/api\/campaigns\/([^/]+)$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
+      await authorize.requireAnyDmIfAuthRequired(req);
       const body = await readJsonBody(req);
       const entry = await campaigns.upsertCampaign({ ...(body || {}), id });
       sendJson(res, 200, { ok: true, campaign: entry });
@@ -164,6 +225,7 @@ function createApiRoutes() {
 
     route("GET", /^\/api\/campaigns\/([^/]+)$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
+      await authorize.requireDmIfAuthRequired(req, id);
       const entry = await campaigns.getCampaign(id);
       if (!entry && id !== "stormwreck-isle") {
         return sendJson(res, 404, { ok: false, error: "Not found" });
@@ -186,6 +248,7 @@ function createApiRoutes() {
 
     route("PATCH", /^\/api\/campaigns\/([^/]+)$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
+      await authorize.requireDmIfAuthRequired(req, id);
       const body = await readJsonBody(req);
       const entry = await campaigns.updateCampaign(id, body || {});
       if (!entry) return sendJson(res, 404, { ok: false, error: "Not found" });
@@ -194,6 +257,7 @@ function createApiRoutes() {
 
     route("DELETE", /^\/api\/campaigns\/([^/]+)$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
+      await authorize.requireDmIfAuthRequired(req, id);
       const removed = await campaigns.removeCampaign(id);
       sendJson(res, 200, { ok: true, removed });
     }),
@@ -205,6 +269,7 @@ function createApiRoutes() {
       async (req, res, p) => {
         const id = assertSafeId(p.id, "campaign id");
         const kind = assertDocKind(p.kind);
+        await authorize.requireDmIfAuthRequired(req, id);
         const document = await campaigns.getDocument(id, kind);
         sendJson(res, 200, { ok: true, kind, document });
       }
@@ -217,6 +282,7 @@ function createApiRoutes() {
       async (req, res, p) => {
         const id = assertSafeId(p.id, "campaign id");
         const kind = assertDocKind(p.kind);
+        await authorize.requireDmIfAuthRequired(req, id);
         const body = await readJsonBody(req);
         const document = await campaigns.putDocument(id, kind, body);
         sendJson(res, 200, { ok: true, kind, document });
@@ -228,6 +294,7 @@ function createApiRoutes() {
       /^\/api\/assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
       ["kind", "type", "id"],
       async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
         const kind = assertAssetKind(p.kind);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
@@ -247,6 +314,7 @@ function createApiRoutes() {
       /^\/api\/assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
       ["kind", "type", "id"],
       async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
         const kind = assertAssetKind(p.kind);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
@@ -272,6 +340,7 @@ function createApiRoutes() {
       /^\/api\/assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
       ["kind", "type", "id"],
       async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
         const kind = assertAssetKind(p.kind);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
@@ -285,6 +354,7 @@ function createApiRoutes() {
       /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
       ["type", "id", "field"],
       async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
         const body = await readJsonBody(req);
@@ -309,6 +379,7 @@ function createApiRoutes() {
       /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
       ["type", "id", "field"],
       async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
         const removed = await assets.deleteField(type, id, p.field);
@@ -316,7 +387,8 @@ function createApiRoutes() {
       }
     ),
 
-    route("GET", /^\/api\/export$/, [], async (_req, res) => {
+    route("GET", /^\/api\/export$/, [], async (req, res) => {
+      await authorize.requireAnyDmIfAuthRequired(req);
       const catalogue = {};
       for (const type of CATALOGUE_TYPES) {
         catalogue[type] = await catalogues.list(type);

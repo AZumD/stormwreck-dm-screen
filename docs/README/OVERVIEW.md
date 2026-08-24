@@ -11,7 +11,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
 
-**Optional Postgres (Phase 1–2):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path for scenes/party/clock; Postgres holds campaign characters, mutable state, inventory, and items. See `docs/README/DB.md` and `docs/README/MIGRATION-RAILWAY.md`.
+**Optional Postgres (Phase 1–3A):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path for scenes/party/clock; Postgres holds campaign characters, mutable state, inventory, items, users, and sessions. Phase 3A adds email/password auth and membership gates (see `docs/README/AUTH.md`).
 
 | Area | Path |
 |------|------|
@@ -88,6 +88,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/campaign-app.js` | Campaign screen controller |
 | `db/` + `server/lib/db.js` + `server/lib/characters.js` | Optional Postgres foundation + Phase 2 characters |
+| `server/lib/auth.js` + `authorize.js` | Phase 3A sessions + membership/DM authorization |
 
 ## Catalogues
 - Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)
@@ -99,5 +100,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Also: `test/validate-*.js` Node validators (`validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
 

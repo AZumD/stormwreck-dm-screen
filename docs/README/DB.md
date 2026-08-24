@@ -1,4 +1,4 @@
-# DB — Postgres foundation (Phase 1–2)
+# DB — Postgres foundation (Phase 1–3A)
 
 ## Purpose
 Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset, the app keeps using file-backed `/data` only.
@@ -8,26 +8,33 @@ Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset
 |------|------|
 | `db/schema.js` | Drizzle schema (ESM) |
 | `db/migrations/0001_phase1.sql` | Initial tables |
+| `db/migrations/0002_phase3_auth.sql` | `password_hash`, `sessions`, case-insensitive email |
 | `db/migrate.mjs` | Apply SQL migrations |
 | `db/seed-items.mjs` | Import `data/catalogues/item/*.json` → `items` |
 | `db/seed-characters.mjs` | Import campaign PC catalogue → `characters` + state + inventory |
+| `db/bootstrap-auth.mjs` | DM/player users + memberships + controllers (env passwords) |
 | `drizzle.config.js` | drizzle-kit config |
 | `server/lib/db.js` | Optional `pg` pool |
 | `server/lib/characters.js` | Campaign-scoped character CRUD (Phase 2) |
+| `server/lib/auth.js` | Sessions, passwords, cookies (Phase 3A) |
+| `server/lib/authorize.js` | Membership / controller / DM gates (Phase 3A) |
 | `server/lib/entity-ref.js` | Parse `@type:id\|Label` refs for inventory import |
 | `.env.example` | Env var names |
 
 ## Commands
 ```bash
-cp .env.example .env   # set DATABASE_URL
+cp .env.example .env   # set DATABASE_URL (+ SESSION_SECRET for auth)
 npm install
 npm run db:migrate
 npm run db:seed:items
-npm run db:seed:characters   # stormwreck-isle party PCs from campaign-state + pc/*.json
+npm run db:seed:characters
+npm run db:bootstrap:auth   # optional local accounts
 npm start
 ```
 
-`GET /api/health` includes a `database` object. `GET /api/db/health` is a dedicated probe.
+`GET /api/health` includes a `database` object and `authRequired`. `GET /api/db/health` is a dedicated probe.
+
+See `docs/README/AUTH.md` for authentication details.
 
 ## Phase 2 authority (migration in progress)
 
@@ -47,7 +54,7 @@ Imported HP values come from the PC catalogue JSON as-is (e.g. Althariel `1/1` i
 
 ## Character API (DATABASE_URL required)
 
-All routes scope by campaign id.
+All routes scope by campaign id. When `AUTH_REQUIRED=1` or `NODE_ENV=production`, these require a DM membership for that campaign.
 
 | Method | Path |
 |--------|------|
@@ -57,9 +64,19 @@ All routes scope by campaign id.
 | PUT | `/api/campaigns/:campaignId/characters/:characterId/state` |
 | GET | `/api/campaigns/:campaignId/characters/:characterId/inventory` |
 
-No authentication in Phase 2; routes are structured for Phase 3 membership checks.
+## Auth API (Phase 3A)
+
+| Method | Path |
+|--------|------|
+| POST | `/api/auth/login` |
+| POST | `/api/auth/logout` |
+| GET | `/api/auth/me` |
+
+## Player API (Phase 3B)
+
+See `docs/README/PLAYER.md`. Session-authenticated routes under `/api/player/…` for bootstrap, controlled characters, whitelisted state patches, party cards (`type=player` only), restricted catalogue resolve, private notes, and player-safe portraits.
 
 ## Tables
-`users`, `campaigns`, `campaign_memberships`, `characters`, `character_controllers`, `character_state`, `items`, `inventory_entries`, `player_notes`
+`users` (+ `password_hash`), `sessions`, `campaigns`, `campaign_memberships`, `characters`, `character_controllers`, `character_state`, `items`, `inventory_entries`, `player_notes`
 
 See `docs/README/MIGRATION-RAILWAY.md` for the full plan.
