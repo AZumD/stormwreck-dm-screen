@@ -72,3 +72,4 @@
 [2026-08-24] Campaign view panel backgrounds (nav / main / map rail) from assets/campaign/*.png. See css/style.css, test/validate-campaign-theme.js
 [2026-08-24] Lighten sidebar/map texture overlays; thin gold scrollbar on campaign nav. See css/style.css
 [2026-08-24] Campaign topbar overlay lowered to ~15% so main-body texture shows through. See css/style.css
+[2026-08-24] Left sidebar legibility pass: navy scrim over artwork, brighter nav hierarchy, bookmark active row. See css/style.css

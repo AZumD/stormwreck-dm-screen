@@ -51,6 +51,21 @@ if (css.includes("rgba(18, 26, 38, 0.86)")) {
   fail("sidebar/map overlay still too opaque for dark textures");
 } else pass("sidebar/map overlay lightness");
 
+if (
+  !css.includes(".campaign-page .sidebar") ||
+  !css.includes("background-attachment: scroll, scroll, fixed")
+) {
+  fail("sidebar missing fixed artwork layer for scroll stability");
+} else pass("sidebar fixed artwork attachment");
+
+if (
+  !css.includes(".campaign-page .sidebar .nav-btn.active") ||
+  !css.includes("linear-gradient(") ||
+  !css.includes("--sidebar-ivory")
+) {
+  fail("sidebar missing legibility scrim or active nav treatment");
+} else pass("sidebar legibility pass");
+
 if (!css.includes(".campaign-page .main-chrome") || !css.includes("rgba(10, 14, 20, 0.15)")) {
   fail("campaign topbar should use ~15% overlay");
 } else pass("campaign topbar overlay");

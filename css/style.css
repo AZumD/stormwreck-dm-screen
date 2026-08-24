@@ -31,6 +31,10 @@
   --campaign-nav-bg: url("/assets/campaign/left-sidebar.png");
   --campaign-main-bg: url("/assets/campaign/main-body.png");
   --campaign-map-bg: url("/assets/campaign/right-sidebar.png");
+  --sidebar-ivory: #f0e8d8;
+  --sidebar-ivory-soft: #e2dcd0;
+  --sidebar-silver: #b4c0d0;
+  --sidebar-muted: #9aa8b6;
 }
 
 *,
@@ -95,13 +99,29 @@ html, body {
   min-width: 0;
   max-width: 100%;
   flex-shrink: unset;
-  background-color: #0a1018;
+  isolation: isolate;
+  background-color: #080c12;
+  /* Art ~25% prominence: uneven navy scrims over fixed artwork, UI above */
   background-image:
-    linear-gradient(180deg, rgba(10, 14, 20, 0.35) 0%, rgba(10, 14, 20, 0.5) 100%),
+    linear-gradient(
+      90deg,
+      rgba(7, 10, 16, 0.90) 0%,
+      rgba(9, 13, 21, 0.76) 38%,
+      rgba(8, 12, 19, 0.80) 58%,
+      rgba(6, 9, 15, 0.88) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(6, 9, 14, 0.42) 0%,
+      rgba(6, 9, 14, 0.14) 16%,
+      transparent 30%,
+      rgba(6, 9, 14, 0.22) 100%
+    ),
     var(--campaign-nav-bg);
-  background-size: auto, cover;
-  background-position: center, left top;
+  background-size: auto, auto, cover;
+  background-position: center, center, left top;
   background-repeat: no-repeat;
+  background-attachment: scroll, scroll, fixed;
   border-right: 1px solid var(--border);
   padding: 1.35rem 0 1.5rem;
   overflow-x: hidden;
@@ -120,6 +140,11 @@ html, body {
     border-color 0.3s var(--ease);
 }
 
+.campaign-page .sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
 .campaign-page .sidebar::-webkit-scrollbar {
   width: 5px;
 }
@@ -135,6 +160,130 @@ html, body {
 
 .campaign-page .sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(196, 160, 53, 0.52);
+}
+
+/* Campaign sidebar legibility — text hierarchy over artwork */
+.campaign-page .sidebar .sidebar-header {
+  position: relative;
+}
+
+.campaign-page .sidebar .sidebar-header::after {
+  content: "";
+  position: absolute;
+  inset: -0.35rem 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 9, 14, 0.58) 0%,
+    rgba(6, 9, 14, 0.26) 62%,
+    transparent 100%
+  );
+}
+
+.campaign-page .sidebar .nav-section {
+  position: relative;
+}
+
+.campaign-page .sidebar .nav-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 9, 14, 0.34) 0%,
+    rgba(6, 9, 14, 0.18) 45%,
+    rgba(6, 9, 14, 0.28) 100%
+  );
+}
+
+.campaign-page .sidebar .back-link {
+  color: #9aa8b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.campaign-page .sidebar .back-link:hover,
+.campaign-page .sidebar .back-link:focus-visible {
+  color: var(--accent);
+}
+
+.campaign-page .sidebar .sidebar-eyebrow {
+  color: #d4b84a;
+  opacity: 0.95;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.campaign-page .sidebar .sidebar-header h1 {
+  color: var(--sidebar-ivory);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.campaign-page .sidebar .subtitle {
+  color: #a8b0bc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.campaign-page .sidebar .nav-section h2,
+.campaign-page .sidebar .nav-chapter {
+  color: var(--sidebar-silver);
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.campaign-page .sidebar .nav-scene-group__summary {
+  color: #b0bcc8;
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.campaign-page .sidebar .nav-btn {
+  color: var(--sidebar-ivory-soft);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
+}
+
+.campaign-page .sidebar .nav-btn:hover,
+.campaign-page .sidebar .nav-btn:focus-visible {
+  background: rgba(10, 16, 26, 0.84);
+  color: #f2ebe2;
+  outline: none;
+}
+
+.campaign-page .sidebar .nav-btn.active,
+.campaign-page .sidebar .nav-btn.nav-scene--current {
+  background: linear-gradient(
+    90deg,
+    rgba(54, 42, 20, 0.94) 0%,
+    rgba(20, 26, 36, 0.91) 48%,
+    rgba(8, 12, 20, 0.89) 100%
+  );
+  border-left: 3px solid var(--accent);
+  color: #e8cc6a;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.38);
+}
+
+.campaign-page .sidebar .nav-btn.nav-scene--completed {
+  color: var(--sidebar-muted);
+  opacity: 0.88;
+}
+
+.campaign-page .sidebar .nav-btn.nav-scene--skipped {
+  color: #8896a4;
+  opacity: 0.82;
+}
+
+.campaign-page .sidebar .nav-add-group-btn,
+.campaign-page .sidebar .nav-scene-group__empty,
+.campaign-page .sidebar .nav-empty-hint {
+  color: #8a98a8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.campaign-page .sidebar .nav-add-scene-btn {
+  color: #8ec4e8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 body.sidebar-collapsed .sidebar,
@@ -4251,6 +4400,11 @@ body.map-mode-combat .map-stage {
     opacity: 1;
     pointer-events: auto;
     padding: 1.35rem 0 1rem;
+  }
+
+  .campaign-page .sidebar {
+    background-attachment: scroll, scroll, scroll;
+    background-position: center, center, left top;
   }
 
   body.sidebar-collapsed .sidebar,
