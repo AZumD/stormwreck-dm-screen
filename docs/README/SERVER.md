@@ -1,7 +1,7 @@
 # SERVER
 
 ## Purpose
-Local Node server that serves the vanilla DM Library frontend and persists user data under `/data`. Optional Postgres when `DATABASE_URL` is set (Phase 1–3A: items, campaign characters, auth sessions).
+Local Node server that serves the vanilla DM Library frontend and persists user data under `/data`. Optional Postgres when `DATABASE_URL` is set (Phase 1–3B: items, campaign characters, auth sessions, player companion API).
 
 ## Start
 **Windows:** double-click `start-dm-screen.bat` (finds Node, starts the server, opens the browser).
@@ -18,10 +18,12 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library. Loca
 | Path | Role |
 |------|------|
 | `server/index.js` | Native Node HTTP entry (binds `127.0.0.1` by default); calls `requireAuthConfig` |
-| `server/routes/api.js` | `/api` JSON routes (+ auth, db health, characters) |
+| `server/routes/api.js` | `/api` JSON routes (+ auth, db health, characters, player) |
 | `server/lib/auth.js` | Passwords, sessions, cookies |
 | `server/lib/authorize.js` | DM / membership / controller gates + mutation CSRF checks |
 | `server/lib/characters.js` | Campaign-scoped character/state/inventory (Postgres) |
+| `server/lib/player.js` | Player companion DTOs + membership/controller-scoped queries |
+| `player/` + `js/player-app.js` | Mobile-first player companion UI |
 | `server/lib/db.js` | Optional Postgres pool |
 | `server/lib/http-util.js` | Body parsing / JSON responses |
 | `server/lib/static-guard.js` | Block static access to `/data`, `/server`, `/.git`, … |

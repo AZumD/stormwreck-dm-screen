@@ -7,11 +7,12 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
+- Player companion (`/player/`) — mobile-first My Characters / Party / Notes (Phase 3B)
 
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
 
-**Optional Postgres (Phase 1–3A):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path for scenes/party/clock; Postgres holds campaign characters, mutable state, inventory, items, users, and sessions. Phase 3A adds email/password auth and membership gates (see `docs/README/AUTH.md`).
+**Optional Postgres (Phase 1–3B):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path for scenes/party/clock; Postgres holds campaign characters, mutable state, inventory, items, users, sessions, and private player notes. Phase 3A adds email/password auth and membership gates (see `docs/README/AUTH.md`). Phase 3B adds the player companion API and `/player/` shell (see `docs/README/PLAYER.md`).
 
 | Area | Path |
 |------|------|
@@ -89,6 +90,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/campaign-app.js` | Campaign screen controller |
 | `db/` + `server/lib/db.js` + `server/lib/characters.js` | Optional Postgres foundation + Phase 2 characters |
 | `server/lib/auth.js` + `authorize.js` | Phase 3A sessions + membership/DM authorization |
+| `server/lib/player.js` + `/player/` | Phase 3B player companion API + mobile shell |
 
 ## Catalogues
 - Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)

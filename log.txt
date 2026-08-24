@@ -46,4 +46,6 @@
 [2026-08-21] True multi-track YouTube: side-by-side visible players + IFrame API resume when YT pauses siblings. See js/core/media-bar.js
 [2026-08-21] Phase 1 DB foundation: Drizzle schema, SQL migration, item seed, optional DATABASE_URL. See docs/README/MIGRATION-RAILWAY.md, docs/README/DB.md
 [2026-08-22] Phase 3A auth: bcrypt sessions, membership/DM gates, fail-closed production. See docs/README/AUTH.md, server/lib/auth.js
+[2026-08-22] Phase 3B player companion: /player shell, player API DTOs, notes, party, safe portraits. See docs/README/PLAYER.md, server/lib/player.js
 [2026-08-24] Live tests isolated from imported Althariel. See test/lib/dev-data-guard.js, test/validate-auth.js
+[2026-08-24] Player UI: tab-bar scroll clearance, in-app note editor, collapse missing portraits, 44px pills. See css/player.css, js/player-app.js

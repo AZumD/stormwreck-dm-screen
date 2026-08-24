@@ -18,6 +18,7 @@ Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset
 | `server/lib/characters.js` | Campaign-scoped character CRUD (Phase 2) |
 | `server/lib/auth.js` | Sessions, passwords, cookies (Phase 3A) |
 | `server/lib/authorize.js` | Membership / controller / DM gates (Phase 3A) |
+| `server/lib/player.js` | Player companion queries + DTOs (Phase 3B) |
 | `server/lib/entity-ref.js` | Parse `@type:id\|Label` refs for inventory import |
 | `.env.example` | Env var names |
 

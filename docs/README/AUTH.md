@@ -38,4 +38,6 @@ Authenticated `POST`/`PUT`/`PATCH`/`DELETE` require `Content-Type: application/j
 | `requireCampaignMember` | Any member of a campaign |
 | `requireCharacterControl` | Player (or DM) for a specific character |
 
-Players must not call legacy `/api/catalogues/*` when auth is required.
+Phase 3B player routes always require a session (`requireUser` / membership / control). They never bypass DM gates; DM document and global catalogue APIs remain DM-only. See `docs/README/PLAYER.md`.
+
+Players must not call legacy `/api/catalogues/*` when auth is required; use `/api/player/campaigns/:id/catalogues/:type/:entryId` instead.

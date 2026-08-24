@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Player Companion</title>
+  <link rel="stylesheet" href="/css/player.css">
+</head>
+<body class="player-body">
+  <div id="app">
+    <section id="view-login" class="view view-login" hidden>
+      <header class="hero">
+        <p class="brand">Stormwreck</p>
+        <h1>Player companion</h1>
+        <p class="lede">Characters, party, and private notes for play at the table.</p>
+      </header>
+      <form id="login-form" class="stack-form">
+        <label>Email<input type="email" name="email" autocomplete="username" required></label>
+        <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="error" hidden></p>
+        <button class="btn btn-primary" type="submit">Sign in</button>
+      </form>
+    </section>
+
+    <section id="view-campaigns" class="view" hidden>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Signed in</p>
+          <h1>Campaigns</h1>
+        </div>
+        <button type="button" class="btn btn-ghost" id="logout-campaigns">Log out</button>
+      </header>
+      <ul id="campaign-list" class="list"></ul>
+    </section>
+
+    <section id="view-shell" class="view view-shell" hidden>
+      <header class="topbar">
+        <div>
+          <p id="shell-campaign" class="eyebrow"></p>
+          <h1 id="shell-title">Companion</h1>
+        </div>
+        <button type="button" class="btn btn-ghost" id="logout-shell">Log out</button>
+      </header>
+      <div id="char-switcher" class="switcher" hidden></div>
+      <main id="main"></main>
+      <nav class="tabs" aria-label="Sections">
+        <button type="button" class="tab is-active" data-tab="characters">My Characters</button>
+        <button type="button" class="tab" data-tab="party">Party</button>
+        <button type="button" class="tab" data-tab="notes">Notes</button>
+      </nav>
+    </section>
+  </div>
+
+  <dialog id="detail-dialog" class="dialog">
+    <form method="dialog" class="dialog-inner">
+      <header>
+        <h2 id="detail-title"></h2>
+        <button value="close" class="btn btn-ghost">Close</button>
+      </header>
+      <div id="detail-body" class="dialog-body"></div>
+    </form>
+  </dialog>
+
+  <dialog id="note-dialog" class="dialog dialog-note">
+    <form id="note-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="note-dialog-title">New note</h2>
+        <button type="button" class="btn btn-ghost" id="note-cancel">Cancel</button>
+      </header>
+      <div class="dialog-body">
+        <p id="note-timestamps" class="meta" hidden></p>
+        <label>Title<input name="title" required maxlength="200"></label>
+        <label>Body<textarea name="body" required></textarea></label>
+        <label>Character (optional)
+          <select name="characterId">
+            <option value="">Campaign note</option>
+          </select>
+        </label>
+        <div class="row" id="note-actions">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <button type="button" class="btn btn-danger" id="note-delete" hidden>Delete</button>
+        </div>
+        <div id="note-confirm-delete" class="confirm-box" hidden>
+          <p>Delete this note? This cannot be undone.</p>
+          <div class="row">
+            <button type="button" class="btn btn-danger" id="note-confirm-yes">Delete</button>
+            <button type="button" class="btn btn-ghost" id="note-confirm-no">Keep note</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/core/player-api-client.js"></script>
+  <script src="/js/player-app.js"></script>
+</body>
+</html>
