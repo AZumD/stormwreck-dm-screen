@@ -103,40 +103,81 @@
       </div>
     </main>
 
-    <aside class="map-panel" id="map-panel" aria-label="Map and party">
+    <aside class="map-panel" id="map-panel" data-map-mode="sidebar" aria-label="Map and party">
       <header class="map-panel__header">
-        <h2 class="map-panel__title">Map &amp; party</h2>
-        <button type="button" id="map-panel-collapse" class="map-panel-collapse" aria-label="Hide map" aria-expanded="true" aria-controls="map-panel">
-          <span class="map-panel-collapse__icon" aria-hidden="true"></span>
-        </button>
+        <div class="map-panel__tabs" role="tablist" aria-label="Map panel sections">
+          <button type="button" class="map-panel__tab" role="tab" id="map-tab-btn" data-map-tab="map" aria-selected="true" aria-controls="map-tab-panel">Map</button>
+          <button type="button" class="map-panel__tab" role="tab" id="party-tab-btn" data-map-tab="party" aria-selected="false" aria-controls="party-tab-panel">Party</button>
+        </div>
+        <div class="map-panel__header-actions">
+          <span id="map-expanded-title" class="map-panel__expanded-title" hidden></span>
+          <button type="button" id="map-panel-collapse" class="map-panel-collapse" aria-label="Hide map" aria-expanded="true" aria-controls="map-panel">
+            <span class="map-panel-collapse__icon" aria-hidden="true"></span>
+          </button>
+        </div>
       </header>
 
       <div class="map-panel__body">
-        <label class="map-select-label" for="map-select">Map</label>
-        <select id="map-select" class="map-select"></select>
+        <div id="map-tab-panel" class="map-tab-panel" role="tabpanel" data-map-tab-panel="map" aria-labelledby="map-tab-btn">
+          <label class="map-select-label" for="map-select">Map</label>
+          <select id="map-select" class="map-select"></select>
 
-        <fieldset class="map-filters-fieldset" id="map-filters-wrap">
-          <legend class="map-filters-legend">Show pins</legend>
-          <div id="map-filters" class="map-filters"></div>
-        </fieldset>
+          <div id="map-primary-actions" class="map-primary-actions">
+            <button type="button" class="map-tool-btn" id="map-measure-btn" aria-pressed="false" hidden>Measure</button>
+            <button type="button" class="map-tool-btn" id="map-add-token-btn" hidden>+ Token</button>
+            <div class="map-layers-wrap">
+              <button type="button" class="map-tool-btn" id="map-layers-btn" aria-haspopup="true" aria-expanded="false" aria-controls="map-layers-popover">Layers</button>
+              <div id="map-layers-popover" class="map-layers-popover" hidden>
+                <div id="map-filters" class="map-filters map-filters--popover" role="group" aria-label="Pin layers"></div>
+              </div>
+            </div>
+            <button type="button" id="map-add-pin" class="map-tool-btn map-add-pin" aria-haspopup="dialog" aria-controls="map-pin-dialog" title="Add pin to this map">+</button>
+            <button type="button" class="map-tool-btn" id="map-expand-btn" aria-pressed="false">Expand</button>
+            <button type="button" class="map-tool-btn" id="map-settings-toggle" aria-expanded="false" aria-controls="map-settings">Map settings</button>
+          </div>
 
-        <div class="map-stage map-stage--loading" id="map-stage">
-          <div class="map-viewport" id="map-viewport">
-            <div class="map-world" id="map-world">
-              <img id="map-image" class="map-image" alt="" draggable="false">
-              <div id="map-pins" class="map-pins"></div>
+          <p id="map-measure-readout" class="map-measure-readout" hidden></p>
+          <p id="map-token-distance" class="map-token-distance" hidden></p>
+
+          <div class="map-stage map-stage--loading" id="map-stage">
+            <div class="map-viewport" id="map-viewport">
+              <div class="map-world" id="map-world">
+                <img id="map-image" class="map-image" alt="" draggable="false">
+                <div id="map-pins" class="map-pins"></div>
+              </div>
             </div>
           </div>
+
+          <details id="map-settings" class="map-settings">
+            <summary class="map-settings__summary">Map settings</summary>
+            <div id="map-settings-body" class="map-settings__body">
+              <div id="map-spatial-chrome" class="map-spatial-chrome">
+                <div class="map-spatial-row">
+                  <label class="map-uvtt-import btn-like">
+                    Import UVTT
+                    <input type="file" id="map-uvtt-file" accept=".dd2vtt,.uvtt,application/json" hidden>
+                  </label>
+                  <span id="map-kind-badge" class="map-kind-badge" hidden></span>
+                </div>
+                <p id="map-spatial-meta" class="map-spatial-meta" hidden></p>
+                <div id="map-calibrated-tools" class="map-calibrated-tools" hidden>
+                  <label class="map-tool-check"><input type="checkbox" id="map-show-grid"> Grid</label>
+                  <label class="map-tool-check"><input type="checkbox" id="map-snap-measure"> Snap measure</label>
+                  <label class="map-scale-label">ft/grid
+                    <input type="number" id="map-scale-input" min="0.1" step="0.5" value="5">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
-        <div class="map-add-row">
-          <button type="button" id="map-add-pin" class="map-add-pin" aria-haspopup="dialog" aria-controls="map-pin-dialog" title="Add pin to this map">+</button>
+        <div id="party-tab-panel" class="map-tab-panel" role="tabpanel" data-map-tab-panel="party" aria-labelledby="party-tab-btn" hidden>
+          <section class="party-section party-section--tab" aria-labelledby="party-heading">
+            <h3 id="party-heading" class="party-heading">Party</h3>
+            <div id="party-list" class="party-list"></div>
+          </section>
         </div>
-
-        <section class="party-section" aria-labelledby="party-heading">
-          <h3 id="party-heading" class="party-heading">Party</h3>
-          <div id="party-list" class="party-list"></div>
-        </section>
       </div>
     </aside>
   </div>
@@ -208,18 +249,21 @@
   </dialog>
 
   <div id="media-bar" class="media-bar" aria-hidden="true">
-    <div class="media-bar__main">
+    <div class="media-bar__strip">
       <span class="media-bar__badge" aria-hidden="true"></span>
-      <div class="media-bar__meta">
-        <span class="media-bar__kicker">Ambience</span>
-        <span id="media-bar-status" class="media-bar__title">No track playing</span>
-        <div id="media-bar-tracks" class="media-bar__tracks" hidden></div>
-      </div>
+      <span id="media-bar-status" class="media-bar__status">Ambience · 0 active</span>
       <div class="media-bar__actions">
-        <button type="button" id="media-bar-stop" class="media-bar__stop">Stop all</button>
+        <button type="button" id="media-bar-mixer" class="media-bar__btn" aria-expanded="false" aria-controls="media-bar-mixer-panel">Mixer</button>
+        <button type="button" id="media-bar-pause-all" class="media-bar__btn">Pause all</button>
+        <button type="button" id="media-bar-stop" class="media-bar__btn media-bar__btn--danger">Stop all</button>
       </div>
     </div>
-    <div id="media-bar-frames" class="media-bar__frame-wrap" aria-label="YouTube ambience players"></div>
+    <div id="media-bar-mixer-panel" class="media-bar__mixer" hidden>
+      <div id="media-bar-tracks" class="media-bar__tracks"></div>
+    </div>
+  </div>
+  <div id="media-dock" class="media-dock" aria-hidden="true" aria-label="YouTube ambience players">
+    <div id="media-bar-frames" class="media-dock__frames"></div>
   </div>
 
   <script src="../../js/i18n/en.js"></script>

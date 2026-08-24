@@ -65,11 +65,11 @@ else pass("parser chips keep data-media-url");
 if (css.includes("clip: rect(0 0 0 0)") && css.includes(".media-bar__frame-wrap")) {
   /* only fail if frame-wrap still uses the old 1px hide */
 }
-if (!css.includes("width: 200px") || !css.includes(".media-bar__frame-wrap")) {
-  fail("media-bar CSS should use a visible 200px player");
+if (!css.includes("width: 200px") && !css.includes("--media-player-size")) {
+  fail("media-bar CSS should use a visible player size (200px or --media-player-size)");
 } else pass("media-bar CSS visible mini player");
 
-if (css.match(/\.media-bar__frame-wrap[\s\S]*?clip:\s*rect\(0/) ) {
+if (css.match(/\.media-bar__frame-wrap[\s\S]*?clip:\s*rect\(0/) || css.match(/\.media-dock__frames[\s\S]*?clip:\s*rect\(0/)) {
   fail("media-bar frame-wrap must not be clipped to 0 (YouTube blocks autoplay)");
 } else pass("media-bar frame not clipped");
 
@@ -81,8 +81,12 @@ if (!mediaBar.includes("iframe_api") || !mediaBar.includes("YT.Player")) {
   fail("media-bar should use YouTube IFrame API for simultaneous play");
 } else pass("media-bar uses YouTube IFrame API");
 
-if (!css.includes(".media-bar__tracks") || !css.includes(".media-bar__player") || !css.includes("overflow-x: auto")) {
-  fail("media-bar CSS missing track pills / side-by-side player dock");
+if (
+  (!css.includes(".media-bar__tracks") && !css.includes(".media-bar__track")) ||
+  !css.includes(".media-bar__player") ||
+  (!css.includes("overflow-x: auto") && !css.includes("media-dock__frames"))
+) {
+  fail("media-bar CSS missing track list / visible player dock");
 } else pass("media-bar CSS multi-track layout");
 
 
@@ -95,6 +99,9 @@ for (const [label, html] of [
   }
   if (!html.includes("media-bar-tracks") || !html.includes("media-bar-frames")) {
     fail(`${label} missing multi-track media bar markup`);
+  }
+  if (!html.includes("media-dock") || !html.includes("media-bar-mixer")) {
+    fail(`${label} missing media dock / mixer`);
   }
   if (html.includes('loading="lazy"') && html.includes("media-bar-frame")) {
     fail(`${label} media iframe should not use loading=lazy`);
@@ -153,7 +160,11 @@ function el(tag, attrs = {}) {
     tagName: tag.toUpperCase(),
     attrs: { ...attrs },
     children: [],
-    style: {},
+    style: {
+      setProperty(k, v) {
+        this[k] = String(v);
+      }
+    },
     dataset: {},
     classList: {
       _s: new Set(String(attrs.class || "").split(/\s+/).filter(Boolean)),
@@ -164,6 +175,13 @@ function el(tag, attrs = {}) {
         this._s.delete(c);
       },
       contains(c) {
+        return this._s.has(c);
+      },
+      toggle(c, force) {
+        if (force === true) this._s.add(c);
+        else if (force === false) this._s.delete(c);
+        else if (this._s.has(c)) this._s.delete(c);
+        else this._s.add(c);
         return this._s.has(c);
       }
     },
@@ -184,8 +202,8 @@ function el(tag, attrs = {}) {
     },
     addEventListener() {},
     querySelector(sel) {
-      if (sel === ".media-bar__frame-wrap") {
-        return this.children.find((c) => c.attrs?.id === "media-bar-frames" || c.classList.contains("media-bar__frame-wrap"));
+      if (sel === ".media-bar__frame-wrap" || sel === ".media-dock__frames") {
+        return this.children.find((c) => c.attrs?.id === "media-bar-frames" || c.classList.contains("media-bar__frame-wrap") || c.classList.contains("media-dock__frames"));
       }
       return null;
     },
@@ -224,12 +242,19 @@ const bar = el("div", { id: "media-bar", class: "media-bar" });
 const status = el("span", { id: "media-bar-status" });
 const tracksBox = el("div", { id: "media-bar-tracks" });
 tracksBox.hidden = true;
-const frames = el("div", { id: "media-bar-frames", class: "media-bar__frame-wrap" });
+const frames = el("div", { id: "media-bar-frames", class: "media-dock__frames" });
 const stopBtn = el("button", { id: "media-bar-stop" });
+const pauseBtn = el("button", { id: "media-bar-pause-all" });
+const mixerBtn = el("button", { id: "media-bar-mixer" });
+const mixerPanel = el("div", { id: "media-bar-mixer-panel" });
+const dock = el("div", { id: "media-dock", class: "media-dock" });
+dock.appendChild(frames);
 bar.appendChild(status);
 bar.appendChild(tracksBox);
-bar.appendChild(frames);
 bar.appendChild(stopBtn);
+bar.appendChild(pauseBtn);
+bar.appendChild(mixerBtn);
+bar.appendChild(mixerPanel);
 
 const body = el("body");
 body.dataset = {};
@@ -243,7 +268,11 @@ const doc = {
       "media-bar-status": status,
       "media-bar-tracks": tracksBox,
       "media-bar-frames": frames,
-      "media-bar-stop": stopBtn
+      "media-bar-stop": stopBtn,
+      "media-bar-pause-all": pauseBtn,
+      "media-bar-mixer": mixerBtn,
+      "media-bar-mixer-panel": mixerPanel,
+      "media-dock": dock
     };
     return map[id] || null;
   },
@@ -269,9 +298,15 @@ function MockPlayer(id, opts) {
   this.opts = opts;
   this.state = -1;
   this.playCalls = 0;
+  this.pauseCalls = 0;
+  this.volume = 100;
   this.playVideo = () => {
     this.state = 1;
     this.playCalls += 1;
+  };
+  this.pauseVideo = () => {
+    this.state = 2;
+    this.pauseCalls += 1;
   };
   this.stopVideo = () => {
     this.state = 0;
@@ -280,6 +315,12 @@ function MockPlayer(id, opts) {
     this.state = -2;
   };
   this.getPlayerState = () => this.state;
+  this.setVolume = (v) => {
+    this.volume = v;
+  };
+  this.mute = () => {};
+  this.unMute = () => {};
+  this.setSize = () => {};
   players.push(this);
   Promise.resolve().then(() => {
     this.state = 1;
@@ -322,12 +363,31 @@ return Promise.resolve()
     if (players[0].playCalls < 1) fail("resumeAll should re-play paused sibling");
     else pass("IFrame API resumes paused sibling tracks");
 
+    MB2.setTrackVolume(playing[0].key, 40);
+    if (players[0].volume !== 40) fail("setTrackVolume should update YT volume");
+    else pass("per-track volume via IFrame API");
+
+    MB2.pauseAll();
+    const afterPause = MB2.getTracks();
+    if (afterPause.some((tr) => tr.wantPlay)) fail("pauseAll should clear wantPlay");
+    else pass("pauseAll keeps tracks mounted without wantPlay");
+    if (frames.children.length !== 2) fail("pauseAll must not destroy player hosts");
+    else pass("pauseAll preserves player dock hosts");
+
     MB2.stopTrack(playing[0].key);
     if (MB2.getTracks().length !== 1) fail("stopTrack should remove one");
     else pass("stopTrack removes one layer");
     MB2.stop();
     if (MB2.getTracks().length !== 0) fail("stop should clear all");
     else pass("stop clears all tracks");
+
+    /* Layout change must not remount */
+    MB2.play("ccccccccccc", "Wind");
+    const beforeLayout = MB2.getTracks()[0].key;
+    MB2.onLayoutChange();
+    if (MB2.getTracks()[0].key !== beforeLayout) fail("onLayoutChange must not remount tracks");
+    else pass("onLayoutChange preserves tracks");
+    MB2.stop();
 
     if (failed) {
       console.error(`\n${failed} check(s) failed.`);

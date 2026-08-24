@@ -31,3 +31,4 @@ Included in `npm test`.
 - Phase 5A: fantasy theme CSS + static `/assets/player/fairy-forest-bg.jpg`; sticky vitals; collapsible sheet sections; inspiration toggle
 - Phase 5B: sheet PATCH whitelist; inventory CRUD; portrait PUT; Edit sheet dialog; `hp_max` mutable
 - Phase 5C: Library tab; player catalogue list/search; attach APIs; monster/location allowed; npc/pc blocked
+- Phase 5D: `campaign_revealed_npcs`; DM reveal/unreveal; player People list/detail; outsider denied; unrevealed 404

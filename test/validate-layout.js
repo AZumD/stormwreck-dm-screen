@@ -39,11 +39,19 @@ if (!layoutJs.includes("MAP_EXPANDED_WIDTH"))
   fail("layout-panels.js missing expanded map width");
 else pass("layout-panels defines expanded map width");
 
+if (!layoutJs.includes("setMapMode") || !layoutJs.includes('"combat"'))
+  fail("layout-panels.js missing map mode API (sidebar|expanded|combat)");
+else pass("layout-panels exposes map mode API");
+
 if (appJs.includes("function initSidebar")) fail("campaign-app.js still owns sidebar init");
 else pass("sidebar init moved out of campaign-app.js");
 
 if (mapJs.includes("setPanelCollapsed")) fail("map-panel.js still owns collapse logic");
 else pass("map collapse moved out of map-panel.js");
+
+if (!html.includes("map-expand-btn") || !html.includes('data-map-tab="party"'))
+  fail("campaign HTML missing expand control / Party tab");
+else pass("campaign HTML has expand + Party tab");
 
 if (!css.includes("grid-template-columns: var(--nav-col"))
   fail("CSS missing grid layout with nav column variable");

@@ -13,6 +13,7 @@ const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
 const campaignMaps = require("../lib/campaign-maps");
 const mapDistance = require("../lib/map-distance");
+const revealedNpcs = require("../lib/revealed-npcs");
 const { sendJson, sendError, readJsonBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
 const {
   assertCatalogueType,
@@ -306,6 +307,30 @@ function createApiRoutes() {
       }
     ),
 
+    route("GET", /^\/api\/player\/campaigns\/([^/]+)\/npcs$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const npcs = await revealedNpcs.listForPlayer(req, id);
+      sendJson(res, 200, { ok: true, campaignId: id, npcs });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/npcs\/([^/]+)$/,
+      ["id", "npcId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const npcId = assertSafeId(p.npcId, "npc id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const npc = await revealedNpcs.getForPlayer(req, id, npcId);
+        sendJson(res, 200, { ok: true, campaignId: id, npc });
+      }
+    ),
+
     route("GET", /^\/api\/player\/campaigns\/([^/]+)\/notes$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
       if (!db.isDbConfigured()) {
@@ -453,6 +478,46 @@ function createApiRoutes() {
         await authorize.requireDmIfAuthRequired(req, id);
         const inventory = await characters.listInventory(id, characterId);
         sendJson(res, 200, { ok: true, campaignId: id, characterId, inventory });
+      }
+    ),
+
+    route("GET", /^\/api\/campaigns\/([^/]+)\/revealed-npcs$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const npcs = await revealedNpcs.listForDm(req, id);
+      sendJson(res, 200, { ok: true, campaignId: id, npcs });
+    }),
+
+    route(
+      "PUT",
+      /^\/api\/campaigns\/([^/]+)\/revealed-npcs\/([^/]+)$/,
+      ["id", "npcId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const npcId = assertSafeId(p.npcId, "npc id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const npc = await revealedNpcs.reveal(req, id, npcId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, npc });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/campaigns\/([^/]+)\/revealed-npcs\/([^/]+)$/,
+      ["id", "npcId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const npcId = assertSafeId(p.npcId, "npc id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const result = await revealedNpcs.unreveal(req, id, npcId);
+        sendJson(res, 200, { ok: true, campaignId: id, ...result });
       }
     ),
 

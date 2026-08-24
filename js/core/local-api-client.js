@@ -241,6 +241,34 @@ window.LocalApiClient = (function () {
     );
   }
 
+  async function listRevealedNpcs(campaignId) {
+    const data = await request(
+      "GET",
+      `/api/campaigns/${encodeURIComponent(campaignId)}/revealed-npcs`
+    );
+    return data.npcs || [];
+  }
+
+  async function revealNpc(campaignId, npcId, payload = {}) {
+    return trackWrite(`revealed-npcs:${campaignId}:${npcId}`, () =>
+      request(
+        "PUT",
+        `/api/campaigns/${encodeURIComponent(campaignId)}/revealed-npcs/${encodeURIComponent(npcId)}`,
+        payload
+      ).then((d) => d.npc)
+    );
+  }
+
+  async function unrevealNpc(campaignId, npcId) {
+    return trackWrite(`revealed-npcs:${campaignId}:${npcId}:del`, () =>
+      request(
+        "DELETE",
+        `/api/campaigns/${encodeURIComponent(campaignId)}/revealed-npcs/${encodeURIComponent(npcId)}`,
+        {}
+      )
+    );
+  }
+
   return {
     ready,
     probe,
@@ -264,6 +292,9 @@ window.LocalApiClient = (function () {
     importUvttMap,
     patchCampaignMap,
     deleteCampaignMap,
+    listRevealedNpcs,
+    revealNpc,
+    unrevealNpc,
     /* test hook */
     _trackWrite: trackWrite,
     _writeQueue: writeQueue

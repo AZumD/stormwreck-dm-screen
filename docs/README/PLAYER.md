@@ -1,7 +1,7 @@
 # PLAYER.md
 
 ## Purpose
-Authenticated, mobile-first player companion: character sheet, party cards, private notes, and player catalogue library. Phase 5A–5C: fantasy sheet UI, full edit, and catalogue browser (NPC reveal is 5D — see `PHASE5-PLAYER-SHEET.md`).
+Authenticated, mobile-first player companion: character sheet, party cards, private notes, catalogue library, and revealed People. Phase 5A–5D complete (see `PHASE5-PLAYER-SHEET.md`).
 
 ## Surfaces
 | Path | Role |
@@ -12,6 +12,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | `css/player.css` | Mobile-first fairy-forest styles |
 | `assets/player/fairy-forest-bg.jpg` | Static theme wallpaper (deploys with app) |
 | `server/lib/player.js` | Player DTOs + authorization-scoped queries |
+| `server/lib/revealed-npcs.js` | Phase 5D revealed NPC queries |
 
 ## Player API (session required)
 | Method | Path |
@@ -27,6 +28,8 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 | GET | `/api/player/campaigns/:id/catalogues/:type` | library browse (`q`, `limit`, `offset`) |
 | GET | `/api/player/campaigns/:id/catalogues/:type/:entryId` | entry detail |
 | POST | `/api/player/campaigns/:id/characters/:characterId/library-attach` | attach entry to sheet |
+| GET | `/api/player/campaigns/:id/npcs` | revealed NPCs only (5D) |
+| GET | `/api/player/campaigns/:id/npcs/:npcId` | revealed NPC detail (5D) |
 | GET/POST | `/api/player/campaigns/:id/notes` |
 | PUT/DELETE | `/api/player/notes/:noteId` |
 | GET | `/api/player/campaigns/:id/portraits/characters/:characterId` |
@@ -46,6 +49,11 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - Attach actions (controlled character): inventory / spell / skill / feature / set race / set class
 - Custom freeform sheet lines still work via Edit sheet / inline add
 - NPC and PC catalogues blocked; DM `/api/catalogues/*` still unavailable to players
+
+## People UI (Phase 5D)
+- Tab lists NPCs the DM has revealed for the campaign
+- Detail dialog shows role / summary / description
+- Unrevealed NPCs are never listed (catalogue `/npc` remains blocked)
 
 ## Sheet whitelist (trusted player)
 `name`, `level`, `race`, `class`, `subclass`, `background`, `alignment`, `abilities`, `ac`, `speed`, `initiative`, `proficiencyBonus`, `hitDice`, `savingThrows`, `languages`, `skills`, `skillRefs`, `featureRefs`, `spellRefs`, `currency`

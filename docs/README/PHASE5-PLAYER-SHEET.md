@@ -9,7 +9,7 @@ Evolve the player companion into a trusted, fully editable fantasy character she
 | **5A** (this) | Fantasy visual/UX, sticky vitals, collapsible sections, theme background |
 | **5B** (done) | Full sheet edit APIs + UI (identity, abilities, lists, inventory, portrait, currency, hp_max) |
 | **5C** (done) | Player catalogue browser (all types except NPC/PC) + attach to sheet |
-| **5D** | DM-controlled NPC reveal table + player Contacts directory |
+| **5D** (done) | DM-controlled NPC reveal table + player People directory |
 
 ## Authority model
 Campaign character in Postgres is authoritative (`characters`, `character_state`, `inventory_entries`). Catalogue PC JSON remains import source only — sheet edits do not auto-write catalogue files.
@@ -28,7 +28,14 @@ Player-only routes (membership for browse/detail; character control for attach):
 UI: Library tab with type chips, debounced search, detail dialog, attach buttons. Custom freeform refs remain via sheet editor.
 
 ## NPC reveal (5D)
-Table `campaign_revealed_npcs (campaign_id, npc_id, …)`. Players list/get revealed only. Minimal DM toggle later.
+Table `campaign_revealed_npcs (campaign_id, npc_id, revealed_by, revealed_at, note)`.
+
+| Who | Routes |
+|-----|--------|
+| DM | `GET/PUT/DELETE /api/campaigns/:id/revealed-npcs[/:npcId]` |
+| Player | `GET /api/player/campaigns/:id/npcs[/:npcId]` |
+
+DM UI: “Reveal to players” checkbox on the NPC entity modal (`CampaignStateUI`). Player UI: **People** tab lists revealed contacts only. See `docs/README/REVEALED-NPCS.md`.
 
 ## Currency
 Optional `sheet.currency { cp, sp, ep, gp, pp }` in 5B (no field exists today).

@@ -1,15 +1,20 @@
-/** Sticky YouTube media bar — layered ambience (true multi-track via IFrame API). */
+/** Compact ambience strip + mixer + visible multi-track YouTube dock (IFrame API). */
 window.MediaBar = (function () {
   "use strict";
 
   let barEl;
+  let dockEl;
   let statusEl;
   let tracksEl;
   let framesEl;
+  let mixerPanel;
+  let mixerBtn;
+  let pauseAllBtn;
   let stopAllBtn;
   let bound = false;
   let apiPromise = null;
   let resumeTimer = null;
+  let mixerOpen = false;
 
   /**
    * @type {{
@@ -19,7 +24,8 @@ window.MediaBar = (function () {
    *   host: HTMLElement,
    *   player: *,
    *   wantPlay: boolean,
-   *   stopping: boolean
+   *   stopping: boolean,
+   *   volume: number
    * }[]}
    */
   let tracks = [];
@@ -86,7 +92,6 @@ window.MediaBar = (function () {
         (document.head || document.documentElement).appendChild(script);
       }
 
-      /* Script may already be present and ready */
       if (window.YT && typeof window.YT.Player === "function") resolve(window.YT);
     });
 
@@ -98,37 +103,122 @@ window.MediaBar = (function () {
     if (!barEl) return false;
     statusEl = document.getElementById("media-bar-status") || document.getElementById("media-bar-title");
     tracksEl = document.getElementById("media-bar-tracks");
-    framesEl = document.getElementById("media-bar-frames") || barEl.querySelector(".media-bar__frame-wrap");
+    framesEl = document.getElementById("media-bar-frames");
+    dockEl = document.getElementById("media-dock");
+    mixerPanel = document.getElementById("media-bar-mixer-panel");
+    mixerBtn = document.getElementById("media-bar-mixer");
+    pauseAllBtn = document.getElementById("media-bar-pause-all");
     stopAllBtn = document.getElementById("media-bar-stop");
+    if (!framesEl && barEl) {
+      framesEl = barEl.querySelector(".media-bar__frame-wrap, .media-dock__frames");
+    }
     return Boolean(framesEl);
+  }
+
+  function setMixerOpen(open) {
+    mixerOpen = Boolean(open);
+    if (mixerPanel) mixerPanel.hidden = !mixerOpen;
+    if (mixerBtn) mixerBtn.setAttribute("aria-expanded", mixerOpen ? "true" : "false");
+    barEl?.classList.toggle("is-mixer-open", mixerOpen);
+  }
+
+  function playerSizeForCount(n) {
+    if (n <= 1) return 200;
+    if (n === 2) return 160;
+    if (n === 3) return 140;
+    return 120;
+  }
+
+  function syncDockLayout() {
+    const n = tracks.length;
+    const size = playerSizeForCount(n);
+    if (dockEl) {
+      dockEl.dataset.trackCount = String(n);
+      try {
+        dockEl.style?.setProperty?.("--media-player-size", `${size}px`);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (document.body?.dataset) {
+      if (n) document.body.dataset.mediaTrackCount = String(n);
+      else delete document.body.dataset.mediaTrackCount;
+    }
+    /* Resize existing YT iframes without remounting (mode changes must not reload). */
+    tracks.forEach((tr) => {
+      if (!tr.host) return;
+      tr.host.style.width = `${size}px`;
+      tr.host.style.height = `${size}px`;
+      const iframe = tr.host.querySelector?.("iframe");
+      if (iframe) {
+        iframe.style.width = `${size}px`;
+        iframe.style.height = `${size}px`;
+      }
+      try {
+        tr.player?.setSize?.(size, size);
+      } catch {
+        /* ignore */
+      }
+    });
   }
 
   function showBar() {
     barEl.classList.add("is-active");
     barEl.setAttribute("aria-hidden", "false");
     document.body.classList.add("media-bar-open");
-    if (document.body.dataset) document.body.dataset.mediaTrackCount = String(tracks.length);
+    if (dockEl) {
+      dockEl.classList.add("is-active");
+      dockEl.setAttribute("aria-hidden", "false");
+    }
+    syncDockLayout();
   }
 
   function hideBar() {
+    setMixerOpen(false);
     barEl.classList.remove("is-active");
     barEl.setAttribute("aria-hidden", "true");
     document.body.classList.remove("media-bar-open");
+    if (dockEl) {
+      dockEl.classList.remove("is-active");
+      dockEl.setAttribute("aria-hidden", "true");
+      delete dockEl.dataset.trackCount;
+    }
     if (document.body.dataset) delete document.body.dataset.mediaTrackCount;
   }
 
   function updateStatus() {
     if (!statusEl) return;
-    if (!tracks.length) {
-      statusEl.textContent = t("mediaIdle", "No track playing");
+    const n = tracks.length;
+    if (!n) {
+      statusEl.textContent = t("mediaIdleStrip", "Ambience · 0 active");
       return;
     }
-    if (tracks.length === 1) {
-      statusEl.textContent = tracks[0].title;
-      return;
+    const template = t("mediaActiveCount", "Ambience · {n} active");
+    statusEl.textContent = template.replace("{n}", String(n));
+  }
+
+  function trackStatusLabel(track) {
+    if (track.stopping) return t("mediaStatusStopping", "Stopping");
+    if (!track.wantPlay) return t("mediaStatusPaused", "Paused");
+    if (!track.player) return t("mediaStatusLoading", "Loading");
+    try {
+      const state = track.player.getPlayerState?.();
+      if (state === 3) return t("mediaStatusBuffering", "Buffering");
+      if (state === 1) return t("mediaStatusPlaying", "Playing");
+    } catch {
+      /* ignore */
     }
-    const template = t("mediaPlayingCount", "{n} tracks playing");
-    statusEl.textContent = template.replace("{n}", String(tracks.length));
+    return track.wantPlay ? t("mediaStatusPlaying", "Playing") : t("mediaStatusPaused", "Paused");
+  }
+
+  function applyVolume(track) {
+    try {
+      track.player?.setVolume?.(track.volume);
+      if (track.volume <= 0) track.player?.mute?.();
+      else track.player?.unMute?.();
+    } catch {
+      /* ignore */
+    }
   }
 
   function renderTrackList() {
@@ -138,15 +228,18 @@ window.MediaBar = (function () {
     }
     tracksEl.innerHTML = "";
     if (!tracks.length) {
-      tracksEl.hidden = true;
+      tracksEl.innerHTML = `<p class="media-bar__mixer-empty">${t("mediaMixerEmpty", "No active tracks")}</p>`;
       updateStatus();
       return;
     }
-    tracksEl.hidden = false;
+
     tracks.forEach((track) => {
       const row = document.createElement("div");
       row.className = "media-bar__track";
       row.dataset.trackKey = track.key;
+
+      const head = document.createElement("div");
+      head.className = "media-bar__track-head";
 
       const link = document.createElement("a");
       link.className = "media-bar__track-label";
@@ -156,6 +249,31 @@ window.MediaBar = (function () {
       link.textContent = track.title;
       link.title = track.title;
 
+      const status = document.createElement("span");
+      status.className = "media-bar__track-status";
+      status.textContent = trackStatusLabel(track);
+
+      head.appendChild(link);
+      head.appendChild(status);
+
+      const controls = document.createElement("div");
+      controls.className = "media-bar__track-controls";
+
+      const playBtn = document.createElement("button");
+      playBtn.type = "button";
+      playBtn.className = "media-bar__track-toggle";
+      playBtn.dataset.toggleTrack = track.key;
+      playBtn.textContent = track.wantPlay ? t("mediaPause", "Pause") : t("mediaPlay", "Play");
+
+      const vol = document.createElement("input");
+      vol.type = "range";
+      vol.className = "media-bar__track-volume";
+      vol.min = "0";
+      vol.max = "100";
+      vol.value = String(track.volume);
+      vol.setAttribute("aria-label", `${t("mediaVolume", "Volume")} ${track.title}`);
+      vol.dataset.volumeTrack = track.key;
+
       const stopBtn = document.createElement("button");
       stopBtn.type = "button";
       stopBtn.className = "media-bar__track-stop";
@@ -163,11 +281,16 @@ window.MediaBar = (function () {
       stopBtn.setAttribute("aria-label", `${t("mediaStopTrack", "Stop")} ${track.title}`);
       stopBtn.textContent = "×";
 
-      row.appendChild(link);
-      row.appendChild(stopBtn);
+      controls.appendChild(playBtn);
+      controls.appendChild(vol);
+      controls.appendChild(stopBtn);
+
+      row.appendChild(head);
+      row.appendChild(controls);
       tracksEl.appendChild(row);
     });
     updateStatus();
+    syncDockLayout();
   }
 
   function clearResumeTimer() {
@@ -177,14 +300,15 @@ window.MediaBar = (function () {
   }
 
   function armResumeTimer() {
-    if (tracks.length < 2) {
+    const playing = tracks.filter((tr) => tr.wantPlay);
+    if (playing.length < 2) {
       clearResumeTimer();
       return;
     }
     if (resumeTimer) return;
     /* YouTube often pauses sibling embeds when another starts — keep re-asserting play. */
     resumeTimer = setInterval(() => {
-      if (tracks.length < 2) {
+      if (tracks.filter((tr) => tr.wantPlay).length < 2) {
         clearResumeTimer();
         return;
       }
@@ -198,7 +322,6 @@ window.MediaBar = (function () {
       if (skipKey && tr.key === skipKey) return;
       try {
         const state = typeof tr.player.getPlayerState === "function" ? tr.player.getPlayerState() : null;
-        /* 1 playing, 3 buffering — leave alone */
         if (state === 1 || state === 3) return;
         tr.player.playVideo();
       } catch {
@@ -227,10 +350,11 @@ window.MediaBar = (function () {
 
   function mountPlayer(track, YT) {
     if (!tracks.some((tr) => tr.key === track.key) || track.stopping) return;
+    const size = playerSizeForCount(tracks.length);
 
     track.player = new YT.Player(track.host.id, {
-      width: 200,
-      height: 200,
+      width: size,
+      height: size,
       videoId: track.id,
       playerVars: {
         autoplay: 1,
@@ -243,13 +367,24 @@ window.MediaBar = (function () {
       },
       events: {
         onReady(event) {
-          if (!track.wantPlay || track.stopping) return;
+          if (track.stopping) return;
+          applyVolume(track);
+          if (!track.wantPlay) {
+            try {
+              event.target.pauseVideo();
+            } catch {
+              /* ignore */
+            }
+            renderTrackList();
+            return;
+          }
           try {
             event.target.playVideo();
           } catch {
             /* ignore */
           }
           resumeAll();
+          renderTrackList();
         },
         onStateChange(event) {
           if (!track.wantPlay || track.stopping) return;
@@ -266,7 +401,6 @@ window.MediaBar = (function () {
             }
           }
           if (event.data === PLAYING) {
-            /* Starting one track pauses others — immediately wake siblings */
             resumeAll(track.key);
           }
           if (event.data === ENDED && track.wantPlay) {
@@ -277,6 +411,7 @@ window.MediaBar = (function () {
               /* ignore */
             }
           }
+          renderTrackList();
         }
       }
     });
@@ -306,10 +441,13 @@ window.MediaBar = (function () {
     const label =
       (title || t("mediaPlaying", "Playing ambience")).trim() || t("mediaPlaying", "Playing ambience");
     const key = `yt-${id}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const size = playerSizeForCount(tracks.length + 1);
 
     const host = document.createElement("div");
     host.className = "media-bar__player";
     host.id = `media-player-${key}`;
+    host.style.width = `${size}px`;
+    host.style.height = `${size}px`;
     framesEl.appendChild(host);
 
     const track = {
@@ -319,7 +457,8 @@ window.MediaBar = (function () {
       host,
       player: null,
       wantPlay: true,
-      stopping: false
+      stopping: false,
+      volume: 100
     };
     tracks.push(track);
     renderTrackList();
@@ -339,9 +478,12 @@ window.MediaBar = (function () {
         iframe.referrerPolicy = "strict-origin-when-cross-origin";
         iframe.allowFullscreen = true;
         iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`;
+        iframe.style.width = `${size}px`;
+        iframe.style.height = `${size}px`;
         host.appendChild(iframe);
         track.player = {
           playVideo() {},
+          pauseVideo() {},
           stopVideo() {
             iframe.src = "";
           },
@@ -349,12 +491,77 @@ window.MediaBar = (function () {
             iframe.remove();
           },
           getPlayerState() {
-            return 1;
+            return track.wantPlay ? 1 : 2;
+          },
+          setVolume() {},
+          mute() {},
+          unMute() {},
+          setSize(w, h) {
+            iframe.style.width = `${w}px`;
+            iframe.style.height = `${h}px`;
           }
         };
+        renderTrackList();
       });
 
     return key;
+  }
+
+  function pauseTrack(key) {
+    const track = tracks.find((tr) => tr.key === key);
+    if (!track) return false;
+    track.wantPlay = false;
+    try {
+      track.player?.pauseVideo?.();
+    } catch {
+      /* ignore */
+    }
+    renderTrackList();
+    armResumeTimer();
+    return true;
+  }
+
+  function resumeTrack(key) {
+    const track = tracks.find((tr) => tr.key === key);
+    if (!track) return false;
+    track.wantPlay = true;
+    track.stopping = false;
+    try {
+      track.player?.playVideo?.();
+    } catch {
+      /* ignore */
+    }
+    renderTrackList();
+    armResumeTimer();
+    resumeAll();
+    return true;
+  }
+
+  function toggleTrack(key) {
+    const track = tracks.find((tr) => tr.key === key);
+    if (!track) return false;
+    return track.wantPlay ? pauseTrack(key) : resumeTrack(key);
+  }
+
+  function setTrackVolume(key, volume) {
+    const track = tracks.find((tr) => tr.key === key);
+    if (!track) return false;
+    track.volume = Math.max(0, Math.min(100, Number(volume) || 0));
+    applyVolume(track);
+    return true;
+  }
+
+  function pauseAll() {
+    tracks.forEach((tr) => {
+      tr.wantPlay = false;
+      try {
+        tr.player?.pauseVideo?.();
+      } catch {
+        /* ignore */
+      }
+    });
+    clearResumeTimer();
+    renderTrackList();
   }
 
   function stopTrack(key) {
@@ -383,7 +590,18 @@ window.MediaBar = (function () {
   }
 
   function getTracks() {
-    return tracks.map((tr) => ({ key: tr.key, id: tr.id, title: tr.title }));
+    return tracks.map((tr) => ({
+      key: tr.key,
+      id: tr.id,
+      title: tr.title,
+      wantPlay: tr.wantPlay,
+      volume: tr.volume
+    }));
+  }
+
+  /** Layout/mode changes must not remount players — only reposition CSS. */
+  function onLayoutChange() {
+    syncDockLayout();
   }
 
   function init() {
@@ -394,28 +612,69 @@ window.MediaBar = (function () {
       stopAllBtn.textContent = t("mediaStopAll", "Stop all");
       stopAllBtn.addEventListener("click", stop);
     }
+    if (pauseAllBtn) {
+      pauseAllBtn.textContent = t("mediaPauseAll", "Pause all");
+      pauseAllBtn.addEventListener("click", pauseAll);
+    }
+    if (mixerBtn) {
+      mixerBtn.textContent = t("mediaMixer", "Mixer");
+      mixerBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setMixerOpen(!mixerOpen);
+      });
+    }
 
     barEl.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-stop-track]");
-      if (!btn || !barEl.contains(btn)) return;
-      e.preventDefault();
-      stopTrack(btn.dataset.stopTrack);
+      const stopBtn = e.target.closest("[data-stop-track]");
+      if (stopBtn && barEl.contains(stopBtn)) {
+        e.preventDefault();
+        stopTrack(stopBtn.dataset.stopTrack);
+        return;
+      }
+      const toggleBtn = e.target.closest("[data-toggle-track]");
+      if (toggleBtn && barEl.contains(toggleBtn)) {
+        e.preventDefault();
+        toggleTrack(toggleBtn.dataset.toggleTrack);
+      }
+    });
+
+    barEl.addEventListener("input", (e) => {
+      const slider = e.target.closest("[data-volume-track]");
+      if (!slider || !barEl.contains(slider)) return;
+      setTrackVolume(slider.dataset.volumeTrack, slider.value);
     });
 
     document.addEventListener("click", (e) => {
       const chip = e.target.closest("[data-media-play]");
-      if (!chip) return;
-      e.preventDefault();
-      play(chip.dataset.mediaUrl || chip.dataset.mediaId, chip.dataset.mediaTitle);
+      if (chip) {
+        e.preventDefault();
+        play(chip.dataset.mediaUrl || chip.dataset.mediaId, chip.dataset.mediaTitle);
+        return;
+      }
+      if (mixerOpen && !e.target.closest?.("#media-bar")) {
+        setMixerOpen(false);
+      }
     });
 
-    /* Warm the API so the second chip isn’t racing the script download */
     ensureYtApi().catch(() => {});
-
     stop();
   }
 
-  return { init, play, stop, stopTrack, getTracks, extractYouTubeId, resumeAll };
+  return {
+    init,
+    play,
+    stop,
+    stopTrack,
+    pauseTrack,
+    resumeTrack,
+    toggleTrack,
+    pauseAll,
+    setTrackVolume,
+    getTracks,
+    extractYouTubeId,
+    resumeAll,
+    onLayoutChange
+  };
 })();
 
 if (typeof document !== "undefined") {

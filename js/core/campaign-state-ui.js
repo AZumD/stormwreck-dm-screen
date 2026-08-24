@@ -317,6 +317,13 @@ window.CampaignStateUI = (function () {
     const wrap = document.createElement("div");
     wrap.className = "npc-memory";
     wrap.innerHTML = `
+      <div class="npc-reveal">
+        <label class="npc-reveal__label">
+          <input type="checkbox" class="npc-reveal__toggle" data-reveal-npc="${escapeHtml(entity.id)}" disabled>
+          <span>${escapeHtml(t().revealToPlayers || "Reveal to players")}</span>
+        </label>
+        <p class="npc-reveal__hint meta">${escapeHtml(t().revealToPlayersHint || "Players see this NPC under People once revealed.")}</p>
+      </div>
       <div class="npc-memory__header">
         <h3 class="npc-memory__title">${escapeHtml(t().npcMemoryTitle || "Campaign memory")}</h3>
         <div class="npc-memory__actions">
@@ -331,6 +338,42 @@ window.CampaignStateUI = (function () {
 
     wrap.querySelector("[data-edit-memory]")?.addEventListener("click", () => openMemoryEditor(entity.id, wrap));
     wrap.querySelector("[data-log-interaction]")?.addEventListener("click", () => openLogInteraction(entity.id));
+    bindRevealToggle(wrap, entity.id);
+  }
+
+  async function bindRevealToggle(wrap, npcId) {
+    const input = wrap.querySelector("[data-reveal-npc]");
+    if (!input || !campaignId || !window.LocalApiClient?.listRevealedNpcs) return;
+    try {
+      const list = await LocalApiClient.listRevealedNpcs(campaignId);
+      input.checked = (list || []).some((n) => n.id === npcId);
+      input.disabled = false;
+    } catch (err) {
+      input.disabled = true;
+      const hint = wrap.querySelector(".npc-reveal__hint");
+      if (hint) {
+        hint.textContent =
+          err?.status === 503
+            ? "Postgres required to reveal NPCs to players."
+            : err.message || "Reveal unavailable.";
+      }
+      return;
+    }
+    input.addEventListener("change", async () => {
+      input.disabled = true;
+      try {
+        if (input.checked) {
+          await LocalApiClient.revealNpc(campaignId, npcId, {});
+        } else {
+          await LocalApiClient.unrevealNpc(campaignId, npcId);
+        }
+      } catch (err) {
+        input.checked = !input.checked;
+        window.alert(err.message || "Could not update reveal.");
+      } finally {
+        input.disabled = false;
+      }
+    });
   }
 
   function openMemoryEditor(entityId, wrap) {

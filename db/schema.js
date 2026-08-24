@@ -171,3 +171,20 @@ export const playerNotes = pgTable("player_notes", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 });
+
+/** Phase 5D: catalogue NPCs revealed to players for this campaign */
+export const campaignRevealedNpcs = pgTable(
+  "campaign_revealed_npcs",
+  {
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    npcId: text("npc_id").notNull(),
+    revealedBy: uuid("revealed_by").references(() => users.id, { onDelete: "set null" }),
+    revealedAt: timestamp("revealed_at", { withTimezone: true }).defaultNow().notNull(),
+    note: text("note").notNull().default("")
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.campaignId, t.npcId] })
+  })
+);

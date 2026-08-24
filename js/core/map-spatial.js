@@ -46,37 +46,66 @@ window.MapSpatial = (function () {
     };
   }
 
+  /**
+   * Prefer static markup in campaign HTML (primary actions + collapsible settings).
+   * Falls back to injecting chrome when older pages lack the slots.
+   */
   function attachChrome(panelBody) {
+    if (document.getElementById("map-measure-btn") && document.getElementById("map-uvtt-file")) {
+      return;
+    }
     if (!panelBody || document.getElementById("map-spatial-chrome")) return;
-    const chrome = document.createElement("div");
-    chrome.id = "map-spatial-chrome";
-    chrome.className = "map-spatial-chrome";
-    chrome.innerHTML = `
-      <div class="map-spatial-row">
-        <label class="map-uvtt-import btn-like">
-          Import UVTT
-          <input type="file" id="map-uvtt-file" accept=".dd2vtt,.uvtt,application/json" hidden>
-        </label>
-        <span id="map-kind-badge" class="map-kind-badge" hidden></span>
-      </div>
-      <p id="map-spatial-meta" class="map-spatial-meta" hidden></p>
-      <div id="map-calibrated-tools" class="map-calibrated-tools" hidden>
-        <label class="map-tool-check"><input type="checkbox" id="map-show-grid"> Grid</label>
-        <label class="map-tool-check"><input type="checkbox" id="map-snap-measure"> Snap measure</label>
-        <button type="button" class="map-tool-btn" id="map-measure-btn" aria-pressed="false">Measure</button>
-        <button type="button" class="map-tool-btn" id="map-add-token-btn">+ Token</button>
-        <label class="map-scale-label">ft/grid
-          <input type="number" id="map-scale-input" min="0.1" step="0.5" value="5">
-        </label>
-      </div>
-      <p id="map-measure-readout" class="map-measure-readout" hidden></p>
-      <p id="map-token-distance" class="map-token-distance" hidden></p>
-    `;
-    const mapSelect = document.getElementById("map-select");
-    if (mapSelect && mapSelect.parentNode) {
-      mapSelect.parentNode.insertBefore(chrome, mapSelect.nextSibling);
-    } else {
-      panelBody.insertBefore(chrome, panelBody.firstChild);
+
+    const settingsBody = document.getElementById("map-settings-body");
+    const primary = document.getElementById("map-primary-actions");
+
+    if (!document.getElementById("map-measure-btn") && primary) {
+      primary.insertAdjacentHTML(
+        "afterbegin",
+        `<button type="button" class="map-tool-btn" id="map-measure-btn" aria-pressed="false" hidden>Measure</button>
+         <button type="button" class="map-tool-btn" id="map-add-token-btn" hidden>+ Token</button>`
+      );
+    }
+
+    const settingsHtml = `
+      <div id="map-spatial-chrome" class="map-spatial-chrome">
+        <div class="map-spatial-row">
+          <label class="map-uvtt-import btn-like">
+            Import UVTT
+            <input type="file" id="map-uvtt-file" accept=".dd2vtt,.uvtt,application/json" hidden>
+          </label>
+          <span id="map-kind-badge" class="map-kind-badge" hidden></span>
+        </div>
+        <p id="map-spatial-meta" class="map-spatial-meta" hidden></p>
+        <div id="map-calibrated-tools" class="map-calibrated-tools" hidden>
+          <label class="map-tool-check"><input type="checkbox" id="map-show-grid"> Grid</label>
+          <label class="map-tool-check"><input type="checkbox" id="map-snap-measure"> Snap measure</label>
+          <label class="map-scale-label">ft/grid
+            <input type="number" id="map-scale-input" min="0.1" step="0.5" value="5">
+          </label>
+        </div>
+      </div>`;
+
+    if (settingsBody && !document.getElementById("map-spatial-chrome")) {
+      settingsBody.insertAdjacentHTML("beforeend", settingsHtml);
+    } else if (!document.getElementById("map-spatial-chrome")) {
+      const chrome = document.createElement("div");
+      chrome.innerHTML = settingsHtml;
+      const node = chrome.firstElementChild;
+      const mapSelect = document.getElementById("map-select");
+      if (mapSelect && mapSelect.parentNode) {
+        mapSelect.parentNode.insertBefore(node, mapSelect.nextSibling);
+      } else {
+        panelBody.insertBefore(node, panelBody.firstChild);
+      }
+    }
+
+    if (!document.getElementById("map-measure-readout") && panelBody) {
+      panelBody.insertAdjacentHTML(
+        "beforeend",
+        `<p id="map-measure-readout" class="map-measure-readout" hidden></p>
+         <p id="map-token-distance" class="map-token-distance" hidden></p>`
+      );
     }
   }
 
@@ -376,9 +405,12 @@ window.MapSpatial = (function () {
         }
       }
 
+      const calibrated = isCalibrated(detail);
       if (els.tools) {
-        els.tools.hidden = !isCalibrated(detail);
+        els.tools.hidden = !calibrated;
       }
+      if (els.measureBtn) els.measureBtn.hidden = !calibrated;
+      if (els.addToken) els.addToken.hidden = !calibrated;
       if (els.showGrid && detail.display) {
         els.showGrid.checked = Boolean(detail.display.showGrid);
       }

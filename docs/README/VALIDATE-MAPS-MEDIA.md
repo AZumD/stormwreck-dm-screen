@@ -13,7 +13,7 @@ Included in `npm test`.
 ## Covers
 - Map panel image resolve + pin drag storage
 - Media bar multi-track via YouTube IFrame API + sibling resume
-- Side-by-side visible 200×200 player dock (not stacked/covered)
-- Track pills, `stopTrack`, `getTracks`
+- Compact strip + mixer + separate visible dock (`#media-dock`, adaptive `--media-player-size`)
+- Per-track volume / pauseAll (mounted) / stopTrack / getTracks / onLayoutChange
 - Parser `{{youtube}}` chips keep `data-media-url`
-- Campaign HTML multi-track media bar markup
+- Campaign HTML multi-track media bar + dock markup

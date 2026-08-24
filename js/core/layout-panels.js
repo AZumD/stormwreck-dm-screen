@@ -1,10 +1,13 @@
-/** Sidebar + map panel collapse — independent of campaign-app init */
+/** Sidebar + map panel collapse / expand modes — independent of campaign-app init */
 window.LayoutPanels = (function () {
   "use strict";
 
   const SIDEBAR_WIDTH = "268px";
   const MAP_WIDTH = "300px";
   const MAP_EXPANDED_WIDTH = "40vw";
+
+  /** @type {"sidebar" | "expanded" | "combat"} */
+  let mapMode = "sidebar";
 
   function campaignId() {
     return document.body.dataset.campaignId || "stormwreck-isle";
@@ -26,13 +29,88 @@ window.LayoutPanels = (function () {
     return document.querySelector(".app");
   }
 
+  function getMapMode() {
+    return mapMode;
+  }
+
   function syncMapColumn() {
     const app = appEl();
     const body = document.body;
     if (!app || body.classList.contains("map-panel-collapsed")) return;
 
-    const expanded = body.classList.contains("sidebar-collapsed");
-    app.style.setProperty("--map-col", expanded ? MAP_EXPANDED_WIDTH : MAP_WIDTH);
+    if (mapMode === "expanded" || mapMode === "combat") {
+      app.style.setProperty("--map-col", "minmax(0, 1fr)");
+      return;
+    }
+
+    const navCollapsed = body.classList.contains("sidebar-collapsed");
+    app.style.setProperty("--map-col", navCollapsed ? MAP_EXPANDED_WIDTH : MAP_WIDTH);
+  }
+
+  function syncExpandChrome() {
+    const body = document.body;
+    const panel = document.getElementById("map-panel");
+    const expandBtn = document.getElementById("map-expand-btn");
+    const titleEl = document.getElementById("map-expanded-title");
+    const select = document.getElementById("map-select");
+    const t = labels();
+    const isWide = mapMode === "expanded" || mapMode === "combat";
+
+    if (panel) panel.dataset.mapMode = mapMode;
+    body.dataset.mapMode = mapMode;
+    body.classList.toggle("map-mode-expanded", isWide);
+    body.classList.toggle("map-mode-combat", mapMode === "combat");
+    document.documentElement.classList.toggle("map-mode-expanded", isWide);
+    document.documentElement.classList.toggle("map-mode-combat", mapMode === "combat");
+
+    if (expandBtn) {
+      expandBtn.setAttribute("aria-pressed", isWide ? "true" : "false");
+      expandBtn.textContent = isWide
+        ? t.collapseMap || "Collapse"
+        : t.expandMap || "Expand";
+    }
+
+    if (titleEl) {
+      if (isWide && select) {
+        const label = select.options[select.selectedIndex]?.textContent || select.value || "Map";
+        titleEl.textContent = label;
+        titleEl.hidden = false;
+      } else {
+        titleEl.hidden = true;
+        titleEl.textContent = "";
+      }
+    }
+
+    window.MediaBar?.onLayoutChange?.();
+  }
+
+  /**
+   * Map rail display mode.
+   * - sidebar: default right column
+   * - expanded: ~full content area (no combat chrome)
+   * - combat: reserved — same shell as expanded for now; Combat Mode builds on this later
+   */
+  function setMapMode(next, save = false) {
+    const allowed = next === "sidebar" || next === "expanded" || next === "combat";
+    if (!allowed) return;
+    mapMode = next;
+
+    const body = document.body;
+    if (mapMode !== "sidebar" && body.classList.contains("map-panel-collapsed")) {
+      setMapCollapsed(false, false);
+    }
+
+    syncMapColumn();
+    syncExpandChrome();
+
+    if (save) {
+      /* Expanded/combat are session UI only — do not persist across reload */
+    }
+  }
+
+  function toggleMapExpanded() {
+    if (mapMode === "expanded" || mapMode === "combat") setMapMode("sidebar");
+    else setMapMode("expanded");
   }
 
   function setNavCollapsed(collapsed, save = true) {
@@ -73,12 +151,20 @@ window.LayoutPanels = (function () {
     const app = appEl();
     const t = labels();
 
+    if (collapsed && (mapMode === "expanded" || mapMode === "combat")) {
+      setMapMode("sidebar");
+    }
+
     body.classList.toggle("map-panel-collapsed", collapsed);
     root.classList.toggle("map-panel-collapsed", collapsed);
     body.dataset.mapCollapsed = collapsed ? "true" : "false";
 
     if (app) {
-      app.style.setProperty("--map-col", collapsed ? "0px" : body.classList.contains("sidebar-collapsed") ? MAP_EXPANDED_WIDTH : MAP_WIDTH);
+      if (collapsed) {
+        app.style.setProperty("--map-col", "0px");
+      } else {
+        syncMapColumn();
+      }
     }
 
     const toggle = document.getElementById("map-panel-toggle");
@@ -100,7 +186,7 @@ window.LayoutPanels = (function () {
 
   function handleClick(event) {
     const button = event.target.closest(
-      "#sidebar-toggle, #sidebar-collapse, #map-panel-toggle, #map-panel-collapse"
+      "#sidebar-toggle, #sidebar-collapse, #map-panel-toggle, #map-panel-collapse, #map-expand-btn"
     );
     if (!button) return;
 
@@ -120,7 +206,16 @@ window.LayoutPanels = (function () {
     }
 
     if (button.id === "map-panel-collapse") {
+      if (mapMode === "expanded" || mapMode === "combat") {
+        setMapMode("sidebar");
+        return;
+      }
       setMapCollapsed(true);
+      return;
+    }
+
+    if (button.id === "map-expand-btn") {
+      toggleMapExpanded();
     }
   }
 
@@ -136,11 +231,24 @@ window.LayoutPanels = (function () {
     const navCollapsed = localStorage.getItem(sidebarStorageKey()) === "1";
     const mapCollapsed = localStorage.getItem(mapStorageKey()) === "1";
 
+    mapMode = "sidebar";
     setMapCollapsed(mapCollapsed, false);
     setNavCollapsed(navCollapsed, false);
+    syncExpandChrome();
+
+    document.getElementById("map-select")?.addEventListener("change", () => {
+      if (mapMode === "expanded" || mapMode === "combat") syncExpandChrome();
+    });
   }
 
-  return { init, setNavCollapsed, setMapCollapsed };
+  return {
+    init,
+    setNavCollapsed,
+    setMapCollapsed,
+    setMapMode,
+    getMapMode,
+    toggleMapExpanded
+  };
 })();
 
 if (document.readyState === "loading") {

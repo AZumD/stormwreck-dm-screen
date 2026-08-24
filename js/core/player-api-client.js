@@ -98,6 +98,10 @@ window.PlayerApiClient = (function () {
         `/api/player/campaigns/${enc(campaignId)}/characters/${enc(characterId)}/library-attach`,
         payload
       ),
+    revealedNpcs: (campaignId) =>
+      request("GET", `/api/player/campaigns/${enc(campaignId)}/npcs`),
+    revealedNpc: (campaignId, npcId) =>
+      request("GET", `/api/player/campaigns/${enc(campaignId)}/npcs/${enc(npcId)}`),
     notes: (campaignId) => request("GET", `/api/player/campaigns/${enc(campaignId)}/notes`),
     createNote: (campaignId, payload) =>
       request("POST", `/api/player/campaigns/${enc(campaignId)}/notes`, payload),

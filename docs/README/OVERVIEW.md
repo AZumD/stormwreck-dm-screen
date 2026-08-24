@@ -9,7 +9,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
 - Campaign maps — image + Universal VTT import, measure, DM tokens (see `docs/README/UVTT.md`)
-- Player companion (`/player/`) — mobile-first sheet / party / library / notes (Phase 5A–5C; see `docs/README/PHASE5-PLAYER-SHEET.md`)
+- Player companion (`/player/`) — mobile-first sheet / party / people / library / notes (Phase 5A–5D; see `docs/README/PHASE5-PLAYER-SHEET.md`)
 
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
@@ -73,7 +73,8 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/catalogue/types.js` | Declarative catalogue type list |
 | `js/core/editor.js` | Free-form ordered scenes, nav groups, edit-mode reorder |
 | `js/core/parser.js` | `@` links (all linkable types), YouTube chips, read-aloud / DM-note |
-| `js/core/media-bar.js` | Sticky multi-track YouTube ambience bar |
+| `js/core/media-bar.js` | Compact multi-track YouTube strip + mixer + dock |
+| `js/core/layout-panels.js` | Nav/map collapse + map modes (sidebar / expanded / combat shell) |
 | `js/core/entity-ui.js` | Tooltips + modals (map pins use compact tooltips) |
 | `js/core/entity-registry.js` | Catalogue → `ENTITIES` (+ `register()` for new types) |
 | `js/core/campaign-registry.js` | User campaigns on the landing page |
@@ -86,7 +87,8 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/scene-meta.js` | Scene cast + connections (design data) |
 | `js/core/scene-ui.js` | At this scene tray + connection UI (edit-mode Link scene) |
 | `js/core/party.js` | Party roster UI from catalogue refs |
-| `js/core/map-panel.js` | Map images, pins, drag positions |
+| `js/core/map-panel.js` | Map rail tabs, pins, expand mode, Layers popover |
+| `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/campaign-app.js` | Campaign screen controller |
@@ -105,5 +107,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
 

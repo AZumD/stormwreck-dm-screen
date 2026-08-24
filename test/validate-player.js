@@ -114,6 +114,21 @@ if (!clientSrc.includes("patchSheet") || !clientSrc.includes("addInventory") || 
 if (!playerHtml.includes('data-tab="library"') || !appSrc.includes("loadLibrary")) {
   fail("player library tab UI missing");
 } else pass("player library tab UI");
+if (!playerHtml.includes('data-tab="people"') || !appSrc.includes("loadPeople") || !appSrc.includes("openRevealedNpc")) {
+  fail("player People / revealed NPC UI missing");
+} else pass("player People tab UI");
+if (!clientSrc.includes("revealedNpcs") || !clientSrc.includes("revealedNpc")) {
+  fail("player-api-client missing revealed NPC helpers");
+} else pass("player-api-client revealed NPC helpers");
+if (!apiSrc.includes("revealed-npcs") || !apiSrc.includes("/npcs")) {
+  fail("api missing revealed NPC routes");
+} else pass("api revealed NPC routes");
+if (!fs.existsSync(path.join(root, "db/migrations/0003_phase5_npc_reveal.sql"))) {
+  fail("missing 0003_phase5_npc_reveal.sql");
+} else pass("npc reveal migration present");
+if (!fs.existsSync(path.join(root, "server/lib/revealed-npcs.js"))) {
+  fail("missing revealed-npcs.js");
+} else pass("revealed-npcs module present");
 if (!clientSrc.includes("libraryAttach") || !clientSrc.includes("library:")) {
   fail("player-api-client missing library helpers");
 } else pass("player-api-client library helpers");
@@ -646,6 +661,98 @@ async function liveTests() {
   );
   if (attachNpc.status !== 403 && attachNpc.status !== 400) fail("npc attach blocked");
   else pass("library attach blocked for NPC catalogue type");
+
+  /* Phase 5D revealed NPCs */
+  const catalogues = require(path.join(root, "server/lib/catalogues.js"));
+  const revealNpcId = `npc-reveal-${suffix}`;
+  await catalogues.upsert("npc", revealNpcId, {
+    id: revealNpcId,
+    name: "Revealed Test NPC",
+    role: "Guide",
+    summary: "A friendly face at the docks.",
+    description: "Knows the tide schedules."
+  });
+  try {
+    const beforeReveal = await httpRequest("GET", `/api/player/campaigns/${campaignId}/npcs`, {
+      cookie: c1
+    });
+    if (beforeReveal.status !== 200) fail(`player npc list before reveal ${beforeReveal.status}`);
+    else if ((beforeReveal.data.npcs || []).some((n) => n.id === revealNpcId)) {
+      fail("unrevealed NPC listed for player");
+    } else pass("player npc list empty before reveal");
+
+    const unrevealedGet = await httpRequest(
+      "GET",
+      `/api/player/campaigns/${campaignId}/npcs/${revealNpcId}`,
+      { cookie: c1 }
+    );
+    if (unrevealedGet.status !== 404) fail(`unrevealed get expected 404 got ${unrevealedGet.status}`);
+    else pass("unrevealed NPC detail is 404");
+
+    const playerReveal = await httpRequest(
+      "PUT",
+      `/api/campaigns/${campaignId}/revealed-npcs/${revealNpcId}`,
+      { cookie: c1, body: {} }
+    );
+    if (playerReveal.status !== 403) fail(`player reveal expected 403 got ${playerReveal.status}`);
+    else pass("player cannot reveal NPCs");
+
+    const dmReveal = await httpRequest(
+      "PUT",
+      `/api/campaigns/${campaignId}/revealed-npcs/${revealNpcId}`,
+      { cookie: cDm, body: { note: "Met at the pier" } }
+    );
+    if (dmReveal.status !== 200 || dmReveal.data?.npc?.id !== revealNpcId) {
+      fail(`DM reveal failed ${dmReveal.status} ${dmReveal.data?.error || ""}`);
+    } else pass("DM can reveal NPC");
+
+    const afterReveal = await httpRequest("GET", `/api/player/campaigns/${campaignId}/npcs`, {
+      cookie: c1
+    });
+    if (
+      afterReveal.status !== 200 ||
+      !(afterReveal.data.npcs || []).some((n) => n.id === revealNpcId)
+    ) {
+      fail("revealed NPC missing from player list");
+    } else pass("player sees revealed NPC in list");
+
+    const detail = await httpRequest(
+      "GET",
+      `/api/player/campaigns/${campaignId}/npcs/${revealNpcId}`,
+      { cookie: c1 }
+    );
+    if (detail.status !== 200 || detail.data?.npc?.name !== "Revealed Test NPC") {
+      fail(`revealed detail ${detail.status}`);
+    } else pass("player can read revealed NPC detail");
+
+    const outsiderList = await httpRequest("GET", `/api/player/campaigns/${campaignId}/npcs`, {
+      cookie: cOut
+    });
+    if (outsiderList.status !== 403) fail(`outsider npc list expected 403 got ${outsiderList.status}`);
+    else pass("outsider denied revealed NPC list");
+
+    const dmUnreveal = await httpRequest(
+      "DELETE",
+      `/api/campaigns/${campaignId}/revealed-npcs/${revealNpcId}`,
+      { cookie: cDm, body: {} }
+    );
+    if (dmUnreveal.status !== 200) fail(`DM unreveal ${dmUnreveal.status}`);
+    else pass("DM can unreveal NPC");
+
+    const afterUnreveal = await httpRequest(
+      "GET",
+      `/api/player/campaigns/${campaignId}/npcs/${revealNpcId}`,
+      { cookie: c1 }
+    );
+    if (afterUnreveal.status !== 404) fail("unreveal should hide NPC again");
+    else pass("unrevealed NPC hidden again");
+  } finally {
+    try {
+      await catalogues.remove("npc", revealNpcId);
+    } catch {
+      /* ignore */
+    }
+  }
 
   const catEnum = await httpRequest("GET", "/api/catalogues/npc", { cookie: c1 });
   if (catEnum.status !== 403) fail(`catalogue enum expected 403 got ${catEnum.status}`);

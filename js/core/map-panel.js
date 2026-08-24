@@ -352,28 +352,92 @@ window.MapPanel = (function () {
         .join("");
     }
 
-    filtersEl.innerHTML = PIN_TYPES.map(
-      (type) => `
+    if (filtersEl) {
+      filtersEl.innerHTML = PIN_TYPES.map(
+        (type) => `
       <label class="map-filter">
         <input type="checkbox" data-filter="${type}" ${filters[type] ? "checked" : ""}>
         <span class="map-filter__dot map-filter__dot--${type}"></span>
         ${FILTER_LABELS[type]}
       </label>`
-    ).join("");
+      ).join("");
 
-    filtersEl.querySelectorAll("input").forEach((input) => {
-      input.addEventListener("change", () => {
-        filters[input.dataset.filter] = input.checked;
-        saveFilters(campaignId, filters);
-        renderPins();
+      filtersEl.querySelectorAll("input").forEach((input) => {
+        input.addEventListener("change", () => {
+          filters[input.dataset.filter] = input.checked;
+          saveFilters(campaignId, filters);
+          renderPins();
+        });
       });
+    }
+
+    const layersBtn = document.getElementById("map-layers-btn");
+    const layersPopover = document.getElementById("map-layers-popover");
+    const settingsEl = document.getElementById("map-settings");
+    const settingsToggle = document.getElementById("map-settings-toggle");
+
+    function setLayersOpen(open) {
+      if (!layersPopover || !layersBtn) return;
+      layersPopover.hidden = !open;
+      layersBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    layersBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setLayersOpen(layersPopover?.hidden !== false);
     });
+
+    document.addEventListener("click", (e) => {
+      if (!layersPopover || layersPopover.hidden) return;
+      if (e.target.closest?.(".map-layers-wrap")) return;
+      setLayersOpen(false);
+    });
+
+    settingsToggle?.addEventListener("click", () => {
+      if (!settingsEl) return;
+      settingsEl.open = !settingsEl.open;
+      settingsToggle.setAttribute("aria-expanded", settingsEl.open ? "true" : "false");
+    });
+    settingsEl?.addEventListener("toggle", () => {
+      settingsToggle?.setAttribute("aria-expanded", settingsEl.open ? "true" : "false");
+    });
+
+    function setActiveTab(tab) {
+      const next = tab === "party" ? "party" : "map";
+      panel.dataset.activeTab = next;
+      panel.querySelectorAll("[data-map-tab]").forEach((btn) => {
+        const on = btn.dataset.mapTab === next;
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+        btn.classList.toggle("is-active", on);
+      });
+      panel.querySelectorAll("[data-map-tab-panel]").forEach((pane) => {
+        const on = pane.dataset.mapTabPanel === next;
+        pane.hidden = !on;
+      });
+      if (next === "party" && window.PartyRoster) {
+        PartyRoster.syncWindowParty();
+        PartyRoster.render(partyList);
+      }
+    }
+
+    panel.querySelectorAll("[data-map-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => setActiveTab(btn.dataset.mapTab));
+    });
+    setActiveTab("map");
+
+    function syncExpandedTitle() {
+      const titleEl = document.getElementById("map-expanded-title");
+      if (!titleEl || titleEl.hidden) return;
+      const map = maps[activeMapId];
+      titleEl.textContent = map?.title || mapSelect?.options[mapSelect.selectedIndex]?.textContent || "Map";
+    }
 
     mapSelect.addEventListener("change", () => {
       activeMapId = mapSelect.value;
       if (window.CampaignMapState) CampaignMapState.patch(campaignId, { activeMap: activeMapId });
       resetZoom();
       renderMap();
+      syncExpandedTitle();
     });
 
     function renderMap() {

@@ -503,9 +503,9 @@ textarea { min-height: 6.5rem; resize: vertical; }
   position: fixed;
   left: 0; right: 0; bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.2rem;
-  padding: 0.35rem 0.35rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.15rem;
+  padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
   background: rgba(10, 16, 12, 0.92);
   border-top: 1px solid var(--border);
   backdrop-filter: blur(12px);
@@ -516,7 +516,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   min-height: 48px;
   border-radius: 10px;
@@ -563,6 +563,25 @@ textarea { min-height: 6.5rem; resize: vertical; }
   gap: 0.4rem;
   margin-top: 0.75rem;
 }
+
+.people-lede {
+  margin: 0 0 var(--space);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.people-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.people-card h3 {
+  margin: 0 0 0.2rem;
+  font-family: var(--display);
+  font-size: 1.1rem;
+}
+
 .dialog-body .detail-meta {
   margin: 0 0 0.55rem;
   color: var(--muted);

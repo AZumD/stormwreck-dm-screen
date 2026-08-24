@@ -92,6 +92,8 @@
     libraryTotal: 0,
     libraryBusy: false,
     librarySearchTimer: null,
+    people: [],
+    peopleBusy: false,
     addKind: null,
     addSearchTimer: null,
     addResults: []
@@ -538,6 +540,56 @@
     return bits.join(" · ");
   }
 
+  function renderPeople() {
+    if (state.peopleBusy) {
+      els.main.innerHTML = `<p class="empty">Loading people…</p>`;
+      return;
+    }
+    const list = state.people.length
+      ? `<ul class="list people-list">${state.people
+          .map((n) => {
+            const role = n.role ? `<p class="meta">${esc(n.role)}</p>` : "";
+            const summary = String(n.summary || "").slice(0, 140);
+            return `<li>
+            <button type="button" class="card card-btn people-card" data-revealed-npc="${esc(n.id)}">
+              <h3>${esc(n.name || n.id)}</h3>
+              ${role}
+              ${summary ? `<p class="meta">${esc(summary)}${String(n.summary || "").length > 140 ? "…" : ""}</p>` : ""}
+            </button>
+          </li>`;
+          })
+          .join("")}</ul>`
+      : `<p class="empty">No people revealed yet. Your DM reveals NPCs as you meet them.</p>`;
+    els.main.innerHTML = `
+      <p class="lede people-lede">Contacts your DM has revealed for this campaign.</p>
+      ${list}`;
+  }
+
+  async function loadPeople() {
+    if (!state.campaignId) return;
+    state.peopleBusy = true;
+    if (state.tab === "people") renderPeople();
+    const data = await safe(() => api.revealedNpcs(state.campaignId));
+    state.peopleBusy = false;
+    state.people = data?.npcs || [];
+    if (state.tab === "people") renderPeople();
+  }
+
+  async function openRevealedNpc(npcId) {
+    const data = await safe(() => api.revealedNpc(state.campaignId, npcId));
+    if (!data) return;
+    const npc = data.npc || {};
+    els.detailTitle.textContent = npc.name || npcId;
+    const bits = [npc.role, npc.note].filter(Boolean);
+    els.detailBody.innerHTML = `
+      ${bits.length ? `<p class="meta">${esc(bits.join(" · "))}</p>` : ""}
+      ${npc.summary ? `<p class="detail-block">${esc(npc.summary)}</p>` : ""}
+      ${npc.description ? `<div class="detail-block">${esc(npc.description).replace(/\n/g, "<br>")}</div>` : ""}
+      ${!npc.summary && !npc.description ? `<p class="empty">No description.</p>` : ""}
+    `;
+    els.dialog.showModal();
+  }
+
   function renderLibrary() {
     const types = LIBRARY_TYPES.map((t) => {
       const on = t === state.libraryType ? " is-active" : "";
@@ -671,6 +723,10 @@
       if (!data) return;
       state.party = data.party || [];
       renderParty();
+      return;
+    }
+    if (state.tab === "people") {
+      await loadPeople();
       return;
     }
     if (state.tab === "library") {
@@ -977,6 +1033,11 @@
     if (libType) {
       state.libraryType = libType.getAttribute("data-library-type");
       await loadLibrary();
+      return;
+    }
+    const revealed = e.target.closest("[data-revealed-npc]");
+    if (revealed) {
+      await openRevealedNpc(revealed.getAttribute("data-revealed-npc"));
       return;
     }
     const toggle = e.target.closest("[data-toggle-section]");
