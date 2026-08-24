@@ -443,6 +443,29 @@ function createApiRoutes() {
     ),
 
     route(
+      "PATCH",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        await authorize.requireDmIfAuthRequired(req, id);
+        const body = await readJsonBody(req);
+        const character = await characters.patchCharacterSheet(id, characterId, body || {});
+        try {
+          const pcCatalogueMirror = require("../lib/pc-catalogue-mirror");
+          await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
+        } catch {
+          /* mirror is best-effort after DM sheet writes */
+        }
+        sendJson(res, 200, { ok: true, campaignId: id, character });
+      }
+    ),
+
+    route(
       "GET",
       /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/state$/,
       ["id", "characterId"],

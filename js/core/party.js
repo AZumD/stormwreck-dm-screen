@@ -176,6 +176,20 @@ window.PartyRoster = (function () {
 
   function openMember(member) {
     if (!member) return;
+    if (
+      window.CombatSheetModal &&
+      (member.memberType === "pc" || member.memberType === "npc") &&
+      member.catalogueId
+    ) {
+      CombatSheetModal.open({
+        kind: member.memberType,
+        catalogueId: member.catalogueId,
+        entityId: member.entityId,
+        name: member.name,
+        portrait: member.portrait
+      });
+      return;
+    }
     if (member.entityId && window.EntityUI?.openModal) {
       const resolved = EntityRegistry?.resolve?.(member.entityId);
       if (resolved) {

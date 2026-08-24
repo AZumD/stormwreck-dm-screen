@@ -64,3 +64,4 @@
 [2026-08-24] Fixed map expand distortion: --map-aspect from image; expanded stage no longer aspect-ratio:auto/flex-grow. See js/core/map-panel.js, css/style.css, test/validate-map-aspect.js
 [2026-08-24] Map UX: default cursor when zoomed (grab only while panning); live measure tape line + distance preview. See js/core/map-spatial.js, css/style.css, docs/README/MAP-SPATIAL.md
 [2026-08-24] Player PC create + bidirectional PC catalogue sync (Postgres sheet <-> DM catalogue). See server/lib/pc-catalogue-mirror.js, docs/README/PC-CATALOGUE-MIRROR.md
+[2026-08-24] Map combat sheets: shared CombatSheetModal for PC (Postgres), NPC (catalogue), monster instance tokens; map Add Monster spawns combat tokens. See js/core/combat-sheet-modal.js, docs/README/COMBAT-SHEET-MODAL.md

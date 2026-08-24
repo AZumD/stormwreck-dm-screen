@@ -4265,3 +4265,109 @@ body.is-booting::before {
   font-family: var(--font-serif);
   font-size: 1.15rem;
 }
+
+/* DM combat sheet modal */
+.combat-sheet-modal {
+  max-width: 420px;
+}
+.combat-sheet__head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+.combat-sheet__portrait {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.combat-sheet__badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.combat-sheet__badge--pc { border-color: #c4a035; color: #c4a035; }
+.combat-sheet__badge--npc { border-color: #7eb8da; color: #7eb8da; }
+.combat-sheet__badge--monster { border-color: #d4847a; color: #d4847a; }
+.combat-sheet__sub {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+.combat-sheet__vitals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 0.75rem;
+}
+.combat-sheet__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.combat-sheet__field input,
+.combat-sheet__field textarea {
+  font: inherit;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.35rem 0.45rem;
+}
+.combat-sheet__field--full,
+.combat-sheet__hp-row {
+  grid-column: 1 / -1;
+}
+.combat-sheet__hp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.combat-sheet__hp-inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.combat-sheet__hp-inputs input {
+  width: 4.5rem;
+}
+.combat-sheet__slash { color: var(--text-muted); }
+.combat-sheet__hp-btns {
+  display: flex;
+  gap: 0.35rem;
+}
+.combat-sheet__check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.combat-sheet__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.combat-sheet__status {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.combat-sheet__status.is-error { color: var(--danger); }
+.combat-sheet__extra { margin-top: 0.85rem; }
+.map-token--monster {
+  box-shadow: 0 0 0 2px rgba(212, 132, 122, 0.55);
+}

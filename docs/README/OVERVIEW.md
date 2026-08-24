@@ -58,7 +58,8 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Campaign map panel prefers catalogue uploads over placeholder SVGs
 - Drag pins to save custom positions in `map-state.json`
 - Mouse-wheel zoom / pan when zoomed (default cursor until dragging; measure shows a live tape line)
-- **+** under the map adds NPC / monster / item / PC pins
+- **+** under the map adds NPC / item / PC pins; **monster** places a combat token (instance HP/AC) on calibrated maps
+- Party cards and PC/NPC map pins open the shared **combat sheet** (`CombatSheetModal`) — PCs via Postgres, NPCs via catalogue, monsters via map tokens only
 
 ## Portraits
 PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait** (or illustration) upload (files under `/data/assets/portraits`). Campaign tooltips, modals, and reference cards show them when present.

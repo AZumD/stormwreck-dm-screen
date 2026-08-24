@@ -695,6 +695,7 @@ window.CampaignStateUI = (function () {
     renderHistoryPanel,
     bindHistoryPanel,
     openLogInteraction,
-    inferLocationId
+    inferLocationId,
+    enrichEntityModal
   };
 })();

@@ -269,6 +269,57 @@ window.LocalApiClient = (function () {
     );
   }
 
+  async function listCharacters(campaignId) {
+    const data = await request("GET", `/api/campaigns/${encodeURIComponent(campaignId)}/characters`);
+    return data.characters || [];
+  }
+
+  async function getCharacter(campaignId, characterId) {
+    const data = await request(
+      "GET",
+      `/api/campaigns/${encodeURIComponent(campaignId)}/characters/${encodeURIComponent(characterId)}`
+    );
+    return data.character;
+  }
+
+  async function patchCharacter(campaignId, characterId, patch) {
+    return trackWrite(`characters:${campaignId}:${characterId}`, () =>
+      request(
+        "PATCH",
+        `/api/campaigns/${encodeURIComponent(campaignId)}/characters/${encodeURIComponent(characterId)}`,
+        patch
+      ).then((d) => d.character)
+    );
+  }
+
+  async function getCharacterState(campaignId, characterId) {
+    const data = await request(
+      "GET",
+      `/api/campaigns/${encodeURIComponent(campaignId)}/characters/${encodeURIComponent(characterId)}/state`
+    );
+    return data.state;
+  }
+
+  async function putCharacterState(campaignId, characterId, patch) {
+    return trackWrite(`characters:${campaignId}:${characterId}:state`, () =>
+      request(
+        "PUT",
+        `/api/campaigns/${encodeURIComponent(campaignId)}/characters/${encodeURIComponent(characterId)}/state`,
+        patch
+      ).then((d) => d.state)
+    );
+  }
+
+  async function mirrorCharacterToCatalogue(campaignId, characterId) {
+    return trackWrite(`characters:${campaignId}:${characterId}:mirror`, () =>
+      request(
+        "POST",
+        `/api/campaigns/${encodeURIComponent(campaignId)}/characters/${encodeURIComponent(characterId)}/mirror-to-catalogue`,
+        {}
+      ).then((d) => d.entry)
+    );
+  }
+
   return {
     ready,
     probe,
@@ -295,6 +346,12 @@ window.LocalApiClient = (function () {
     listRevealedNpcs,
     revealNpc,
     unrevealNpc,
+    listCharacters,
+    getCharacter,
+    patchCharacter,
+    getCharacterState,
+    putCharacterState,
+    mirrorCharacterToCatalogue,
     /* test hook */
     _trackWrite: trackWrite,
     _writeQueue: writeQueue

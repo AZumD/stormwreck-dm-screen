@@ -19,7 +19,7 @@ Roster refs live in `CampaignState.party`:
 Map rail **Party** tab (not stacked under the map):
 - **+ PC** / **+ NPC** opens a picker of catalogue entries not already in the party
 - **×** removes a member from the party (does not delete the catalogue entry)
-- Click a card opens the catalogue entity modal when possible
+- Click a card opens the **combat sheet** (HP / AC / conditions) for PCs and NPCs; full catalogue remains available from that sheet
 
 ## Wiring
 Loaded after `campaign-state.js` in the campaign page. `CampaignApp` calls `PartyRoster.init()` before `MapPanel.init()`.

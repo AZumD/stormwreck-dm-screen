@@ -242,7 +242,14 @@ window.CatalogueConfigs = {
         fields: [
           { id: "ac", label: "Armor Class", type: "text", grid: "third" },
           { id: "hp", label: "Hit Points", type: "text", grid: "third" },
-          { id: "speed", label: "Speed", type: "text", grid: "third" }
+          { id: "speed", label: "Speed", type: "text", grid: "third" },
+          {
+            id: "combatConditions",
+            label: "Combat conditions",
+            type: "text",
+            grid: "full",
+            placeholder: "poisoned, prone…"
+          }
         ]
       },
       {
@@ -341,6 +348,7 @@ window.CatalogueConfigs = {
       ac: "",
       hp: "",
       speed: "",
+      combatConditions: "",
       traits: "",
       ideals: "",
       bonds: "",

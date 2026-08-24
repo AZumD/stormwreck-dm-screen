@@ -285,7 +285,8 @@ window.MapSpatial = (function () {
           const pos = worldToStyle(t.x, t.y, map);
           const sel = selectedTokenIds.includes(t.id) ? " is-selected" : "";
           const size = Math.max(0.5, Number(t.size) || 1);
-          return `<button type="button" class="map-token${sel}" data-token-id="${escape(t.id)}"
+          const mon = t.kind === "monster" ? " map-token--monster" : "";
+          return `<button type="button" class="map-token${sel}${mon}" data-token-id="${escape(t.id)}"
             style="left:${pos.left};top:${pos.top};--token-size:${size}"
             title="${escape(t.label || t.id)}">${escape((t.label || "?").slice(0, 2))}</button>`;
         })
@@ -324,6 +325,16 @@ window.MapSpatial = (function () {
             /* ignore */
           }
           if (!moved) {
+            const tok = tokensForMap(map.id).find((t) => t.id === id);
+            if (tok?.kind === "monster" && !e.shiftKey && window.CombatSheetModal?.open) {
+              CombatSheetModal.open({
+                kind: "monster-token",
+                token: tok,
+                mapId: map.id,
+                campaignId
+              });
+              return;
+            }
             if (e.shiftKey || selectedTokenIds.length === 1) {
               if (selectedTokenIds.includes(id)) {
                 selectedTokenIds = selectedTokenIds.filter((x) => x !== id);
@@ -599,10 +610,29 @@ window.MapSpatial = (function () {
       paintMeasure(measureStart, world, map, { preview: true });
     });
 
+    function spawnMonsterToken(entry) {
+      const map = activeMap();
+      if (!isCalibrated(map)) {
+        return { ok: false, error: "Import or open a calibrated / UVTT map to place combat monsters." };
+      }
+      const token =
+        window.CombatSheetModal?.buildMonsterToken?.(entry, {
+          x: (Number(map.grid?.sizeX) || Number(map.grid?.width) || 10) / 2,
+          y: (Number(map.grid?.sizeY) || Number(map.grid?.height) || 10) / 2
+        }) || null;
+      if (!token) return { ok: false, error: "Combat sheet helper unavailable." };
+      const list = tokensForMap(map.id);
+      list.push(token);
+      setTokensForMap(map.id, list);
+      renderTokens(map);
+      return { ok: true, token };
+    }
+
     return {
       refreshChrome,
       summaryToMapDef,
-      loadCalibratedMaps
+      loadCalibratedMaps,
+      spawnMonsterToken
     };
   }
 

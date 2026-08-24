@@ -576,6 +576,38 @@ window.MapPanel = (function () {
     }
 
     function openPinDetails(pin) {
+      if (window.CombatSheetModal?.open) {
+        if (pin.partyId && window.PARTY) {
+          const member = PARTY.find((p) => p.id === pin.partyId);
+          if (
+            member &&
+            (member.memberType === "pc" || member.memberType === "npc") &&
+            member.catalogueId
+          ) {
+            CombatSheetModal.open({
+              kind: member.memberType,
+              catalogueId: member.catalogueId,
+              entityId: member.entityId,
+              name: member.name,
+              portrait: member.portrait
+            });
+            return;
+          }
+        }
+        if (pin.entityId && window.EntityRegistry?.resolve) {
+          const entity = EntityRegistry.resolve(pin.entityId);
+          if (entity && (entity.type === "pc" || entity.type === "npc")) {
+            CombatSheetModal.open({
+              kind: entity.type,
+              catalogueId: entity.catalogueId || entity.id,
+              entityId: entity.id,
+              name: entity.name
+            });
+            return;
+          }
+        }
+      }
+
       EntityUI.openPinModal(pin);
       if (!pin.custom || !modalBody || !entityModal) return;
 
@@ -670,11 +702,16 @@ window.MapPanel = (function () {
         return;
       }
 
-      const labels = { npc: "NPC", monster: "Monster", item: "Item", pc: "PC" };
+      const labels = { npc: "NPC", monster: "Monster (combat)", item: "Item", pc: "PC" };
       const choices = listChoices(pinType);
       pinDialogTitle.textContent = `Add ${labels[pinType] || pinType}`;
+      const lead =
+        pinType === "monster"
+          ? `<p class="map-pin-dialog-lead">Places a combat token (independent HP/AC). Requires a calibrated / UVTT map.</p>`
+          : "";
       pinDialogBody.innerHTML = `
         <button type="button" class="map-pin-back" data-pin-back>← Back</button>
+        ${lead}
         <input type="search" class="map-pin-search" placeholder="Search…" autocomplete="off">
         <div class="map-pin-choice-list">
           ${
@@ -719,6 +756,24 @@ window.MapPanel = (function () {
     }
 
     function addPinFromChoice(pinType, choice) {
+      if (pinType === "monster") {
+        const entity = choice.entityId ? EntityRegistry?.resolve?.(choice.entityId) : null;
+        const catalogueId = entity?.catalogueId || choice.entityId || choice.id;
+        let entry = catalogueId && CatalogueStore?.get?.("monster", catalogueId);
+        if (!entry && catalogueId) {
+          entry = { id: catalogueId, name: choice.name || entity?.name || "Monster", hp: "", ac: "" };
+        }
+        if (!spatialApi?.spawnMonsterToken) {
+          window.alert("Open a calibrated / UVTT map to place combat monsters.");
+          return;
+        }
+        const result = spatialApi.spawnMonsterToken(entry || { name: choice.name });
+        if (!result?.ok) {
+          window.alert(result?.error || "Could not place monster token.");
+        }
+        return;
+      }
+
       const spot = nextFreeSpot();
 
       if (pinType === "pc" && choice.partyId) {

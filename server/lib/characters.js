@@ -326,6 +326,25 @@ async function getCharacterState(campaignId, characterId) {
   return result.rows[0] || null;
 }
 
+async function patchCharacterSheet(campaignId, characterId, patch) {
+  const row = await assertCharacterInCampaign(campaignId, characterId);
+  const p = patch && typeof patch === "object" ? patch : {};
+  const sheet =
+    row.sheet && typeof row.sheet === "object" && !Array.isArray(row.sheet) ? { ...row.sheet } : {};
+
+  if (Object.prototype.hasOwnProperty.call(p, "ac")) {
+    const n = Number(p.ac);
+    sheet.ac = Number.isFinite(n) ? n : p.ac;
+  }
+
+  await db.query(
+    `UPDATE characters SET sheet = $1::jsonb, updated_at = now()
+     WHERE id = $2 AND campaign_id = $3`,
+    [JSON.stringify(sheet), characterId, campaignId]
+  );
+  return getCharacter(campaignId, characterId);
+}
+
 async function updateCharacterState(campaignId, characterId, patch) {
   await assertCharacterInCampaign(campaignId, characterId);
   const current = (await getCharacterState(campaignId, characterId)) || {};
@@ -400,6 +419,7 @@ module.exports = {
   listCharacters,
   getCharacter,
   getCharacterState,
+  patchCharacterSheet,
   updateCharacterState,
   listInventory
 };

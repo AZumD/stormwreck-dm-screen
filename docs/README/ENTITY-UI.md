@@ -14,7 +14,7 @@ Shared entity tooltips and the catalogue/campaign entity modal.
 | Party pin | Name, kind/class, HP·AC |
 | Freeform pin | Label, pin type, optional pin summary |
 
-Click still opens the full entity modal.
+Click still opens the full entity modal for wiki / search / POI / item. Party cards and map PC/NPC pins open `CombatSheetModal` instead (see `docs/README/COMBAT-SHEET-MODAL.md`).
 
 ## Modal navigation
 Single `<dialog>` — no nested dialogs.

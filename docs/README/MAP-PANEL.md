@@ -23,7 +23,9 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 - Import `.dd2vtt` / `.uvtt` via Map settings
 - Optional grid overlay, measure tool, editable ft/grid
 - DM tokens (world coordinates); select two for distance
-- See `docs/README/UVTT.md` and `docs/README/MAP-SPATIAL.md`
+- **Add monster** places a **combat token** (independent HP/AC), not a wiki pin — requires a calibrated map
+- PC / NPC pin clicks open the **combat sheet**; POI / item / freeform still use the wiki modal
+- See `docs/README/UVTT.md`, `docs/README/MAP-SPATIAL.md`, and `docs/README/COMBAT-SHEET-MODAL.md`
 
 ## Pin persistence
 | Key | Contents |
@@ -31,7 +33,7 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 | `{campaignId}-pin-positions` | `{ [mapId]: { [pinId]: { x, y } } }` |
 | `{campaignId}-party-positions` | `{ [partyId]: { mapId, x, y } }` |
 
-Drag moves pins; click (without drag) opens the entity/party modal.
+Drag moves pins; click (without drag) opens the combat sheet (PC/NPC) or entity modal (other).
 
 ## Party
 Roster UI is owned by `PartyRoster` (`js/core/party.js`) on the **Party** tab. Map panel calls it to render/refresh. PC map pins come from party members with type `pc` that have saved positions.
