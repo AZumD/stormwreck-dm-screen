@@ -42,8 +42,49 @@
     party: [],
     notes: [],
     tab: "characters",
-    editingNoteId: null
+    editingNoteId: null,
+    collapsed: loadCollapsed()
   };
+
+  function collapseKey() {
+    return "player-sheet-collapsed-v1";
+  }
+
+  function loadCollapsed() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(collapseKey()) || "{}");
+      return raw && typeof raw === "object" ? raw : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveCollapsed() {
+    try {
+      localStorage.setItem(collapseKey(), JSON.stringify(state.collapsed));
+    } catch {
+      /* ignore quota */
+    }
+  }
+
+  /** Default: list sections collapsed; abilities/combat open for play access */
+  function isSectionCollapsed(id) {
+    if (Object.prototype.hasOwnProperty.call(state.collapsed, id)) {
+      return Boolean(state.collapsed[id]);
+    }
+    return id === "skills" || id === "features" || id === "spells" || id === "inventory";
+  }
+
+  function section(id, title, bodyHtml) {
+    const collapsed = isSectionCollapsed(id);
+    return `<section class="sheet-section${collapsed ? " is-collapsed" : ""}" data-section="${esc(id)}">
+      <button type="button" class="sheet-section__toggle" data-toggle-section="${esc(id)}" aria-expanded="${collapsed ? "false" : "true"}">
+        <h3 class="sheet-section__title">${esc(title)}</h3>
+        <span class="sheet-section__chevron" aria-hidden="true">▾</span>
+      </button>
+      <div class="sheet-section__body">${bodyHtml}</div>
+    </section>`;
+  }
 
   function esc(v) {
     return String(v ?? "")
@@ -107,7 +148,7 @@
       btn.classList.toggle("is-active", btn.getAttribute("data-tab") === state.tab);
     });
     els.shellTitle.textContent =
-      { characters: "My Characters", party: "Party", notes: "Notes" }[state.tab] || "Companion";
+      { characters: "Character sheet", party: "Party", notes: "Notes" }[state.tab] || "Companion";
   }
 
   function renderSwitcher() {
@@ -126,7 +167,7 @@
   }
 
   function dropBrokenPortrait(img) {
-    const parent = img.parentElement;
+    const parent = img.closest(".vitals, .identity");
     img.remove();
     if (parent) parent.classList.add("no-portrait");
   }
@@ -155,7 +196,7 @@
   }
 
   function pills(refs) {
-    if (!refs || !refs.length) return `<p class="empty">None listed.</p>`;
+    if (!refs || !refs.length) return `<p class="empty">Nothing here yet.</p>`;
     return `<div class="pills">${refs
       .map((r) => {
         const label = esc(r.label || r.id || r.raw);
@@ -190,7 +231,7 @@
             return `<span class="pill static">${label}</span>`;
           })
           .join("")}</div>`
-      : `<p class="empty">No inventory entries.</p>`;
+      : `<p class="empty">Pack is empty.</p>`;
     const condList = Array.isArray(c.state?.conditions) ? c.state.conditions : [];
     const conditionPills = condList.length
       ? `<div class="pills">${condList
@@ -199,42 +240,56 @@
               `<button type="button" class="pill" data-remove-condition="${esc(cond)}">${esc(cond)} ×</button>`
           )
           .join("")}</div>`
-      : `<p class="empty">None</p>`;
+      : `<p class="empty">No conditions.</p>`;
+    const inspired = Boolean(c.state?.inspiration);
+    const temp = c.state?.hpTemp ? ` · temp ${esc(c.state.hpTemp)}` : "";
+    const metaLine = `${c.race || "—"} · ${c.class || "—"} · L${c.level}`;
 
     els.main.innerHTML = `
-      ${identityCard(
-        c.name,
-        `${c.race || "—"} · ${c.class || "—"} · Level ${c.level}`,
-        api.portraitUrl(state.campaignId, c.id),
-        "h2"
-      )}
-      <div class="hp card">
-        <div>
-          <p class="hp-value">${esc(c.state?.hpCurrent ?? "—")} <span>/ ${esc(c.state?.hpMax ?? "—")}</span></p>
-          <p class="meta">Hit points${c.state?.hpTemp ? ` · temp ${esc(c.state.hpTemp)}` : ""}</p>
+      <div class="vitals">
+        <img class="portrait" src="${esc(api.portraitUrl(state.campaignId, c.id))}" alt="" onerror="window.PlayerAppDropPortrait(this)">
+        <div class="vitals-text">
+          <h2 class="sheet-name">${esc(c.name)}</h2>
+          <p class="vitals-meta">${esc(metaLine)}</p>
         </div>
-        <div class="hp-btns">
-          <button type="button" class="btn" data-hp="-1" aria-label="Decrease HP">−</button>
-          <button type="button" class="btn" data-hp="1" aria-label="Increase HP">+</button>
+        <div class="vitals-hp">
+          <p class="hp-value">${esc(c.state?.hpCurrent ?? "—")} <span>/ ${esc(c.state?.hpMax ?? "—")}</span></p>
+          <div class="hp-btns">
+            <button type="button" class="btn btn-icon" data-hp="-1" aria-label="Decrease HP">−</button>
+            <button type="button" class="btn btn-icon" data-hp="1" aria-label="Increase HP">+</button>
+          </div>
         </div>
       </div>
-      <div class="stats">${abilityHtml}</div>
-      <section class="block">
-        <h3>Combat</h3>
-        <p class="meta">AC ${esc(c.ac ?? "—")} · Speed ${esc(c.speed || "—")} · Prof ${esc(c.proficiencyBonus || "—")} · HD ${esc(c.hitDice || "—")}</p>
-      </section>
-      <section class="block">
-        <h3>Conditions</h3>
-        ${conditionPills}
+      <p class="meta hp-sub">Hit points${temp}</p>
+      <div class="combat-chips" aria-label="Key combat stats">
+        <span class="combat-chip">AC <strong>${esc(c.ac ?? "—")}</strong></span>
+        <span class="combat-chip">Speed <strong>${esc(c.speed || "—")}</strong></span>
+        <span class="combat-chip">Prof <strong>${esc(c.proficiencyBonus || "—")}</strong></span>
+        <span class="combat-chip">HD <strong>${esc(c.hitDice || "—")}</strong></span>
+      </div>
+      ${section(
+        "conditions",
+        "Conditions",
+        `${conditionPills}
         <form id="condition-form" class="row-form">
           <input name="condition" maxlength="80" placeholder="Add condition" aria-label="Add condition">
           <button class="btn" type="submit">Add</button>
-        </form>
-      </section>
-      <section class="block"><h3>Skills</h3>${pills(c.skillRefs)}</section>
-      <section class="block"><h3>Features</h3>${pills(c.featureRefs)}</section>
-      <section class="block"><h3>Spells</h3>${pills(c.spellRefs)}</section>
-      <section class="block"><h3>Inventory</h3>${inv}</section>`;
+        </form>`
+      )}
+      ${section("abilities", "Abilities", `<div class="stats">${abilityHtml}</div>`)}
+      ${section(
+        "combat",
+        "Combat details",
+        `<p class="meta combat-detail">AC ${esc(c.ac ?? "—")} · Speed ${esc(c.speed || "—")} · Proficiency ${esc(c.proficiencyBonus || "—")} · Hit dice ${esc(c.hitDice || "—")}</p>
+        <div class="inspire-row">
+          <p class="meta">Inspiration</p>
+          <button type="button" class="btn ${inspired ? "btn-primary" : ""}" data-inspiration="${inspired ? "0" : "1"}" aria-pressed="${inspired ? "true" : "false"}">${inspired ? "Inspired" : "Mark inspiration"}</button>
+        </div>`
+      )}
+      ${section("skills", "Skills", pills(c.skillRefs))}
+      ${section("features", "Features", pills(c.featureRefs))}
+      ${section("spells", "Spells", pills(c.spellRefs))}
+      ${section("inventory", "Inventory", inv)}`;
   }
 
   function renderParty() {
@@ -418,6 +473,18 @@
     renderCharacter();
   }
 
+  async function setInspiration(on) {
+    const c = currentCharacter();
+    if (!c) return;
+    const data = await safe(() =>
+      api.patchState(state.campaignId, c.id, { inspiration: Boolean(on) })
+    );
+    if (!data) return;
+    const idx = state.characters.findIndex((x) => x.id === c.id);
+    if (idx >= 0) state.characters[idx] = data.character;
+    renderCharacter();
+  }
+
   async function logout() {
     await safe(() => api.logout());
     state.bootstrap = null;
@@ -467,6 +534,24 @@
   });
 
   els.main.addEventListener("click", async (e) => {
+    const toggle = e.target.closest("[data-toggle-section]");
+    if (toggle) {
+      const id = toggle.getAttribute("data-toggle-section");
+      const next = !isSectionCollapsed(id);
+      state.collapsed[id] = next;
+      saveCollapsed();
+      const sectionEl = toggle.closest(".sheet-section");
+      if (sectionEl) {
+        sectionEl.classList.toggle("is-collapsed", next);
+        toggle.setAttribute("aria-expanded", next ? "false" : "true");
+      }
+      return;
+    }
+    const inspire = e.target.closest("[data-inspiration]");
+    if (inspire) {
+      await setInspiration(inspire.getAttribute("data-inspiration") === "1");
+      return;
+    }
     const removeCond = e.target.closest("[data-remove-condition]");
     if (removeCond) {
       const c = currentCharacter();

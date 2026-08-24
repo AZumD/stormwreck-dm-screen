@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Player Companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/player.css">
 </head>
 <body class="player-body">
@@ -12,9 +15,9 @@
       <header class="hero">
         <p class="brand">Stormwreck</p>
         <h1>Player companion</h1>
-        <p class="lede">Characters, party, and private notes for play at the table.</p>
+        <p class="lede">Your character sheet for play at the table.</p>
       </header>
-      <form id="login-form" class="stack-form">
+      <form id="login-form" class="stack-form login-card panel">
         <label>Email<input type="email" name="email" autocomplete="username" required></label>
         <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
         <p id="login-error" class="error" hidden></p>
@@ -44,7 +47,7 @@
       <div id="char-switcher" class="switcher" hidden></div>
       <main id="main"></main>
       <nav class="tabs" aria-label="Sections">
-        <button type="button" class="tab is-active" data-tab="characters">My Characters</button>
+        <button type="button" class="tab is-active" data-tab="characters">Sheet</button>
         <button type="button" class="tab" data-tab="party">Party</button>
         <button type="button" class="tab" data-tab="notes">Notes</button>
       </nav>

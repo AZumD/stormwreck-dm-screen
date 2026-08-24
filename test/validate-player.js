@@ -62,10 +62,35 @@ if (!playerCss.includes("--tab-bar-height") || !playerCss.includes(".view-shell"
 if (!playerCss.includes("padding-bottom: calc(var(--tab-bar-height)") || !playerCss.includes("scroll-padding-bottom")) {
   fail("player.css missing scroll/safe-area padding");
 } else pass("player.css scroll padding above tabs");
-if (!playerCss.includes(".identity.no-portrait")) fail("player.css missing no-portrait layout");
-else pass("player.css no-portrait layout");
+if (!playerCss.includes(".identity.no-portrait") && !playerCss.includes(".vitals.no-portrait")) {
+  fail("player.css missing no-portrait layout");
+} else pass("player.css no-portrait layout");
 if (!/\.pill\s*\{[\s\S]*?min-height:\s*44px/.test(playerCss)) fail("player.css pill tap height");
 else pass("player.css pill min-height 44px");
+if (!playerCss.includes("/assets/player/fairy-forest-bg.jpg") || !playerCss.includes("--accent")) {
+  fail("player.css missing fantasy theme background");
+} else pass("player.css fantasy theme background");
+if (!playerCss.includes(".sheet-section") || !playerCss.includes(".vitals")) {
+  fail("player.css missing sheet-section / vitals");
+} else pass("player.css compact sheet sections");
+
+if (!appSrc.includes("data-toggle-section") || !appSrc.includes("sheet-section")) {
+  fail("player-app missing collapsible sections");
+} else pass("player-app collapsible sections");
+if (!appSrc.includes("data-inspiration")) fail("player-app missing inspiration toggle");
+else pass("player-app inspiration toggle");
+
+if (apiSrc.includes("theme/background") || apiSrc.includes("theme\\/background")) {
+  fail("theme background must be static, not API under DM_DATA_ROOT");
+} else pass("no DM_DATA_ROOT theme background API");
+
+if (!fs.existsSync(path.join(root, "assets/player/fairy-forest-bg.jpg"))) {
+  fail("missing static assets/player/fairy-forest-bg.jpg");
+} else pass("static fairy-forest wallpaper present");
+
+if (!fs.existsSync(path.join(root, "docs/README/PHASE5-PLAYER-SHEET.md"))) {
+  fail("missing PHASE5-PLAYER-SHEET.md");
+} else pass("PHASE5-PLAYER-SHEET.md present");
 
 const player = require(path.join(root, "server/lib/player.js"));
 if (!player.PLAYER_STATE_WHITELIST?.has("hp_current")) fail("PLAYER_STATE_WHITELIST");

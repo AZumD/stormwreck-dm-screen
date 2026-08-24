@@ -27,3 +27,4 @@ Included in `npm test`.
 - DM document routes 403 for players
 - Expired session → 401
 - Player shell: no `prompt()`/`confirm()`; in-app note dialog; tab-bar scroll clearance; 44px pills; empty portraits collapse
+- Phase 5A: fantasy theme CSS + static `/assets/player/fairy-forest-bg.jpg`; sticky vitals; collapsible sheet sections; inspiration toggle

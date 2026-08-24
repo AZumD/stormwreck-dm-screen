@@ -51,3 +51,4 @@
 [2026-08-24] Player UI: tab-bar scroll clearance, in-app note editor, collapse missing portraits, 44px pills. See css/player.css, js/player-app.js
 [2026-08-24] Phase 4A Railway persistence audit (no deploy): recommend Postgres + DM_DATA_ROOT volume; dirty campaign files reviewed; orphan map JPG unreferenced. See canvases/phase-4a-railway-persistence-audit.canvas.tsx
 [2026-08-24] Phase 4B Railway hardening: graceful shutdown, DM_DATA_ROOT production require, data:init, seed-items path, campaign create Postgres sync, deploy runbook. See docs/README/DEPLOY.md
+[2026-08-24] Phase 5A player sheet visual/UX: fairy-forest theme (static assets/player/fairy-forest-bg.jpg), sticky vitals, collapsible sections. See docs/README/PHASE5-PLAYER-SHEET.md

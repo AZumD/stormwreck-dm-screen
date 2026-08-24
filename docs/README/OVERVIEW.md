@@ -7,7 +7,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
-- Player companion (`/player/`) — mobile-first My Characters / Party / Notes (Phase 3B)
+- Player companion (`/player/`) — mobile-first character sheet / party / notes (Phase 5A fantasy sheet UI; see `docs/README/PHASE5-PLAYER-SHEET.md`)
 
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
