@@ -61,3 +61,5 @@
 [2026-08-24] UVTT import: raise import body limit to 64MB so large .dd2vtt files no longer fail as Failed to fetch. See server/lib/http-util.js
 [2026-08-24] Phase 5D NPC reveal: campaign_revealed_npcs, DM toggle on NPC modal, player People tab. See docs/README/REVEALED-NPCS.md
 [2026-08-24] DM UI cleanup: Map|Party tabs, Layers popover, expanded map mode shell, compact multi-track ambience strip+dock. See docs/README/MAP-PANEL.md, MEDIA-BAR.md, LAYOUT-PANELS.md
+[2026-08-24] Fixed map expand distortion: --map-aspect from image; expanded stage no longer aspect-ratio:auto/flex-grow. See js/core/map-panel.js, css/style.css, test/validate-map-aspect.js
+[2026-08-24] Map UX: default cursor when zoomed (grab only while panning); live measure tape line + distance preview. See js/core/map-spatial.js, css/style.css, docs/README/MAP-SPATIAL.md

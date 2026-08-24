@@ -19,3 +19,5 @@ Persisted: nav collapsed + map rail collapsed (localStorage). Expanded/combat ar
 `init()`, `setNavCollapsed(bool)`, `setMapCollapsed(bool)`, `setMapMode("sidebar"|"expanded"|"combat")`, `getMapMode()`, `toggleMapExpanded()`
 
 Expand control: `#map-expand-btn`. Collapse from expanded returns to `sidebar` without destroying map zoom/pan/tokens.
+
+On mode sync (`syncExpandChrome`), notifies `MediaBar.onLayoutChange` and `MapPanel.onLayoutChange` so ambience dock and map aspect/overlays refresh after resize.

@@ -13,6 +13,15 @@ Prefers static campaign markup:
 
 Falls back to injecting chrome if older pages lack the slots.
 
+## Measure
+1. Toggle **Measure** (aria-pressed).
+2. First click sets the start point (dot + “Click end point…”).
+3. Move the pointer: a live **tape** line follows the cursor with a live distance readout (`…` while previewing).
+4. Second click locks the line and final distance label.
+5. Toggle Measure off (or change map) clears the graphics.
+
+Snap measure (Map settings) applies to both preview and final distance when checked.
+
 ## API
 `loadCalibratedMaps(campaignId)`, `summaryToMapDef(summary)`, `bind(ctx)`, `attachChrome(panelBody)`, `ensureLayers(mapWorld)`
 

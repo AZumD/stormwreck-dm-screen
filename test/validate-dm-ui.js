@@ -98,6 +98,14 @@ if (!css.includes("map-mode-expanded") || !css.includes("map-primary-actions") |
   fail("CSS missing expanded mode / primary actions / ambience strip");
 } else pass("CSS has expanded mode + strip styles");
 
+if (!mapJs.includes("syncMapAspect") || !mapJs.includes("--map-aspect")) {
+  fail("map-panel must sync --map-aspect from image natural size");
+} else pass("map-panel syncs --map-aspect");
+
+if (/body\.map-mode-expanded\s+\.map-stage[\s\S]{0,280}aspect-ratio:\s*auto/.test(css)) {
+  fail("expanded .map-stage must not use aspect-ratio: auto");
+} else pass("expanded map stage keeps aspect ratio");
+
 if (!css.includes("media-dock") || !css.includes("--media-player-size")) {
   fail("CSS missing adaptive media dock sizing");
 } else pass("CSS has adaptive media dock");

@@ -19,3 +19,4 @@ Included in `npm test`.
 - Map modes API (`sidebar` | `expanded` | `combat`)
 - Expand control + Party tab present in campaign HTML
 - CSS grid column variables + collapse data-attribute fallbacks
+- Map stage `--map-aspect` (no expanded `aspect-ratio: auto` stretch)

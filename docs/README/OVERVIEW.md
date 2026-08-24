@@ -57,7 +57,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Upload images in the **Location catalogue** (`mapImage` → `/data/assets/maps/…`)
 - Campaign map panel prefers catalogue uploads over placeholder SVGs
 - Drag pins to save custom positions in `map-state.json`
-- Mouse-wheel zoom / pan when zoomed (no on-map zoom chrome)
+- Mouse-wheel zoom / pan when zoomed (default cursor until dragging; measure shows a live tape line)
 - **+** under the map adds NPC / monster / item / PC pins
 
 ## Portraits
@@ -107,5 +107,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-map-aspect`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
 

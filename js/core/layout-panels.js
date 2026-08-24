@@ -82,6 +82,7 @@ window.LayoutPanels = (function () {
     }
 
     window.MediaBar?.onLayoutChange?.();
+    window.MapPanel?.onLayoutChange?.();
   }
 
   /**

@@ -423,6 +423,7 @@ window.MapSpatial = (function () {
 
       renderGrid(detail);
       renderTokens(detail);
+      measureStart = null;
       if (els.measureOut) els.measureOut.hidden = true;
       if (layers.measure) layers.measure.innerHTML = "";
     }
@@ -509,13 +510,38 @@ window.MapSpatial = (function () {
       persistDisplayPatch({ scale: { distancePerGrid: v } });
     });
 
+    function clearMeasureGraphics() {
+      measureStart = null;
+      if (layers.measure) layers.measure.innerHTML = "";
+      if (els.measureOut) els.measureOut.hidden = true;
+    }
+
+    function paintMeasure(start, end, map, { preview = false } = {}) {
+      if (!layers.measure || !window.MapDistance || !start || !end || !map) return null;
+      const a = MapDistance.worldToPercent(start.x, start.y, map);
+      const b = MapDistance.worldToPercent(end.x, end.y, map);
+      if (!a || !b) return null;
+      const lineClass = preview ? "map-measure-line map-measure-line--preview" : "map-measure-line";
+      layers.measure.setAttribute("viewBox", "0 0 100 100");
+      layers.measure.innerHTML =
+        `<circle class="map-measure-dot" cx="${a.x}" cy="${a.y}" r="0.7" />` +
+        `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="${lineClass}" />` +
+        (preview ? "" : `<circle class="map-measure-dot" cx="${b.x}" cy="${b.y}" r="0.7" />`);
+      const d = MapDistance.distanceBetween(start, end, map.scale || {}, {
+        snap: Boolean(els.snap?.checked)
+      });
+      if (d && els.measureOut) {
+        els.measureOut.hidden = false;
+        els.measureOut.textContent = preview ? `${d.label}…` : d.label;
+      }
+      return d;
+    }
+
     els.measureBtn?.addEventListener("click", () => {
       measuring = !measuring;
       els.measureBtn.setAttribute("aria-pressed", measuring ? "true" : "false");
       els.measureBtn.classList.toggle("is-active", measuring);
-      measureStart = null;
-      if (layers.measure) layers.measure.innerHTML = "";
-      if (els.measureOut) els.measureOut.hidden = true;
+      clearMeasureGraphics();
     });
 
     els.addToken?.addEventListener("click", () => {
@@ -547,25 +573,30 @@ window.MapSpatial = (function () {
       if (!world) return;
       if (!measureStart) {
         measureStart = world;
+        if (layers.measure && window.MapDistance) {
+          const a = MapDistance.worldToPercent(measureStart.x, measureStart.y, map);
+          if (a) {
+            layers.measure.setAttribute("viewBox", "0 0 100 100");
+            layers.measure.innerHTML = `<circle class="map-measure-dot" cx="${a.x}" cy="${a.y}" r="0.7" />`;
+          }
+        }
+        if (els.measureOut) {
+          els.measureOut.hidden = false;
+          els.measureOut.textContent = "Click end point…";
+        }
         return;
       }
-      const end = world;
-      const d = window.MapDistance?.distanceBetween(measureStart, end, map.scale || {}, {
-        snap: Boolean(els.snap?.checked)
-      });
-      if (d && els.measureOut) {
-        els.measureOut.hidden = false;
-        els.measureOut.textContent = d.label;
-      }
-      if (layers.measure && window.MapDistance) {
-        const a = MapDistance.worldToPercent(measureStart.x, measureStart.y, map);
-        const b = MapDistance.worldToPercent(end.x, end.y, map);
-        if (a && b) {
-          layers.measure.setAttribute("viewBox", "0 0 100 100");
-          layers.measure.innerHTML = `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="map-measure-line" />`;
-        }
-      }
+      paintMeasure(measureStart, world, map, { preview: false });
       measureStart = null;
+    });
+
+    mapViewport?.addEventListener("pointermove", (e) => {
+      if (!measuring || !measureStart) return;
+      const map = activeMap();
+      if (!isCalibrated(map)) return;
+      const world = clientToWorld(e.clientX, e.clientY, map);
+      if (!world) return;
+      paintMeasure(measureStart, world, map, { preview: true });
     });
 
     return {

@@ -39,8 +39,14 @@ Roster UI is owned by `PartyRoster` (`js/core/party.js`) on the **Party** tab. M
 ## Zoom
 - Mouse wheel over the map zooms toward the cursor (no on-map chrome)
 - When zoomed in, drag empty map area to pan
+- Cursor stays the default arrow while zoomed; grab/hand only while actively panning
 - Pins counter-scale so they grow slower than the map
 - Zoom resets when switching maps
+
+## Aspect / expand
+- On image load (and map change), sets `--map-aspect` on `#map-stage` from `naturalWidth / naturalHeight`
+- Stage CSS uses that ratio in both sidebar and expanded modes so % pins, grid, and tokens stay on the art
+- `onLayoutChange()` re-syncs aspect + transform when `LayoutPanels` expands/collapses
 
 ## Add pins
 - **+** in primary actions opens a dialog: choose NPC / Monster / Item / PC, then pick an entry
@@ -49,4 +55,4 @@ Roster UI is owned by `PartyRoster` (`js/core/party.js`) on the **Party** tab. M
 - PCs are placed via party position overrides
 
 ## API
-`init(campaignId)`, `refresh()`, helpers `resolveMapImage`, `getEffectiveMaps`
+`init(campaignId)`, `refresh()`, `onLayoutChange()`, helpers `resolveMapImage`, `getEffectiveMaps`

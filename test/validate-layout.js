@@ -61,6 +61,10 @@ if (!css.includes("body[data-nav-collapsed=\"true\"]"))
   fail("CSS missing data-attribute nav collapse fallback");
 else pass("CSS has data-attribute collapse fallback");
 
+if (!css.includes("aspect-ratio: var(--map-aspect") || /map-mode-expanded[\s\S]{0,200}aspect-ratio:\s*auto/.test(css))
+  fail("CSS map stage must use --map-aspect and not stretch with aspect-ratio: auto when expanded");
+else pass("CSS map stage preserves --map-aspect on expand");
+
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);
   process.exit(1);

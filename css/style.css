@@ -2988,7 +2988,9 @@ body[data-map-collapsed="true"] .map-panel {
 .map-stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  /* Intrinsic image ratio from MapPanel (--map-aspect = naturalWidth/naturalHeight); 4/3 fallback */
+  aspect-ratio: var(--map-aspect, 4 / 3);
+  height: auto;
   margin-bottom: 1.15rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -3007,12 +3009,7 @@ body[data-map-collapsed="true"] .map-panel {
   -webkit-user-select: none;
 }
 
-.map-viewport.is-panning,
-.map-stage.is-zoomed .map-viewport,
-.map-stage.is-panning .map-viewport {
-  cursor: grab;
-}
-
+/* Default arrow stays when zoomed; grab only while actively panning */
 .map-viewport.is-panning,
 .map-stage.is-panning .map-viewport {
   cursor: grabbing;
@@ -3118,6 +3115,15 @@ body[data-map-collapsed="true"] .map-panel {
   stroke-width: 0.35;
   stroke-dasharray: 1.2 0.8;
   fill: none;
+}
+.map-measure-line--preview {
+  stroke-opacity: 0.9;
+  stroke-dasharray: 1.6 1.1;
+}
+.map-measure-dot {
+  fill: #e8c86a;
+  stroke: rgba(12, 18, 14, 0.85);
+  stroke-width: 0.15;
 }
 .map-grid-line {
   position: absolute;
@@ -3796,12 +3802,17 @@ body.map-mode-combat .map-panel__body {
   padding-bottom: 1rem;
 }
 
+/* Fit stage into available space without changing aspect (pins/grid stay on image) */
 body.map-mode-expanded .map-stage,
 body.map-mode-combat .map-stage {
-  aspect-ratio: auto;
-  flex: 1 1 auto;
-  min-height: min(70vh, 720px);
+  --map-max-h: min(70vh, 720px);
+  flex: 0 0 auto;
+  width: min(100%, calc(var(--map-max-h) * var(--map-aspect, 1.333333)));
+  max-width: 100%;
+  max-height: var(--map-max-h);
   height: auto;
+  aspect-ratio: var(--map-aspect, 4 / 3);
+  margin-inline: auto;
   margin-bottom: 0.65rem;
 }
 

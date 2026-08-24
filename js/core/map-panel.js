@@ -234,6 +234,25 @@ window.MapPanel = (function () {
       mapStage?.classList.toggle("is-zoomed", zoom > 1.01);
     }
 
+    /** Keep .map-stage aspect equal to the loaded image so % pins/grid match the art. */
+    function syncMapAspect() {
+      if (!mapStage) return;
+      const w = mapImage?.naturalWidth || 0;
+      const h = mapImage?.naturalHeight || 0;
+      if (w > 0 && h > 0) {
+        mapStage.style.setProperty("--map-aspect", String(w / h));
+      } else {
+        mapStage.style.removeProperty("--map-aspect");
+      }
+    }
+
+    /** Expand/collapse may change stage box; re-apply transform + spatial chrome. */
+    function onLayoutChange() {
+      syncMapAspect();
+      applyMapTransform();
+      spatialApi?.refreshChrome?.();
+    }
+
     function resetZoom() {
       zoom = 1;
       panX = 0;
@@ -466,12 +485,14 @@ window.MapPanel = (function () {
         mapImage.src = resolved.src;
         mapImage.alt = map.title;
         mapImage.classList.remove("hidden");
+        if (mapImage.complete && mapImage.naturalWidth) syncMapAspect();
       } else {
         mapImage.removeAttribute("src");
         mapImage.alt = "No map image yet";
         mapImage.classList.add("hidden");
         mapStage.classList.remove("map-stage--loading");
         mapStage.classList.add("map-stage--error");
+        syncMapAspect();
       }
 
       applyMapTransform();
@@ -837,11 +858,15 @@ window.MapPanel = (function () {
 
     mapImage.addEventListener("load", () => {
       mapStage.classList.remove("map-stage--loading", "map-stage--error");
+      syncMapAspect();
+      applyMapTransform();
+      spatialApi?.refreshChrome?.();
     });
     mapImage.addEventListener("error", () => {
       mapStage.classList.remove("map-stage--loading");
       mapStage.classList.add("map-stage--error");
       mapImage.alt = "Map image not found";
+      syncMapAspect();
     });
 
     rebuildMapSelect();
@@ -891,12 +916,17 @@ window.MapPanel = (function () {
           rebuildMapSelect();
           renderMap();
         });
-      }
+      },
+      onLayoutChange
     };
   }
 
   function refresh() {
     activeInstance?.refresh?.();
+  }
+
+  function onLayoutChange() {
+    activeInstance?.onLayoutChange?.();
   }
 
   function renderParty(container) {
@@ -951,6 +981,7 @@ window.MapPanel = (function () {
   return {
     init,
     refresh,
+    onLayoutChange,
     resolveMapImage,
     getEffectiveMaps,
     findLocationEntry

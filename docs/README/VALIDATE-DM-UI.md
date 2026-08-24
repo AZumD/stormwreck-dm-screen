@@ -17,3 +17,4 @@ node test/validate-dm-ui.js
 - `LayoutPanels` modes: sidebar | expanded | combat
 - Compact ambience strip + Mixer / Pause all / Stop all + separate `#media-dock`
 - CSS avoids classic YouTube-hiding patterns; multi-track API hooks present
+- Map `--map-aspect` sync; expanded stage does not use `aspect-ratio: auto`
