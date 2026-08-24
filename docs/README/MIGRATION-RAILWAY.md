@@ -81,13 +81,18 @@ Generic world flags later: `campaign_flags (campaign_id, key, value jsonb)` — 
 
 ---
 
-## Railway
+## Railway (Phase 4B hybrid)
+
+See **`docs/README/DEPLOY.md`** for the current runbook.
 
 ```text
 Git → Railway
-  ├─ Web service (Node, HOST=0.0.0.0)
+  ├─ Web service (Node; production HOST defaults to 0.0.0.0)
+  │    └─ Volume mounted at /data  →  DM_DATA_ROOT=/data
   └─ PostgreSQL (DATABASE_URL)
 ```
+
+One-shot after first deploy: `data:init` → migrate → seed items → seed characters (once) → bootstrap auth. Never auto-seed on start.
 
 Migrations on release. No secrets in git. See `.env.example`.
 

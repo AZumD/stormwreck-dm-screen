@@ -29,13 +29,24 @@ function createApiRoutes() {
   return [
     route("GET", /^\/api\/health$/, [], async (_req, res) => {
       const database = await db.health();
-      sendJson(res, 200, {
-        ok: true,
+      const authRequired = auth.isAuthRequired();
+      /* Production / auth-required: Postgres must be reachable (Railway healthcheck). */
+      const healthy = !authRequired || (database.configured && database.ok);
+      const safeDatabase = {
+        configured: database.configured,
+        ok: database.ok,
+        mode: database.mode
+      };
+      if (!healthy && database.error) {
+        safeDatabase.error = "database unavailable";
+      }
+      sendJson(res, healthy ? 200 : 503, {
+        ok: healthy,
         mode: database.configured && database.ok ? "file+postgres" : "file-backed",
         catalogueTypes: CATALOGUE_TYPES,
         documentKinds: CAMPAIGN_DOC_KINDS,
-        database,
-        authRequired: auth.isAuthRequired()
+        database: safeDatabase,
+        authRequired
       });
     }),
 
@@ -358,9 +369,17 @@ function createApiRoutes() {
     }),
 
     route("POST", /^\/api\/campaigns$/, [], async (req, res) => {
-      await authorize.requireAnyDmIfAuthRequired(req);
+      const gate = await authorize.requireAnyDmIfAuthRequired(req);
       const body = await readJsonBody(req);
       const entry = await campaigns.createCampaign(body || {});
+      if (auth.isAuthRequired() && db.isDbConfigured() && gate?.user?.id) {
+        try {
+          await campaigns.ensurePostgresCampaignAndDm(entry, gate.user.id);
+        } catch (err) {
+          await campaigns.removeCampaign(entry.id).catch(() => false);
+          throw err;
+        }
+      }
       sendJson(res, 201, { ok: true, campaign: entry });
     }),
 

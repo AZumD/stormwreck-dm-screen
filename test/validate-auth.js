@@ -83,8 +83,9 @@ if (!pkg.scripts?.["db:bootstrap:auth"]) fail("package.json missing db:bootstrap
 else pass("package.json db:bootstrap:auth");
 
 const indexSrc = fs.readFileSync(path.join(root, "server/index.js"), "utf8");
-if (!indexSrc.includes("requireAuthConfig")) fail("server index missing requireAuthConfig");
-else pass("server refuses to start without auth config in production path");
+if (!indexSrc.includes("validateStartupConfig") && !indexSrc.includes("requireAuthConfig")) {
+  fail("server index missing startup/auth config validation");
+} else pass("server refuses to start without auth config in production path");
 
 const auth = require(path.join(root, "server/lib/auth.js"));
 if (auth.normalizeEmail("  Maja@Example.COM ") !== "maja@example.com") {

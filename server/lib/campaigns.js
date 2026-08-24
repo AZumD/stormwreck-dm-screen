@@ -121,6 +121,50 @@ async function createCampaign({ title, description, level } = {}) {
   return entry;
 }
 
+/**
+ * When auth + Postgres are active, mirror a new FS campaign into campaigns + DM membership.
+ * Call after createCampaign; on failure the caller should roll back the FS entry.
+ */
+async function ensurePostgresCampaignAndDm(entry, userId) {
+  const db = require("./db");
+  if (!db.isDbConfigured()) return false;
+  if (!entry?.id || !userId) {
+    const err = new Error("campaign entry and userId required for Postgres sync");
+    err.status = 500;
+    throw err;
+  }
+  const pool = await db.getPool();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO campaigns (id, name, description) VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         description = EXCLUDED.description,
+         updated_at = now()`,
+      [entry.id, entry.title || entry.id, entry.description || ""]
+    );
+    await client.query(
+      `INSERT INTO campaign_memberships (campaign_id, user_id, role)
+       VALUES ($1, $2, 'dm')
+       ON CONFLICT (campaign_id, user_id) DO UPDATE SET role = 'dm'`,
+      [entry.id, userId]
+    );
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* ignore */
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 async function updateCampaign(id, patch) {
   const safe = assertSafeId(id, "campaign id");
   const state = await loadIndex();
@@ -213,6 +257,7 @@ module.exports = {
   listCampaigns,
   getCampaign,
   createCampaign,
+  ensurePostgresCampaignAndDm,
   updateCampaign,
   upsertCampaign,
   removeCampaign,

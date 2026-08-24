@@ -1,6 +1,7 @@
 /**
  * Local DM Library server — static frontend + /api file-backed persistence.
- * Optional Postgres when DATABASE_URL is set (Phase 1). Binds to 127.0.0.1 by default.
+ * Optional Postgres when DATABASE_URL is set (Phase 1–4B). Local bind defaults to 127.0.0.1;
+ * production defaults to 0.0.0.0 and requires DM_DATA_ROOT on a persistent volume.
  */
 "use strict";
 
@@ -14,13 +15,15 @@ const http = require("http");
 const fsp = require("fs/promises");
 const path = require("path");
 const { URL } = require("url");
-const { ensureDataLayout, projectRoot } = require("./lib/atomic-fs");
+const { ensureDataLayout, projectRoot, dataRoot } = require("./lib/atomic-fs");
 const { createApiRoutes, handleApi } = require("./routes/api");
 const { sendJson } = require("./lib/http-util");
 const { isDeniedStaticPath } = require("./lib/static-guard");
+const { validateStartupConfig } = require("./lib/startup-config");
+const { registerShutdownHandlers } = require("./lib/shutdown");
+const db = require("./lib/db");
 
 const PORT = Number(process.env.PORT) || 3000;
-const HOST = process.env.HOST || "127.0.0.1";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -115,15 +118,18 @@ async function serveStatic(req, res, root, pathname) {
 }
 
 async function main() {
-  await ensureDataLayout();
-  const auth = require("./lib/auth");
+  let startup;
   try {
-    auth.requireAuthConfig();
+    startup = validateStartupConfig();
   } catch (err) {
     console.error(err.message || err);
     process.exit(1);
   }
+
+  const HOST = startup.host;
+  await ensureDataLayout();
   const root = projectRoot();
+  const resolvedDataRoot = dataRoot();
   const apiRoutes = createApiRoutes();
 
   const server = http.createServer(async (req, res) => {
@@ -145,9 +151,14 @@ async function main() {
     }
   });
 
+  registerShutdownHandlers(server, {
+    closeDb: () => db.close(),
+    exit: true
+  });
+
   server.listen(PORT, HOST, () => {
     console.log(`DM Library listening on http://${HOST}:${PORT}`);
-    console.log(`Data directory: ${path.join(root, "data")}`);
+    console.log(`Data directory: ${resolvedDataRoot}`);
   });
 }
 

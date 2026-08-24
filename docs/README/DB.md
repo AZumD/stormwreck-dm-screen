@@ -1,4 +1,4 @@
-# DB — Postgres foundation (Phase 1–3A)
+# DB — Postgres foundation (Phase 1–4B)
 
 ## Purpose
 Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset, the app keeps using file-backed `/data` only.
@@ -10,9 +10,10 @@ Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset
 | `db/migrations/0001_phase1.sql` | Initial tables |
 | `db/migrations/0002_phase3_auth.sql` | `password_hash`, `sessions`, case-insensitive email |
 | `db/migrate.mjs` | Apply SQL migrations |
-| `db/seed-items.mjs` | Import `data/catalogues/item/*.json` → `items` |
-| `db/seed-characters.mjs` | Import campaign PC catalogue → `characters` + state + inventory |
+| `db/seed-items.mjs` | Import `{DM_DATA_ROOT}/catalogues/item/*.json` → `items` |
+| `db/seed-characters.mjs` | Import campaign PC catalogue → `characters` + state + inventory (**one-shot**) |
 | `db/bootstrap-auth.mjs` | DM/player users + memberships + controllers (env passwords) |
+| `scripts/data-init.mjs` | Empty volume seed from committed `data/` (`npm run data:init`) |
 | `drizzle.config.js` | drizzle-kit config |
 | `server/lib/db.js` | Optional `pg` pool |
 | `server/lib/characters.js` | Campaign-scoped character CRUD (Phase 2) |
@@ -26,16 +27,20 @@ Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset
 ```bash
 cp .env.example .env   # set DATABASE_URL (+ SESSION_SECRET for auth)
 npm install
+# Optional empty volume (Railway): DM_DATA_ROOT=/data npm run data:init
 npm run db:migrate
 npm run db:seed:items
-npm run db:seed:characters
-npm run db:bootstrap:auth   # optional local accounts
-npm start
+npm run db:seed:characters   # WARNING: upserts character_state — once only
+npm run db:bootstrap:auth    # optional local accounts
+npm start                    # never auto-runs migrate/seed/init
 ```
 
-`GET /api/health` includes a `database` object and `authRequired`. `GET /api/db/health` is a dedicated probe.
+### Warning: `db:seed:characters`
+Re-running reconciles from catalogue / `campaign-state` and **UPSERTS `character_state` (HP, conditions, resources)**. That can overwrite live play. Never attach it to deploy/start hooks. See `docs/README/DEPLOY.md`.
 
-See `docs/README/AUTH.md` for authentication details.
+`GET /api/health` includes a `database` object and `authRequired` (503 in production if DB down). `GET /api/db/health` is a dedicated probe.
+
+See `docs/README/AUTH.md` for authentication details and `docs/README/DEPLOY.md` for Railway.
 
 ## Phase 2 authority (migration in progress)
 
@@ -49,7 +54,7 @@ See `docs/README/AUTH.md` for authentication details.
 | HP, conditions, resources | Postgres `character_state` | Updated via character state API |
 | Equipment / inventory rows | Postgres `inventory_entries` | Resolved `item_id` when item exists; unresolved refs kept in `custom_item` |
 
-Re-run `npm run db:seed:characters` to reconcile imports idempotently (upsert, inventory replaced per character).
+Re-run `npm run db:seed:characters` only as a deliberate one-shot reconcile: it upserts characters and **replaces inventory / can overwrite `character_state` HP**. Never automate it on deploy.
 
 Imported HP values come from the PC catalogue JSON as-is (e.g. Althariel `1/1` in `pc-mswdvrcy-u6nnt.json` is source-derived and likely a placeholder until an authoritative sheet is available).
 

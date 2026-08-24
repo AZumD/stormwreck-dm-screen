@@ -2,18 +2,28 @@
  * Import item catalogue JSON files into Postgres `items` table.
  * Usage: node db/seed-items.mjs
  * Requires DATABASE_URL and applied migrations.
+ *
+ * Reads from `{DM_DATA_ROOT}/catalogues/item` when DM_DATA_ROOT is set,
+ * otherwise `<repo>/data/catalogues/item`.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import pg from "pg";
 import dotenv from "dotenv";
 
 dotenv.config();
 
+const require = createRequire(import.meta.url);
+const { dataRoot } = require("../server/lib/atomic-fs.js");
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const itemDir = path.join(root, "data", "catalogues", "item");
+
+export function resolveItemCatalogueDir() {
+  return path.join(dataRoot(), "catalogues", "item");
+}
 
 function mapItem(raw) {
   const id = String(raw?.id || "").trim();
@@ -63,6 +73,8 @@ async function main() {
     console.error("DATABASE_URL is not set.");
     process.exit(1);
   }
+  const itemDir = resolveItemCatalogueDir();
+  console.log("Item catalogue source:", itemDir);
   if (!fs.existsSync(itemDir)) {
     console.error("Missing item catalogue folder:", itemDir);
     process.exit(1);
@@ -131,7 +143,14 @@ async function main() {
   console.log(`Upserted ${upserted} items from ${files.length} files.`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (isMain) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+export { mapItem, root };

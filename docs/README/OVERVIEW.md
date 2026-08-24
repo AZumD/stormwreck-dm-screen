@@ -12,7 +12,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
 
-**Optional Postgres (Phase 1–3B):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path for scenes/party/clock; Postgres holds campaign characters, mutable state, inventory, items, users, sessions, and private player notes. Phase 3A adds email/password auth and membership gates (see `docs/README/AUTH.md`). Phase 3B adds the player companion API and `/player/` shell (see `docs/README/PLAYER.md`).
+**Optional Postgres (Phase 1–4B):** set `DATABASE_URL` (see `.env.example`). File API remains the live app path for scenes/party/clock; Postgres holds campaign characters, mutable state, inventory, items, users, sessions, and private player notes. Phase 3A adds email/password auth and membership gates (see `docs/README/AUTH.md`). Phase 3B adds the player companion API and `/player/` shell (see `docs/README/PLAYER.md`). Phase 4B hardens Railway hybrid deploy: `DM_DATA_ROOT` volume, graceful shutdown, `data:init`, production env checks (see `docs/README/DEPLOY.md`).
 
 | Area | Path |
 |------|------|
@@ -91,6 +91,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `db/` + `server/lib/db.js` + `server/lib/characters.js` | Optional Postgres foundation + Phase 2 characters |
 | `server/lib/auth.js` + `authorize.js` | Phase 3A sessions + membership/DM authorization |
 | `server/lib/player.js` + `/player/` | Phase 3B player companion API + mobile shell |
+| `scripts/data-init.mjs` + `docs/README/DEPLOY.md` | Phase 4B volume init + Railway hybrid runbook |
 
 ## Catalogues
 - Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)
