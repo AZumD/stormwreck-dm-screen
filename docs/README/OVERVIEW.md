@@ -39,7 +39,8 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **History** — structured timeline entries; Session Notes remain freeform
 - **Chronicle** — authored Story So Far, session prose, and curated Key Events (`chronicle.json`) — separate from History
 - **Party** — add/remove PCs and companion NPCs from catalogues (no hardcoded placeholders)
-- **Music mixer** — map-rail Music tab; campaign-persisted catalogue tracks with play/volume/reorder (`docs/README/MUSIC-MIXER-UI.md`)
+- **Music mixer** — map-rail Music tab; campaign-persisted catalogue tracks with play/volume/loop/reorder (`docs/README/MUSIC-MIXER-UI.md`)
+- **Dual-store backup** — optional `npm run backup:dual` for Postgres + volume (`docs/README/BACKUP-DUAL-STORE.md`)
 
 ## Scene runtime
 - Default **Play** view focuses one scene (content, notes, At this scene, connections)

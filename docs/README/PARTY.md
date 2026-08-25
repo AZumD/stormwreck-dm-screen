@@ -13,7 +13,7 @@ Roster refs live in `CampaignState.party`:
 { "type": "pc|npc", "id": "<catalogue entry id>" }
 ```
 
-`window.PARTY` is a derived view (name, HP, AC, portrait, etc.) for map pins and tooltips.
+`window.PARTY` is a derived view (name, HP, AC, portrait, etc.) for map pins and tooltips. For PCs linked to Postgres (`catalogue_pc_id`), `PartyRoster.enrichFromPostgres` overlays live HP from `listCharacters` so the Party tab matches combat-sheet state.
 
 ## UI
 Map rail **Party** tab (not stacked under the map):

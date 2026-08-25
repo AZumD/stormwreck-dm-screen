@@ -57,19 +57,60 @@ window.MusicMixerUi = (function () {
 
   function disposeAll() {
     for (const id of [...players.keys()]) disposePlayer(id);
+    syncPlayingBadge();
+  }
+
+  function pauseAll() {
+    for (const audio of players.values()) {
+      try {
+        audio.pause();
+      } catch {
+        /* ignore */
+      }
+    }
+    syncPlayingBadge();
+    if (listEl) render(listEl);
+  }
+
+  function anyPlaying() {
+    for (const id of players.keys()) {
+      if (isPlaying(id)) return true;
+    }
+    return false;
+  }
+
+  function syncPlayingBadge() {
+    document.getElementById("music-tab-btn")?.classList.toggle("is-playing", anyPlaying());
   }
 
   async function ensureSrc(slot, audio) {
-    if (audio.dataset.catalogueId === slot.catalogueMusicId && audio.src) return true;
+    const expiresAt = Number(audio.dataset.expiresAt || 0);
+    const stale = expiresAt > 0 && Date.now() > expiresAt - 15000;
+    if (audio.dataset.catalogueId === slot.catalogueMusicId && audio.src && !stale) return true;
     if (!window.LocalApiClient?.getMusicPlayback) {
       throw new Error("Music playback API unavailable");
     }
     const playback = await LocalApiClient.getMusicPlayback(slot.catalogueMusicId);
     if (!playback?.url) throw new Error("No audio for this track");
+    const wasPlaying = !audio.paused && !audio.ended;
+    const t = audio.currentTime || 0;
     audio.src = playback.url;
     audio.dataset.catalogueId = slot.catalogueMusicId;
+    if (playback.expiresIn != null && Number.isFinite(Number(playback.expiresIn))) {
+      audio.dataset.expiresAt = String(Date.now() + Number(playback.expiresIn) * 1000);
+    } else {
+      audio.dataset.expiresAt = "";
+    }
     audio.loop = !!slot.loop;
     audio.volume = clampVolume(slot.volume);
+    if (wasPlaying) {
+      try {
+        audio.currentTime = t;
+        await audio.play();
+      } catch {
+        /* ignore resume after refresh */
+      }
+    }
     return true;
   }
 
@@ -81,6 +122,7 @@ window.MusicMixerUi = (function () {
       return;
     }
     try {
+      window.MediaBar?.pauseAll?.();
       await ensureSrc(slot, audio);
       audio.loop = !!slot.loop;
       audio.volume = clampVolume(slot.volume);
@@ -256,8 +298,11 @@ window.MusicMixerUi = (function () {
       if (!liveIds.has(id)) disposePlayer(id);
     }
 
-    const addBtn = `
+    const tools = `
       <div class="music-mixer-tools">
+        <button type="button" class="party-add-btn music-mixer-pause-all" data-music-pause-all>${escapeHtml(
+          t().musicPauseAll || "Pause all"
+        )}</button>
         <button type="button" class="party-add-btn music-mixer-add" data-music-add>+</button>
       </div>`;
 
@@ -266,13 +311,14 @@ window.MusicMixerUi = (function () {
         <p class="party-empty">${escapeHtml(
           t().musicEmpty || "No tracks yet. Add one from the Music catalogue."
         )}</p>
-        ${addBtn}`;
+        ${tools}`;
     } else {
       host.innerHTML =
         tracks
           .map((slot) => {
             const playing = isPlaying(slot.id);
             const volPct = Math.round(clampVolume(slot.volume) * 100);
+            const loopOn = !!slot.loop;
             return `
             <div class="music-mixer-track" data-slot-id="${escapeHtml(slot.id)}" draggable="false">
               <button type="button" class="music-mixer-track__handle" draggable="false"
@@ -287,26 +333,48 @@ window.MusicMixerUi = (function () {
                 <span class="music-mixer-track__title" title="${escapeHtml(slot.title)}">${escapeHtml(
                   slot.title
                 )}</span>
-                <label class="music-mixer-track__volume">
-                  <span class="visually-hidden">${escapeHtml(t().musicVolume || "Volume")}</span>
-                  <input type="range" min="0" max="100" step="1" value="${volPct}" draggable="false" data-volume="${escapeHtml(
+                <div class="music-mixer-track__controls">
+                  <label class="music-mixer-track__volume">
+                    <span class="visually-hidden">${escapeHtml(t().musicVolume || "Volume")}</span>
+                    <input type="range" min="0" max="100" step="1" value="${volPct}" draggable="false" data-volume="${escapeHtml(
+                      slot.id
+                    )}">
+                  </label>
+                  <button type="button" class="music-mixer-track__loop${loopOn ? " is-on" : ""}" data-loop="${escapeHtml(
                     slot.id
-                  )}">
-                </label>
+                  )}" aria-pressed="${loopOn ? "true" : "false"}" title="${escapeHtml(
+                    t().musicLoop || "Loop"
+                  )}">${escapeHtml(t().musicLoopShort || "Loop")}</button>
+                </div>
               </div>
               <button type="button" class="music-mixer-track__remove" data-remove="${escapeHtml(slot.id)}" draggable="false"
                 aria-label="${escapeHtml(t().musicRemove || "Remove track")}">×</button>
             </div>`;
           })
-          .join("") + addBtn;
+          .join("") + tools;
     }
 
+    syncPlayingBadge();
+
     host.querySelector("[data-music-add]")?.addEventListener("click", openPicker);
+    host.querySelector("[data-music-pause-all]")?.addEventListener("click", () => pauseAll());
 
     host.querySelectorAll("[data-play]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const slot = CampaignMusicMixer.sortedTracks(campaignId).find((tr) => tr.id === btn.dataset.play);
         if (slot) togglePlay(slot);
+      });
+    });
+
+    host.querySelectorAll("[data-loop]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const slot = CampaignMusicMixer.sortedTracks(campaignId).find((tr) => tr.id === btn.dataset.loop);
+        if (!slot) return;
+        const next = !slot.loop;
+        CampaignMusicMixer.updateTrack(campaignId, slot.id, { loop: next });
+        const audio = players.get(slot.id);
+        if (audio) audio.loop = next;
+        render();
       });
     });
 
@@ -360,5 +428,5 @@ window.MusicMixerUi = (function () {
     if (listEl) render(listEl);
   }
 
-  return { init, render, refresh, disposeAll };
+  return { init, render, refresh, disposeAll, pauseAll, anyPlaying };
 })();

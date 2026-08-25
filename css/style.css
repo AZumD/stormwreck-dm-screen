@@ -2009,6 +2009,24 @@ body[data-nav-collapsed="true"] .sidebar {
   color: var(--text-muted);
 }
 
+.npc-reveal__note-label {
+  display: block;
+  margin-top: 0.55rem;
+  font-weight: 500;
+}
+
+.npc-reveal__note {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-panel, var(--bg));
+  color: inherit;
+  font: inherit;
+}
+
 .npc-memory__header {
   display: flex;
   flex-wrap: wrap;
@@ -4118,6 +4136,8 @@ body.map-mode-combat .map-stage {
 .music-mixer-tools {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-top: 0.15rem;
 }
 
@@ -4127,6 +4147,16 @@ body.map-mode-combat .map-stage {
   font-size: 1.1rem;
   line-height: 1;
   padding: 0.35rem 0.75rem;
+}
+
+.music-mixer-pause-all {
+  flex: 1 1 auto;
+  min-width: 5.5rem;
+}
+
+.map-panel__tab.is-playing {
+  box-shadow: inset 0 -2px 0 var(--accent);
+  color: var(--accent);
 }
 
 .music-mixer-list.is-reordering {
@@ -4230,9 +4260,73 @@ body.map-mode-combat .map-stage {
   text-overflow: ellipsis;
 }
 
-.music-mixer-track__volume input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
+.music-mixer-track__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.music-mixer-track__volume {
+  flex: 1;
+  min-width: 0;
+}
+
+.music-mixer-track__loop {
+  appearance: none;
+  flex: 0 0 auto;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.music-mixer-track__loop.is-on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.play-scene-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+}
+
+.play-scene-nav__btn {
+  flex: 1;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.play-scene-nav__btn:hover:not(:disabled),
+.play-scene-nav__btn:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.play-scene-nav__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.scene-tray__location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
 }
 
 .music-mixer-track__remove {

@@ -23,7 +23,7 @@ Used only as a default for interaction / history forms — never overwrites a us
 | Adventure sections | Status buttons + autosaving scene notes |
 | Sidebar nav | Subtle current / completed / skipped classes |
 | Toolbar **Current scene** | Jump + hash update via `jumpToSection` |
-| NPC modal | Campaign memory block + “Reveal to players” toggle via `EntityUI.addModalEnricher` |
+| NPC modal | Campaign memory block + “Reveal to players” toggle + optional player-facing note via `EntityUI.addModalEnricher` |
 | Session → History | Timeline list, filters, manual entry (entity picker: NPC/monster/item/location) |
 
 Campaign-specific story facts never live here — only generic campaign-state UX.

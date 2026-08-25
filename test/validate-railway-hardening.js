@@ -109,6 +109,26 @@ if (!healthSrc.includes("healthy ? 200 : 503") && !healthSrc.includes("503")) {
 if (!healthSrc.includes("ensurePostgresCampaignAndDm")) {
   fail("POST /api/campaigns missing Postgres sync");
 } else pass("campaign create syncs Postgres when auth+db");
+if (!healthSrc.includes("volume.writable") || !healthSrc.includes("sessionsTable")) {
+  fail("health missing volume writability / sessions schema probe");
+} else pass("health probes volume + sessions schema");
+if (!healthSrc.includes("db:migrate")) {
+  fail("health missing migrate hint");
+} else pass("health migrate hint when schema incomplete");
+
+const shutdownSrc = fs.readFileSync(path.join(root, "server/lib/shutdown.js"), "utf8");
+if (!shutdownSrc.includes("timeoutMs") || !shutdownSrc.includes("timed out")) {
+  fail("shutdown missing hard timeout");
+} else pass("shutdown has hard timeout");
+
+const backupScript = path.join(root, "scripts/backup-dual-store.mjs");
+const backupDoc = path.join(root, "docs/README/BACKUP-DUAL-STORE.md");
+if (!fs.existsSync(backupScript) || !fs.existsSync(backupDoc)) {
+  fail("dual-store backup script/docs missing");
+} else pass("dual-store backup script + docs");
+
+if (!pkg.scripts?.["backup:dual"]) fail("package.json missing backup:dual script");
+else pass("npm run backup:dual wired");
 
 /* —— Unit: resolveHost / validateStartupConfig —— */
 async function unitStartup() {

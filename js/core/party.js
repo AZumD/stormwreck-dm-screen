@@ -286,6 +286,30 @@ window.PartyRoster = (function () {
   function refresh() {
     syncWindowParty();
     if (listEl) render(listEl);
+    enrichFromPostgres().then(() => {
+      if (listEl) render(listEl);
+    });
+  }
+
+  async function enrichFromPostgres() {
+    const cid = window.CampaignState?.getCampaignId?.();
+    if (!cid || !window.LocalApiClient?.listCharacters) return;
+    try {
+      const list = await LocalApiClient.listCharacters(cid);
+      for (const m of window.PARTY || []) {
+        if (m.memberType !== "pc") continue;
+        const hit =
+          list.find((c) => c.catalogue_pc_id === m.catalogueId || c.id === m.catalogueId) ||
+          list.find((c) => String(c.catalogue_pc_id || "") === String(m.catalogueId));
+        if (!hit) continue;
+        m.characterId = hit.id;
+        if (hit.hp_current != null || hit.hp_max != null) {
+          m.hp = `${hit.hp_current ?? "—"}/${hit.hp_max ?? "—"}`;
+        }
+      }
+    } catch {
+      /* offline / no DB — keep catalogue vitals */
+    }
   }
 
   function init(options = {}) {
@@ -301,12 +325,14 @@ window.PartyRoster = (function () {
 
     syncWindowParty();
     render(listEl);
+    enrichFromPostgres().then(() => render(listEl));
   }
 
   return {
     init,
     refresh,
     syncWindowParty,
+    enrichFromPostgres,
     render,
     toPartyMember
   };

@@ -422,6 +422,8 @@ window.MediaBar = (function () {
     const id = extractYouTubeId(idOrUrl);
     if (!id) return null;
 
+    window.MusicMixerUi?.pauseAll?.();
+
     const existing = tracks.find((tr) => tr.id === id);
     if (existing) {
       existing.wantPlay = true;

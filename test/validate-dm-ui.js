@@ -72,6 +72,14 @@ if (!mapJs.includes("setActiveTab") || !mapJs.includes("map-layers-popover")) {
   fail("map-panel missing tabs / layers popover logic");
 } else pass("map-panel has tabs + layers popover");
 
+if (!mapJs.includes("map-reset-view-btn") || !mapJs.includes("showLocationOnMap")) {
+  fail("map-panel missing Fit/reset or showLocationOnMap");
+} else pass("map-panel Fit + show on map");
+
+if (!mediaJs.includes("MusicMixerUi?.pauseAll") && !mediaJs.includes("MusicMixerUi.pauseAll")) {
+  fail("media-bar should pause mixer when pausing YouTube");
+} else pass("media-bar ↔ mixer pause coordination");
+
 if (!spatialJs.includes("map-settings-body") || !spatialJs.includes("els.measureBtn.hidden")) {
   fail("map-spatial should demote settings and gate Measure/Token visibility");
 } else pass("map-spatial splits primary vs settings chrome");

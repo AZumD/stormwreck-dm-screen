@@ -129,7 +129,7 @@
     if (Object.prototype.hasOwnProperty.call(state.collapsed, id)) {
       return Boolean(state.collapsed[id]);
     }
-    return id === "skills" || id === "features" || id === "spells" || id === "inventory";
+    return id === "skills" || id === "features" || id === "spells" || id === "inventory" || id === "class-resources";
   }
 
   function section(id, title, bodyHtml) {
@@ -149,6 +149,41 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function displayRefLabel(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return "—";
+    const m = s.match(/^@[\w-]+:[^|\s]+\|(.+)$/);
+    if (m) return m[1].trim() || s;
+    return s;
+  }
+
+  function renderClassResources(cr) {
+    const entries = Object.entries(cr && typeof cr === "object" ? cr : {});
+    const rows = entries
+      .map(([key, val]) => {
+        const cur =
+          val && typeof val === "object" ? Number(val.current ?? val.value ?? 0) : Number(val) || 0;
+        const max = val && typeof val === "object" ? Number(val.max ?? cur) : cur;
+        return `<div class="class-res-row" data-cr-key="${esc(key)}">
+          <span class="class-res-name">${esc(key)}</span>
+          <input type="number" class="class-res-cur" data-cr-cur="${esc(key)}" value="${esc(cur)}" min="0" aria-label="${esc(key)} current">
+          <span>/</span>
+          <input type="number" class="class-res-max" data-cr-max="${esc(key)}" value="${esc(max)}" min="0" aria-label="${esc(key)} max">
+          <button type="button" class="btn btn-ghost" data-cr-remove="${esc(key)}" aria-label="Remove ${esc(key)}">×</button>
+        </div>`;
+      })
+      .join("");
+    const empty = entries.length
+      ? ""
+      : `<p class="empty">No class resources yet (rage, ki, channel…).</p>`;
+    return `${empty}${rows}
+      <div class="class-res-add">
+        <input type="text" class="class-res-new-name" data-new-cr-name maxlength="40" placeholder="Rage, Ki, Channel…" aria-label="New class resource name">
+        <button type="button" class="btn btn-add" data-add-class-resource aria-label="Add class resource">+</button>
+        ${entries.length ? `<button type="button" class="btn btn-primary" data-save-class-resources>Save resources</button>` : ""}
+      </div>`;
   }
 
   function mod(n) {
@@ -260,6 +295,7 @@
       {
         characters: "Character sheet",
         party: "Party",
+        people: "People",
         library: "Library",
         notes: "Notes"
       }[state.tab] || "Companion";
@@ -422,11 +458,20 @@
       ? `<div class="inv-list">${c.inventory
           .map((item) => {
             const label = esc(item.itemName || item.customName || item.itemId || "Item");
-            const eq = item.equipped ? " · eq" : "";
+            const qty = item.quantity != null ? Number(item.quantity) : 1;
             const open = item.itemId
-              ? `<button type="button" class="pill" data-type="item" data-id="${esc(item.itemId)}">${label}${eq}</button>`
-              : `<span class="pill static">${label}${eq}</span>`;
-            return `<div class="inv-row">${open}<button type="button" class="btn btn-ghost" data-remove-inv="${esc(item.id)}">Remove</button></div>`;
+              ? `<button type="button" class="pill" data-type="item" data-id="${esc(item.itemId)}">${label}</button>`
+              : `<span class="pill static">${label}</span>`;
+            return `<div class="inv-row">
+              ${open}
+              <label class="inv-equip"><input type="checkbox" data-equip-inv="${esc(item.id)}" ${
+                item.equipped ? "checked" : ""
+              }> Eq</label>
+              <input type="number" class="inv-qty" min="0" step="1" value="${esc(qty)}" data-qty-inv="${esc(
+                item.id
+              )}" aria-label="Quantity">
+              <button type="button" class="btn btn-ghost" data-remove-inv="${esc(item.id)}">Remove</button>
+            </div>`;
           })
           .join("")}</div>`
       : `<p class="empty">Pack is empty.</p>`;
@@ -443,8 +488,8 @@
       : `<p class="empty">No conditions.</p>`;
     const inspired = Boolean(c.state?.inspiration);
     const temp = c.state?.hpTemp ? ` · temp ${esc(c.state.hpTemp)}` : "";
-    const subclassBit = c.subclass ? ` (${c.subclass})` : "";
-    const metaLine = `${c.race || "—"} · ${c.class || "—"}${subclassBit} · L${c.level}`;
+    const subclassBit = c.subclass ? ` (${displayRefLabel(c.subclass)})` : "";
+    const metaLine = `${displayRefLabel(c.race)} · ${displayRefLabel(c.class)}${subclassBit} · L${c.level}`;
 
     els.main.innerHTML = `
       <div class="sheet-toolbar">
@@ -492,6 +537,7 @@
       )}
       ${section("death-saves", "Death saves", deathSavesBlock(c.state?.deathSaves))}
       ${section("spell-slots", "Spell slots", spellSlotsBlock(c.state?.spellSlots))}
+      ${section("class-resources", "Class resources", renderClassResources(c.state?.classResources))}
       ${section(
         "skills",
         "Skills",
@@ -519,14 +565,24 @@
       return;
     }
     els.main.innerHTML = `<div class="party-list">${state.party
-      .map((p) =>
-        identityCard(
+      .map((p) => {
+        const race = displayRefLabel(p.race);
+        const klass = displayRefLabel(p.class);
+        const hp =
+          p.hpCurrent != null || p.hpMax != null
+            ? ` · HP ${p.hpCurrent ?? "—"}/${p.hpMax ?? "—"}`
+            : "";
+        const cond =
+          Array.isArray(p.conditions) && p.conditions.length
+            ? ` · ${p.conditions.slice(0, 3).join(", ")}`
+            : "";
+        return identityCard(
           p.name,
-          `${p.race || "—"} · ${p.class || "—"} · Level ${p.level}`,
+          `${race} · ${klass} · Level ${p.level}${hp}${cond}`,
           api.portraitUrl(state.campaignId, p.id),
           "h3"
-        )
-      )
+        );
+      })
       .join("")}</div>`;
   }
 
@@ -633,12 +689,20 @@
       ? `<ul class="list people-list">${state.people
           .map((n) => {
             const role = n.role ? `<p class="meta">${esc(n.role)}</p>` : "";
+            const note = n.note ? `<p class="meta people-note">${esc(n.note)}</p>` : "";
             const summary = String(n.summary || "").slice(0, 140);
+            const portrait = n.portraitUrl
+              ? `<img class="people-portrait" src="${esc(n.portraitUrl)}" alt="" onerror="this.remove()">`
+              : "";
             return `<li>
             <button type="button" class="card card-btn people-card" data-revealed-npc="${esc(n.id)}">
-              <h3>${esc(n.name || n.id)}</h3>
-              ${role}
-              ${summary ? `<p class="meta">${esc(summary)}${String(n.summary || "").length > 140 ? "…" : ""}</p>` : ""}
+              ${portrait}
+              <div class="people-card__text">
+                <h3>${esc(n.name || n.id)}</h3>
+                ${role}
+                ${note}
+                ${summary ? `<p class="meta">${esc(summary)}${String(n.summary || "").length > 140 ? "…" : ""}</p>` : ""}
+              </div>
             </button>
           </li>`;
           })
@@ -664,12 +728,17 @@
     if (!data) return;
     const npc = data.npc || {};
     els.detailTitle.textContent = npc.name || npcId;
-    const bits = [npc.role, npc.note].filter(Boolean);
+    const bits = [npc.role].filter(Boolean);
+    const portrait = npc.portraitUrl
+      ? `<img class="detail-portrait" src="${esc(npc.portraitUrl)}" alt="" onerror="this.remove()">`
+      : "";
     els.detailBody.innerHTML = `
+      ${portrait}
       ${bits.length ? `<p class="meta">${esc(bits.join(" · "))}</p>` : ""}
+      ${npc.note ? `<p class="meta people-note">${esc(npc.note)}</p>` : ""}
       ${npc.summary ? `<p class="detail-block">${esc(npc.summary)}</p>` : ""}
       ${npc.description ? `<div class="detail-block">${esc(npc.description).replace(/\n/g, "<br>")}</div>` : ""}
-      ${!npc.summary && !npc.description ? `<p class="empty">No description.</p>` : ""}
+      ${!npc.summary && !npc.description && !npc.note ? `<p class="empty">No description.</p>` : ""}
     `;
     els.dialog.showModal();
   }
@@ -696,6 +765,10 @@
             })
             .join("")}</ul>`
         : `<p class="empty">No entries match.</p>`;
+    const more =
+      !state.libraryBusy && state.libraryEntries.length < state.libraryTotal
+        ? `<p class="section-add"><button type="button" class="btn btn-primary" data-library-more>Load more</button></p>`
+        : "";
     const charHint = currentCharacter()
       ? `Attach actions use <strong>${esc(currentCharacter().name)}</strong>.`
       : "Select a character on the Sheet tab to attach entries.";
@@ -704,8 +777,12 @@
         <input type="search" id="library-q" value="${esc(state.libraryQ)}" placeholder="Name, tag, school…" autocomplete="off">
       </label>
       <div class="library-types" role="tablist" aria-label="Catalogue type">${types}</div>
-      <p class="meta">${charHint} Showing ${state.libraryEntries.length} of ${state.libraryTotal}.</p>
-      ${list}`;
+      <p class="meta">${charHint} Showing ${state.libraryEntries.length} of ${state.libraryTotal}.
+        ${(state.libraryType === "monster" || state.libraryType === "location")
+          ? " Lookup only — no sheet attach."
+          : ""}</p>
+      ${list}
+      ${more}`;
     const input = document.getElementById("library-q");
     if (input) {
       input.focus();
@@ -720,26 +797,31 @@
 
   async function loadLibrary(opts = {}) {
     if (!state.campaignId) return;
+    const append = Boolean(opts.append);
     const silent = Boolean(opts.silent);
-    if (!silent) {
+    if (!silent && !append) {
       state.libraryBusy = true;
       if (state.tab === "library") renderLibrary();
     }
+    const offset = append ? state.libraryEntries.length : 0;
     const data = await safe(() =>
       api.library(state.campaignId, state.libraryType, {
         q: state.libraryQ,
         limit: 40,
-        offset: 0
+        offset
       })
     );
     state.libraryBusy = false;
     if (!data) {
-      state.libraryEntries = [];
-      state.libraryTotal = 0;
+      if (!append) {
+        state.libraryEntries = [];
+        state.libraryTotal = 0;
+      }
       if (state.tab === "library") renderLibrary();
       return;
     }
-    state.libraryEntries = data.entries || [];
+    const next = data.entries || [];
+    state.libraryEntries = append ? state.libraryEntries.concat(next) : next;
     state.libraryTotal = data.total || 0;
     if (state.tab === "library") renderLibrary();
   }
@@ -1089,6 +1171,72 @@
     renderCharacter();
   }
 
+  async function updateInventoryEntry(entryId, patch) {
+    const c = currentCharacter();
+    if (!c || !entryId) return;
+    const data = await safe(() =>
+      api.updateInventory(state.campaignId, c.id, entryId, patch)
+    );
+    if (!data) return;
+    applyCharacter(data.character);
+    renderCharacter();
+  }
+
+  function readClassResourcesFromDom(root) {
+    const out = {};
+    root?.querySelectorAll("[data-cr-key]").forEach((row) => {
+      const key = row.getAttribute("data-cr-key");
+      if (!key) return;
+      const cur = Number(row.querySelector("[data-cr-cur]")?.value);
+      const max = Number(row.querySelector("[data-cr-max]")?.value);
+      out[key] = {
+        current: Number.isFinite(cur) ? Math.max(0, cur) : 0,
+        max: Number.isFinite(max) ? Math.max(0, max) : 0
+      };
+    });
+    return out;
+  }
+
+  async function saveClassResourcesFromDom(root) {
+    const c = currentCharacter();
+    if (!c || !root) return;
+    const data = await safe(() =>
+      api.patchState(state.campaignId, c.id, {
+        class_resources: readClassResourcesFromDom(root)
+      })
+    );
+    if (!data) return;
+    applyCharacter(data.character);
+    renderCharacter();
+  }
+
+  async function softRefreshLive() {
+    if (!state.campaignId || els.shell.hidden) return;
+    if (document.visibilityState && document.visibilityState !== "visible") return;
+    try {
+      const chars = await api.myCharacters(state.campaignId);
+      if (chars?.characters) {
+        state.characters = chars.characters;
+        if (!state.characters.some((c) => c.id === state.characterId)) {
+          state.characterId = state.characters[0]?.id || null;
+        }
+        renderSwitcher();
+        if (state.tab === "characters") renderCharacter();
+      }
+      if (state.tab === "party") {
+        const party = await api.party(state.campaignId);
+        if (party?.party) {
+          state.party = party.party;
+          renderParty();
+        }
+      }
+      if (state.tab === "people") await loadPeople();
+    } catch (err) {
+      if (expired(err)) return;
+      /* soft refresh stays silent on transient errors */
+    }
+  }
+
   async function logout() {
     await safe(() => api.logout());
     state.bootstrap = null;
@@ -1150,9 +1298,30 @@
     }
   });
 
+  els.main.addEventListener("change", async (e) => {
+    const equip = e.target.closest("[data-equip-inv]");
+    if (equip) {
+      await updateInventoryEntry(equip.getAttribute("data-equip-inv"), {
+        equipped: Boolean(equip.checked)
+      });
+      return;
+    }
+    const qty = e.target.closest("[data-qty-inv]");
+    if (qty) {
+      const n = Number(qty.value);
+      await updateInventoryEntry(qty.getAttribute("data-qty-inv"), {
+        quantity: Number.isFinite(n) ? Math.max(0, n) : 0
+      });
+    }
+  });
+
   els.main.addEventListener("click", async (e) => {
     if (e.target.closest("[data-create-character]")) {
       openCreateCharacterDialog();
+      return;
+    }
+    if (e.target.closest("[data-library-more]")) {
+      await loadLibrary({ append: true, silent: true });
       return;
     }
     const libType = e.target.closest("[data-library-type]");
@@ -1186,6 +1355,45 @@
     const openAdd = e.target.closest("[data-open-add]");
     if (openAdd) {
       openAddDialog(openAdd.getAttribute("data-open-add"));
+      return;
+    }
+    if (e.target.closest("[data-add-class-resource]")) {
+      const name = String(els.main.querySelector("[data-new-cr-name]")?.value || "")
+        .trim()
+        .slice(0, 40);
+      if (!name) {
+        window.alert("Enter a resource name first (e.g. Rage, Ki).");
+        return;
+      }
+      const c = currentCharacter();
+      if (!c) return;
+      const next = { ...(c.state?.classResources || {}) };
+      if (!next[name]) next[name] = { current: 0, max: 1 };
+      const data = await safe(() =>
+        api.patchState(state.campaignId, c.id, { class_resources: next })
+      );
+      if (!data) return;
+      applyCharacter(data.character);
+      renderCharacter();
+      return;
+    }
+    if (e.target.closest("[data-save-class-resources]")) {
+      await saveClassResourcesFromDom(els.main);
+      return;
+    }
+    const crRemove = e.target.closest("[data-cr-remove]");
+    if (crRemove) {
+      const key = crRemove.getAttribute("data-cr-remove");
+      const c = currentCharacter();
+      if (!c || !key) return;
+      const next = { ...(c.state?.classResources || {}) };
+      delete next[key];
+      const data = await safe(() =>
+        api.patchState(state.campaignId, c.id, { class_resources: next })
+      );
+      if (!data) return;
+      applyCharacter(data.character);
+      renderCharacter();
       return;
     }
     const inspire = e.target.closest("[data-inspiration]");
@@ -1255,6 +1463,13 @@
       const note = state.notes.find((n) => n.id === edit.getAttribute("data-edit"));
       if (note) openNoteEditor(note);
     }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") softRefreshLive();
+  });
+  window.addEventListener("focus", () => {
+    softRefreshLive();
   });
 
   if (els.addCancel) {

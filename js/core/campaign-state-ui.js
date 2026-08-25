@@ -322,6 +322,11 @@ window.CampaignStateUI = (function () {
           <input type="checkbox" class="npc-reveal__toggle" data-reveal-npc="${escapeHtml(entity.id)}" disabled>
           <span>${escapeHtml(t().revealToPlayers || "Reveal to players")}</span>
         </label>
+        <label class="npc-reveal__note-label meta">${escapeHtml(t().revealNoteLabel || "Player-facing note")}
+          <input type="text" class="npc-reveal__note" data-reveal-note maxlength="500" placeholder="${escapeHtml(
+            t().revealNotePlaceholder || "e.g. Met as the innkeeper — wary but helpful"
+          )}" disabled>
+        </label>
         <p class="npc-reveal__hint meta">${escapeHtml(t().revealToPlayersHint || "Players see this NPC under People once revealed.")}</p>
       </div>
       <div class="npc-memory__header">
@@ -343,13 +348,20 @@ window.CampaignStateUI = (function () {
 
   async function bindRevealToggle(wrap, npcId) {
     const input = wrap.querySelector("[data-reveal-npc]");
+    const noteInput = wrap.querySelector("[data-reveal-note]");
     if (!input || !campaignId || !window.LocalApiClient?.listRevealedNpcs) return;
     try {
       const list = await LocalApiClient.listRevealedNpcs(campaignId);
-      input.checked = (list || []).some((n) => n.id === npcId);
+      const row = (list || []).find((n) => n.id === npcId);
+      input.checked = Boolean(row);
+      if (noteInput) {
+        noteInput.value = row?.note || "";
+        noteInput.disabled = false;
+      }
       input.disabled = false;
     } catch (err) {
       input.disabled = true;
+      if (noteInput) noteInput.disabled = true;
       const hint = wrap.querySelector(".npc-reveal__hint");
       if (hint) {
         hint.textContent =
@@ -359,20 +371,33 @@ window.CampaignStateUI = (function () {
       }
       return;
     }
-    input.addEventListener("change", async () => {
+
+    async function persistReveal(checked) {
       input.disabled = true;
+      if (noteInput) noteInput.disabled = true;
       try {
-        if (input.checked) {
-          await LocalApiClient.revealNpc(campaignId, npcId, {});
+        if (checked) {
+          await LocalApiClient.revealNpc(campaignId, npcId, {
+            note: noteInput ? String(noteInput.value || "").slice(0, 500) : ""
+          });
         } else {
           await LocalApiClient.unrevealNpc(campaignId, npcId);
         }
       } catch (err) {
-        input.checked = !input.checked;
+        input.checked = !checked;
         window.alert(err.message || "Could not update reveal.");
       } finally {
         input.disabled = false;
+        if (noteInput) noteInput.disabled = false;
       }
+    }
+
+    input.addEventListener("change", async () => {
+      await persistReveal(input.checked);
+    });
+    noteInput?.addEventListener("change", async () => {
+      if (!input.checked) return;
+      await persistReveal(true);
     });
   }
 

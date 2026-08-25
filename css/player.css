@@ -492,6 +492,68 @@ textarea { min-height: 6.5rem; resize: vertical; }
   align-items: center;
   margin-top: 0.35rem;
 }
+.inv-equip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 44px;
+}
+.inv-qty {
+  width: 3.5rem;
+  min-height: 44px;
+  padding: 0.25rem 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--elev);
+  color: inherit;
+  font: inherit;
+}
+.class-res-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+.class-res-name {
+  min-width: 5rem;
+  font-weight: 600;
+}
+.class-res-cur,
+.class-res-max {
+  width: 3.5rem;
+  min-height: 44px;
+  padding: 0.25rem 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--elev);
+  color: inherit;
+  font: inherit;
+}
+.people-card {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  text-align: left;
+}
+.people-portrait,
+.detail-portrait {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.people-card__text {
+  min-width: 0;
+  flex: 1;
+}
+.people-note {
+  color: var(--accent);
+}
 .dialog-sheet .dialog-body {
   max-height: calc(90dvh - 4.5rem);
 }

@@ -267,6 +267,11 @@
     restoreInitialScene();
     document.body.classList.remove("is-booting");
 
+    window.addEventListener("sw:auth-required", () => {
+      window.alert("Session expired. Sign in again from the home page to keep saving.");
+      window.location.href = "/";
+    });
+
     window.addEventListener("focus", async () => {
       if (window.CatalogueImages) {
         try {
@@ -821,6 +826,18 @@
     editingSectionId = null;
 
     const data = getSectionData(section);
+    const idx = sections.findIndex((s) => s.id === section.id);
+    const prevId = idx > 0 ? sections[idx - 1].id : null;
+    const nextId = idx >= 0 && idx < sections.length - 1 ? sections[idx + 1].id : null;
+    const navHtml = `
+      <div class="play-scene-nav" role="navigation" aria-label="${escapeHtml(t.playSceneNav || "Scene")}">
+        <button type="button" class="play-scene-nav__btn" data-play-prev ${prevId ? "" : "disabled"} data-jump-scene="${escapeHtml(
+          prevId || ""
+        )}">${escapeHtml(t.playPrevScene || "← Prev")}</button>
+        <button type="button" class="play-scene-nav__btn" data-play-next ${nextId ? "" : "disabled"} data-jump-scene="${escapeHtml(
+          nextId || ""
+        )}">${escapeHtml(t.playNextScene || "Next →")}</button>
+      </div>`;
 
     playView.innerHTML = `
       <section class="adventure-section play-scene${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
@@ -828,6 +845,7 @@
           <h1 class="section-title">${escapeHtml(data.title)}</h1>
           ${sectionActionsHtml(section)}
         </div>
+        ${navHtml}
         ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id) : ""}
         <div class="section-body" data-body="${section.id}">
           ${parseContent(data.content, getEntities())}
@@ -844,6 +862,13 @@
     bindDocumentEditControls();
     if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(playView);
     if (window.SceneUI) SceneUI.bind(playView);
+    playView.querySelectorAll("[data-jump-scene]").forEach((btn) => {
+      if (btn.disabled) return;
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.jumpScene;
+        if (target) jumpToSection(target);
+      });
+    });
     updateNavActive();
     if (draft && draft.sectionId === section.id) restoreEditorDraft(draft);
   }

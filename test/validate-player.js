@@ -79,6 +79,18 @@ if (!appSrc.includes("data-toggle-section") || !appSrc.includes("sheet-section")
 } else pass("player-app collapsible sections");
 if (!appSrc.includes("data-inspiration")) fail("player-app missing inspiration toggle");
 else pass("player-app inspiration toggle");
+if (!appSrc.includes("data-equip-inv") || !appSrc.includes("updateInventory")) {
+  fail("player-app missing inventory equip/qty wiring");
+} else pass("player-app inventory equip/qty");
+if (!appSrc.includes("displayRefLabel") || !appSrc.includes("class-resources")) {
+  fail("player-app missing ref pretty-print / class resources");
+} else pass("player-app ref labels + class resources");
+if (!appSrc.includes("data-library-more") || !appSrc.includes("softRefreshLive")) {
+  fail("player-app missing library load-more / soft refresh");
+} else pass("player-app library paging + soft refresh");
+if (!appSrc.includes("people-portrait") || !appSrc.includes("portraitUrl")) {
+  fail("player-app People missing portraits");
+} else pass("player-app People portraits");
 
 if (apiSrc.includes("theme/background") || apiSrc.includes("theme\\/background")) {
   fail("theme background must be static, not API under DM_DATA_ROOT");
@@ -205,13 +217,20 @@ const party = player.toPartyCardDto({
   type: "player",
   level: 2,
   portrait_url: null,
-  sheet: { race: "Human", class: "Fighter", backstory: "nope" }
+  sheet: { race: "Human", class: "Fighter", backstory: "nope" },
+  hp_current: 8,
+  hp_max: 14,
+  conditions: ["prone"]
 });
 const keys = Object.keys(party).sort().join(",");
-if (keys !== "campaignId,class,id,level,name,portraitUrl,race,type") fail(`party keys ${keys}`);
-else pass("party DTO only allowed fields");
+if (keys !== "campaignId,class,conditions,hpCurrent,hpMax,id,level,name,portraitUrl,race,type") {
+  fail(`party keys ${keys}`);
+} else pass("party DTO only allowed fields");
 if (party.backstory || party.inventory || party.state) fail("party leaked private");
 else pass("party DTO excludes private fields");
+if (party.hpCurrent !== 8 || party.hpMax !== 14 || !party.conditions.includes("prone")) {
+  fail("party shared vitals missing");
+} else pass("party DTO includes shared vitals");
 
 async function liveTests() {
   if (!process.env.DATABASE_URL) {

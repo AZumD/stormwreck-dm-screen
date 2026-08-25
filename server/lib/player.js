@@ -244,6 +244,7 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
 
 function toPartyCardDto(characterRow) {
   const sheet = characterRow.sheet && typeof characterRow.sheet === "object" ? characterRow.sheet : {};
+  const conditions = Array.isArray(characterRow.conditions) ? characterRow.conditions : [];
   return {
     id: characterRow.id,
     campaignId: characterRow.campaign_id,
@@ -252,8 +253,10 @@ function toPartyCardDto(characterRow) {
     level: characterRow.level,
     portraitUrl: characterRow.portrait_url || null,
     race: sheet.race != null ? String(sheet.race) : "",
-    class: sheet.class != null ? String(sheet.class) : ""
-    /* Future: campaign-configurable shared fields (hp, conditions, …) */
+    class: sheet.class != null ? String(sheet.class) : "",
+    hpCurrent: characterRow.hp_current != null ? Number(characterRow.hp_current) : null,
+    hpMax: characterRow.hp_max != null ? Number(characterRow.hp_max) : null,
+    conditions
   };
 }
 
@@ -786,10 +789,12 @@ async function listParty(req, campaignId) {
   requireDb();
   await authorize.requireCampaignMember(req, campaignId);
   const result = await db.query(
-    `SELECT id, campaign_id, name, type, level, portrait_url, sheet
-     FROM characters
-     WHERE campaign_id = $1 AND type = 'player'
-     ORDER BY name ASC`,
+    `SELECT c.id, c.campaign_id, c.name, c.type, c.level, c.portrait_url, c.sheet,
+            cs.hp_current, cs.hp_max, cs.conditions
+     FROM characters c
+     LEFT JOIN character_state cs ON cs.character_id = c.id
+     WHERE c.campaign_id = $1 AND c.type = 'player'
+     ORDER BY c.name ASC`,
     [campaignId]
   );
   return result.rows.map(toPartyCardDto);

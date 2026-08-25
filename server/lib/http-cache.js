@@ -47,6 +47,10 @@ function cacheControlForStatic(filePath) {
   if (lower.endsWith(".js") || lower.endsWith(".css") || lower.endsWith(".map") || lower.endsWith(".json")) {
     return "public, max-age=0, must-revalidate";
   }
+  const base = lower.split(/[/\\]/).pop() || "";
+  if (base === "favicon.png" || base === "favicon.ico" || base.startsWith("favicon-")) {
+    return "public, max-age=0, must-revalidate";
+  }
   /* Repo static images/fonts — longer TTL; ETag still allows 304. */
   return "public, max-age=86400";
 }

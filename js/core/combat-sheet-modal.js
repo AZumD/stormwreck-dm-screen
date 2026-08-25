@@ -125,6 +125,46 @@ window.CombatSheetModal = (function () {
       </div>`;
   }
 
+  function parseClassResources(raw) {
+    const src = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const out = {};
+    for (const [key, val] of Object.entries(src)) {
+      const name = String(key || "").trim();
+      if (!name) continue;
+      const cur =
+        val && typeof val === "object" ? Number(val.current ?? val.value ?? 0) : Number(val) || 0;
+      const max = val && typeof val === "object" ? Number(val.max ?? cur) : cur;
+      out[name] = {
+        current: Number.isFinite(cur) ? Math.max(0, cur) : 0,
+        max: Number.isFinite(max) ? Math.max(0, max) : 0
+      };
+    }
+    return out;
+  }
+
+  function classResourcesHtml(resources) {
+    const parsed = parseClassResources(resources);
+    const keys = Object.keys(parsed);
+    const rows = keys
+      .map((key, i) => {
+        const row = parsed[key];
+        return `
+        <label class="combat-sheet__slot-row combat-sheet__cr-row">
+          <span>${escapeHtml(key)}</span>
+          <input type="hidden" name="crKey${i}" value="${escapeHtml(key)}">
+          <input type="number" name="crCur${i}" min="0" step="1" value="${row.current}" title="Current" aria-label="${escapeHtml(key)} current">
+          <span class="combat-sheet__slash">/</span>
+          <input type="number" name="crMax${i}" min="0" step="1" value="${row.max}" title="Max" aria-label="${escapeHtml(key)} max">
+        </label>`;
+      })
+      .join("");
+    return `
+      <div class="combat-sheet__class-resources" data-class-resources>
+        <p class="combat-sheet__section-label">Class resources <span class="combat-sheet__hint">current / max</span></p>
+        <div class="combat-sheet__slot-grid">${rows || `<p class="combat-sheet__hint">None yet — add on the player sheet.</p>`}</div>
+      </div>`;
+  }
+
   function syncInitiativeTracker(key, name, initiative, kind) {
     const cid = campaignId();
     if (!cid || !window.CampaignMapState || !key) return;
@@ -231,6 +271,19 @@ window.CombatSheetModal = (function () {
         used: Number.isFinite(used) ? Math.max(0, used) : 0
       };
     }
+    const classResources = {};
+    for (let i = 0; i < 24; i++) {
+      const keyEl = bodyEl.querySelector(`[name=crKey${i}]`);
+      if (!keyEl) break;
+      const key = String(keyEl.value || "").trim();
+      if (!key) continue;
+      const cur = Number(bodyEl.querySelector(`[name=crCur${i}]`)?.value);
+      const max = Number(bodyEl.querySelector(`[name=crMax${i}]`)?.value);
+      classResources[key] = {
+        current: Number.isFinite(cur) ? Math.max(0, cur) : 0,
+        max: Number.isFinite(max) ? Math.max(0, max) : 0
+      };
+    }
     return {
       hpCurrent: hpCurrent === "" ? null : Number(hpCurrent),
       hpMax: hpMax === "" ? null : Number(hpMax),
@@ -240,7 +293,8 @@ window.CombatSheetModal = (function () {
       conditions,
       inspiration,
       deathSaves,
-      spellSlots
+      spellSlots,
+      classResources
     };
   }
 
@@ -324,7 +378,7 @@ window.CombatSheetModal = (function () {
         : "";
     const pcExtras =
       model.kind === "pc"
-        ? `${deathSavesHtml(model.deathSaves)}${spellSlotsHtml(model.spellSlots)}`
+        ? `${deathSavesHtml(model.deathSaves)}${spellSlotsHtml(model.spellSlots)}${classResourcesHtml(model.classResources)}`
         : "";
     const removeFromMapBtn =
       model.removeFromMap
@@ -477,6 +531,7 @@ window.CombatSheetModal = (function () {
       inspiration: Boolean(state.inspiration),
       deathSaves: parseDeathSaves(state.death_saves),
       spellSlots: parseSpellSlots(state.spell_slots),
+      classResources: parseClassResources(state.class_resources),
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "pc")
     });
     fillCombatReference({ entityId: opts.entityId, catalogueId });
@@ -569,6 +624,7 @@ window.CombatSheetModal = (function () {
       inspiration: Boolean(form.inspiration),
       death_saves: parseDeathSaves(form.deathSaves),
       spell_slots: parseSpellSlots(form.spellSlots),
+      class_resources: parseClassResources(form.classResources),
       extras
     });
     if (form.ac != null && Number.isFinite(form.ac)) {

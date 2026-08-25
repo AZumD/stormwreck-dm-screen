@@ -36,8 +36,41 @@ function createApiRoutes() {
     route("GET", /^\/api\/health$/, [], async (_req, res) => {
       const database = await db.health();
       const authRequired = auth.isAuthRequired();
+      const { dataRoot, pathExists } = require("../lib/atomic-fs");
+      const fsp = require("fs/promises");
+      const path = require("path");
+      let volume = { configured: Boolean(process.env.DM_DATA_ROOT), writable: null, initialized: null };
+      try {
+        const root = dataRoot();
+        volume.pathSet = Boolean(String(process.env.DM_DATA_ROOT || "").trim());
+        const probe = path.join(root, ".health-write-probe");
+        await fsp.writeFile(probe, String(Date.now()), "utf8");
+        await fsp.unlink(probe).catch(() => {});
+        volume.writable = true;
+        volume.initialized = await pathExists(path.join(root, ".initialized"));
+      } catch (err) {
+        volume.writable = false;
+        volume.error = "data root not writable";
+      }
+
+      let schema = null;
+      if (database.configured && database.ok) {
+        try {
+          const q = await db.query(
+            `SELECT COUNT(*)::int AS n FROM information_schema.tables
+             WHERE table_schema = 'public' AND table_name = 'sessions'`
+          );
+          schema = { sessionsTable: Number(q.rows[0]?.n || 0) > 0 };
+        } catch {
+          schema = { sessionsTable: false };
+        }
+      }
+
       /* Production / auth-required: Postgres must be reachable (Railway healthcheck). */
-      const healthy = !authRequired || (database.configured && database.ok);
+      let healthy = !authRequired || (database.configured && database.ok);
+      if (authRequired && volume.pathSet && volume.writable === false) healthy = false;
+      if (authRequired && schema && schema.sessionsTable === false) healthy = false;
+
       const safeDatabase = {
         configured: database.configured,
         ok: database.ok,
@@ -46,14 +79,21 @@ function createApiRoutes() {
       if (!healthy && database.error) {
         safeDatabase.error = "database unavailable";
       }
-      sendJson(res, healthy ? 200 : 503, {
+
+      const payload = {
         ok: healthy,
         mode: database.configured && database.ok ? "file+postgres" : "file-backed",
         catalogueTypes: CATALOGUE_TYPES,
         documentKinds: CAMPAIGN_DOC_KINDS,
         database: safeDatabase,
+        volume,
+        schema,
         authRequired
-      });
+      };
+      if (schema && schema.sessionsTable === false) {
+        payload.hint = "Run npm run db:migrate (sessions table missing)";
+      }
+      sendJson(res, healthy ? 200 : 503, payload);
     }),
 
     route("GET", /^\/api\/db\/health$/, [], async (_req, res) => {

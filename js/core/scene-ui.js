@@ -110,7 +110,10 @@ window.SceneUI = (function () {
             <button type="button" class="scene-chip__remove" data-clear-scene-location="${escapeHtml(sectionId)}" aria-label="${escapeHtml(t().clearSceneLocation || "Clear location")}">×</button>
           </span>
         </div>
-        <button type="button" class="scene-tray__set-location" data-set-scene-location="${escapeHtml(sectionId)}">${escapeHtml(t().changeSceneLocation || "Change location")}</button>
+        <div class="scene-tray__location-actions">
+          <button type="button" class="scene-tray__set-location" data-show-location-map="${escapeHtml(locId)}">${escapeHtml(t().showLocationOnMap || "Show on map")}</button>
+          <button type="button" class="scene-tray__set-location" data-set-scene-location="${escapeHtml(sectionId)}">${escapeHtml(t().changeSceneLocation || "Change location")}</button>
+        </div>
       </div>`;
   }
 
@@ -463,6 +466,15 @@ window.SceneUI = (function () {
 
     root.querySelectorAll("[data-set-scene-location]").forEach((btn) => {
       btn.addEventListener("click", () => openLocationPicker(btn.dataset.setSceneLocation));
+    });
+
+    root.querySelectorAll("[data-show-location-map]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const ok = window.MapPanel?.showLocationOnMap?.(btn.dataset.showLocationMap);
+        if (!ok) {
+          alert(t().showLocationOnMapMissing || "That location is not on this campaign’s map list yet.");
+        }
+      });
     });
 
     root.querySelectorAll("[data-clear-scene-location]").forEach((btn) => {

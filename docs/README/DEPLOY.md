@@ -56,16 +56,22 @@ Production **refuses to start** without `DATABASE_URL`, `SESSION_SECRET`, and `D
 - **Never** put `db:seed:characters` (or any seed / `data:init`) in automatic deploy or `npm start`
 - Re-running `db:seed:characters` **upserts `character_state` and can overwrite live HP/conditions**
 
-## Healthcheck
-Use `GET /api/health`. In production (auth required) it returns **503** if Postgres is unreachable. Response does not include secrets.
-
 ## Backups (manual)
 Treat the campaign system as **two parts** restored together when possible:
 
 1. **PostgreSQL** — Railway snapshot or `pg_dump`
 2. **`DM_DATA_ROOT` volume** — tar/archive of `/data` (catalogues, campaigns, assets, `.backup`)
 
-Automated backup infrastructure is out of scope for Phase 4B.
+Helper script (optional):
+
+```bash
+DM_DATA_ROOT=/data npm run backup:dual
+```
+
+See `docs/README/BACKUP-DUAL-STORE.md` for restore checklist. Automated backup infrastructure is out of scope for Phase 4B.
+
+## Healthcheck
+Use `GET /api/health`. In production (auth required) it returns **503** if Postgres is unreachable, the volume is not writable, or the `sessions` table is missing (migrate hint included). Response does not include secrets.
 
 ## Related docs
 - `docs/README/DATA-INIT.md` — volume seed script

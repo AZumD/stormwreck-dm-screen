@@ -41,6 +41,18 @@ if (!mixerUiSrc.includes("MusicMixerUi") || !mixerUiSrc.includes("getMusicPlayba
   fail("music-mixer-ui.js incomplete");
 } else pass("music-mixer-ui.js");
 
+if (!mixerUiSrc.includes("pauseAll") || !mixerUiSrc.includes("data-music-pause-all") || !mixerUiSrc.includes("is-playing")) {
+  fail("music-mixer-ui missing Pause all / playing badge");
+} else pass("music-mixer-ui Pause all + playing badge");
+
+if (!mixerUiSrc.includes("expiresAt") || !mixerUiSrc.includes("expiresIn")) {
+  fail("music-mixer-ui missing signed URL refresh");
+} else pass("music-mixer-ui signed URL refresh");
+
+if (!mixerUiSrc.includes("data-loop") || !mixerUiSrc.includes("slot.loop")) {
+  fail("music-mixer-ui missing loop toggle");
+} else pass("music-mixer-ui loop toggle");
+
 if (!mapPanel.includes('"music"') || !mapPanel.includes("MusicMixerUi")) {
   fail("map-panel.js missing music tab wiring");
 } else pass("map-panel music tab");

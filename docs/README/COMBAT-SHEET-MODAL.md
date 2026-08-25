@@ -10,7 +10,7 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 
 | Kind | Open from | Save target |
 |------|-----------|-------------|
-| **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `extras.combat_initiative`) + sheet `ac`; remirrors to PC catalogue |
+| **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `class_resources`, `extras.combat_initiative`) + sheet `ac`; remirrors to PC catalogue |
 | **NPC** | Party / map pin | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`, `combatInitiative`); NPC memory enricher still attaches |
 | **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` (incl. `initiative`) — never writes the monster catalogue |
 
@@ -22,7 +22,7 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 ## UI
 - Name, type badge, portrait
 - HP current / max with ±1, AC, initiative, conditions (freeform)
-- PC: temp HP, inspiration, death saves (3/3), spell slots L1–L9 (max / used)
+- PC: temp HP, inspiration, death saves (3/3), spell slots L1–L9 (max / used), class resources (current / max)
 - **Combat reference** — resolved catalogue stat block (speed, saves, actions, spells, equipment, etc.; HP/AC omitted because they are editable above)
 - Autosave on blur / short debounce; Save button; last-saved hint
 - Monster token sheet: **Remove from map** button (also right-click the dot)

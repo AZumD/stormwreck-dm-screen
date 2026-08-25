@@ -286,6 +286,50 @@ window.MapPanel = (function () {
       applyMapTransform();
     }
 
+    document.getElementById("map-reset-view-btn")?.addEventListener("click", () => {
+      resetZoom();
+    });
+
+    function selectMapByLocationId(locationId) {
+      if (!locationId) return false;
+      maps = getEffectiveMaps(campaignId);
+      const entry = findLocationEntry(locationId);
+      const candidates = [
+        locationId,
+        entry?.id,
+        entry ? locationLinkId(entry) : null,
+        entry?.id?.startsWith("sw-") ? entry.id.slice(3) : null
+      ].filter(Boolean);
+      let matchId = null;
+      for (const c of candidates) {
+        if (maps[c]) {
+          matchId = c;
+          break;
+        }
+        const hit = Object.values(maps).find(
+          (m) => m.id === c || m.locationId === c || locationLinkId({ id: m.locationId || m.id }) === c
+        );
+        if (hit) {
+          matchId = hit.id;
+          break;
+        }
+      }
+      if (!matchId) return false;
+      activeMapId = matchId;
+      if (mapSelect) mapSelect.value = matchId;
+      if (window.CampaignMapState) CampaignMapState.patch(campaignId, { activeMap: activeMapId });
+      resetZoom();
+      renderMap();
+      syncExpandedTitle();
+      return true;
+    }
+
+    function showLocationOnMap(locationId) {
+      if (window.LayoutPanels?.setMapCollapsed) LayoutPanels.setMapCollapsed(false);
+      setActiveTab("map");
+      return selectMapByLocationId(locationId);
+    }
+
     function setZoomAt(nextZoom, clientX, clientY) {
       const rect = mapViewport.getBoundingClientRect();
       const mx = clientX != null ? clientX - rect.left : rect.width / 2;
@@ -1054,7 +1098,11 @@ window.MapPanel = (function () {
         }
       },
       refreshInitiative: renderInitiativeList,
-      onLayoutChange
+      onLayoutChange,
+      setActiveTab,
+      selectMapByLocationId,
+      showLocationOnMap,
+      resetZoom
     };
     renderInitiativeList();
   }
@@ -1127,6 +1175,10 @@ window.MapPanel = (function () {
     onLayoutChange,
     resolveMapImage,
     getEffectiveMaps,
-    findLocationEntry
+    findLocationEntry,
+    setActiveTab: (tab) => activeInstance?.setActiveTab?.(tab),
+    selectMapByLocationId: (id) => activeInstance?.selectMapByLocationId?.(id),
+    showLocationOnMap: (id) => activeInstance?.showLocationOnMap?.(id),
+    resetZoom: () => activeInstance?.resetZoom?.()
   };
 })();

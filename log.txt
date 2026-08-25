@@ -88,3 +88,4 @@
 [2026-08-25] Music mixer: drag only via handle so volume slider works. See music-mixer-ui.js
 [2026-08-25] Music mixer reorder uses pointer events on handle only (no HTML5 DnD); cache-bust mixer assets.
 
+[2026-08-25] Polish queue: mixer pause/loop/badge + URL refresh; map Fit/show-on-map + play prev/next; player inventory/class resources/refs/people/load-more/soft refresh; party vitals; reveal notes; combat class resources; health/shutdown/401/backup. See PLAYER.md, BACKUP-DUAL-STORE.md

@@ -47,9 +47,16 @@ window.LocalApiClient = (function () {
       data = { ok: false, error: text || "Invalid JSON response" };
     }
     if (!res.ok || data?.ok === false) {
-      const err = new Error(data?.error || `HTTP ${res.status}`);
+      const err = new Error(
+        res.status === 401
+          ? data?.error || "Session expired — sign in again"
+          : data?.error || `HTTP ${res.status}`
+      );
       err.status = res.status;
       err.data = data;
+      if (res.status === 401 && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("sw:auth-required", { detail: { path, method: methodUpper } }));
+      }
       throw err;
     }
     return data;

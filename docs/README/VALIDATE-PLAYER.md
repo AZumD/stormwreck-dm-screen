@@ -33,3 +33,4 @@ Included in `npm test`.
 - Phase 5B: sheet PATCH whitelist; inventory CRUD; portrait PUT; Edit sheet dialog; `hp_max` mutable
 - Phase 5C: Library tab; player catalogue list/search; attach APIs; monster/location allowed; npc/pc blocked
 - Phase 5D: `campaign_revealed_npcs`; DM reveal/unreveal; player People list/detail; outsider denied; unrevealed 404
+- Polish: inventory equip/qty; class resources UI; `@ref` pretty-print; library load-more; soft refresh; People portraits; party shared vitals

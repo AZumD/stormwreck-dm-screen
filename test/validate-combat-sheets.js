@@ -107,6 +107,10 @@ if (!docs.includes("CombatSheetModal") || !docs.includes("buildMonsterToken")) {
   fail("COMBAT-SHEET-MODAL.md incomplete");
 } else pass("COMBAT-SHEET-MODAL.md");
 
+if (!modal.includes("classResourcesHtml") || !modal.includes("class_resources")) {
+  fail("CombatSheetModal missing class resources");
+} else pass("CombatSheetModal class resources");
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

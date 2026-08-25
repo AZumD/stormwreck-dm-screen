@@ -146,6 +146,12 @@ if (cacheControlForAssetUrl("/api/assets/portraits/npc/x").includes("immutable")
     fail(`configs.js Cache-Control should revalidate, got ${jsCc}`);
   } else pass("configs.js must-revalidate");
 
+  const fav = await get("/favicon.png");
+  const favCc = String(fav.headers["cache-control"] || "");
+  if (fav.status !== 200 || !favCc.includes("must-revalidate")) {
+    fail(`favicon Cache-Control should revalidate, got ${favCc}`);
+  } else pass("favicon must-revalidate");
+
   const css304 = await get("/css/style.css", { "If-None-Match": css.headers.etag });
   if (css304.status !== 304) fail(`static If-None-Match expected 304 got ${css304.status}`);
   else pass("static 304 Not Modified");
