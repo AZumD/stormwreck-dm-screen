@@ -37,7 +37,7 @@ if (!mixerStateSrc.includes("CampaignMusicMixer") || !mixerStateSrc.includes("re
   fail("campaign-music-mixer.js incomplete");
 } else pass("campaign-music-mixer.js");
 
-if (!mixerUiSrc.includes("MusicMixerUi") || !mixerUiSrc.includes("getMusicPlayback") || !mixerUiSrc.includes("draggable")) {
+if (!mixerUiSrc.includes("MusicMixerUi") || !mixerUiSrc.includes("getMusicPlayback") || !mixerUiSrc.includes("music-mixer-track__handle")) {
   fail("music-mixer-ui.js incomplete");
 } else pass("music-mixer-ui.js");
 

@@ -168,6 +168,7 @@ window.I18N = {
   musicPause: "Pause",
   musicVolume: "Volume",
   musicRemove: "Remove track",
+  musicDragHandle: "Drag to reorder",
   musicPlayFailed: "Could not play this track.",
   mapFilters: "Show pins",
   atThisScene: "At this scene",

@@ -174,13 +174,16 @@ window.MusicMixerUi = (function () {
   }
 
   function bindDrag(row) {
-    row.addEventListener("dragstart", (e) => {
+    const handle = row.querySelector(".music-mixer-track__handle");
+    if (!handle) return;
+
+    handle.addEventListener("dragstart", (e) => {
       dragSlotId = row.dataset.slotId;
       row.classList.add("is-dragging");
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", dragSlotId);
     });
-    row.addEventListener("dragend", () => {
+    handle.addEventListener("dragend", () => {
       row.classList.remove("is-dragging");
       dragSlotId = null;
       listEl?.querySelectorAll(".music-mixer-track.is-drop-target").forEach((el) => {
@@ -240,7 +243,11 @@ window.MusicMixerUi = (function () {
             const playing = isPlaying(slot.id);
             const volPct = Math.round(clampVolume(slot.volume) * 100);
             return `
-            <div class="music-mixer-track" draggable="true" data-slot-id="${escapeHtml(slot.id)}">
+            <div class="music-mixer-track" data-slot-id="${escapeHtml(slot.id)}">
+              <button type="button" class="music-mixer-track__handle" draggable="true"
+                aria-label="${escapeHtml(t().musicDragHandle || "Drag to reorder")}" title="${escapeHtml(
+                  t().musicDragHandle || "Drag to reorder"
+                )}">⋮⋮</button>
               <button type="button" class="music-mixer-track__play" data-play="${escapeHtml(slot.id)}"
                 aria-label="${escapeHtml(playing ? t().musicPause || "Pause" : t().musicPlay || "Play")}">
                 ${playing ? "❚❚" : "▶"}

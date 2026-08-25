@@ -4131,14 +4131,14 @@ body.map-mode-combat .map-stage {
 
 .music-mixer-track {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.45rem;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 0.4rem;
   align-items: center;
   padding: 0.45rem 0.5rem;
   background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  cursor: grab;
+  cursor: default;
 }
 
 .music-mixer-track.is-dragging {
@@ -4147,6 +4147,32 @@ body.map-mode-combat .map-stage {
 
 .music-mixer-track.is-drop-target {
   border-color: var(--accent);
+}
+
+.music-mixer-track__handle {
+  appearance: none;
+  width: 1.35rem;
+  height: 2.1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  letter-spacing: -0.12em;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.music-mixer-track__handle:hover,
+.music-mixer-track__handle:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.music-mixer-track__handle:active {
+  cursor: grabbing;
 }
 
 .music-mixer-track__play,
