@@ -30,6 +30,7 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library. Loca
 | `player/` + `js/player-app.js` | Mobile-first player companion UI |
 | `server/lib/db.js` | Optional Postgres pool |
 | `server/lib/http-util.js` | Body parsing / JSON responses |
+| `server/lib/http-cache.js` | Streamed file responses + ETag / 304 / Cache-Control |
 | `server/lib/static-guard.js` | Block static access to `/data`, `/server`, `/.git`, … |
 | `server/lib/atomic-fs.js` | Atomic JSON/binary writes + `.bak`; `DM_DATA_ROOT` |
 | `server/lib/ids.js` | Safe id / type validation |

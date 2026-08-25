@@ -1431,5 +1431,114 @@ window.CatalogueConfigs = {
       notes: "",
       tags: []
     }
+  },
+
+  music: {
+    type: "music",
+    title: "Music Catalogue",
+    subtitle: "Long-form ambience, creature atmosphere, and battle music for Pocket Bard.",
+    newLabel: "+ Upload track",
+    searchPlaceholder: "Search tracks…",
+    listIcon: "♪",
+    searchFields: ["title", "name", "kind", "category", "tags", "notes", "audio.originalFilename"],
+    facets: [
+      {
+        id: "kind",
+        label: "Kind",
+        options: [
+          { value: "ambience", label: "Ambience" },
+          { value: "creature", label: "Creature" },
+          { value: "music", label: "Music" }
+        ]
+      }
+    ],
+    groupBy: "kind",
+    groupOrder: ["ambience", "creature", "music"],
+    groupLabels: {
+      ambience: "Ambience",
+      creature: "Creature",
+      music: "Music",
+      "": "Uncategorized"
+    },
+    listMeta: ["category", "tags", "_duration", "_loop"],
+    sections: [
+      {
+        title: "Track",
+        fields: [
+          { id: "title", label: "Title", type: "text", required: true, grid: "full" },
+          {
+            id: "audio",
+            label: "Audio file",
+            type: "audio",
+            grid: "full",
+            uploadLabel: "Choose MP3",
+            replaceLabel: "Replace MP3",
+            hint: "MP3 only for now. Stored outside the repo (local data volume or S3 bucket)."
+          },
+          {
+            id: "kind",
+            label: "Kind",
+            type: "select",
+            grid: "half",
+            options: [
+              { value: "ambience", label: "Ambience" },
+              { value: "creature", label: "Creature" },
+              { value: "music", label: "Music" }
+            ]
+          },
+          {
+            id: "category",
+            label: "Category",
+            type: "text",
+            grid: "half",
+            placeholder: "coastal, combat, undead…"
+          },
+          {
+            id: "tags",
+            label: "Tags",
+            type: "list",
+            grid: "full",
+            placeholder: "dark, cave, calm, loop, stormwreck…"
+          },
+          {
+            id: "defaultVolume",
+            label: "Default volume (0–1)",
+            type: "number",
+            grid: "half",
+            placeholder: "0.7"
+          },
+          {
+            id: "loopByDefault",
+            label: "Loop by default",
+            type: "checkbox",
+            grid: "half"
+          }
+        ]
+      },
+      {
+        title: "Notes",
+        fields: [
+          {
+            id: "notes",
+            label: "Description / notes",
+            type: "textarea",
+            rows: 4,
+            grid: "full",
+            placeholder: "When to use this track, mood, source…"
+          }
+        ]
+      }
+    ],
+    defaults: {
+      title: "Untitled track",
+      name: "Untitled track",
+      kind: "ambience",
+      category: "",
+      tags: [],
+      notes: "",
+      defaultVolume: 0.7,
+      loopByDefault: true,
+      audio: null
+    }
   }
 };

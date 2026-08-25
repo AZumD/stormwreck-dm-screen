@@ -54,3 +54,8 @@ data/catalogues/pc/pc-p3b-a-*.json
 assets/maps/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*.jpg
 assets/maps/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*.png
 assets/maps/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*.webp
+
+# Music catalogue audio binaries (metadata JSON stays tracked if seeded; never commit MP3s)
+data/assets/audio/
+data/catalogues/music/*.json
+!data/catalogues/music/.gitkeep

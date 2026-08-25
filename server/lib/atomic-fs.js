@@ -149,6 +149,8 @@ async function ensureDataLayout() {
   await ensureDir(path.join(root, "campaigns"));
   await ensureDir(path.join(root, "assets", "portraits"));
   await ensureDir(path.join(root, "assets", "maps"));
+  await ensureDir(path.join(root, "assets", "audio"));
+  await ensureDir(path.join(root, "catalogues", "music"));
   await ensureDir(backupRoot());
   const indexPath = path.join(root, "campaigns", "index.json");
   if (!(await pathExists(indexPath))) {

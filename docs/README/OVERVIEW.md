@@ -97,6 +97,8 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
+| `js/core/catalogue/music-ui.js` | Music upload dialog + single-track preview |
+| `server/lib/audio-storage.js` + `music-catalogue.js` | Music MP3 storage abstraction + catalogue helpers |
 | `js/campaign-app.js` | Campaign screen controller |
 | `db/` + `server/lib/db.js` + `server/lib/characters.js` | Optional Postgres foundation + Phase 2 characters |
 | `server/lib/auth.js` + `authorize.js` | Phase 3A sessions + membership/DM authorization |
@@ -108,6 +110,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 - Items use controlled `category` + freeform `itemType` / `tags`
 - Race catalogue holds species + subspecies (`@race:`); class catalogue holds class + subclass (`@class:`)
 - Locations may nest via `parentLocationRef`; monsters carry `source` / `tags`
+- **Music** catalogue (`music-katalog`) — DM-only track metadata; MP3s under `assets/audio/` or S3 (`docs/README/MUSIC.md`)
 
 ## Tests
 ```bash

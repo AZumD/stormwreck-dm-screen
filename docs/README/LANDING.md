@@ -34,4 +34,4 @@ Uses `/api/health` → `authRequired` plus `/api/auth/me`.
 - `#create-campaign-dialog` / `#create-campaign-form`
 
 ## Related
-`CampaignRegistry`, `css/landing.css`, `campaigns/sandbox/`, `docs/README/HOME.md`, `docs/README/AUTH.md`
+`CampaignRegistry`, `css/landing.css`, `campaigns/sandbox/`, `docs/README/HOME.md`, `docs/README/AUTH.md`, `docs/README/MUSIC.md` (Media → Music Catalogue)

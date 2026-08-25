@@ -65,15 +65,17 @@ window.CatalogueStore = (function () {
       const missing = list.filter((t) => !cache.has(t));
       if (!missing.length) return;
       if (useApi()) {
-        for (const type of missing) {
-          try {
-            const entries = await LocalApiClient.listCatalogue(type);
-            setEntries(type, Array.isArray(entries) ? entries.slice() : []);
-          } catch (err) {
-            console.warn("Catalogue bootstrap failed for", type, err);
-            setEntries(type, loadAllLocal(type));
-          }
-        }
+        await Promise.all(
+          missing.map(async (type) => {
+            try {
+              const entries = await LocalApiClient.listCatalogue(type);
+              setEntries(type, Array.isArray(entries) ? entries.slice() : []);
+            } catch (err) {
+              console.warn("Catalogue bootstrap failed for", type, err);
+              setEntries(type, loadAllLocal(type));
+            }
+          })
+        );
       } else {
         missing.forEach((type) => setEntries(type, loadAllLocal(type)));
       }
@@ -83,15 +85,17 @@ window.CatalogueStore = (function () {
     bootstrapPromise = (async () => {
       if (window.LocalApiClient) await LocalApiClient.ready();
       if (useApi()) {
-        for (const type of list) {
-          try {
-            const entries = await LocalApiClient.listCatalogue(type);
-            setEntries(type, Array.isArray(entries) ? entries.slice() : []);
-          } catch (err) {
-            console.warn("Catalogue bootstrap failed for", type, err);
-            setEntries(type, loadAllLocal(type));
-          }
-        }
+        await Promise.all(
+          list.map(async (type) => {
+            try {
+              const entries = await LocalApiClient.listCatalogue(type);
+              setEntries(type, Array.isArray(entries) ? entries.slice() : []);
+            } catch (err) {
+              console.warn("Catalogue bootstrap failed for", type, err);
+              setEntries(type, loadAllLocal(type));
+            }
+          })
+        );
       } else {
         list.forEach((type) => setEntries(type, loadAllLocal(type)));
       }

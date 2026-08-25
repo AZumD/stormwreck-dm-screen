@@ -13,7 +13,8 @@ const CATALOGUE_TYPES = Object.freeze([
   "spell",
   "item",
   "monster",
-  "location"
+  "location",
+  "music"
 ]);
 
 const CAMPAIGN_DOC_KINDS = Object.freeze([

@@ -40,21 +40,28 @@ async function list(type) {
   const dir = typeDir(type);
   await ensureDir(dir);
   const files = await listJsonFiles(dir);
-  const entries = [];
-  for (const file of files) {
-    const id = file.replace(/\.json$/i, "");
-    try {
-      assertSafeId(id, "entry id");
-    } catch {
-      continue;
-    }
-    const data = await readJson(path.join(dir, file), null);
-    if (!data || typeof data !== "object") continue;
-    const entry = { ...data, id: data.id || id };
-    entries.push(entry);
-  }
+  const settled = await Promise.all(
+    files.map(async (file) => {
+      const id = file.replace(/\.json$/i, "");
+      try {
+        assertSafeId(id, "entry id");
+      } catch {
+        return null;
+      }
+      try {
+        const data = await readJson(path.join(dir, file), null);
+        if (!data || typeof data !== "object") return null;
+        return { ...data, id: data.id || id };
+      } catch {
+        return null;
+      }
+    })
+  );
+  const entries = settled.filter(Boolean);
   entries.sort((a, b) =>
-    String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" })
+    String(a.title || a.name || "").localeCompare(String(b.title || b.name || ""), undefined, {
+      sensitivity: "base"
+    })
   );
   return entries;
 }

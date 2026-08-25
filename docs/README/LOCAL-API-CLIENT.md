@@ -9,6 +9,7 @@ Browser HTTP client for the local file-backed API. Domain modules call this inst
 ## Behavior
 - Probes `GET /api/health`
 - Catalogue CRUD, campaign registry, campaign documents, assets
+- Music audio: `putMusicAudio`, `getMusicPlayback` (see `docs/README/MUSIC.md`)
 - Campaign maps / UVTT import helpers
 - Revealed NPCs: `listRevealedNpcs`, `revealNpc`, `unrevealNpc` (Phase 5D)
 - Campaign characters (DM): `listCharacters`, `getCharacter`, `patchCharacter`, `getCharacterState`, `putCharacterState`, `mirrorCharacterToCatalogue`

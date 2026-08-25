@@ -23,7 +23,7 @@ const PLAYER_CATALOGUE_TYPES = new Set([
   "location"
 ]);
 
-const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc"]);
+const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc", "music"]);
 
 const LIBRARY_ATTACH_ACTIONS = new Set([
   "inventory",

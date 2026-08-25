@@ -23,6 +23,18 @@ window.CatalogueApp = (function () {
     return m >= 0 ? `+${m}` : String(m);
   }
 
+  function entryLabel(entry) {
+    return String(entry?.title || entry?.name || "Untitled").trim() || "Untitled";
+  }
+
+  function formatDuration(sec) {
+    const n = Number(sec);
+    if (!Number.isFinite(n) || n < 0) return "";
+    const m = Math.floor(n / 60);
+    const s = Math.floor(n % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
   function listSummary(entry, config) {
     if (Array.isArray(config.listMeta) && config.listMeta.length) {
       const bits = config.listMeta
@@ -36,6 +48,12 @@ window.CatalogueApp = (function () {
             const labels = config.entryKindLabels || config.groupLabels || {};
             const raw = entry.entryKind || "";
             return labels[raw] || raw;
+          }
+          if (key === "_duration") {
+            return formatDuration(entry.audio?.durationSec);
+          }
+          if (key === "_loop") {
+            return entry.loopByDefault ? "loop" : "";
           }
           const v = entry[key];
           if (Array.isArray(v)) return v.filter(Boolean).slice(0, 2).join(", ");
@@ -125,14 +143,20 @@ window.CatalogueApp = (function () {
       ? config.searchFields
       : null;
     const values = [];
+    function pushValue(v) {
+      if (Array.isArray(v)) values.push(...v.filter(Boolean).map(String));
+      else if (v != null && String(v).trim()) values.push(String(v));
+    }
+    function readPath(obj, path) {
+      return String(path)
+        .split(".")
+        .reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+    }
     if (fields) {
-      fields.forEach((key) => {
-        const v = entry[key];
-        if (Array.isArray(v)) values.push(...v.filter(Boolean));
-        else if (v != null && String(v).trim()) values.push(String(v));
-      });
+      fields.forEach((key) => pushValue(key.includes(".") ? readPath(entry, key) : entry[key]));
     } else {
       [
+        entry.title,
         entry.name,
         entry.role,
         entry.summary,
@@ -156,11 +180,13 @@ window.CatalogueApp = (function () {
         entry.parentLocationRef,
         entry.locationType,
         entry.rarity,
+        entry.kind,
+        entry.notes,
         ...(Array.isArray(entry.tags) ? entry.tags : []),
         ...(Array.isArray(entry.classRefs) ? entry.classRefs : [])
       ]
         .filter(Boolean)
-        .forEach((v) => values.push(String(v)));
+        .forEach((v) => pushValue(v));
     }
     return values.join(" ").toLowerCase();
   }
@@ -278,14 +304,43 @@ window.CatalogueApp = (function () {
     if (field.type === "list") return !Array.isArray(value) || !value.filter(Boolean).length;
     if (field.type === "image") return !value;
     if (field.type === "uvtt") return !value || typeof value !== "object";
+    if (field.type === "audio") return !value || typeof value !== "object" || !value.key;
     return value === undefined || value === null || String(value).trim() === "";
   }
 
-  function renderWikiFieldValue(field, value) {
+  function renderAudioPreviewControls(entry) {
+    const hasAudio = entry?.audio?.key;
+    if (!hasAudio) {
+      return `<p class="cat-audio__empty">No MP3 uploaded yet.</p>`;
+    }
+    const dur = formatDuration(entry.audio.durationSec);
+    const sizeKb = entry.audio.sizeBytes ? `${Math.round(entry.audio.sizeBytes / 1024)} KB` : "";
+    return `
+      <div class="cat-audio__meta">
+        <span>${escapeHtml(entry.audio.originalFilename || "track.mp3")}</span>
+        ${dur ? `<span>${escapeHtml(dur)}</span>` : ""}
+        ${sizeKb ? `<span>${escapeHtml(sizeKb)}</span>` : ""}
+        ${entry.loopByDefault ? `<span class="cat-audio__badge">loop</span>` : ""}
+      </div>
+      <div class="cat-audio__preview" data-audio-preview="${escapeHtml(entry.id)}">
+        <button type="button" class="cat-btn" data-audio-play="${escapeHtml(entry.id)}">Play</button>
+        <button type="button" class="cat-btn cat-btn--ghost" data-audio-pause="${escapeHtml(entry.id)}">Pause</button>
+        <button type="button" class="cat-btn cat-btn--ghost" data-audio-stop="${escapeHtml(entry.id)}">Stop</button>
+      </div>`;
+  }
+
+  function renderWikiFieldValue(field, value, entry) {
+    if (field.type === "audio") {
+      return `<div class="cat-audio">${renderAudioPreviewControls({
+        id: entry?.id,
+        audio: value,
+        loopByDefault: entry?.loopByDefault
+      })}</div>`;
+    }
     if (field.type === "image") {
       const isPortrait = field.kind === "portrait" || field.id === "portrait";
       const cls = isPortrait ? "cat-wiki__media cat-wiki__media--portrait" : "cat-wiki__media cat-wiki__media--map";
-      return `<img class="${cls}" src="${value}" alt="${escapeHtml(field.label || "")}">`;
+      return `<img class="${cls}" src="${value}" alt="${escapeHtml(field.label || "")}" loading="lazy">`;
     }
     if (field.type === "list") {
       const items = (Array.isArray(value) ? value : []).filter(Boolean);
@@ -326,7 +381,7 @@ window.CatalogueApp = (function () {
   }
 
   function renderWikiView(entry, config) {
-    const skipIds = new Set(["name"]);
+    const skipIds = new Set(["name", "title"]);
     const heroSrc = entry.portrait || entry.mapImage || "";
     if (entry.portrait) skipIds.add("portrait");
     else if (entry.mapImage) skipIds.add("mapImage");
@@ -340,6 +395,12 @@ window.CatalogueApp = (function () {
             src="${heroSrc}" alt="">
         </div>`
       : "";
+
+    const audioHero =
+      config.type === "music"
+        ? `<div class="cat-wiki__audio-hero cat-audio">${renderAudioPreviewControls(entry)}</div>`
+        : "";
+    if (config.type === "music") skipIds.add("audio");
 
     const sections = config.sections
       .filter((section) => isSectionVisible(section, entry))
@@ -359,7 +420,7 @@ window.CatalogueApp = (function () {
                   (f) => `
                 <div class="cat-wiki__field cat-wiki__field--${f.grid || "full"}">
                   <dt>${escapeHtml(f.label)}</dt>
-                  <dd>${renderWikiFieldValue(f, entry[f.id])}</dd>
+                  <dd>${renderWikiFieldValue(f, entry[f.id], entry)}</dd>
                 </div>`
                 )
                 .join("")}
@@ -384,8 +445,9 @@ window.CatalogueApp = (function () {
             ${hero}
             <div class="cat-wiki__intro">
               ${meta ? `<p class="cat-wiki__kicker">${escapeHtml(meta)}</p>` : ""}
-              <h2 class="cat-wiki__title">${escapeHtml(entry.name || "Untitled")}</h2>
+              <h2 class="cat-wiki__title">${escapeHtml(entryLabel(entry))}</h2>
               ${lede}
+              ${audioHero}
             </div>
           </div>
           <div class="cat-wiki__actions">
@@ -413,6 +475,18 @@ window.CatalogueApp = (function () {
         }
         if (field.type === "uvtt") {
           const raw = root.querySelector(`[data-uvtt-value="${field.id}"]`)?.value || "";
+          if (!raw) entry[field.id] = null;
+          else {
+            try {
+              entry[field.id] = JSON.parse(raw);
+            } catch {
+              entry[field.id] = null;
+            }
+          }
+          return;
+        }
+        if (field.type === "audio") {
+          const raw = root.querySelector(`[data-audio-value="${field.id}"]`)?.value || "";
           if (!raw) entry[field.id] = null;
           else {
             try {
@@ -585,6 +659,24 @@ window.CatalogueApp = (function () {
       </div>`;
   }
 
+  function renderAudioField(field, value, entry) {
+    const audio = value && typeof value === "object" ? value : null;
+    const uploadLabel = audio ? field.replaceLabel || "Replace MP3" : field.uploadLabel || "Choose MP3";
+    const hint = field.hint || "MP3 only. Stored under the data volume or S3 — never in catalogue JSON.";
+    return `
+      <div class="cat-audio-field" data-audio-field="${field.id}">
+        <input type="hidden" data-audio-value="${field.id}" value="${escapeHtml(audio ? JSON.stringify(audio) : "")}">
+        <div class="cat-audio">${renderAudioPreviewControls({ id: entry?.id, audio, loopByDefault: entry?.loopByDefault })}</div>
+        <div class="cat-image-actions">
+          <label class="cat-upload-btn">
+            ${escapeHtml(uploadLabel)}
+            <input type="file" accept="audio/mpeg,.mp3,audio/mp3" data-audio-input="${field.id}" hidden>
+          </label>
+        </div>
+        <p class="cat-field-hint">${escapeHtml(hint)}</p>
+      </div>`;
+  }
+
   function renderField(field, entry) {
     const value = entry[field.id];
     const gridClass = `cat-field cat-field--${field.grid || "full"}`;
@@ -599,6 +691,10 @@ window.CatalogueApp = (function () {
 
     if (field.type === "uvtt") {
       return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${renderUvttField(field, value)}</div>`;
+    }
+
+    if (field.type === "audio") {
+      return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${renderAudioField(field, value, entry)}</div>`;
     }
 
     if (field.type === "checkbox") {
@@ -727,15 +823,15 @@ window.CatalogueApp = (function () {
 
   function renderEntryButton(e, config, activeId) {
     const thumb = e.portrait
-      ? `<img class="cat-list-item__thumb" src="${e.portrait}" alt="">`
+      ? `<img class="cat-list-item__thumb" src="${e.portrait}" alt="" loading="lazy">`
       : e.mapImage
-        ? `<img class="cat-list-item__thumb cat-list-item__thumb--map" src="${e.mapImage}" alt="">`
+        ? `<img class="cat-list-item__thumb cat-list-item__thumb--map" src="${e.mapImage}" alt="" loading="lazy">`
         : `<span class="cat-list-item__icon" aria-hidden="true">${config.listIcon}</span>`;
     return `
         <button type="button" class="cat-list-item${e.id === activeId ? " is-active" : ""}" data-id="${escapeHtml(e.id)}">
           ${thumb}
           <span class="cat-list-item__body">
-            <span class="cat-list-item__name">${escapeHtml(e.name || "Untitled")}</span>
+            <span class="cat-list-item__name">${escapeHtml(entryLabel(e))}</span>
             <span class="cat-list-item__meta">${escapeHtml(listSummary(e, config))}</span>
           </span>
         </button>`;
@@ -1036,6 +1132,7 @@ window.CatalogueApp = (function () {
         imageCache = {};
         editorEl.innerHTML = renderWikiView(entry, config);
         bindWikiEvents(editorEl.querySelector(".cat-wiki"));
+        if (window.MusicCatalogueUi) MusicCatalogueUi.bindPreviewClicks(editorEl);
       }
       renderList();
     }
@@ -1059,10 +1156,24 @@ window.CatalogueApp = (function () {
       });
 
       if (!data.name?.trim()) data.name = config.defaults.name;
+      if (data.title != null) {
+        data.title = String(data.title).trim() || config.defaults.title || config.defaults.name;
+        data.name = data.title;
+      } else if (config.type === "music" && data.name) {
+        data.title = data.name;
+      }
 
       const existingRaw = CatalogueStore.get(type, data.id) || {};
       const existing = window.CatalogueImages ? CatalogueImages.hydrate(type, existingRaw) : existingRaw;
       const merged = { ...existing, ...data };
+      /* Preserve audio object unless explicitly cleared */
+      config.sections.forEach((section) => {
+        section.fields.forEach((field) => {
+          if (field.type === "audio" && !merged[field.id] && existing[field.id]) {
+            merged[field.id] = existing[field.id];
+          }
+        });
+      });
       config.sections.forEach((section) => {
         section.fields.forEach((field) => {
           if (field.type !== "image") return;
@@ -1110,8 +1221,44 @@ window.CatalogueApp = (function () {
         saveTimer = setTimeout(() => saveCurrent(form), 400);
       };
 
+      if (window.MusicCatalogueUi) MusicCatalogueUi.bindPreviewClicks(form);
+
+      form.querySelectorAll("[data-audio-input]").forEach((input) => {
+        input.addEventListener("change", async () => {
+          const file = input.files?.[0];
+          input.value = "";
+          if (!file) return;
+          const mimeOk =
+            file.type === "audio/mpeg" || file.type === "audio/mp3" || /\.mp3$/i.test(file.name);
+          if (!mimeOk) {
+            alert("Only MP3 files are supported.");
+            return;
+          }
+          try {
+            setStatus("Uploading audio…");
+            const durationSec = window.MusicCatalogueUi
+              ? await MusicCatalogueUi.probeDuration(file)
+              : null;
+            const buffer = await file.arrayBuffer();
+            const result = await LocalApiClient.putMusicAudio(form.dataset.entryId, buffer, {
+              contentType: "audio/mpeg",
+              originalFilename: file.name,
+              durationSec
+            });
+            if (result?.entry) {
+              await CatalogueStore.upsert(type, result.entry);
+              renderEditor(form.dataset.entryId, { mode: "edit" });
+              setStatus("Audio saved");
+            }
+          } catch (err) {
+            setStatus("Audio upload failed");
+            alert(err.message || "Could not upload audio.");
+          }
+        });
+      });
+
       form.addEventListener("input", (e) => {
-        if (e.target.matches("[data-image-input]") || e.target.matches("[data-uvtt-input]")) return;
+        if (e.target.matches("[data-image-input]") || e.target.matches("[data-uvtt-input]") || e.target.matches("[data-audio-input]")) return;
         if (e.target.matches('[name="str"],[name="dex"],[name="con"],[name="int"],[name="wis"],[name="cha"]')) {
           const modEl = form.querySelector(`[data-mod-for="${e.target.name}"]`);
           if (modEl) modEl.textContent = mod(e.target.value) ? `(${mod(e.target.value)})` : "";
@@ -1496,6 +1643,15 @@ window.CatalogueApp = (function () {
 
     newBtn?.addEventListener("click", async () => {
       clearTimeout(saveTimer);
+      if (type === "music" && window.MusicCatalogueUi) {
+        const entry = await MusicCatalogueUi.openUploadDialog({
+          onComplete: (saved) => {
+            if (saved?.id) renderEditor(saved.id, { mode: "view" });
+          }
+        });
+        if (entry?.id) renderEditor(entry.id, { mode: "view" });
+        return;
+      }
       const entry = {
         id: CatalogueStore.generateId(type),
         ...JSON.parse(JSON.stringify(config.defaults))

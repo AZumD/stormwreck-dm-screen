@@ -77,4 +77,6 @@
 [2026-08-25] Map dropdown "+ Add location…" opens catalogue picker modal. See js/core/map-panel.js, js/core/campaign-locations-ui.js
 [2026-08-25] Polish pass: location UVTT PATCH for grid/scale; replace map UVTT file stub with catalogue link; sandbox checklist guard; npm test adds locations/theme/combat/measure; gitignore runtime UVTT junk; LayoutPanels syncs CampaignPrefs. See UVTT.md, catalogue-location-maps.js
 [2026-08-25] Initiative tracker on combat sheets + map list; PC death saves/spell slots on DM modal and player sheet; remove legacy campaign-maps HTTP API; delete orphan maps.json. See combat-sheet-modal.js, map-panel.js, player-app.js
+[2026-08-25] Music catalogue (DM): MP3 upload/storage abstraction (local + S3), browse/filter/preview, no mixer yet. See docs/README/MUSIC.md, server/lib/audio-storage.js
+[2026-08-25] Stream static + /api/assets (no full-file buffer); ETag/304; versioned asset ?v= for CDN; parallel catalogue bootstrap/list; lazy list thumbs. See server/lib/http-cache.js
 

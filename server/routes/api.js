@@ -13,7 +13,8 @@ const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
 const catalogueLocationMaps = require("../lib/catalogue-location-maps");
 const revealedNpcs = require("../lib/revealed-npcs");
-const { sendJson, sendError, readJsonBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
+const { sendJson, sendError, readJsonBody, readBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
+const { sendFileStream, cacheControlForAssetUrl } = require("../lib/http-cache");
 const {
   assertCatalogueType,
   assertSafeId,
@@ -22,6 +23,8 @@ const {
   CATALOGUE_TYPES,
   CAMPAIGN_DOC_KINDS
 } = require("../lib/ids");
+const musicCatalogue = require("../lib/music-catalogue");
+const audioStorage = require("../lib/audio-storage");
 
 function route(method, pattern, keys, handler) {
   return { method, pattern, keys, handler };
@@ -387,9 +390,16 @@ function createApiRoutes() {
           return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
         }
         const asset = await player.readCharacterPortrait(req, id, characterId);
+        if (asset.filePath) {
+          await sendFileStream(req, res, asset.filePath, {
+            contentType: asset.mime,
+            cacheControl: "private, max-age=60, must-revalidate"
+          });
+          return;
+        }
         res.writeHead(200, {
           "Content-Type": asset.mime,
-          "Cache-Control": "private, max-age=60",
+          "Cache-Control": "private, max-age=60, must-revalidate",
           "Content-Length": asset.buffer.length
         });
         res.end(asset.buffer);
@@ -406,9 +416,16 @@ function createApiRoutes() {
           return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
         }
         const asset = await player.readCataloguePortrait(req, id, p.type, p.entryId);
+        if (asset.filePath) {
+          await sendFileStream(req, res, asset.filePath, {
+            contentType: asset.mime,
+            cacheControl: "private, max-age=60, must-revalidate"
+          });
+          return;
+        }
         res.writeHead(200, {
           "Content-Type": asset.mime,
-          "Cache-Control": "private, max-age=60",
+          "Cache-Control": "private, max-age=60, must-revalidate",
           "Content-Length": asset.buffer.length
         });
         res.end(asset.buffer);
@@ -602,6 +619,8 @@ function createApiRoutes() {
       if (type === "pc" && db.isDbConfigured()) {
         const pcCatalogueMirror = require("../lib/pc-catalogue-mirror");
         entry = await pcCatalogueMirror.upsertPcFromDm(id, body || {});
+      } else if (type === "music") {
+        entry = await musicCatalogue.upsertMetadata(id, body || {});
       } else {
         entry = await catalogues.upsert(type, id, body || {});
       }
@@ -612,11 +631,109 @@ function createApiRoutes() {
       await authorize.requireAnyDmIfAuthRequired(req);
       const type = assertCatalogueType(p.type);
       const id = assertSafeId(p.id, "entry id");
+      if (type === "music") {
+        const result = await musicCatalogue.deleteTrack(id);
+        return sendJson(res, 200, { ok: true, ...result });
+      }
       const removed = await catalogues.remove(type, id);
       await assets.deleteAsset("portraits", type, id).catch(() => false);
       await assets.deleteAsset("maps", type, id).catch(() => false);
       sendJson(res, 200, { ok: true, removed });
     }),
+
+    route(
+      "PUT",
+      /^\/api\/catalogues\/music\/([^/]+)\/audio$/,
+      ["id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const id = assertSafeId(p.id, "entry id");
+        const contentType = req.headers["content-type"] || "";
+        const originalFilename =
+          String(req.headers["x-original-filename"] || "").trim() ||
+          String(req.headers["x-filename"] || "").trim();
+        const durationHeader = req.headers["x-audio-duration"];
+        const durationSec = durationHeader != null && durationHeader !== "" ? Number(durationHeader) : undefined;
+        const buffer = await readBody(req, musicCatalogue.MAX_AUDIO_BYTES);
+        const result = await musicCatalogue.putAudio(id, buffer, {
+          contentType,
+          originalFilename,
+          durationSec
+        });
+        sendJson(res, 200, { ok: true, entry: result.entry, audio: result.audio });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/catalogues\/music\/([^/]+)\/audio$/,
+      ["id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const id = assertSafeId(p.id, "entry id");
+        const playback = await musicCatalogue.playbackFor(id, { ttlSec: 300 });
+        if (!playback) return sendJson(res, 404, { ok: false, error: "No audio for this track" });
+        sendJson(res, 200, { ok: true, playback, backend: audioStorage.backendName() });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/catalogues\/music\/([^/]+)\/audio\/stream$/,
+      ["id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const id = assertSafeId(p.id, "entry id");
+        const stream = await musicCatalogue.streamAudio(id);
+        if (!stream) return sendJson(res, 404, { ok: false, error: "Not found" });
+
+        const total = stream.buffer.length;
+        const mime = stream.mimeType || "audio/mpeg";
+        const range = req.headers.range;
+        if (range) {
+          const m = String(range).match(/^bytes=(\d*)-(\d*)$/);
+          if (m) {
+            const start = m[1] ? parseInt(m[1], 10) : 0;
+            const end = m[2] ? parseInt(m[2], 10) : total - 1;
+            if (start >= 0 && end >= start && start < total) {
+              const slice = stream.buffer.subarray(start, Math.min(end, total - 1) + 1);
+              res.writeHead(206, {
+                "Content-Type": mime,
+                "Content-Length": slice.length,
+                "Accept-Ranges": "bytes",
+                "Content-Range": `bytes ${start}-${start + slice.length - 1}/${total}`,
+                "Cache-Control": "private, max-age=60"
+              });
+              res.end(slice);
+              return;
+            }
+          }
+        }
+        res.writeHead(200, {
+          "Content-Type": mime,
+          "Content-Length": total,
+          "Accept-Ranges": "bytes",
+          "Cache-Control": "private, max-age=60"
+        });
+        res.end(stream.buffer);
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/catalogues\/music\/([^/]+)\/audio$/,
+      ["id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const id = assertSafeId(p.id, "entry id");
+        const entry = await catalogues.get("music", id);
+        if (!entry) return sendJson(res, 404, { ok: false, error: "Not found" });
+        const key = entry.audio?.key;
+        if (key) await audioStorage.delete(key);
+        const saved = await musicCatalogue.upsertMetadata(id, { ...entry, audio: null });
+        sendJson(res, 200, { ok: true, entry: saved });
+      }
+    ),
 
     route("GET", /^\/api\/campaigns$/, [], async (req, res) => {
       await authorize.requireAnyDmIfAuthRequired(req);
@@ -722,14 +839,12 @@ function createApiRoutes() {
         const kind = assertAssetKind(p.kind);
         const type = assertCatalogueType(p.type);
         const id = assertSafeId(p.id, "entry id");
-        const asset = await assets.readAsset(kind, type, id);
-        if (!asset) return sendJson(res, 404, { ok: false, error: "Not found" });
-        res.writeHead(200, {
-          "Content-Type": asset.mime,
-          "Cache-Control": "public, max-age=60",
-          "Content-Length": asset.buffer.length
+        const meta = await assets.resolveAsset(kind, type, id);
+        if (!meta) return sendJson(res, 404, { ok: false, error: "Not found" });
+        await sendFileStream(req, res, meta.filePath, {
+          contentType: meta.mime,
+          cacheControl: cacheControlForAssetUrl(req.url)
         });
-        res.end(asset.buffer);
       }
     ),
 

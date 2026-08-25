@@ -7,7 +7,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-const types = ["pc", "npc", "item", "monster", "location", "race", "class", "spell", "skill", "feature"];
+const types = ["pc", "npc", "item", "monster", "location", "race", "class", "spell", "skill", "feature", "music"];
 const folders = {
   pc: "pc-katalog",
   npc: "npc-katalog",
@@ -18,7 +18,8 @@ const folders = {
   class: "class-katalog",
   spell: "spell-katalog",
   skill: "skill-katalog",
-  feature: "feature-katalog"
+  feature: "feature-katalog",
+  music: "music-katalog"
 };
 
 let failed = 0;

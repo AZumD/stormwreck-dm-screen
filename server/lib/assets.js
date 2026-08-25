@@ -47,8 +47,15 @@ function assetDir(kind, type) {
   return path.join(dataRoot(), "assets", assertAssetKind(kind), assertCatalogueType(type));
 }
 
-function publicUrl(kind, type, id) {
-  return `/api/assets/${assertAssetKind(kind)}/${assertCatalogueType(type)}/${assertSafeId(id, "entry id")}`;
+/**
+ * Public URL for an uploaded asset. Pass `version` (mtime ms) for CDN cache-busting.
+ * Legacy callers omit version — unversioned URLs remain valid.
+ */
+function publicUrl(kind, type, id, version) {
+  const base = `/api/assets/${assertAssetKind(kind)}/${assertCatalogueType(type)}/${assertSafeId(id, "entry id")}`;
+  if (version == null || version === "") return base;
+  const v = encodeURIComponent(String(version));
+  return `${base}?v=${v}`;
 }
 
 async function findExistingFile(kind, type, id) {
@@ -92,11 +99,14 @@ async function putFromBuffer(kind, type, id, buffer, mime) {
   if (existing) await removeFile(existing);
   const filePath = path.join(dir, `${assertSafeId(id, "entry id")}.${ext}`);
   await writeBinaryAtomic(filePath, buffer);
+  const stat = await fsp.stat(filePath);
+  const version = Math.floor(Number(stat.mtimeMs) || Date.now());
   return {
-    url: publicUrl(kind, type, id),
+    url: publicUrl(kind, type, id, version),
     mime: safeMime,
     bytes: buffer.length,
-    path: filePath
+    path: filePath,
+    version
   };
 }
 
@@ -113,13 +123,32 @@ async function putFieldFromBuffer(type, id, field, buffer, mime) {
   return putFromBuffer(fieldToKind(field), type, id, buffer, mime);
 }
 
-async function readAsset(kind, type, id) {
+/**
+ * Resolve asset metadata for streaming (no full-file read).
+ */
+async function resolveAsset(kind, type, id) {
   const filePath = await findExistingFile(kind, type, id);
   if (!filePath) return null;
-  const buffer = await fsp.readFile(filePath);
+  const stat = await fsp.stat(filePath);
+  if (!stat.isFile()) return null;
   const ext = path.extname(filePath).slice(1).toLowerCase();
   const mime = MIME_BY_EXT[ext] || "application/octet-stream";
-  return { buffer, mime, filePath };
+  return {
+    filePath,
+    mime,
+    size: stat.size,
+    mtime: stat.mtime,
+    mtimeMs: stat.mtimeMs,
+    version: Math.floor(Number(stat.mtimeMs) || 0)
+  };
+}
+
+/** Full buffer read — prefer resolveAsset + stream for HTTP responses. */
+async function readAsset(kind, type, id) {
+  const meta = await resolveAsset(kind, type, id);
+  if (!meta) return null;
+  const buffer = await fsp.readFile(meta.filePath);
+  return { buffer, mime: meta.mime, filePath: meta.filePath, size: meta.size, mtime: meta.mtime };
 }
 
 async function deleteAsset(kind, type, id) {
@@ -143,6 +172,7 @@ module.exports = {
   putFromBuffer,
   putFieldFromDataUrl,
   putFieldFromBuffer,
+  resolveAsset,
   readAsset,
   deleteAsset,
   deleteField,

@@ -9,7 +9,7 @@ Do **not** put seeds or `data:init` in the web start command.
 | Layer | Backing store |
 |-------|----------------|
 | Users, sessions, memberships, characters, inventory, player notes | Railway Postgres (`DATABASE_URL`) |
-| Catalogues, campaign docs, uploaded portraits/maps, `.backup` | Volume at `DM_DATA_ROOT` (e.g. `/data`) |
+| Catalogues, campaign docs, uploaded portraits/maps/**audio**, `.backup` | Volume at `DM_DATA_ROOT` (e.g. `/data`) — or S3 for music when `AUDIO_S3_*` set |
 | Repo `assets/*.svg` placeholders | Image only (never mutated at runtime) |
 
 ## One-time Railway setup
@@ -28,6 +28,9 @@ Do **not** put seeds or `data:init` in the web start command.
 | `SESSION_SECRET` | ≥32 random characters |
 | `TRUST_PROXY` | `1` |
 | `DM_DATA_ROOT` | `/data` (must match volume mount) |
+| `AUDIO_S3_BUCKET` | optional — Music MP3s on S3-compatible bucket (else `{DM_DATA_ROOT}/assets/audio/`) |
+| `AUDIO_S3_ENDPOINT` / `AUDIO_S3_REGION` / `AUDIO_S3_ACCESS_KEY_ID` / `AUDIO_S3_SECRET_ACCESS_KEY` | optional — see `.env.example` |
+| `AUDIO_S3_FORCE_PATH_STYLE` | optional — default `1` for most S3-compatible providers |
 
 Optional one-shot bootstrap vars: see `.env.example` (`BOOTSTRAP_*`).
 

@@ -1,7 +1,7 @@
 # CATALOGUE
 
 ## Purpose
-Shared catalogue engine for PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location entries.
+Shared catalogue engine for PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / **Music** entries.
 
 ## Files
 - `js/core/catalogue/types.js` — declarative type list (linkable types for `@` links)
@@ -56,8 +56,9 @@ Monsters can store **catalogue links** (`skillRefs`, `traitRefs`, `actionRefs`, 
 |-------|------------|-------|
 | `portrait` | PC, NPC, Item, Monster, Race, Class, Spell | Auto-resized; shown in campaign tooltips/modals / wiki hero |
 | `mapImage` | Location | Auto-resized; drives campaign map panel |
+| `audio` | Music | MP3 via `audio-storage` (see `docs/README/MUSIC.md`); preview only in catalogue |
 
-Uploads go to **`/data/assets`** via the local server (same library as catalogue JSON). Entry fields store `/api/assets/…` URLs. IndexedDB is only used offline / for Import browser data.
+Uploads go to **`/data/assets`** via the local server (same library as catalogue JSON). Entry fields store `/api/assets/…` URLs (images) or `audio.key` metadata (music). IndexedDB is only used offline / for Import browser data.
 
 ## Seeds
 | File | Types |

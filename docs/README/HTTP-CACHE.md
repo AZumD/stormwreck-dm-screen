@@ -1,0 +1,19 @@
+# HTTP-CACHE
+
+## Purpose
+Stream files to HTTP clients with conditional caching (`ETag`, `Last-Modified`, `304`) without hashing or buffering whole files.
+
+## File
+`server/lib/http-cache.js`
+
+## API
+| Export | Role |
+|--------|------|
+| `weakEtagFromStat(stat)` | `W/"size-mtime"` from filesystem metadata |
+| `notModified(req, etag, mtime)` | Honours `If-None-Match` / `If-Modified-Since` |
+| `cacheControlForStatic(path)` | HTML revalidate; other static files `max-age=86400` |
+| `cacheControlForAssetUrl(url)` | `?v=` → immutable year; else short revalidate |
+| `sendFileStream(req, res, path, opts)` | Pipe `fs.createReadStream` with `Content-Length` |
+
+## Related
+`server/index.js`, `server/routes/api.js`, `docs/README/IMAGES.md`, `test/validate-http-cache.js`

@@ -131,6 +131,38 @@ window.LocalApiClient = (function () {
     );
   }
 
+  async function putMusicAudio(id, buffer, { contentType, originalFilename, durationSec } = {}) {
+    await ready();
+    if (!available) throw Object.assign(new Error("API unavailable"), { status: 0 });
+    const headers = {
+      "Content-Type": contentType || "audio/mpeg",
+      "X-Original-Filename": originalFilename || "track.mp3"
+    };
+    if (durationSec != null && Number.isFinite(Number(durationSec))) {
+      headers["X-Audio-Duration"] = String(durationSec);
+    }
+    return trackWrite(`music-audio:${id}`, async () => {
+      const res = await fetch(`/api/catalogues/music/${encodeURIComponent(id)}/audio`, {
+        method: "PUT",
+        credentials: "same-origin",
+        headers,
+        body: buffer
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw Object.assign(new Error(data.error || res.statusText || "Upload failed"), {
+          status: res.status
+        });
+      }
+      return data;
+    });
+  }
+
+  async function getMusicPlayback(id) {
+    const data = await request("GET", `/api/catalogues/music/${encodeURIComponent(id)}/audio`);
+    return data.playback || null;
+  }
+
   /* Campaigns */
   async function listCampaigns() {
     const data = await request("GET", "/api/campaigns");
@@ -327,6 +359,8 @@ window.LocalApiClient = (function () {
     getCatalogue,
     putCatalogue,
     deleteCatalogue,
+    putMusicAudio,
+    getMusicPlayback,
     listCampaigns,
     createCampaign,
     upsertCampaign,

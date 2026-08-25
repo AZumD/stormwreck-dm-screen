@@ -21,6 +21,7 @@ const { sendJson } = require("./lib/http-util");
 const { isDeniedStaticPath } = require("./lib/static-guard");
 const { validateStartupConfig } = require("./lib/startup-config");
 const { registerShutdownHandlers } = require("./lib/shutdown");
+const { sendFileStream, cacheControlForStatic } = require("./lib/http-cache");
 const db = require("./lib/db");
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -51,14 +52,12 @@ function safeJoin(root, reqPath) {
   return abs;
 }
 
-async function sendFile(res, filePath) {
-  const data = await fsp.readFile(filePath);
+async function sendFile(req, res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
-  res.writeHead(200, {
-    "Content-Type": MIME[ext] || "application/octet-stream",
-    "Content-Length": data.length
+  await sendFileStream(req, res, filePath, {
+    contentType: MIME[ext] || "application/octet-stream",
+    cacheControl: cacheControlForStatic(filePath)
   });
-  res.end(data);
 }
 
 function denyStatic(res) {
@@ -100,7 +99,7 @@ async function serveStatic(req, res, root, pathname) {
       denyStatic(res);
       return;
     }
-    await sendFile(res, target);
+    await sendFile(req, res, target);
   } catch {
     try {
       const htmlPath = `${target}.html`;
@@ -110,7 +109,7 @@ async function serveStatic(req, res, root, pathname) {
         return;
       }
       await fsp.access(htmlPath);
-      await sendFile(res, htmlPath);
+      await sendFile(req, res, htmlPath);
     } catch {
       denyStatic(res);
     }
@@ -162,7 +161,7 @@ async function main() {
   });
 }
 
-module.exports = { serveStatic, isDeniedStaticPath };
+module.exports = { serveStatic, isDeniedStaticPath, sendFile };
 
 if (require.main === module) {
   main().catch((err) => {

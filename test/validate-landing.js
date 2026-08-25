@@ -51,7 +51,7 @@ if (html.includes("catalogue-grid") || html.includes("landing-section--reference
   pass("bottom catalogue grid removed");
 }
 
-["pc-katalog", "npc-katalog", "race-katalog", "class-katalog", "spell-katalog", "skill-katalog", "feature-katalog", "item-katalog", "monster-katalog", "location-katalog"].forEach((folder) => {
+["pc-katalog", "npc-katalog", "race-katalog", "class-katalog", "spell-katalog", "skill-katalog", "feature-katalog", "item-katalog", "monster-katalog", "location-katalog", "music-katalog"].forEach((folder) => {
   if (!html.includes(folder)) fail(`landing missing link to ${folder}`);
   else pass(`link ${folder}`);
 });
