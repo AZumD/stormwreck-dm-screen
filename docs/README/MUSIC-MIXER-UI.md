@@ -10,7 +10,7 @@ Campaign right-rail **Music** tab: add tracks from the Music catalogue, play/pau
 - Starts with a **+** button; tracks stack above it
 - Each row: drag handle, play/pause, title, volume slider, remove
 - **+** opens a catalogue picker dialog (`#music-mixer-dialog`) — only entries with uploaded audio
-- Drag the **⋮⋮** handle to change order (persisted via `CampaignMusicMixer`); volume/play stay undraggable
+- Drag the **⋮⋮** handle to change order (pointer-based; not HTML5 DnD) so the volume slider never starts a drag
 
 ## Playback
 One `<audio>` element per mixer slot. Source from `LocalApiClient.getMusicPlayback(catalogueMusicId)` (stream or signed URL). Loop/volume follow the stored slot.

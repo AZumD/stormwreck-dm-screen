@@ -12,6 +12,7 @@ window.MusicMixerUi = (function () {
   /** @type {Map<string, HTMLAudioElement>} */
   const players = new Map();
   let dragSlotId = null;
+  let dragPointerId = null;
 
   function t() {
     return window.I18N || {};
@@ -177,41 +178,71 @@ window.MusicMixerUi = (function () {
     const handle = row.querySelector(".music-mixer-track__handle");
     if (!handle) return;
 
-    handle.addEventListener("dragstart", (e) => {
+    handle.addEventListener("pointerdown", (e) => {
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+
       dragSlotId = row.dataset.slotId;
+      dragPointerId = e.pointerId;
       row.classList.add("is-dragging");
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", dragSlotId);
-    });
-    handle.addEventListener("dragend", () => {
-      row.classList.remove("is-dragging");
-      dragSlotId = null;
-      listEl?.querySelectorAll(".music-mixer-track.is-drop-target").forEach((el) => {
-        el.classList.remove("is-drop-target");
-      });
-    });
-    row.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      row.classList.add("is-drop-target");
-    });
-    row.addEventListener("dragleave", () => {
-      row.classList.remove("is-drop-target");
-    });
-    row.addEventListener("drop", (e) => {
-      e.preventDefault();
-      row.classList.remove("is-drop-target");
-      const fromId = dragSlotId || e.dataTransfer.getData("text/plain");
-      const toId = row.dataset.slotId;
-      if (!fromId || !toId || fromId === toId) return;
-      const ids = CampaignMusicMixer.sortedTracks(campaignId).map((tr) => tr.id);
-      const from = ids.indexOf(fromId);
-      const to = ids.indexOf(toId);
-      if (from < 0 || to < 0) return;
-      ids.splice(from, 1);
-      ids.splice(to, 0, fromId);
-      CampaignMusicMixer.reorderTracks(campaignId, ids);
-      render();
+      listEl?.classList.add("is-reordering");
+      try {
+        handle.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+
+      const clearTargets = () => {
+        listEl?.querySelectorAll(".music-mixer-track.is-drop-target").forEach((el) => {
+          el.classList.remove("is-drop-target");
+        });
+      };
+
+      const onMove = (ev) => {
+        if (dragPointerId != null && ev.pointerId !== dragPointerId) return;
+        const el = document.elementFromPoint(ev.clientX, ev.clientY);
+        const over = el?.closest?.(".music-mixer-track");
+        clearTargets();
+        if (over && over.dataset.slotId && over.dataset.slotId !== dragSlotId) {
+          over.classList.add("is-drop-target");
+        }
+      };
+
+      const onUp = (ev) => {
+        if (dragPointerId != null && ev.pointerId !== dragPointerId) return;
+        handle.removeEventListener("pointermove", onMove);
+        handle.removeEventListener("pointerup", onUp);
+        handle.removeEventListener("pointercancel", onUp);
+        try {
+          handle.releasePointerCapture(ev.pointerId);
+        } catch {
+          /* ignore */
+        }
+
+        const target = listEl?.querySelector(".music-mixer-track.is-drop-target");
+        const fromId = dragSlotId;
+        const toId = target?.dataset?.slotId || null;
+        clearTargets();
+        row.classList.remove("is-dragging");
+        listEl?.classList.remove("is-reordering");
+        dragSlotId = null;
+        dragPointerId = null;
+
+        if (!fromId || !toId || fromId === toId || !window.CampaignMusicMixer) return;
+        const ids = CampaignMusicMixer.sortedTracks(campaignId).map((tr) => tr.id);
+        const from = ids.indexOf(fromId);
+        const to = ids.indexOf(toId);
+        if (from < 0 || to < 0) return;
+        ids.splice(from, 1);
+        ids.splice(to, 0, fromId);
+        CampaignMusicMixer.reorderTracks(campaignId, ids);
+        render();
+      };
+
+      handle.addEventListener("pointermove", onMove);
+      handle.addEventListener("pointerup", onUp);
+      handle.addEventListener("pointercancel", onUp);
     });
   }
 
@@ -243,12 +274,12 @@ window.MusicMixerUi = (function () {
             const playing = isPlaying(slot.id);
             const volPct = Math.round(clampVolume(slot.volume) * 100);
             return `
-            <div class="music-mixer-track" data-slot-id="${escapeHtml(slot.id)}">
-              <button type="button" class="music-mixer-track__handle" draggable="true"
+            <div class="music-mixer-track" data-slot-id="${escapeHtml(slot.id)}" draggable="false">
+              <button type="button" class="music-mixer-track__handle" draggable="false"
                 aria-label="${escapeHtml(t().musicDragHandle || "Drag to reorder")}" title="${escapeHtml(
                   t().musicDragHandle || "Drag to reorder"
                 )}">⋮⋮</button>
-              <button type="button" class="music-mixer-track__play" data-play="${escapeHtml(slot.id)}"
+              <button type="button" class="music-mixer-track__play" data-play="${escapeHtml(slot.id)}" draggable="false"
                 aria-label="${escapeHtml(playing ? t().musicPause || "Pause" : t().musicPlay || "Play")}">
                 ${playing ? "❚❚" : "▶"}
               </button>
@@ -258,12 +289,12 @@ window.MusicMixerUi = (function () {
                 )}</span>
                 <label class="music-mixer-track__volume">
                   <span class="visually-hidden">${escapeHtml(t().musicVolume || "Volume")}</span>
-                  <input type="range" min="0" max="100" step="1" value="${volPct}" data-volume="${escapeHtml(
+                  <input type="range" min="0" max="100" step="1" value="${volPct}" draggable="false" data-volume="${escapeHtml(
                     slot.id
                   )}">
                 </label>
               </div>
-              <button type="button" class="music-mixer-track__remove" data-remove="${escapeHtml(slot.id)}"
+              <button type="button" class="music-mixer-track__remove" data-remove="${escapeHtml(slot.id)}" draggable="false"
                 aria-label="${escapeHtml(t().musicRemove || "Remove track")}">×</button>
             </div>`;
           })
@@ -287,6 +318,11 @@ window.MusicMixerUi = (function () {
         const audio = players.get(slotId);
         if (audio) audio.volume = volume;
       };
+      /* Keep slider gestures from being treated as track/module drags. */
+      const stopDrag = (e) => e.stopPropagation();
+      input.addEventListener("pointerdown", stopDrag);
+      input.addEventListener("mousedown", stopDrag);
+      input.addEventListener("touchstart", stopDrag, { passive: true });
       input.addEventListener("input", apply);
       input.addEventListener("change", apply);
     });
