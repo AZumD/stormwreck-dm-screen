@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Music Catalogue — DM Library</title>
-  <link rel="stylesheet" href="../css/catalogue.css">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/catalogue.css?v=20260825m1">
+  <link rel="stylesheet" href="../css/style.css?v=20260825m1">
 </head>
 <body class="landing-page landing-subpage catalogue-page catalogue-page--music">
   <div class="landing-atmosphere" aria-hidden="true"></div>
@@ -44,18 +44,19 @@
     <div class="modal-body" id="modal-body"></div>
   </dialog>
 
-  <script src="../js/core/save-status.js"></script>
-  <script src="../js/core/local-api-client.js"></script>
-  <script src="../js/i18n/en.js"></script>
-  <script src="../js/core/catalogue/types.js"></script>
-  <script src="../js/core/catalogue/store.js"></script>
-  <script src="../js/core/catalogue/images.js"></script>
-  <script src="../js/core/catalogue/configs.js"></script>
-  <script src="../js/core/catalogue/music-ui.js"></script>
-  <script src="../js/core/parser.js"></script>
-  <script src="../js/core/entity-registry.js"></script>
-  <script src="../js/core/entity-ui.js"></script>
-  <script src="../js/core/catalogue/app.js"></script>
+  <!-- ?v= busts Railway/browser cache of shared catalogue JS after deploys -->
+  <script src="../js/core/save-status.js?v=20260825m1"></script>
+  <script src="../js/core/local-api-client.js?v=20260825m1"></script>
+  <script src="../js/i18n/en.js?v=20260825m1"></script>
+  <script src="../js/core/catalogue/types.js?v=20260825m1"></script>
+  <script src="../js/core/catalogue/store.js?v=20260825m1"></script>
+  <script src="../js/core/catalogue/images.js?v=20260825m1"></script>
+  <script src="../js/core/catalogue/configs.js?v=20260825m1"></script>
+  <script src="../js/core/catalogue/music-ui.js?v=20260825m1"></script>
+  <script src="../js/core/parser.js?v=20260825m1"></script>
+  <script src="../js/core/entity-registry.js?v=20260825m1"></script>
+  <script src="../js/core/entity-ui.js?v=20260825m1"></script>
+  <script src="../js/core/catalogue/app.js?v=20260825m1"></script>
   <script>CatalogueApp.init("music");</script>
 </body>
 </html>

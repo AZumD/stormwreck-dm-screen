@@ -909,7 +909,14 @@ window.CatalogueApp = (function () {
 
   function init(type) {
     const config = CatalogueConfigs[type];
-    if (!config) throw new Error(`Unknown catalogue type: ${type}`);
+    if (!config) {
+      const registered = window.CatalogueTypes?.ids?.()?.includes(type);
+      throw new Error(
+        registered
+          ? `Catalogue config for "${type}" is missing — hard-refresh (Ctrl+F5) to clear a stale configs.js cache.`
+          : `Unknown catalogue type: ${type}`
+      );
+    }
 
     const start = async () => {
       document.body.classList.add("is-booting");

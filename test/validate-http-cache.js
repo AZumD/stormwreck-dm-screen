@@ -136,6 +136,15 @@ if (cacheControlForAssetUrl("/api/assets/portraits/npc/x").includes("immutable")
   } else pass("static response has ETag + Last-Modified");
   if (!css.headers["content-length"]) fail("static missing Content-Length");
   else pass("static Content-Length set");
+  const cssCc = String(css.headers["cache-control"] || "");
+  if (!cssCc.includes("must-revalidate")) fail(`css Cache-Control should revalidate, got ${cssCc}`);
+  else pass("css/js use must-revalidate (not long-lived CDN cache)");
+
+  const js = await get("/js/core/catalogue/configs.js");
+  const jsCc = String(js.headers["cache-control"] || "");
+  if (js.status !== 200 || !jsCc.includes("must-revalidate") || jsCc.includes("86400")) {
+    fail(`configs.js Cache-Control should revalidate, got ${jsCc}`);
+  } else pass("configs.js must-revalidate");
 
   const css304 = await get("/css/style.css", { "If-None-Match": css.headers.etag });
   if (css304.status !== 304) fail(`static If-None-Match expected 304 got ${css304.status}`);

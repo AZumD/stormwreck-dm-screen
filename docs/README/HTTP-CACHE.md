@@ -11,7 +11,7 @@ Stream files to HTTP clients with conditional caching (`ETag`, `Last-Modified`, 
 |--------|------|
 | `weakEtagFromStat(stat)` | `W/"size-mtime"` from filesystem metadata |
 | `notModified(req, etag, mtime)` | Honours `If-None-Match` / `If-Modified-Since` |
-| `cacheControlForStatic(path)` | HTML revalidate; other static files `max-age=86400` |
+| `cacheControlForStatic(path)` | HTML + JS/CSS/JSON → `max-age=0, must-revalidate`; other static (images) → `max-age=86400` |
 | `cacheControlForAssetUrl(url)` | `?v=` → immutable year; else short revalidate |
 | `sendFileStream(req, res, path, opts)` | Pipe `fs.createReadStream` with `Content-Length` |
 

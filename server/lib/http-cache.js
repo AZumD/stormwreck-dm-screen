@@ -43,6 +43,11 @@ function cacheControlForStatic(filePath) {
   if (lower.endsWith(".html") || lower.endsWith(".htm")) {
     return "public, max-age=0, must-revalidate";
   }
+  /* Unfingerprinted JS/CSS must revalidate on every deploy (Railway CDN + browser). */
+  if (lower.endsWith(".js") || lower.endsWith(".css") || lower.endsWith(".map") || lower.endsWith(".json")) {
+    return "public, max-age=0, must-revalidate";
+  }
+  /* Repo static images/fonts — longer TTL; ETag still allows 304. */
   return "public, max-age=86400";
 }
 
