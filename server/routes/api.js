@@ -649,13 +649,40 @@ function createApiRoutes() {
       async (req, res, p) => {
         await authorize.requireAnyDmIfAuthRequired(req);
         const id = assertSafeId(p.id, "entry id");
-        const contentType = req.headers["content-type"] || "";
-        const originalFilename =
-          String(req.headers["x-original-filename"] || "").trim() ||
-          String(req.headers["x-filename"] || "").trim();
-        const durationHeader = req.headers["x-audio-duration"];
-        const durationSec = durationHeader != null && durationHeader !== "" ? Number(durationHeader) : undefined;
-        const buffer = await readBody(req, musicCatalogue.MAX_AUDIO_BYTES);
+        const headerCt = String(req.headers["content-type"] || "")
+          .split(";")[0]
+          .trim()
+          .toLowerCase();
+
+        let buffer;
+        let contentType;
+        let originalFilename;
+        let durationSec;
+
+        if (headerCt.includes("json")) {
+          /* Preferred path: JSON { dataBase64 } — CSRF-safe and proxy-friendly */
+          const body = (await readJsonBody(req, { limit: musicCatalogue.MAX_AUDIO_BYTES * 1.4 })) || {};
+          if (!body.dataBase64 || typeof body.dataBase64 !== "string") {
+            const err = new Error("dataBase64 required");
+            err.status = 400;
+            throw err;
+          }
+          buffer = Buffer.from(body.dataBase64, "base64");
+          contentType = body.contentType || body.mimeType || "audio/mpeg";
+          originalFilename = String(body.originalFilename || body.filename || "").trim();
+          durationSec =
+            body.durationSec != null && body.durationSec !== "" ? Number(body.durationSec) : undefined;
+        } else {
+          /* Legacy raw audio/mpeg body */
+          contentType = req.headers["content-type"] || "";
+          originalFilename =
+            String(req.headers["x-original-filename"] || "").trim() ||
+            String(req.headers["x-filename"] || "").trim();
+          const durationHeader = req.headers["x-audio-duration"];
+          durationSec = durationHeader != null && durationHeader !== "" ? Number(durationHeader) : undefined;
+          buffer = await readBody(req, musicCatalogue.MAX_AUDIO_BYTES);
+        }
+
         const result = await musicCatalogue.putAudio(id, buffer, {
           contentType,
           originalFilename,

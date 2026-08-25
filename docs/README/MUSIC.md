@@ -55,8 +55,9 @@ Playback:
 - Not in player catalogue allowlist (`PLAYER_BLOCKED_CATALOGUE_TYPES` includes `music`)
 - Safe storage keys (never original filenames as paths)
 - MP3 sniff + MIME check; max ~50MB
-- Upload `PUT` uses `Content-Type: audio/mpeg` (allowed by mutation CSRF checks; see AUTH.md)
+- Upload `PUT` sends JSON `{ dataBase64, contentType, originalFilename, durationSec }` (CSRF-safe `application/json`; raw `audio/mpeg` body still accepted)
 - Entry `DELETE` sends `Content-Type: application/json` from the client; server also accepts DELETE with no Content-Type
+- Audio object cleanup failures after metadata delete are logged, not surfaced as a failed delete
 
 ## Out of scope (later Pocket Bard)
 Multi-track mixer, scene presets, fades, player controls, SFX, YouTube migration.

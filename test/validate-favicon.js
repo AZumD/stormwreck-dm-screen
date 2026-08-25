@@ -49,7 +49,7 @@ const pages = [
 
 for (const rel of pages) {
   const html = fs.readFileSync(path.join(root, rel), "utf8");
-  if (!html.includes('rel="icon"') || !html.includes('href="/favicon.png"')) {
+  if (!html.includes('rel="icon"') || !html.includes('href="/favicon.png')) {
     fail(`missing favicon link: ${rel}`);
   } else pass(`favicon link: ${rel}`);
 }

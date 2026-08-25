@@ -83,4 +83,5 @@
 [2026-08-25] Fix music MP3 upload: allow audio/* Content-Type in mutation CSRF; drain body on early 4xx; raise max to 50MB. See authorize.js, music-catalogue.js, AUTH.md
 [2026-08-25] Site favicon from root favicon.png (HTML link + /favicon.ico alias). See docs/README/FAVICON.md
 [2026-08-25] Fix music delete/upload CSRF: DELETE may omit Content-Type; client always sends JSON CT on mutations; Origin vs X-Forwarded-Host. See authorize.js, local-api-client.js
+[2026-08-25] Music uploads via JSON base64; soft audio cleanup on delete; shrink favicon to 64px (source kept). Restart local server to pick up music type.
 

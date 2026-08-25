@@ -263,12 +263,18 @@ else pass("music-ui.js preview/upload");
     await musicCatalogue.upsertMetadata(httpId, { title: "HTTP Upload Track", kind: "music" });
     const putHttp = await request(server, "PUT", `/api/catalogues/music/${httpId}/audio`, {
       headers: {
-        "Content-Type": "audio/mpeg",
-        "Content-Length": String(mp3.length),
-        "X-Original-Filename": "http-track.mp3",
-        Origin: "http://127.0.0.1"
+        "Content-Type": "application/json",
+        Origin: "http://127.0.0.1",
+        Host: "127.0.0.1"
       },
-      body: mp3
+      body: Buffer.from(
+        JSON.stringify({
+          dataBase64: mp3.toString("base64"),
+          contentType: "audio/mpeg",
+          originalFilename: "http-track.mp3",
+          durationSec: 12
+        })
+      )
     });
     if (putHttp.status !== 200 || !putHttp.json?.audio?.key) {
       fail(`HTTP PUT audio status=${putHttp.status} err=${putHttp.json?.error || putHttp.body}`);

@@ -151,11 +151,12 @@ window.CatalogueStore = (function () {
   }
 
   async function remove(type, id) {
-    const entries = getEntries(type).filter((e) => e.id !== id);
-    setEntries(type, entries);
     if (useApi()) {
       await LocalApiClient.deleteCatalogue(type, id);
-    } else {
+    }
+    const entries = getEntries(type).filter((e) => e.id !== id);
+    setEntries(type, entries);
+    if (!useApi()) {
       const result = saveAllLocal(type, entries);
       if (!result.ok) {
         const error = new Error(result.quota ? "quota" : "save-failed");

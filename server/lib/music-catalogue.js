@@ -168,11 +168,8 @@ async function deleteTrack(id) {
     try {
       await audioStorage.delete(key);
     } catch (err) {
+      /* Metadata is already gone — do not fail the request (client would show false "could not delete"). */
       console.warn("[music] audio object delete failed after metadata remove", key, err.message || err);
-      const wrap = httpError(500, `Track metadata removed but audio delete failed: ${err.message || err}`);
-      wrap.partial = true;
-      wrap.removed = removed;
-      throw wrap;
     }
   }
   return { removed: !!removed, audioDeleted: !!key };

@@ -139,40 +139,24 @@ window.LocalApiClient = (function () {
   async function putMusicAudio(id, buffer, { contentType, originalFilename, durationSec } = {}) {
     await ready();
     if (!available) throw Object.assign(new Error("API unavailable"), { status: 0 });
-    const headers = {
-      "Content-Type": contentType || "audio/mpeg",
-      "X-Original-Filename": originalFilename || "track.mp3"
-    };
-    if (durationSec != null && Number.isFinite(Number(durationSec))) {
-      headers["X-Audio-Duration"] = String(durationSec);
+
+    /* JSON + base64 stays inside application/json CSRF allowlist and survives proxies that abort raw audio PUTs. */
+    const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : new Uint8Array(buffer.buffer || buffer);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
     }
-    return trackWrite(`music-audio:${id}`, async () => {
-      let res;
-      try {
-        res = await fetch(`/api/catalogues/music/${encodeURIComponent(id)}/audio`, {
-          method: "PUT",
-          credentials: "same-origin",
-          headers,
-          body: buffer
-        });
-      } catch (err) {
-        throw Object.assign(
-          new Error(
-            err?.message === "Failed to fetch"
-              ? "Failed to fetch (upload interrupted — check file size / server, then retry)"
-              : err?.message || "Network request failed"
-          ),
-          { status: 0, cause: err }
-        );
-      }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw Object.assign(new Error(data.error || res.statusText || "Upload failed"), {
-          status: res.status
-        });
-      }
-      return data;
-    });
+    const dataBase64 = btoa(binary);
+
+    return trackWrite(`music-audio:${id}`, () =>
+      request("PUT", `/api/catalogues/music/${encodeURIComponent(id)}/audio`, {
+        dataBase64,
+        contentType: contentType || "audio/mpeg",
+        originalFilename: originalFilename || "track.mp3",
+        durationSec
+      })
+    );
   }
 
   async function getMusicPlayback(id) {
