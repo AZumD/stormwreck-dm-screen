@@ -82,6 +82,7 @@ Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional 
 - Catalogue browse/detail allowlist: item, skill, feature, spell, race, class, monster, location. Blocked: npc, pc.
 - Library attach requires character control; action must match entry type.
 - Mutable state whitelist: `hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`.
+- Player sheet UI includes **Death saves** (3 successes / 3 failures) and **Spell slots** (L1–L9 max/used). DM combat sheet mirrors the same for PCs.
 - Sheet whitelist: see Sheet whitelist section above.
 - Live tests use isolated fixtures; they must not mutate imported Althariel. See `docs/README/VALIDATE-PLAYER.md`.
 

@@ -135,6 +135,23 @@ window.MapPanel = (function () {
     return allowed;
   }
 
+  /** Prefer catalogue link ids; ignore legacy campaign-map ids (map-…). */
+  function resolveActiveMapId(campaignId, maps) {
+    const saved = window.CampaignMapState?.get(campaignId)?.activeMap;
+    if (saved && maps[saved]) return saved;
+    if (saved) {
+      const stripped = String(saved).replace(/^sw-/, "");
+      if (maps[stripped]) return stripped;
+      const withSw = saved.startsWith("sw-") ? saved : `sw-${saved}`;
+      const entry = findLocationEntry(withSw) || findLocationEntry(stripped);
+      if (entry) {
+        const link = locationLinkId(entry);
+        if (maps[link]) return link;
+      }
+    }
+    return Object.keys(maps)[0] || null;
+  }
+
   function locationEntryToMapDef(entry) {
     const linkId = locationLinkId(entry);
     const staticMap = window.MAPS?.[linkId];
@@ -223,9 +240,7 @@ window.MapPanel = (function () {
 
     let filters = loadFilters(campaignId);
     let maps = getEffectiveMaps(campaignId);
-    let activeMapId =
-      (window.CampaignMapState?.get(campaignId)?.activeMap) ||
-      Object.keys(maps)[0];
+    let activeMapId = resolveActiveMapId(campaignId, maps);
     if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0] || null;
 
     let spatialApi = null;
@@ -995,10 +1010,38 @@ window.MapPanel = (function () {
       });
     }
 
+    function renderInitiativeList() {
+      const el = document.getElementById("map-initiative");
+      if (!el) return;
+      const tracker = window.CampaignMapState?.get(campaignId)?.initiativeTracker || {};
+      const rows = Object.entries(tracker)
+        .map(([id, row]) => ({
+          id,
+          name: row?.name || id,
+          initiative: Number(row?.initiative) || 0,
+          kind: row?.kind || "combatant"
+        }))
+        .filter((r) => r.initiative !== 0)
+        .sort((a, b) => b.initiative - a.initiative || a.name.localeCompare(b.name));
+      if (!rows.length) {
+        el.innerHTML = "";
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      el.innerHTML = rows
+        .map(
+          (r) =>
+            `<li class="map-initiative__row" data-kind="${escape(r.kind)}"><span class="map-initiative__init">${escape(String(r.initiative))}</span><span class="map-initiative__name">${escape(r.name)}</span></li>`
+        )
+        .join("");
+    }
+
     activeInstance = {
       refresh() {
         rebuildMapSelect();
         renderMap();
+        renderInitiativeList();
         if (window.PartyRoster) {
           PartyRoster.syncWindowParty();
           PartyRoster.render(partyList);
@@ -1006,12 +1049,18 @@ window.MapPanel = (function () {
           renderParty(partyList);
         }
       },
+      refreshInitiative: renderInitiativeList,
       onLayoutChange
     };
+    renderInitiativeList();
   }
 
   function refresh() {
     activeInstance?.refresh?.();
+  }
+
+  function refreshInitiative() {
+    activeInstance?.refreshInitiative?.();
   }
 
   function onLayoutChange() {
@@ -1070,6 +1119,7 @@ window.MapPanel = (function () {
   return {
     init,
     refresh,
+    refreshInitiative,
     onLayoutChange,
     resolveMapImage,
     getEffectiveMaps,

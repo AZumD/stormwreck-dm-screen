@@ -70,6 +70,10 @@ if (!client.includes("importLocationUvtt") || !client.includes("getLocationUvttM
   fail("LocalApiClient missing location UVTT helpers");
 } else pass("LocalApiClient location UVTT");
 
+if (!client.includes("patchLocationUvtt") || !catMaps.includes("patchCalibration")) {
+  fail("Location UVTT display PATCH missing");
+} else pass("Location UVTT PATCH");
+
 if (!isle.includes("campaign-locations.js") || !isle.includes("campaign-location-picker")) {
   fail("Campaign HTML must load campaign locations modules");
 } else pass("Campaign HTML scripts");

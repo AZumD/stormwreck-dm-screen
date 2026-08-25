@@ -4632,6 +4632,91 @@ body.is-booting::before {
 .combat-sheet__reference-body p { margin: 0.35rem 0; }
 .combat-sheet__remove { margin-left: auto; }
 
+.combat-sheet__section-label {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.combat-sheet__hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+.combat-sheet__death-saves,
+.combat-sheet__spell-slots {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+
+.combat-sheet__ds-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.combat-sheet__ds-box input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.combat-sheet__slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.combat-sheet__slot-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.combat-sheet__slot-row input {
+  width: 2.4rem;
+  padding: 0.2rem 0.25rem;
+}
+
+.map-initiative {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(10, 14, 20, 0.45);
+}
+
+.map-initiative__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.2rem 0;
+  font-size: 0.82rem;
+}
+
+.map-initiative__init {
+  flex: 0 0 1.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.map-initiative__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Campaign locations panel */
 .campaign-locations__lede {
   color: var(--text-muted);

@@ -36,3 +36,21 @@ data/.tmp/
 data/**/*.tmp
 data/**/*.tmp.*
 data/.backup/
+
+# Local UVTT dumps / import scratch (never seed these)
+*.dd2vtt
+*.uvtt
+!test/fixtures/**
+
+# Runtime map assets (campaign-map path is legacy; catalogue uses maps/location/)
+data/assets/maps/campaign-map/
+data/assets/uvtt/
+data/campaigns/*/maps.json
+
+# Player PC catalogue mirrors created at runtime (keep intentional seed PCs tracked)
+data/catalogues/pc/pc-p3b-a-*.json
+
+# Accidental uploads under static assets/
+assets/maps/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*.jpg
+assets/maps/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*.png
+assets/maps/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*.webp

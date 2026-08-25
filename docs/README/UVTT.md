@@ -1,43 +1,43 @@
 # UVTT.md
 
 ## Purpose
-Universal VTT (`.dd2vtt` / `.uvtt`) import → normalized campaign maps with calibrated coordinates, measurement, and DM tokens.
+Universal VTT (`.dd2vtt` / `.uvtt`) import → calibrated maps for **location catalogue** entries. Campaigns pick which locations appear on the map panel.
 
-## Server
+## Canonical path (live)
 | Module | Role |
 |--------|------|
 | `server/lib/uvtt.js` | Parse/normalize UVTT JSON (incl. `objects_line_of_sight`) |
-| `server/lib/campaign-maps.js` | `maps.json` + campaign-scoped image files |
+| `server/lib/catalogue-location-maps.js` | Location UVTT sidecar + raster via assets |
 | `server/lib/map-distance.js` | World-space distance (pluggable modes) |
 
-## Persistence
 | Data | Path |
 |------|------|
-| Map metadata + geometry | `{DM_DATA_ROOT}/campaigns/{id}/maps.json` |
-| Extracted images | `{DM_DATA_ROOT}/assets/maps/campaign-map/{campaignId}/{mapId}.{ext}` |
-| Tokens | `map-state.json` → `tokens[mapId][]` |
-
-Images are **not** stored as base64 in JSON. Served via:
-
-`GET /api/campaigns/:campaignId/maps/:mapId/image` (DM-only)
+| Geometry + grid | `{DM_DATA_ROOT}/assets/uvtt/location/{id}.json` |
+| Extracted image | `{DM_DATA_ROOT}/assets/maps/location/{id}.{ext}` |
+| Summary on entry | catalogue `mapCalibration` (+ `mapImage` URL) |
+| Campaign membership | `locations.json` → map picker |
+| Tokens / pin positions | `map-state.json` keyed by **location link id** |
 
 ## APIs (DM)
 | Method | Path |
 |--------|------|
-| GET | `/api/campaigns/:id/maps` |
-| POST | `/api/campaigns/:id/maps/import-uvtt` `{ text, filename?, mapName? }` (body limit **64MB**) |
-| GET/PATCH/DELETE | `/api/campaigns/:id/maps/:mapId` |
-| GET | `/api/campaigns/:id/maps/:mapId/image` |
-| POST | `/api/campaigns/:id/maps/:mapId/distance` |
+| POST | `/api/catalogue-assets/location/:id/uvtt` `{ text, filename? }` (body limit **64MB**) |
+| GET | `/api/catalogue-assets/location/:id/uvtt` |
+| PATCH | `/api/catalogue-assets/location/:id/uvtt` `{ display?, scale? }` |
+| DELETE | `/api/catalogue-assets/location/:id/uvtt` |
 
-Large `.dd2vtt` files (tens of MB with embedded images) need the UVTT body limit; the default API cap is 25MB and used to surface as browser **Failed to fetch**.
+Upload UVTT in the **Location catalogue**. On the campaign screen: **Map → + Add location…** (or Locations panel). Map settings link to the catalogue — there is no campaign-level UVTT file upload.
 
 ## Client
 | File | Role |
 |------|------|
 | `js/core/map-distance.js` | Client distance / coord helpers |
-| `js/core/map-spatial.js` | Import UI, grid, measure, tokens |
-| `js/core/map-panel.js` | Integrates calibrated maps into selector |
+| `js/core/map-spatial.js` | Grid, measure, tokens; display prefs via location PATCH |
+| `js/core/map-panel.js` | Builds maps from campaign locations + catalogue |
+| `js/core/campaign-locations.js` | Which locations belong to the campaign |
+
+## Legacy (campaign `maps.json`)
+`server/lib/campaign-maps.js` remains as a library helper for older data/tests. **HTTP routes under `/api/campaigns/:id/maps` were removed** — the live map panel uses location catalogue UVTT only.
 
 ## Geometry
 Walls normalize from both `line_of_sight` and `objects_line_of_sight` with `source` retained for later lighting/LOS work. Portals and lights are stored but not simulated yet.

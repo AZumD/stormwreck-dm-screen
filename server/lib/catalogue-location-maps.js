@@ -67,8 +67,13 @@ async function importUvtt(type, locationId, { text, filename, name } = {}) {
     name: name || (filename ? String(filename).replace(/\.(dd2vtt|uvtt)$/i, "") : null)
   });
 
-  const dataUrl = `data:${image.mime};base64,${image.buffer.toString("base64")}`;
-  const imageResult = await assets.putFieldFromDataUrl(catType, id, "mapImage", dataUrl);
+  const imageResult = await assets.putFieldFromBuffer(
+    catType,
+    id,
+    "mapImage",
+    image.buffer,
+    image.mime
+  );
 
   const now = new Date().toISOString();
   const full = {
@@ -89,12 +94,25 @@ async function importUvtt(type, locationId, { text, filename, name } = {}) {
   await ensureDir(path.dirname(docPath));
   await writeJsonAtomic(docPath, full);
 
+  const mapCalibration = calibrationSummary(normalized, {
+    importedAt: now,
+    sourceFilename: filename ? String(filename) : null
+  });
+
+  const catalogues = require("./catalogues");
+  const entry = await catalogues.get(catType, id);
+  if (entry) {
+    await catalogues.upsert(catType, id, {
+      ...entry,
+      mapImage: imageResult.url,
+      mapCalibration,
+      updatedAt: Date.now()
+    });
+  }
+
   return {
     mapImage: imageResult.url,
-    mapCalibration: calibrationSummary(normalized, {
-      importedAt: now,
-      sourceFilename: filename ? String(filename) : null
-    })
+    mapCalibration
   };
 }
 
@@ -120,9 +138,54 @@ async function deleteUvtt(type, id) {
   return true;
 }
 
+/**
+ * Patch display / scale on a location UVTT sidecar and sync mapCalibration on the catalogue entry.
+ */
+async function patchCalibration(type, locationId, patch = {}) {
+  const catType = assertCatalogueType(type);
+  if (catType !== "location") {
+    const err = new Error("UVTT calibration patch is only supported for location catalogue entries");
+    err.status = 400;
+    throw err;
+  }
+  const id = assertSafeId(locationId, "entry id");
+  const full = await getFullMap(catType, id);
+  if (!full) {
+    const err = new Error("No UVTT map for this entry");
+    err.status = 404;
+    throw err;
+  }
+
+  if (patch.display && typeof patch.display === "object") {
+    full.display = { ...(full.display || {}), ...patch.display };
+  }
+  if (patch.scale && typeof patch.scale === "object") {
+    full.scale = { ...(full.scale || {}), ...patch.scale };
+  }
+  full.updatedAt = new Date().toISOString();
+
+  const docPath = uvttDocPath(catType, id);
+  await ensureDir(path.dirname(docPath));
+  await writeJsonAtomic(docPath, full);
+
+  const mapCalibration = calibrationSummary(full, full.import || {});
+  const catalogues = require("./catalogues");
+  const entry = await catalogues.get(catType, id);
+  if (entry) {
+    await catalogues.upsert(catType, id, {
+      ...entry,
+      mapCalibration,
+      updatedAt: Date.now()
+    });
+  }
+
+  return { map: full, mapCalibration };
+}
+
 module.exports = {
   importUvtt,
   getFullMap,
   deleteUvtt,
+  patchCalibration,
   calibrationSummary
 };

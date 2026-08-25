@@ -693,3 +693,47 @@ textarea { min-height: 6.5rem; resize: vertical; }
 @media (prefers-reduced-motion: reduce) {
   .sheet-section__chevron { transition: none; }
 }
+
+.death-saves .ds-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.ds-box {
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  padding: 0;
+}
+
+.ds-box.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.spell-slots .slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.slot-row input {
+  width: 2.6rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--elev);
+  color: var(--text);
+}

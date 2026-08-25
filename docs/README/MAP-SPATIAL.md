@@ -1,7 +1,7 @@
 # MAP-SPATIAL.js
 
 ## Purpose
-Calibrated / UVTT helpers for MapPanel: measure, grid overlay, DM tokens, UVTT import. Not a full VTT combat UI.
+Calibrated / UVTT helpers for MapPanel: measure, grid overlay, DM tokens. Not a full VTT combat UI.
 
 ## File
 `js/core/map-spatial.js` → `window.MapSpatial`
@@ -9,7 +9,9 @@ Calibrated / UVTT helpers for MapPanel: measure, grid overlay, DM tokens, UVTT i
 ## Chrome
 Prefers static campaign markup:
 - Primary actions: `#map-measure-btn`, `#map-add-token-btn` (shown when map is calibrated)
-- Settings body: UVTT import, kind badge, meta (grid dims / px/grid / LOS·portals·lights), grid toggle, snap, ft/grid
+- Settings body: link to **Location catalogue** for UVTT, kind badge, meta (grid dims / px/grid / LOS·portals·lights), grid toggle, snap, ft/grid
+
+Display/scale toggles persist via `PATCH /api/catalogue-assets/location/:id/uvtt` (`LocalApiClient.patchLocationUvtt`).
 
 Falls back to injecting chrome if older pages lack the slots.
 
@@ -26,6 +28,8 @@ Snap measure (Map settings) applies to both preview and final distance when chec
 `bind()` returns `spawnMonsterToken(entry)` — copies HP/AC once from the monster catalogue via `CombatSheetModal.buildMonsterToken`. Monsters render as compact **map pin dots** (same footprint as PC/NPC). Click opens the combat sheet (with **Remove from map**); Shift-click selects for distance; right-click also removes.
 
 ## API
-`loadCalibratedMaps(campaignId)`, `summaryToMapDef(summary)`, `bind(ctx)`, `attachChrome(panelBody)`, `ensureLayers(mapWorld)`
+`loadCalibratedMaps(campaignId)` (legacy campaign-maps list), `summaryToMapDef(summary)`, `bind(ctx)`, `attachChrome(panelBody)`, `ensureLayers(mapWorld)`
+
+Live maps come from `MapPanel.getEffectiveMaps` (campaign locations + catalogue), not from `loadCalibratedMaps`.
 
 See `docs/README/UVTT.md`, `docs/README/MAP-PANEL.md`, and `docs/README/COMBAT-SHEET-MODAL.md`.

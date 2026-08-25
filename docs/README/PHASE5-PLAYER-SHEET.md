@@ -38,7 +38,7 @@ Table `campaign_revealed_npcs (campaign_id, npc_id, revealed_by, revealed_at, no
 DM UI: “Reveal to players” checkbox on the NPC entity modal (`CampaignStateUI`). Player UI: **People** tab lists revealed contacts only. See `docs/README/REVEALED-NPCS.md`.
 
 ## Currency
-Optional `sheet.currency { cp, sp, ep, gp, pp }` in 5B (no field exists today).
+Optional `sheet.currency { cp, sp, ep, gp, pp }` — implemented in 5B (player sheet + APIs).
 
 ## 5A surfaces
 | Path | Role |

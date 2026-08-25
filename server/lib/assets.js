@@ -83,9 +83,9 @@ function parseDataUrl(dataUrl) {
   return { mime, buffer };
 }
 
-async function putFromDataUrl(kind, type, id, dataUrl) {
-  const { mime, buffer } = parseDataUrl(dataUrl);
-  const ext = EXT_BY_MIME[mime] || "bin";
+async function putFromBuffer(kind, type, id, buffer, mime) {
+  const safeMime = String(mime || "application/octet-stream").toLowerCase();
+  const ext = EXT_BY_MIME[safeMime] || "bin";
   const dir = assetDir(kind, type);
   await ensureDir(dir);
   const existing = await findExistingFile(kind, type, id);
@@ -94,14 +94,23 @@ async function putFromDataUrl(kind, type, id, dataUrl) {
   await writeBinaryAtomic(filePath, buffer);
   return {
     url: publicUrl(kind, type, id),
-    mime,
+    mime: safeMime,
     bytes: buffer.length,
     path: filePath
   };
 }
 
+async function putFromDataUrl(kind, type, id, dataUrl) {
+  const { mime, buffer } = parseDataUrl(dataUrl);
+  return putFromBuffer(kind, type, id, buffer, mime);
+}
+
 async function putFieldFromDataUrl(type, id, field, dataUrl) {
   return putFromDataUrl(fieldToKind(field), type, id, dataUrl);
+}
+
+async function putFieldFromBuffer(type, id, field, buffer, mime) {
+  return putFromBuffer(fieldToKind(field), type, id, buffer, mime);
 }
 
 async function readAsset(kind, type, id) {
@@ -131,7 +140,9 @@ module.exports = {
   fieldToKind,
   publicUrl,
   putFromDataUrl,
+  putFromBuffer,
   putFieldFromDataUrl,
+  putFieldFromBuffer,
   readAsset,
   deleteAsset,
   deleteField,

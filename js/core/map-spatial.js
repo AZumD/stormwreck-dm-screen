@@ -17,14 +17,9 @@ window.MapSpatial = (function () {
     return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   }
 
-  async function loadCalibratedMaps(campaignId) {
-    if (!window.LocalApiClient?.isAvailable?.()) return [];
-    try {
-      return await LocalApiClient.listCampaignMaps(campaignId);
-    } catch (err) {
-      console.warn("listCampaignMaps failed", err);
-      return [];
-    }
+  async function loadCalibratedMaps() {
+    /* Legacy campaign-maps API removed — maps come from location catalogue via MapPanel. */
+    return [];
   }
 
   function summaryToMapDef(summary) {
@@ -51,7 +46,7 @@ window.MapSpatial = (function () {
    * Falls back to injecting chrome when older pages lack the slots.
    */
   function attachChrome(panelBody) {
-    if (document.getElementById("map-measure-btn") && document.getElementById("map-uvtt-file")) {
+    if (document.getElementById("map-measure-btn") && document.getElementById("map-show-grid")) {
       return;
     }
     if (!panelBody || document.getElementById("map-spatial-chrome")) return;
@@ -70,10 +65,9 @@ window.MapSpatial = (function () {
     const settingsHtml = `
       <div id="map-spatial-chrome" class="map-spatial-chrome">
         <div class="map-spatial-row">
-          <label class="map-uvtt-import btn-like">
-            Import UVTT
-            <input type="file" id="map-uvtt-file" accept=".dd2vtt,.uvtt,application/json" hidden>
-          </label>
+          <a class="map-uvtt-import btn-like" id="map-uvtt-catalogue-link" href="/location-katalog/index.html">
+            Manage UVTT in Location catalogue
+          </a>
           <span id="map-kind-badge" class="map-kind-badge" hidden></span>
         </div>
         <p id="map-spatial-meta" class="map-spatial-meta" hidden></p>
@@ -158,7 +152,6 @@ window.MapSpatial = (function () {
     let fullMapCache = {};
 
     const els = {
-      file: document.getElementById("map-uvtt-file"),
       badge: document.getElementById("map-kind-badge"),
       meta: document.getElementById("map-spatial-meta"),
       tools: document.getElementById("map-calibrated-tools"),
@@ -182,25 +175,22 @@ window.MapSpatial = (function () {
     async function ensureFull(mapId) {
       if (fullMapCache[mapId]) return fullMapCache[mapId];
       const summary = activeMap();
-      if (summary?.catalogueId && window.LocalApiClient?.getLocationUvttMap) {
+      const catalogueId =
+        summary?.catalogueId ||
+        (summary?.id ? `sw-${summary.id}` : null) ||
+        mapId;
+      if (catalogueId && window.LocalApiClient?.getLocationUvttMap) {
         try {
-          const full = await LocalApiClient.getLocationUvttMap(summary.catalogueId);
+          const full = await LocalApiClient.getLocationUvttMap(catalogueId);
           if (full) {
-            fullMapCache[mapId] = { ...full, id: mapId, name: summary.title || full.name };
+            fullMapCache[mapId] = { ...full, id: mapId, name: summary?.title || full.name };
             return fullMapCache[mapId];
           }
-        } catch {
-          /* fall through */
+        } catch (err) {
+          console.warn("location UVTT load failed", err);
         }
       }
-      if (!window.LocalApiClient?.isAvailable?.()) return null;
-      try {
-        const map = await LocalApiClient.getCampaignMap(campaignId, mapId);
-        fullMapCache[mapId] = map;
-        return map;
-      } catch {
-        return null;
-      }
+      return null;
     }
 
     function loadTokens() {
@@ -473,32 +463,35 @@ window.MapSpatial = (function () {
       if (layers.measure) layers.measure.innerHTML = "";
     }
 
-    if (els.file) {
-      els.file.addEventListener("change", async () => {
-        const file = els.file.files && els.file.files[0];
-        els.file.value = "";
-        window.alert(
-          "Import UVTT in the Location catalogue for this place, then add that location to this campaign under Locations."
-        );
-      });
-    }
-
     async function persistDisplayPatch(partial) {
       const map = activeMap();
-      if (!map?.calibrated || !LocalApiClient?.patchCampaignMap) return;
+      if (!map?.calibrated) return;
+      const catalogueId = map.catalogueId || (map.id ? `sw-${map.id}` : null);
+      if (!catalogueId || !LocalApiClient?.patchLocationUvtt) return;
       const patch = {};
       if (partial.display) patch.display = { ...(map.display || {}), ...partial.display };
       if (partial.scale) patch.scale = { ...(map.scale || {}), ...partial.scale };
       try {
-        const res = await LocalApiClient.patchCampaignMap(campaignId, map.id, patch);
-        fullMapCache[map.id] = res.map;
+        const res = await LocalApiClient.patchLocationUvtt("location", catalogueId, patch);
+        const next = res.map || {};
+        fullMapCache[map.id] = { ...next, id: map.id, name: map.title || next.name };
         Object.assign(map, {
-          display: res.map.display,
-          scale: res.map.scale
+          display: next.display || patch.display,
+          scale: next.scale || patch.scale
         });
+        if (res.mapCalibration && window.CatalogueStore?.upsert) {
+          const entry = CatalogueStore.get?.("location", catalogueId);
+          if (entry) {
+            await CatalogueStore.upsert("location", {
+              ...entry,
+              mapCalibration: res.mapCalibration
+            });
+          }
+        }
         await refreshChrome();
       } catch (err) {
         console.warn(err);
+        window.alert(err?.message || "Could not save map display settings.");
       }
     }
 

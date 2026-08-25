@@ -249,6 +249,13 @@ window.CatalogueConfigs = {
             type: "text",
             grid: "full",
             placeholder: "poisoned, prone…"
+          },
+          {
+            id: "combatInitiative",
+            label: "Combat initiative",
+            type: "text",
+            grid: "third",
+            placeholder: "0 = not in turn order"
           }
         ]
       },
@@ -349,6 +356,7 @@ window.CatalogueConfigs = {
       hp: "",
       speed: "",
       combatConditions: "",
+      combatInitiative: "0",
       traits: "",
       ideals: "",
       bonds: "",

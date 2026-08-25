@@ -144,6 +144,9 @@
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (window.CatalogueStore) await CatalogueStore.bootstrap();
     if (window.CampaignPrefs) await CampaignPrefs.bootstrap(campaignId);
+    if (window.LayoutPanels?.applyChromeFromPrefs && window.CampaignPrefs) {
+      LayoutPanels.applyChromeFromPrefs(CampaignPrefs.get(campaignId));
+    }
     if (window.CampaignMapState) await CampaignMapState.bootstrap(campaignId);
     if (window.CampaignLocations) await CampaignLocations.bootstrap(campaignId);
     if (window.SectionEditor?.bootstrap) {
@@ -1537,12 +1540,13 @@
 
   function renderChecklistView() {
     const state = getChecklistState();
-    const groups = ADVENTURE.checklist
+    const list = ADVENTURE.checklist || [];
+    const groups = list
       .map(
         (g) => `
         <div class="checklist-group">
           <h3>${escapeHtml(g.group)}</h3>
-          ${g.items
+          ${(g.items || [])
             .map((item) => {
               const done = !!state[item.id];
               return `
@@ -1556,6 +1560,9 @@
       )
       .join("");
 
+    if (!list.length) {
+      return `<h1>${t.headings.checklist}</h1><p>${t.checklistIntro || ""}</p><p class="empty-state">No progress checklist for this campaign yet.</p>`;
+    }
     return `<h1>${t.headings.checklist}</h1><p>${t.checklistIntro}</p>${groups}`;
   }
 

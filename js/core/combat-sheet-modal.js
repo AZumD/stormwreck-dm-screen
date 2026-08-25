@@ -60,6 +60,82 @@ window.CombatSheetModal = (function () {
       .filter(Boolean);
   }
 
+  function normalizeInitiative(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function parseDeathSaves(raw) {
+    const d = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    return {
+      successes: Math.min(3, Math.max(0, Number(d.successes) || 0)),
+      failures: Math.min(3, Math.max(0, Number(d.failures) || 0))
+    };
+  }
+
+  function parseSpellSlots(raw) {
+    const src = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const out = {};
+    for (let i = 1; i <= 9; i++) {
+      const row = src[String(i)] || src[i] || {};
+      const max = Math.max(0, Number(row.max) || 0);
+      const used = Math.max(0, Number(row.used) || 0);
+      out[String(i)] = { max, used: Math.min(used, max || used) };
+    }
+    return out;
+  }
+
+  function deathSavesHtml(saves) {
+    const s = parseDeathSaves(saves);
+    const boxes = (name, count) =>
+      [0, 1, 2]
+        .map(
+          (i) =>
+            `<label class="combat-sheet__ds-box"><input type="checkbox" name="${name}" data-index="${i}" ${
+              i < count ? "checked" : ""
+            }></label>`
+        )
+        .join("");
+    return `
+      <div class="combat-sheet__death-saves" data-death-saves>
+        <p class="combat-sheet__section-label">Death saves</p>
+        <div class="combat-sheet__ds-row"><span>Successes</span>${boxes("dsSuccess", s.successes)}</div>
+        <div class="combat-sheet__ds-row"><span>Failures</span>${boxes("dsFail", s.failures)}</div>
+        <button type="button" class="btn" data-reset-death-saves>Reset</button>
+      </div>`;
+  }
+
+  function spellSlotsHtml(slots) {
+    const parsed = parseSpellSlots(slots);
+    const rows = [];
+    for (let i = 1; i <= 9; i++) {
+      const row = parsed[String(i)];
+      rows.push(`
+        <label class="combat-sheet__slot-row">
+          <span>L${i}</span>
+          <input type="number" name="slotMax${i}" min="0" step="1" value="${row.max}" title="Max" aria-label="Level ${i} max">
+          <span class="combat-sheet__slash">/</span>
+          <input type="number" name="slotUsed${i}" min="0" step="1" value="${row.used}" title="Used" aria-label="Level ${i} used">
+        </label>`);
+    }
+    return `
+      <div class="combat-sheet__spell-slots" data-spell-slots>
+        <p class="combat-sheet__section-label">Spell slots <span class="combat-sheet__hint">max / used</span></p>
+        <div class="combat-sheet__slot-grid">${rows.join("")}</div>
+      </div>`;
+  }
+
+  function syncInitiativeTracker(key, name, initiative, kind) {
+    const cid = campaignId();
+    if (!cid || !window.CampaignMapState || !key) return;
+    const all = { ...(CampaignMapState.get(cid)?.initiativeTracker || {}) };
+    const init = normalizeInitiative(initiative);
+    if (!init) delete all[key];
+    else all[key] = { name: name || key, initiative: init, kind: kind || "combatant" };
+    CampaignMapState.patch(cid, { initiativeTracker: all });
+    window.MapPanel?.refreshInitiative?.();
+  }
+
   function setStatus(msg, isError) {
     const el = bodyEl?.querySelector("[data-combat-status]");
     if (!el) return;
@@ -139,15 +215,32 @@ window.CombatSheetModal = (function () {
     const hpMax = bodyEl.querySelector("[name=hpMax]")?.value;
     const hpTemp = bodyEl.querySelector("[name=hpTemp]")?.value;
     const ac = bodyEl.querySelector("[name=ac]")?.value;
+    const initiative = bodyEl.querySelector("[name=initiative]")?.value;
     const conditions = bodyEl.querySelector("[name=conditions]")?.value ?? "";
     const inspiration = Boolean(bodyEl.querySelector("[name=inspiration]")?.checked);
+    const deathSaves = {
+      successes: bodyEl.querySelectorAll("[name=dsSuccess]:checked").length,
+      failures: bodyEl.querySelectorAll("[name=dsFail]:checked").length
+    };
+    const spellSlots = {};
+    for (let i = 1; i <= 9; i++) {
+      const max = Number(bodyEl.querySelector(`[name=slotMax${i}]`)?.value);
+      const used = Number(bodyEl.querySelector(`[name=slotUsed${i}]`)?.value);
+      spellSlots[String(i)] = {
+        max: Number.isFinite(max) ? Math.max(0, max) : 0,
+        used: Number.isFinite(used) ? Math.max(0, used) : 0
+      };
+    }
     return {
       hpCurrent: hpCurrent === "" ? null : Number(hpCurrent),
       hpMax: hpMax === "" ? null : Number(hpMax),
       hpTemp: hpTemp === "" ? 0 : Number(hpTemp),
       ac: ac === "" ? null : Number(ac),
+      initiative: normalizeInitiative(initiative),
       conditions,
-      inspiration
+      inspiration,
+      deathSaves,
+      spellSlots
     };
   }
 
@@ -229,6 +322,10 @@ window.CombatSheetModal = (function () {
             <input type="number" name="hpTemp" value="${escapeHtml(model.hpTemp ?? 0)}" step="1">
           </label>`
         : "";
+    const pcExtras =
+      model.kind === "pc"
+        ? `${deathSavesHtml(model.deathSaves)}${spellSlotsHtml(model.spellSlots)}`
+        : "";
     const removeFromMapBtn =
       model.removeFromMap
         ? `<button type="button" class="btn btn-danger combat-sheet__remove" data-remove-from-map>Remove from map</button>`
@@ -263,12 +360,16 @@ window.CombatSheetModal = (function () {
           <label class="combat-sheet__field">AC
             <input type="number" name="ac" value="${escapeHtml(model.ac ?? "")}" step="1">
           </label>
+          <label class="combat-sheet__field">Initiative
+            <input type="number" name="initiative" value="${escapeHtml(model.initiative ?? 0)}" step="1" title="0 hides from turn order">
+          </label>
           ${temp}
           ${insp}
           <label class="combat-sheet__field combat-sheet__field--full">Conditions
             <textarea name="conditions" rows="2" placeholder="poisoned, prone…">${escapeHtml(model.conditions || "")}</textarea>
           </label>
         </div>
+        ${pcExtras}
         <div class="combat-sheet__reference-wrap" data-combat-reference hidden></div>
         <div class="combat-sheet__footer">
           <button type="button" class="btn" data-combat-save>Save</button>
@@ -281,6 +382,13 @@ window.CombatSheetModal = (function () {
 
     bodyEl.querySelectorAll("[data-hp-delta]").forEach((btn) => {
       btn.addEventListener("click", () => adjustHp(Number(btn.dataset.hpDelta) || 0));
+    });
+    bodyEl.querySelector("[data-reset-death-saves]")?.addEventListener("click", () => {
+      bodyEl.querySelectorAll("[name=dsSuccess], [name=dsFail]").forEach((el) => {
+        el.checked = false;
+      });
+      dirty = true;
+      scheduleSave();
     });
     bodyEl.querySelectorAll("input, textarea").forEach((el) => {
       el.addEventListener("input", scheduleSave);
@@ -310,6 +418,7 @@ window.CombatSheetModal = (function () {
     const list = Array.isArray(all[mapId]) ? all[mapId].filter((t) => t.id !== current.tokenId) : [];
     all[mapId] = list;
     CampaignMapState.patch(cid, { tokens: all });
+    syncInitiativeTracker(`tok:${current.tokenId}`, current.name, 0, "monster");
     current.onRemoved?.();
     close();
   }
@@ -347,8 +456,10 @@ window.CombatSheetModal = (function () {
       catalogueId,
       characterId: bundle.characterId,
       campaignId: bundle.campaignId,
-      name: bundle.character?.name || opts.name || entry?.name || "PC"
+      name: bundle.character?.name || opts.name || entry?.name || "PC",
+      extras: state.extras && typeof state.extras === "object" ? { ...state.extras } : {}
     };
+    const extras = current.extras;
     renderShell({
       kind: "pc",
       badge: "PC",
@@ -361,8 +472,11 @@ window.CombatSheetModal = (function () {
       hpMax: state.hp_max ?? entry?.hpMax ?? null,
       hpTemp: state.hp_temp ?? 0,
       ac: sheet.ac ?? entry?.ac ?? null,
+      initiative: normalizeInitiative(extras.combat_initiative),
       conditions: conditionsToText(state.conditions),
       inspiration: Boolean(state.inspiration),
+      deathSaves: parseDeathSaves(state.death_saves),
+      spellSlots: parseSpellSlots(state.spell_slots),
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "pc")
     });
     fillCombatReference({ entityId: opts.entityId, catalogueId });
@@ -392,6 +506,7 @@ window.CombatSheetModal = (function () {
       hpCurrent: hp.current,
       hpMax: hp.max,
       ac: parseAc(entry.ac),
+      initiative: normalizeInitiative(entry.combatInitiative),
       conditions: entry.combatConditions || "",
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "npc")
     });
@@ -429,6 +544,7 @@ window.CombatSheetModal = (function () {
       hpCurrent: token.hpCurrent ?? null,
       hpMax: token.hpMax ?? null,
       ac: token.ac ?? null,
+      initiative: normalizeInitiative(token.initiative),
       conditions: token.conditions || "",
       removeFromMap: true,
       catalogueOpen: token.catalogueId
@@ -440,16 +556,25 @@ window.CombatSheetModal = (function () {
   }
 
   async function savePc(form) {
+    const extras = {
+      ...(current.extras || {}),
+      combat_initiative: normalizeInitiative(form.initiative)
+    };
+    current.extras = extras;
     await LocalApiClient.putCharacterState(current.campaignId, current.characterId, {
       hp_current: form.hpCurrent,
       hp_max: form.hpMax,
       hp_temp: Number.isFinite(form.hpTemp) ? form.hpTemp : 0,
       conditions: textToConditions(form.conditions),
-      inspiration: Boolean(form.inspiration)
+      inspiration: Boolean(form.inspiration),
+      death_saves: parseDeathSaves(form.deathSaves),
+      spell_slots: parseSpellSlots(form.spellSlots),
+      extras
     });
     if (form.ac != null && Number.isFinite(form.ac)) {
       await LocalApiClient.patchCharacter(current.campaignId, current.characterId, { ac: form.ac });
     }
+    syncInitiativeTracker(`pc:${current.characterId}`, current.name, form.initiative, "pc");
     refreshParty();
   }
 
@@ -462,8 +587,10 @@ window.CombatSheetModal = (function () {
     else if (cur !== "") entry.hp = String(cur);
     entry.ac = Number.isFinite(form.ac) ? String(form.ac) : form.ac == null ? entry.ac || "" : String(form.ac);
     entry.combatConditions = form.conditions || "";
+    entry.combatInitiative = normalizeInitiative(form.initiative);
     current.entry = await CatalogueStore.upsert("npc", entry);
     if (window.EntityRegistry?.build) EntityRegistry.build();
+    syncInitiativeTracker(`npc:${current.catalogueId}`, current.name, form.initiative, "npc");
     refreshParty();
   }
 
@@ -480,10 +607,12 @@ window.CombatSheetModal = (function () {
       hpCurrent: form.hpCurrent,
       hpMax: form.hpMax,
       ac: form.ac,
-      conditions: form.conditions || ""
+      conditions: form.conditions || "",
+      initiative: normalizeInitiative(form.initiative)
     };
     all[mapId] = list;
     CampaignMapState.patch(cid, { tokens: all });
+    syncInitiativeTracker(`tok:${current.tokenId}`, current.name, form.initiative, "monster");
   }
 
   async function save() {
@@ -561,7 +690,8 @@ window.CombatSheetModal = (function () {
       hpCurrent: hp.current,
       hpMax: hp.max,
       ac: parseAc(entry?.ac),
-      conditions: ""
+      conditions: "",
+      initiative: 0
     };
   }
 
@@ -571,6 +701,9 @@ window.CombatSheetModal = (function () {
     buildMonsterToken,
     parseHpBlob,
     parseAc,
+    parseDeathSaves,
+    parseSpellSlots,
+    normalizeInitiative,
     _readForm: readForm,
     _textToConditions: textToConditions
   };

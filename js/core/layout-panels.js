@@ -143,7 +143,12 @@ window.LayoutPanels = (function () {
       collapse.setAttribute("aria-label", collapsed ? t.showNav || "Show navigation" : t.hideNav || "Hide navigation");
     }
 
-    if (save) localStorage.setItem(sidebarStorageKey(), collapsed ? "1" : "0");
+    if (save) {
+      localStorage.setItem(sidebarStorageKey(), collapsed ? "1" : "0");
+      if (window.CampaignPrefs?.patch) {
+        CampaignPrefs.patch(campaignId(), { sidebarCollapsed: collapsed });
+      }
+    }
   }
 
   function setMapCollapsed(collapsed, save = true) {
@@ -182,7 +187,12 @@ window.LayoutPanels = (function () {
       collapse.setAttribute("aria-label", collapsed ? t.showMap || "Show map" : t.hideMap || "Hide map");
     }
 
-    if (save) localStorage.setItem(mapStorageKey(), collapsed ? "1" : "0");
+    if (save) {
+      localStorage.setItem(mapStorageKey(), collapsed ? "1" : "0");
+      if (window.CampaignPrefs?.patch) {
+        CampaignPrefs.patch(campaignId(), { mapPanelCollapsed: collapsed });
+      }
+    }
   }
 
   function handleClick(event) {
@@ -220,6 +230,18 @@ window.LayoutPanels = (function () {
     }
   }
 
+  function applyChromeFromPrefs(prefs) {
+    if (!prefs || typeof prefs !== "object") return;
+    if (typeof prefs.sidebarCollapsed === "boolean") {
+      setNavCollapsed(prefs.sidebarCollapsed, false);
+      localStorage.setItem(sidebarStorageKey(), prefs.sidebarCollapsed ? "1" : "0");
+    }
+    if (typeof prefs.mapPanelCollapsed === "boolean") {
+      setMapCollapsed(prefs.mapPanelCollapsed, false);
+      localStorage.setItem(mapStorageKey(), prefs.mapPanelCollapsed ? "1" : "0");
+    }
+  }
+
   function init() {
     const app = appEl();
     if (!app) return;
@@ -229,8 +251,15 @@ window.LayoutPanels = (function () {
 
     document.addEventListener("click", handleClick);
 
-    const navCollapsed = localStorage.getItem(sidebarStorageKey()) === "1";
-    const mapCollapsed = localStorage.getItem(mapStorageKey()) === "1";
+    const prefs = window.CampaignPrefs?.get?.(campaignId());
+    const navCollapsed =
+      typeof prefs?.sidebarCollapsed === "boolean"
+        ? prefs.sidebarCollapsed
+        : localStorage.getItem(sidebarStorageKey()) === "1";
+    const mapCollapsed =
+      typeof prefs?.mapPanelCollapsed === "boolean"
+        ? prefs.mapPanelCollapsed
+        : localStorage.getItem(mapStorageKey()) === "1";
 
     mapMode = "sidebar";
     setMapCollapsed(mapCollapsed, false);
@@ -248,7 +277,8 @@ window.LayoutPanels = (function () {
     setMapCollapsed,
     setMapMode,
     getMapMode,
-    toggleMapExpanded
+    toggleMapExpanded,
+    applyChromeFromPrefs
   };
 })();
 

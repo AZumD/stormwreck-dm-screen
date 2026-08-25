@@ -226,46 +226,18 @@ window.LocalApiClient = (function () {
     );
   }
 
-  async function exportAll() {
-    return request("GET", "/api/export");
-  }
-
-  async function listCampaignMaps(campaignId) {
-    const data = await request("GET", `/api/campaigns/${encodeURIComponent(campaignId)}/maps`);
-    return data.maps || [];
-  }
-
-  async function getCampaignMap(campaignId, mapId) {
-    const data = await request(
-      "GET",
-      `/api/campaigns/${encodeURIComponent(campaignId)}/maps/${encodeURIComponent(mapId)}`
-    );
-    return data.map;
-  }
-
-  async function importUvttMap(campaignId, payload) {
-    return trackWrite(`maps:${campaignId}:import`, () =>
-      request("POST", `/api/campaigns/${encodeURIComponent(campaignId)}/maps/import-uvtt`, payload)
-    );
-  }
-
-  async function patchCampaignMap(campaignId, mapId, patch) {
-    return trackWrite(`maps:${campaignId}:${mapId}`, () =>
+  async function patchLocationUvtt(type, id, patch) {
+    return trackWrite(`uvtt:${type}:${id}:patch`, () =>
       request(
         "PATCH",
-        `/api/campaigns/${encodeURIComponent(campaignId)}/maps/${encodeURIComponent(mapId)}`,
+        `/api/catalogue-assets/${encodeURIComponent(type)}/${encodeURIComponent(id)}/uvtt`,
         patch
       )
     );
   }
 
-  async function deleteCampaignMap(campaignId, mapId) {
-    return trackWrite(`maps:${campaignId}:${mapId}:del`, () =>
-      request(
-        "DELETE",
-        `/api/campaigns/${encodeURIComponent(campaignId)}/maps/${encodeURIComponent(mapId)}`
-      )
-    );
+  async function exportAll() {
+    return request("GET", "/api/export");
   }
 
   async function listRevealedNpcs(campaignId) {
@@ -367,12 +339,8 @@ window.LocalApiClient = (function () {
     importLocationUvtt,
     getLocationUvttMap,
     deleteLocationUvtt,
+    patchLocationUvtt,
     exportAll,
-    listCampaignMaps,
-    getCampaignMap,
-    importUvttMap,
-    patchCampaignMap,
-    deleteCampaignMap,
     listRevealedNpcs,
     revealNpc,
     unrevealNpc,

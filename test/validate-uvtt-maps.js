@@ -211,26 +211,9 @@ else pass("distance uses scale.distancePerGrid");
     });
   }
 
-  const imgRes = await httpRequest(
-    "GET",
-    `/api/campaigns/${campaignId}/maps/${imported.id}/image`
-  );
-  if (imgRes.status !== 200 || !(imgRes.raw && imgRes.raw.length)) fail("campaign map image route");
-  else pass("campaign-scoped map image route");
-
-  const badImport = await httpRequest("POST", `/api/campaigns/${campaignId}/maps/import-uvtt`, {
-    body: { text: "{bad", filename: "x.uvtt" }
-  });
-  if (badImport.status !== 400) fail(`malformed import HTTP ${badImport.status}`);
-  else pass("malformed import returns useful error");
-
-  const distRes = await httpRequest(
-    "POST",
-    `/api/campaigns/${campaignId}/maps/${imported.id}/distance`,
-    { body: { from: { x: 0, y: 0 }, to: { x: 1, y: 0 } } }
-  );
-  if (distRes.status !== 200 || distRes.data.distance !== 10) fail("distance API uses patched scale");
-  else pass("distance API");
+  const gone = await httpRequest("GET", `/api/campaigns/${campaignId}/maps`);
+  if (gone.status !== 404) fail(`legacy campaign maps list should be gone (${gone.status})`);
+  else pass("legacy campaign maps HTTP removed");
 
   /* token coordinate persistence shape in map-state */
   const token = {
@@ -241,19 +224,23 @@ else pass("distance uses scale.distancePerGrid");
     y: 2.25,
     size: 1,
     visible: true,
-    imageUrl: null
+    imageUrl: null,
+    initiative: 12
   };
   await campaigns.putDocument(campaignId, "map-state", {
-    activeMap: imported.id,
+    activeMap: "dragons-rest",
     filters: null,
     pinPositions: {},
     partyPositions: {},
     customPins: {},
-    tokens: { [imported.id]: [token] }
+    tokens: { "dragons-rest": [token] },
+    initiativeTracker: { "tok-test-1": { name: "Marker", initiative: 12, kind: "monster" } }
   });
   const ms = await campaigns.getDocument(campaignId, "map-state");
-  if (ms.tokens?.[imported.id]?.[0]?.x !== 1.5) fail("token coordinate persistence");
+  if (ms.tokens?.["dragons-rest"]?.[0]?.x !== 1.5) fail("token coordinate persistence");
   else pass("token coordinate persistence");
+  if (ms.initiativeTracker?.["tok-test-1"]?.initiative !== 12) fail("initiativeTracker persistence");
+  else pass("initiativeTracker persistence");
 
   /* static UI wiring checks */
   const mapPanel = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
@@ -261,26 +248,40 @@ else pass("distance uses scale.distancePerGrid");
   const mapDistClient = fs.readFileSync(path.join(root, "js/core/map-distance.js"), "utf8");
   if (!mapDistClient.includes("distanceBetween")) fail("client MapDistance missing");
   else pass("client MapDistance module");
-  if (!mapSpatial.includes("map-uvtt-file") || !mapSpatial.includes("Location catalogue")) {
+  if (!mapSpatial.includes("map-uvtt-catalogue-link") || !mapSpatial.includes("Location catalogue")) {
     fail("map spatial UVTT UI missing");
   } else pass("map spatial UVTT import UI");
   if (!mapPanel.includes("getEffectiveMaps") || !mapPanel.includes("MapSpatial")) {
     fail("map-panel calibrated integration missing");
   } else pass("map-panel calibrated / UVTT integration");
+  if (!mapSpatial.includes("patchLocationUvtt")) {
+    fail("map-spatial should persist display via location UVTT PATCH");
+  } else pass("map-spatial location UVTT display patch");
   if (!mapSpatial.includes("objects_line_of_sight") && !fixtureText.includes("objects_line_of_sight")) {
     fail("objects_line_of_sight fixture missing");
   } else pass("objects_line_of_sight fixture present");
 
   const httpUtilSrc = fs.readFileSync(path.join(root, "server/lib/http-util.js"), "utf8");
   const apiSrc = fs.readFileSync(path.join(root, "server/routes/api.js"), "utf8");
+  const clientSrc = fs.readFileSync(path.join(root, "js/core/local-api-client.js"), "utf8");
+  const catMapsSrc = fs.readFileSync(path.join(root, "server/lib/catalogue-location-maps.js"), "utf8");
+  if (!clientSrc.includes("patchLocationUvtt")) {
+    fail("LocalApiClient missing patchLocationUvtt");
+  } else pass("LocalApiClient patchLocationUvtt");
+  if (!catMapsSrc.includes("patchCalibration") || !apiSrc.includes('"PATCH"')) {
+    fail("catalogue-location-maps / API missing UVTT PATCH");
+  } else pass("catalogue location UVTT patchCalibration");
   if (!httpUtilSrc.includes("UVTT_BODY_LIMIT") || !httpUtilSrc.includes("64 * 1024 * 1024")) {
     fail("http-util missing UVTT_BODY_LIMIT (64MB)");
   } else pass("UVTT body limit constant");
   const uvttLimitCalls = (apiSrc.match(/readJsonBody\(req,\s*\{\s*limit:\s*UVTT_BODY_LIMIT\s*\}/g) || [])
     .length;
-  if (uvttLimitCalls < 2) {
-    fail("import-uvtt and catalogue uvtt routes must use readJsonBody(req, { limit: UVTT_BODY_LIMIT })");
+  if (uvttLimitCalls < 1) {
+    fail("catalogue uvtt route must use readJsonBody(req, { limit: UVTT_BODY_LIMIT })");
   } else pass("UVTT routes use raised body limit");
+  if (apiSrc.includes("campaignMaps") || apiSrc.includes("/maps/import-uvtt")) {
+    fail("legacy campaign maps API should be removed from routes");
+  } else pass("legacy campaign maps API removed");
 
   const bigPayload = JSON.stringify({
     text: "x".repeat(26 * 1024 * 1024),

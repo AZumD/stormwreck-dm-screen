@@ -148,15 +148,16 @@
             </div>
           </div>
 
+          <ol id="map-initiative" class="map-initiative" hidden aria-label="Initiative order"></ol>
+
           <details id="map-settings" class="map-settings">
             <summary class="map-settings__summary">Map settings</summary>
             <div id="map-settings-body" class="map-settings__body">
               <div id="map-spatial-chrome" class="map-spatial-chrome">
                 <div class="map-spatial-row">
-                  <label class="map-uvtt-import btn-like" title="Import UVTT in the Location catalogue, then add that location here">
-                    UVTT via Location catalogue
-                    <input type="file" id="map-uvtt-file" accept=".dd2vtt,.uvtt,application/json" hidden>
-                  </label>
+                  <a class="map-uvtt-import btn-like" id="map-uvtt-catalogue-link" href="/location-katalog/index.html">
+                    Manage UVTT in Location catalogue
+                  </a>
                   <span id="map-kind-badge" class="map-kind-badge" hidden></span>
                 </div>
                 <p id="map-spatial-meta" class="map-spatial-meta" hidden></p>

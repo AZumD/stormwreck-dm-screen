@@ -43,8 +43,8 @@ for (const [label, html] of [
     fail(`${label} missing Layers popover / filters`);
   } else pass(`${label} has Layers popover`);
 
-  if (!html.includes('id="map-settings"') || !html.includes("map-uvtt-file")) {
-    fail(`${label} missing collapsible map settings / UVTT`);
+  if (!html.includes('id="map-settings"') || !html.includes("location-katalog")) {
+    fail(`${label} missing collapsible map settings / Location catalogue link`);
   } else pass(`${label} has map settings`);
 
   if (html.includes("party-section") && html.includes('data-map-tab-panel="party"')) {

@@ -1,7 +1,7 @@
 # COMBAT-SHEET-MODAL.js
 
 ## Purpose
-Shared DM combat sheet for live HP / AC / conditions during play. Opens from party cards, map pins (PC/NPC), and monster combat tokens.
+Shared DM combat sheet for live HP / AC / conditions / initiative during play. Opens from party cards, map pins (PC/NPC), and monster combat tokens.
 
 ## File
 `js/core/combat-sheet-modal.js` → `window.CombatSheetModal`
@@ -10,14 +10,19 @@ Shared DM combat sheet for live HP / AC / conditions during play. Opens from par
 
 | Kind | Open from | Save target |
 |------|-----------|-------------|
-| **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration) + sheet `ac`; remirrors to PC catalogue |
-| **NPC** | Party / map pin | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`); NPC memory enricher still attaches |
-| **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` — never writes the monster catalogue |
+| **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `extras.combat_initiative`) + sheet `ac`; remirrors to PC catalogue |
+| **NPC** | Party / map pin | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`, `combatInitiative`); NPC memory enricher still attaches |
+| **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` (incl. `initiative`) — never writes the monster catalogue |
+
+## Initiative
+- Number input on every combat sheet (default `0`)
+- Values other than `0` sync into `map-state.initiativeTracker` and appear under the map (`#map-initiative`), highest first
+- Clearing to `0` removes the combatant from the list
 
 ## UI
 - Name, type badge, portrait
-- HP current / max with ±1, AC, conditions (freeform)
-- PC: temp HP + inspiration
+- HP current / max with ±1, AC, initiative, conditions (freeform)
+- PC: temp HP, inspiration, death saves (3/3), spell slots L1–L9 (max / used)
 - **Combat reference** — resolved catalogue stat block (speed, saves, actions, spells, equipment, etc.; HP/AC omitted because they are editable above)
 - Autosave on blur / short debounce; Save button; last-saved hint
 - Monster token sheet: **Remove from map** button (also right-click the dot)
@@ -30,4 +35,4 @@ Shared DM combat sheet for live HP / AC / conditions during play. Opens from par
 `EntityRegistry.byType` dedupes alias keys so add-monster / add-NPC pickers list each catalogue entry once.
 
 ## Related
-`LocalApiClient` character helpers, `CatalogueStore` NPC upsert, `MapSpatial`, `PartyRoster`, `CampaignStateUI.enrichEntityModal`
+`LocalApiClient` character helpers, `CatalogueStore` NPC upsert, `MapSpatial`, `MapPanel.refreshInitiative`, `PartyRoster`, `CampaignStateUI.enrichEntityModal`

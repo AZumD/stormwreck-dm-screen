@@ -24,7 +24,12 @@ Incremental plan to evolve the local DM Library into a multi-user, multi-campaig
 Built-in `stormwreck-isle` + sandbox shells (`campaigns/sandbox/?id=`) via `CampaignRegistry`. Catalogues are **global**; campaigns **reference** them by id.
 
 ### Auth / Railway
-**None.** Loopback bind by default. No Dockerfile. Not cloud-safe without `HOST=0.0.0.0`, durable DB, and auth.
+**Phase 3A–4B delivered.** See `docs/README/AUTH.md` and `docs/README/DEPLOY.md`. Local default remains `AUTH_REQUIRED=0` on loopback; production requires `DATABASE_URL`, `SESSION_SECRET`, `DM_DATA_ROOT`, and `TRUST_PROXY` as documented.
+
+> Phase 0 below is a **historical audit** of the pre-auth architecture. Do not treat “Auth / Railway: None” as current.
+
+### Auth / Railway (historical — Phase 0 snapshot)
+**None at the time of this audit.** Loopback bind by default. No Dockerfile. Not cloud-safe without `HOST=0.0.0.0`, durable DB, and auth.
 
 ### Characters / inventory today
 - PCs are catalogue rows (`data/catalogues/pc/…`), not campaign-owned

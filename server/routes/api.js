@@ -11,9 +11,7 @@ const characters = require("../lib/characters");
 const player = require("../lib/player");
 const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
-const campaignMaps = require("../lib/campaign-maps");
 const catalogueLocationMaps = require("../lib/catalogue-location-maps");
-const mapDistance = require("../lib/map-distance");
 const revealedNpcs = require("../lib/revealed-npcs");
 const { sendJson, sendError, readJsonBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
 const {
@@ -715,122 +713,6 @@ function createApiRoutes() {
       }
     ),
 
-    route("GET", /^\/api\/campaigns\/([^/]+)\/maps$/, ["id"], async (req, res, p) => {
-      const id = assertSafeId(p.id, "campaign id");
-      await authorize.requireDmIfAuthRequired(req, id);
-      const maps = await campaignMaps.listMaps(id);
-      sendJson(res, 200, { ok: true, campaignId: id, maps });
-    }),
-
-    route(
-      "POST",
-      /^\/api\/campaigns\/([^/]+)\/maps\/import-uvtt$/,
-      ["id"],
-      async (req, res, p) => {
-        const id = assertSafeId(p.id, "campaign id");
-        await authorize.requireDmIfAuthRequired(req, id);
-        authorize.assertMutationSafety(req);
-        /* Embedded map images routinely push UVTT JSON past the default 25MB cap. */
-        const body = await readJsonBody(req, { limit: UVTT_BODY_LIMIT });
-        const text = body?.text != null ? String(body.text) : body?.content != null ? String(body.content) : "";
-        if (!text.trim()) {
-          return sendJson(res, 400, { ok: false, error: "UVTT text/content required" });
-        }
-        const map = await campaignMaps.importUvtt(id, {
-          text,
-          filename: body?.filename || body?.name || null,
-          name: body?.mapName || null
-        });
-        sendJson(res, 201, {
-          ok: true,
-          campaignId: id,
-          map,
-          summary: campaignMaps.toSummary(map)
-        });
-      }
-    ),
-
-    route(
-      "GET",
-      /^\/api\/campaigns\/([^/]+)\/maps\/([^/]+)\/image$/,
-      ["id", "mapId"],
-      async (req, res, p) => {
-        const id = assertSafeId(p.id, "campaign id");
-        const mapId = assertSafeId(p.mapId, "map id");
-        await authorize.requireDmIfAuthRequired(req, id);
-        const asset = await campaignMaps.readMapImage(id, mapId);
-        res.writeHead(200, {
-          "Content-Type": asset.mime,
-          "Content-Length": asset.buffer.length,
-          "Cache-Control": "private, max-age=120"
-        });
-        res.end(asset.buffer);
-      }
-    ),
-
-    route(
-      "GET",
-      /^\/api\/campaigns\/([^/]+)\/maps\/([^/]+)$/,
-      ["id", "mapId"],
-      async (req, res, p) => {
-        const id = assertSafeId(p.id, "campaign id");
-        const mapId = assertSafeId(p.mapId, "map id");
-        await authorize.requireDmIfAuthRequired(req, id);
-        const map = await campaignMaps.getMap(id, mapId);
-        if (!map) return sendJson(res, 404, { ok: false, error: "Map not found" });
-        sendJson(res, 200, { ok: true, campaignId: id, map });
-      }
-    ),
-
-    route(
-      "PATCH",
-      /^\/api\/campaigns\/([^/]+)\/maps\/([^/]+)$/,
-      ["id", "mapId"],
-      async (req, res, p) => {
-        const id = assertSafeId(p.id, "campaign id");
-        const mapId = assertSafeId(p.mapId, "map id");
-        await authorize.requireDmIfAuthRequired(req, id);
-        authorize.assertMutationSafety(req);
-        const body = await readJsonBody(req);
-        const map = await campaignMaps.patchMap(id, mapId, body || {});
-        sendJson(res, 200, { ok: true, campaignId: id, map, summary: campaignMaps.toSummary(map) });
-      }
-    ),
-
-    route(
-      "DELETE",
-      /^\/api\/campaigns\/([^/]+)\/maps\/([^/]+)$/,
-      ["id", "mapId"],
-      async (req, res, p) => {
-        const id = assertSafeId(p.id, "campaign id");
-        const mapId = assertSafeId(p.mapId, "map id");
-        await authorize.requireDmIfAuthRequired(req, id);
-        authorize.assertMutationSafety(req);
-        await campaignMaps.deleteMap(id, mapId);
-        sendJson(res, 200, { ok: true, removed: true });
-      }
-    ),
-
-    route(
-      "POST",
-      /^\/api\/campaigns\/([^/]+)\/maps\/([^/]+)\/distance$/,
-      ["id", "mapId"],
-      async (req, res, p) => {
-        const id = assertSafeId(p.id, "campaign id");
-        const mapId = assertSafeId(p.mapId, "map id");
-        await authorize.requireDmIfAuthRequired(req, id);
-        authorize.assertMutationSafety(req);
-        const map = await campaignMaps.getMap(id, mapId);
-        if (!map) return sendJson(res, 404, { ok: false, error: "Map not found" });
-        const body = await readJsonBody(req);
-        const result = mapDistance.distanceBetween(body?.from, body?.to, map.scale || {}, {
-          mode: body?.mode || "euclidean",
-          snap: Boolean(body?.snap)
-        });
-        sendJson(res, 200, { ok: true, ...result });
-      }
-    ),
-
     route(
       "GET",
       /^\/api\/assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
@@ -925,6 +807,23 @@ function createApiRoutes() {
         const map = await catalogueLocationMaps.getFullMap(type, id);
         if (!map) return sendJson(res, 404, { ok: false, error: "No UVTT map for this entry" });
         sendJson(res, 200, { ok: true, map });
+      }
+    ),
+
+    route(
+      "PATCH",
+      /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/uvtt$/,
+      ["type", "id"],
+      async (req, res, p) => {
+        await authorize.requireAnyDmIfAuthRequired(req);
+        const type = assertCatalogueType(p.type);
+        const id = assertSafeId(p.id, "entry id");
+        const body = await readJsonBody(req);
+        const result = await catalogueLocationMaps.patchCalibration(type, id, {
+          display: body?.display,
+          scale: body?.scale
+        });
+        sendJson(res, 200, { ok: true, ...result });
       }
     ),
 

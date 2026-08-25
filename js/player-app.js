@@ -157,6 +157,57 @@
     return v >= 0 ? `+${v}` : String(v);
   }
 
+  function parseDeathSaves(raw) {
+    if (window.CombatSheetModal?.parseDeathSaves) return CombatSheetModal.parseDeathSaves(raw);
+    const d = raw && typeof raw === "object" ? raw : {};
+    return {
+      successes: Math.min(3, Math.max(0, Number(d.successes) || 0)),
+      failures: Math.min(3, Math.max(0, Number(d.failures) || 0))
+    };
+  }
+
+  function parseSpellSlots(raw) {
+    if (window.CombatSheetModal?.parseSpellSlots) return CombatSheetModal.parseSpellSlots(raw);
+    const src = raw && typeof raw === "object" ? raw : {};
+    const out = {};
+    for (let i = 1; i <= 9; i++) {
+      const row = src[String(i)] || {};
+      out[String(i)] = { max: Math.max(0, Number(row.max) || 0), used: Math.max(0, Number(row.used) || 0) };
+    }
+    return out;
+  }
+
+  function deathSavesBlock(saves) {
+    const s = parseDeathSaves(saves);
+    const boxes = (kind, count) =>
+      [0, 1, 2]
+        .map(
+          (i) =>
+            `<button type="button" class="ds-box${i < count ? " is-on" : ""}" data-ds-kind="${kind}" data-ds-count="${i + 1}" aria-pressed="${i < count ? "true" : "false"}"></button>`
+        )
+        .join("");
+    return `<div class="death-saves">
+      <div class="ds-row"><span>Successes</span>${boxes("successes", s.successes)}</div>
+      <div class="ds-row"><span>Failures</span>${boxes("failures", s.failures)}</div>
+      <button type="button" class="btn btn-ghost" data-ds-reset>Reset</button>
+    </div>`;
+  }
+
+  function spellSlotsBlock(slots) {
+    const parsed = parseSpellSlots(slots);
+    const rows = [];
+    for (let i = 1; i <= 9; i++) {
+      const row = parsed[String(i)];
+      rows.push(`<label class="slot-row"><span>L${i}</span>
+        <input type="number" min="0" data-slot-max="${i}" value="${row.max}" aria-label="Level ${i} max">
+        <span>/</span>
+        <input type="number" min="0" data-slot-used="${i}" value="${row.used}" aria-label="Level ${i} used">
+      </label>`);
+    }
+    return `<div class="spell-slots"><p class="meta">max / used</p><div class="slot-grid">${rows.join("")}</div>
+      <p class="section-add"><button type="button" class="btn btn-primary" data-save-slots>Save slots</button></p></div>`;
+  }
+
   function fmtTs(v) {
     if (!v) return "";
     const d = new Date(v);
@@ -439,6 +490,8 @@
           <button type="button" class="btn ${inspired ? "btn-primary" : ""}" data-inspiration="${inspired ? "0" : "1"}" aria-pressed="${inspired ? "true" : "false"}">${inspired ? "Inspired" : "Mark inspiration"}</button>
         </div>`
       )}
+      ${section("death-saves", "Death saves", deathSavesBlock(c.state?.deathSaves))}
+      ${section("spell-slots", "Spell slots", spellSlotsBlock(c.state?.spellSlots))}
       ${section(
         "skills",
         "Skills",
@@ -1005,6 +1058,37 @@
     renderCharacter();
   }
 
+  async function patchDeathSaves(next) {
+    const c = currentCharacter();
+    if (!c) return;
+    const data = await safe(() =>
+      api.patchState(state.campaignId, c.id, { death_saves: parseDeathSaves(next) })
+    );
+    if (!data) return;
+    applyCharacter(data.character);
+    renderCharacter();
+  }
+
+  async function saveSpellSlotsFromDom(root) {
+    const c = currentCharacter();
+    if (!c || !root) return;
+    const slots = {};
+    for (let i = 1; i <= 9; i++) {
+      const max = Number(root.querySelector(`[data-slot-max="${i}"]`)?.value);
+      const used = Number(root.querySelector(`[data-slot-used="${i}"]`)?.value);
+      slots[String(i)] = {
+        max: Number.isFinite(max) ? Math.max(0, max) : 0,
+        used: Number.isFinite(used) ? Math.max(0, used) : 0
+      };
+    }
+    const data = await safe(() =>
+      api.patchState(state.campaignId, c.id, { spell_slots: parseSpellSlots(slots) })
+    );
+    if (!data) return;
+    applyCharacter(data.character);
+    renderCharacter();
+  }
+
   async function logout() {
     await safe(() => api.logout());
     state.bootstrap = null;
@@ -1107,6 +1191,29 @@
     const inspire = e.target.closest("[data-inspiration]");
     if (inspire) {
       await setInspiration(inspire.getAttribute("data-inspiration") === "1");
+      return;
+    }
+    if (e.target.closest("[data-ds-reset]")) {
+      await patchDeathSaves({ successes: 0, failures: 0 });
+      return;
+    }
+    const ds = e.target.closest("[data-ds-kind]");
+    if (ds) {
+      const c = currentCharacter();
+      const cur = parseDeathSaves(c?.state?.deathSaves);
+      const kind = ds.getAttribute("data-ds-kind");
+      const count = Number(ds.getAttribute("data-ds-count")) || 0;
+      const prev = kind === "successes" ? cur.successes : cur.failures;
+      const nextVal = prev === count ? count - 1 : count;
+      const next = {
+        successes: kind === "successes" ? nextVal : cur.successes,
+        failures: kind === "failures" ? nextVal : cur.failures
+      };
+      await patchDeathSaves(next);
+      return;
+    }
+    if (e.target.closest("[data-save-slots]")) {
+      await saveSpellSlotsFromDom(els.main);
       return;
     }
     const removeInv = e.target.closest("[data-remove-inv]");
