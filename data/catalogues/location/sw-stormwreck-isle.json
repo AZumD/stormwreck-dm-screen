@@ -16,10 +16,11 @@
     "Dragons of Stormwreck Isle"
   ],
   "notes": "Adventure for levels 1–3. Red dragon Sharruth imprisoned beneath the sea — her fury shaped the volcanoes here.",
-  "updatedAt": 1786918771752,
-  "locationType": "Island",
+  "updatedAt": 1787601958662,
   "tags": [
     "Sword Coast",
     "Stormwreck Isle"
-  ]
+  ],
+  "locationType": "Island",
+  "parentLocationRef": ""
 }

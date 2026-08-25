@@ -1,5 +1,5 @@
 {
-  "activeMap": "compass-rose",
+  "activeMap": "map-mt7kdr0h-uzge47",
   "filters": null,
   "pinPositions": {
     "dragons-rest": {
@@ -23,6 +23,12 @@
         "x": 45.6,
         "y": 22.6
       }
+    },
+    "compass-rose": {
+      "p-cr-wheel": {
+        "x": 31.7,
+        "y": 44.5
+      }
     }
   },
   "partyPositions": {
@@ -32,5 +38,6 @@
       "y": 70
     }
   },
-  "customPins": {}
+  "customPins": {},
+  "tokens": {}
 }
