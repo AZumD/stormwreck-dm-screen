@@ -28,7 +28,7 @@ Locally, `AUTH_REQUIRED` defaults to `0` so the DM file-backed workflow stays co
 Session cookie `sw_session`: HttpOnly, SameSite=Lax, Secure in production (or `COOKIE_SECURE=1` / `TRUST_PROXY=1`). Only a SHA-256 hash of the token is stored in Postgres.
 
 ## CSRF (mutations)
-Authenticated `POST`/`PUT`/`PATCH`/`DELETE` require `Content-Type: application/json`. If the browser sends `Origin`, it must match the request `Host`.
+Authenticated `POST`/`PUT`/`PATCH`/`DELETE` require `Content-Type: application/json`, or an allowlisted binary upload type (`audio/*`, `application/octet-stream`) for music MP3 uploads. `DELETE` may omit `Content-Type` (no body). If the browser sends `Origin`, it must match `Host` (or `X-Forwarded-Host` when `TRUST_PROXY=1` / production).
 
 ## Authorization
 | Helper | Use |

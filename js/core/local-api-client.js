@@ -13,13 +13,18 @@ window.LocalApiClient = (function () {
   }
 
   async function request(method, path, body) {
+    const methodUpper = String(method || "GET").toUpperCase();
     const opts = {
-      method,
+      method: methodUpper,
+      credentials: "same-origin",
       headers: { Accept: "application/json" }
     };
     if (body !== undefined) {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
+    } else if (["POST", "PUT", "PATCH", "DELETE"].includes(methodUpper)) {
+      /* CSRF gate requires JSON Content-Type; DELETE had none → 415 on production */
+      opts.headers["Content-Type"] = "application/json";
     }
     let res;
     try {
@@ -142,12 +147,24 @@ window.LocalApiClient = (function () {
       headers["X-Audio-Duration"] = String(durationSec);
     }
     return trackWrite(`music-audio:${id}`, async () => {
-      const res = await fetch(`/api/catalogues/music/${encodeURIComponent(id)}/audio`, {
-        method: "PUT",
-        credentials: "same-origin",
-        headers,
-        body: buffer
-      });
+      let res;
+      try {
+        res = await fetch(`/api/catalogues/music/${encodeURIComponent(id)}/audio`, {
+          method: "PUT",
+          credentials: "same-origin",
+          headers,
+          body: buffer
+        });
+      } catch (err) {
+        throw Object.assign(
+          new Error(
+            err?.message === "Failed to fetch"
+              ? "Failed to fetch (upload interrupted — check file size / server, then retry)"
+              : err?.message || "Network request failed"
+          ),
+          { status: 0, cause: err }
+        );
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw Object.assign(new Error(data.error || res.statusText || "Upload failed"), {

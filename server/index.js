@@ -71,7 +71,18 @@ async function serveStatic(req, res, root, pathname) {
     return;
   }
 
-  let target = safeJoin(root, pathname === "/" ? "/index.html" : pathname);
+  /* Browsers often request /favicon.ico; serve root favicon.png when no .ico exists. */
+  let requestPath = pathname;
+  if (pathname === "/favicon.ico") {
+    try {
+      await fsp.access(path.join(root, "favicon.png"));
+      requestPath = "/favicon.png";
+    } catch {
+      /* fall through to normal 404 */
+    }
+  }
+
+  let target = safeJoin(root, requestPath === "/" ? "/index.html" : requestPath);
   if (!target) {
     sendJson(res, 400, { ok: false, error: "Invalid path" });
     return;

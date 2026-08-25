@@ -54,7 +54,9 @@ Playback:
 ## Security
 - Not in player catalogue allowlist (`PLAYER_BLOCKED_CATALOGUE_TYPES` includes `music`)
 - Safe storage keys (never original filenames as paths)
-- MP3 sniff + MIME check; max ~40MB
+- MP3 sniff + MIME check; max ~50MB
+- Upload `PUT` uses `Content-Type: audio/mpeg` (allowed by mutation CSRF checks; see AUTH.md)
+- Entry `DELETE` sends `Content-Type: application/json` from the client; server also accepts DELETE with no Content-Type
 
 ## Out of scope (later Pocket Bard)
 Multi-track mixer, scene presets, fades, player controls, SFX, YouTube migration.

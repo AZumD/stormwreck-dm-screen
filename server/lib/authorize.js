@@ -15,9 +15,45 @@ function deny(status, message) {
 
 /**
  * CSRF hardening for authenticated mutations:
- * - Content-Type must be application/json
- * - If Origin is present, it must match the request Host (same-origin)
+ * - Content-Type must be application/json OR an allowlisted binary upload type
+ *   (music MP3 uploads use audio/mpeg). DELETE with no body may omit Content-Type.
+ * - If Origin is present, it must match Host / X-Forwarded-Host (same-origin)
  */
+function normalizeHost(host) {
+  return String(host || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase()
+    .replace(/:443$/, "")
+    .replace(/:80$/, "");
+}
+
+function requestHosts(req) {
+  const hosts = new Set();
+  const trustProxy =
+    process.env.TRUST_PROXY === "1" ||
+    String(process.env.NODE_ENV || "").toLowerCase() === "production";
+  const primary = normalizeHost(req.headers.host);
+  if (primary) hosts.add(primary);
+  if (trustProxy) {
+    const xf = normalizeHost(req.headers["x-forwarded-host"]);
+    if (xf) hosts.add(xf);
+  }
+  return hosts;
+}
+
+function isAllowedMutationContentType(contentType) {
+  const ct = String(contentType || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  if (!ct) return false;
+  if (ct === "application/json" || ct.endsWith("+json") || ct.includes("json")) return true;
+  if (ct === "application/octet-stream") return true;
+  if (ct.startsWith("audio/")) return true;
+  return false;
+}
+
 function assertMutationSafety(req) {
   const method = (req.method || "GET").toUpperCase();
   if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) return;
@@ -26,20 +62,25 @@ function assertMutationSafety(req) {
     .split(";")[0]
     .trim()
     .toLowerCase();
-  if (!contentType || (!contentType.includes("json") && contentType !== "application/json")) {
-    deny(415, "Content-Type must be application/json");
+  /* DELETE often has no body — browsers omit Content-Type. Allow empty for DELETE only. */
+  if (!contentType) {
+    if (method !== "DELETE") {
+      deny(415, "Content-Type must be application/json (or an allowed binary upload type)");
+    }
+  } else if (!isAllowedMutationContentType(contentType)) {
+    deny(415, "Content-Type must be application/json (or an allowed binary upload type)");
   }
 
   const origin = req.headers.origin;
   if (origin) {
     let originHost;
     try {
-      originHost = new URL(origin).host;
+      originHost = normalizeHost(new URL(origin).host);
     } catch {
       deny(403, "Invalid Origin");
     }
-    const host = String(req.headers.host || "").split(",")[0].trim();
-    if (!host || originHost !== host) {
+    const hosts = requestHosts(req);
+    if (!originHost || !hosts.has(originHost)) {
       deny(403, "Cross-origin request rejected");
     }
   }
@@ -150,6 +191,7 @@ async function requireCharacterControl(req, campaignId, characterId) {
 
 module.exports = {
   assertMutationSafety,
+  isAllowedMutationContentType,
   requireUser,
   requireUserIfAuthRequired,
   getMembership,

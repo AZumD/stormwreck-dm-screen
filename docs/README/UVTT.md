@@ -37,7 +37,13 @@ Upload UVTT in the **Location catalogue**. On the campaign screen: **Map → + A
 | `js/core/campaign-locations.js` | Which locations belong to the campaign |
 
 ## Legacy (campaign `maps.json`)
-`server/lib/campaign-maps.js` remains as a library helper for older data/tests. **HTTP routes under `/api/campaigns/:id/maps` were removed** — the live map panel uses location catalogue UVTT only.
+`server/lib/campaign-maps.js` remains for older data/tests. Import/list/patch **HTTP** APIs stay removed (live panel uses location catalogue UVTT).
+
+| Method | Path | Notes |
+|--------|------|--------|
+| GET | `/api/campaigns/:id/maps/:mapId/image` | Streamed extract; unique `mapId` per import → `Cache-Control: public, max-age=31536000, immutable` + ETag/304 |
+
+Images live under `{DM_DATA_ROOT}/assets/maps/campaign-map/{campaignId}/{mapId}.{ext}` and are **not** replaced in place (re-import creates a new id).
 
 ## Geometry
 Walls normalize from both `line_of_sight` and `objects_line_of_sight` with `source` retained for later lighting/LOS work. Portals and lights are stored but not simulated yet.

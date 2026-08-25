@@ -6,7 +6,8 @@ Root gate at `/` — choose DM Library or Player companion before entering eithe
 ## Surfaces
 | Path | Role |
 |------|------|
-| `index.html` | Two-button entry (DM / Player) |
+| `index.html` | Two-button entry (DM / Player); favicon link |
+| `favicon.png` | Tab / bookmark icon (`docs/README/FAVICON.md`) |
 | `css/home.css` | Full-bleed fantasy gate styles |
 | `assets/medieval-fantasy-krvphc5yb1whovd1.jpg` | Background art |
 

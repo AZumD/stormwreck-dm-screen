@@ -213,7 +213,76 @@ else pass("distance uses scale.distancePerGrid");
 
   const gone = await httpRequest("GET", `/api/campaigns/${campaignId}/maps`);
   if (gone.status !== 404) fail(`legacy campaign maps list should be gone (${gone.status})`);
-  else pass("legacy campaign maps HTTP removed");
+  else pass("legacy campaign maps list HTTP removed");
+
+  /* Streamed campaign-map image GET (unique mapId → immutable CDN cache) */
+  function httpBinary(method, urlPath, headers = {}) {
+    return new Promise((resolve, reject) => {
+      const server = http.createServer(async (req, res) => {
+        const u = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+        const handled = await handleApi(req, res, u.pathname, routes);
+        if (!handled) {
+          res.writeHead(404, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: "Not found" }));
+        }
+      });
+      server.listen(0, "127.0.0.1", () => {
+        const { port } = server.address();
+        const req = http.request(
+          {
+            hostname: "127.0.0.1",
+            port,
+            path: urlPath,
+            method,
+            headers: { Host: `127.0.0.1:${port}`, ...headers }
+          },
+          (res) => {
+            const chunks = [];
+            res.on("data", (c) => chunks.push(c));
+            res.on("end", () => {
+              server.close();
+              resolve({
+                status: res.statusCode,
+                headers: res.headers,
+                body: Buffer.concat(chunks)
+              });
+            });
+          }
+        );
+        req.on("error", (err) => {
+          server.close();
+          reject(err);
+        });
+        req.end();
+      });
+    });
+  }
+
+  const imgUrl = `/api/campaigns/${campaignId}/maps/${imported.id}/image`;
+  const imgRes = await httpBinary("GET", imgUrl);
+  if (imgRes.status !== 200 || !imgRes.body.length) fail("campaign map image stream");
+  else pass("campaign map image streams bytes");
+  if (!imgRes.headers.etag || !imgRes.headers["last-modified"] || !imgRes.headers["content-length"]) {
+    fail("campaign map image missing cache headers");
+  } else pass("campaign map image ETag/Last-Modified/Content-Length");
+  const imgCc = String(imgRes.headers["cache-control"] || "");
+  if (!imgCc.includes("immutable") || !imgCc.includes("31536000")) {
+    fail(`campaign map image Cache-Control ${imgCc}`);
+  } else pass("campaign map image immutable Cache-Control");
+
+  const img304 = await httpBinary("GET", imgUrl, { "If-None-Match": imgRes.headers.etag });
+  if (img304.status !== 304) fail(`campaign map image 304 got ${img304.status}`);
+  else pass("campaign map image If-None-Match → 304");
+
+  const resolved = await campaignMaps.resolveMapImage(campaignId, imported.id);
+  if (!resolved?.filePath || resolved.size !== imgRes.body.length) fail("resolveMapImage metadata");
+  else pass("resolveMapImage without full-buffer requirement for HTTP");
+
+  const mapsLibSrc = fs.readFileSync(path.join(root, "server/lib/campaign-maps.js"), "utf8");
+  if (!mapsLibSrc.includes("async function resolveMapImage")) fail("resolveMapImage missing");
+  else if (/readMapImage[\s\S]*fsp\.readFile\(filePath\)/.test(mapsLibSrc) && !mapsLibSrc.includes("resolveMapImage")) {
+    fail("readMapImage still only path");
+  } else pass("campaign-maps resolveMapImage present");
 
   /* token coordinate persistence shape in map-state */
   const token = {
@@ -279,9 +348,11 @@ else pass("distance uses scale.distancePerGrid");
   if (uvttLimitCalls < 1) {
     fail("catalogue uvtt route must use readJsonBody(req, { limit: UVTT_BODY_LIMIT })");
   } else pass("UVTT routes use raised body limit");
-  if (apiSrc.includes("campaignMaps") || apiSrc.includes("/maps/import-uvtt")) {
-    fail("legacy campaign maps API should be removed from routes");
-  } else pass("legacy campaign maps API removed");
+  if (apiSrc.includes("/maps/import-uvtt") || apiSrc.includes("campaignMaps.importUvtt")) {
+    fail("legacy campaign maps import HTTP should stay removed");
+  } else if (!apiSrc.includes("resolveMapImage") || !apiSrc.includes("maps/") || !apiSrc.includes("/image")) {
+    fail("campaign map image GET route missing");
+  } else pass("campaign map image GET kept; import HTTP removed");
 
   const bigPayload = JSON.stringify({
     text: "x".repeat(26 * 1024 * 1024),

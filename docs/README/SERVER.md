@@ -32,6 +32,7 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library. Loca
 | `server/lib/http-util.js` | Body parsing / JSON responses |
 | `server/lib/http-cache.js` | Streamed file responses + ETag / 304 / Cache-Control |
 | `server/lib/static-guard.js` | Block static access to `/data`, `/server`, `/.git`, … |
+| `favicon.png` | Site tab icon; `/favicon.ico` aliases to this PNG |
 | `server/lib/atomic-fs.js` | Atomic JSON/binary writes + `.bak`; `DM_DATA_ROOT` |
 | `server/lib/ids.js` | Safe id / type validation |
 | `server/lib/catalogues.js` | One JSON file per catalogue entry |

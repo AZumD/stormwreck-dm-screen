@@ -3,7 +3,7 @@
 Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox campaigns).
 
 ## Surfaces
-- Root gate (`index.html`) — DM login / Player login (see `docs/README/HOME.md`)
+- Root gate (`index.html`) — DM login / Player login (see `docs/README/HOME.md`); favicon at `/favicon.png`
 - DM Library (`/dm/`) — Stormwreck + **Create new campaign** + **Import browser data**
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns

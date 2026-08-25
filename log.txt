@@ -80,4 +80,7 @@
 [2026-08-25] Music catalogue (DM): MP3 upload/storage abstraction (local + S3), browse/filter/preview, no mixer yet. See docs/README/MUSIC.md, server/lib/audio-storage.js
 [2026-08-25] Stream static + /api/assets (no full-file buffer); ETag/304; versioned asset ?v= for CDN; parallel catalogue bootstrap/list; lazy list thumbs. See server/lib/http-cache.js
 [2026-08-25] Fix stale catalogue JS on Railway CDN: JS/CSS must-revalidate; music-katalog script ?v= bust. See server/lib/http-cache.js, music-katalog/index.html
+[2026-08-25] Fix music MP3 upload: allow audio/* Content-Type in mutation CSRF; drain body on early 4xx; raise max to 50MB. See authorize.js, music-catalogue.js, AUTH.md
+[2026-08-25] Site favicon from root favicon.png (HTML link + /favicon.ico alias). See docs/README/FAVICON.md
+[2026-08-25] Fix music delete/upload CSRF: DELETE may omit Content-Type; client always sends JSON CT on mutations; Origin vs X-Forwarded-Host. See authorize.js, local-api-client.js
 

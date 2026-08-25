@@ -329,8 +329,43 @@ async function liveTests() {
     );
     fail("non-json content-type should be rejected");
   } catch (err) {
-    if (err.status === 415) pass("mutation requires application/json");
+    if (err.status === 415) pass("mutation rejects text/plain");
     else fail(`wrong content-type status: ${err.status}`);
+  }
+
+  authorize.assertMutationSafety(
+    fakeReq(loginDm2.rawToken, "PUT", {
+      origin: "http://127.0.0.1:3000",
+      "content-type": "audio/mpeg"
+    })
+  );
+  pass("same-origin audio/mpeg mutation allowed (music uploads)");
+
+  authorize.assertMutationSafety(
+    fakeReq(loginDm2.rawToken, "DELETE", {
+      origin: "http://127.0.0.1:3000",
+      "content-type": ""
+    })
+  );
+  pass("DELETE with empty Content-Type allowed");
+
+  const prevTrust = process.env.TRUST_PROXY;
+  process.env.TRUST_PROXY = "1";
+  try {
+    authorize.assertMutationSafety({
+      method: "PUT",
+      headers: {
+        host: "railway-internal:8080",
+        "x-forwarded-host": "app.example.com",
+        origin: "https://app.example.com",
+        "content-type": "audio/mpeg",
+        cookie: `${auth.COOKIE_NAME}=${encodeURIComponent(loginDm2.rawToken)}`
+      }
+    });
+    pass("Origin matches X-Forwarded-Host when TRUST_PROXY");
+  } finally {
+    if (prevTrust === undefined) delete process.env.TRUST_PROXY;
+    else process.env.TRUST_PROXY = prevTrust;
   }
 
   authorize.assertMutationSafety(

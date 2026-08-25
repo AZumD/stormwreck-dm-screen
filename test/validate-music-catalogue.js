@@ -141,7 +141,7 @@ else pass("music-ui.js preview/upload");
     const audioStorage = require("../server/lib/audio-storage");
     const catalogues = require("../server/lib/catalogues");
     const { createApiRoutes } = require("../server/routes/api");
-    const { matchRoute, sendError } = require("../server/lib/http-util");
+    const { sendError } = require("../server/lib/http-util");
 
     if (audioStorage.backendName() !== "local") fail("expected local backend without AUDIO_S3_BUCKET");
     else pass("local filesystem fallback");
@@ -233,18 +233,17 @@ else pass("music-ui.js preview/upload");
     if (oldExists) fail("old object should be deleted after replace");
     else pass("replacement cleans old object");
 
-    /* HTTP surface: stream + auth gate source already checked */
+    /* HTTP surface via handleApi (drains body on early errors; DELETE without CT) */
+    const { handleApi } = require("../server/routes/api");
     const routes = createApiRoutes();
     const server = http.createServer(async (req, res) => {
       try {
         const url = new URL(req.url, "http://127.0.0.1");
-        const hit = matchRoute(req.method, url.pathname, routes);
-        if (!hit) {
+        const handled = await handleApi(req, res, url.pathname, routes);
+        if (!handled) {
           res.writeHead(404);
           res.end("missing");
-          return;
         }
-        await hit.handler(req, res, hit.params);
       } catch (err) {
         sendError(res, err);
       }
@@ -259,6 +258,32 @@ else pass("music-ui.js preview/upload");
     const playJson = await request(server, "GET", `/api/catalogues/music/${id}/audio`);
     if (!playJson.json?.playback?.url) fail("HTTP playback JSON");
     else pass("HTTP playback URL endpoint");
+
+    const httpId = "music-http-upload";
+    await musicCatalogue.upsertMetadata(httpId, { title: "HTTP Upload Track", kind: "music" });
+    const putHttp = await request(server, "PUT", `/api/catalogues/music/${httpId}/audio`, {
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Content-Length": String(mp3.length),
+        "X-Original-Filename": "http-track.mp3",
+        Origin: "http://127.0.0.1"
+      },
+      body: mp3
+    });
+    if (putHttp.status !== 200 || !putHttp.json?.audio?.key) {
+      fail(`HTTP PUT audio status=${putHttp.status} err=${putHttp.json?.error || putHttp.body}`);
+    } else pass("HTTP PUT audio/mpeg upload");
+
+    const delHttp = await request(server, "DELETE", `/api/catalogues/music/${httpId}`, {
+      headers: {
+        Origin: "http://127.0.0.1",
+        Host: "127.0.0.1"
+        /* intentionally no Content-Type — browser DELETE behaviour */
+      }
+    });
+    if (delHttp.status !== 200 || delHttp.json?.ok !== true) {
+      fail(`HTTP DELETE music status=${delHttp.status} err=${delHttp.json?.error || delHttp.body}`);
+    } else pass("HTTP DELETE music without Content-Type");
 
     /* 4. DM authorization — player blocked type + route gates requireAnyDm */
     if (!player.includes("PLAYER_BLOCKED_CATALOGUE_TYPES") || !player.includes('"music"')) {

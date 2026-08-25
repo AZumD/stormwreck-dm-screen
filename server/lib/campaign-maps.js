@@ -254,7 +254,7 @@ async function deleteMap(campaignId, mapId) {
   return true;
 }
 
-async function readMapImage(campaignId, mapId) {
+async function resolveMapImage(campaignId, mapId) {
   const map = await getMap(campaignId, mapId);
   if (!map) {
     const err = new Error("Map not found");
@@ -268,11 +268,32 @@ async function readMapImage(campaignId, mapId) {
     throw err;
   }
   assertInsideData(filePath);
-  const buffer = await fsp.readFile(filePath);
+  const stat = await fsp.stat(filePath);
+  if (!stat.isFile()) {
+    const err = new Error("Map image not found");
+    err.status = 404;
+    throw err;
+  }
   const ext = path.extname(filePath).slice(1).toLowerCase();
   return {
+    filePath,
+    mime: MIME_BY_EXT[ext] || map.imageMime || "application/octet-stream",
+    size: stat.size,
+    mtime: stat.mtime,
+    mtimeMs: stat.mtimeMs
+  };
+}
+
+/** Prefer resolveMapImage + sendFileStream for HTTP. Buffer read kept for tests/tools. */
+async function readMapImage(campaignId, mapId) {
+  const meta = await resolveMapImage(campaignId, mapId);
+  const buffer = await fsp.readFile(meta.filePath);
+  return {
     buffer,
-    mime: MIME_BY_EXT[ext] || map.imageMime || "application/octet-stream"
+    mime: meta.mime,
+    filePath: meta.filePath,
+    size: meta.size,
+    mtime: meta.mtime
   };
 }
 
@@ -282,9 +303,12 @@ module.exports = {
   importUvtt,
   patchMap,
   deleteMap,
+  resolveMapImage,
   readMapImage,
   toSummary,
   publicImageUrl,
   loadDoc,
-  emptyDoc
+  emptyDoc,
+  findImageFile,
+  newMapId
 };

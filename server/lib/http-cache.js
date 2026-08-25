@@ -51,6 +51,9 @@ function cacheControlForStatic(filePath) {
   return "public, max-age=86400";
 }
 
+/** Content-addressed / unique-id binaries that are never replaced in place (e.g. campaign-map UVTT extracts). */
+const CACHE_CONTROL_IMMUTABLE = "public, max-age=31536000, immutable";
+
 /**
  * Cache-Control for catalogue `/api/assets/...` responses.
  * Versioned `?v=` URLs are immutable; legacy URLs stay short-lived + revalidatable.
@@ -60,7 +63,7 @@ function cacheControlForAssetUrl(reqUrl) {
     const u = new URL(reqUrl || "/", "http://local");
     const v = u.searchParams.get("v");
     if (v != null && String(v).trim() !== "") {
-      return "public, max-age=31536000, immutable";
+      return CACHE_CONTROL_IMMUTABLE;
     }
   } catch {
     /* ignore */
@@ -139,5 +142,6 @@ module.exports = {
   notModified,
   cacheControlForStatic,
   cacheControlForAssetUrl,
+  CACHE_CONTROL_IMMUTABLE,
   sendFileStream
 };

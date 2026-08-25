@@ -18,7 +18,8 @@ Included in `npm test`.
 - Portal and light import
 - `.uvtt` and `.dd2vtt` import paths
 - Extracted image under `{DM_DATA_ROOT}/assets/maps/campaign-map/{campaignId}/{mapId}.png`
-- Campaign-scoped `GET …/maps/:mapId/image`
+- Campaign-scoped `GET …/maps/:mapId/image` (streamed + ETag/304 + immutable Cache-Control)
+- `resolveMapImage` does not buffer the full file for HTTP
 - Distance uses `scale.distancePerGrid` (not hard-coded 5 ft)
 - Token coordinates in `map-state.tokens`
 - Legacy location `mapImage` PNG upload still works

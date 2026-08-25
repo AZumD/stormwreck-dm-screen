@@ -14,7 +14,7 @@ const authorize = require("../lib/authorize");
 const catalogueLocationMaps = require("../lib/catalogue-location-maps");
 const revealedNpcs = require("../lib/revealed-npcs");
 const { sendJson, sendError, readJsonBody, readBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
-const { sendFileStream, cacheControlForAssetUrl } = require("../lib/http-cache");
+const { sendFileStream, cacheControlForAssetUrl, CACHE_CONTROL_IMMUTABLE } = require("../lib/http-cache");
 const {
   assertCatalogueType,
   assertSafeId,
@@ -25,6 +25,7 @@ const {
 } = require("../lib/ids");
 const musicCatalogue = require("../lib/music-catalogue");
 const audioStorage = require("../lib/audio-storage");
+const campaignMaps = require("../lib/campaign-maps");
 
 function route(method, pattern, keys, handler) {
   return { method, pattern, keys, handler };
@@ -888,6 +889,27 @@ function createApiRoutes() {
       }
     ),
 
+    /*
+     * Legacy campaign-scoped map image (UVTT extract under assets/maps/campaign-map/).
+     * Import/list/patch HTTP APIs stay removed; image GET remains for stored imageUrl + tests.
+     * mapId is unique per import and images are not replaced in place → immutable CDN cache.
+     */
+    route(
+      "GET",
+      /^\/api\/campaigns\/([^/]+)\/maps\/([^/]+)\/image$/,
+      ["id", "mapId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const mapId = assertSafeId(p.mapId, "map id");
+        await authorize.requireDmIfAuthRequired(req, id);
+        const meta = await campaignMaps.resolveMapImage(id, mapId);
+        await sendFileStream(req, res, meta.filePath, {
+          contentType: meta.mime,
+          cacheControl: CACHE_CONTROL_IMMUTABLE
+        });
+      }
+    ),
+
     route(
       "POST",
       /^\/api\/catalogue-assets\/([^/]+)\/([^/]+)\/uvtt$/,
@@ -1019,6 +1041,19 @@ function createApiRoutes() {
   ];
 }
 
+function drainRequest(req) {
+  return new Promise((resolve) => {
+    if (!req || req.readableEnded || req.complete) {
+      resolve();
+      return;
+    }
+    req.on("end", resolve);
+    req.on("close", resolve);
+    req.on("error", () => resolve());
+    req.resume();
+  });
+}
+
 async function handleApi(req, res, pathname, routes) {
   const method = req.method || "GET";
   for (const route of routes) {
@@ -1032,6 +1067,8 @@ async function handleApi(req, res, pathname, routes) {
     try {
       await route.handler(req, res, params);
     } catch (err) {
+      /* Drain unread body so proxies/browsers do not see HTTP/2 PROTOCOL_ERROR after early 4xx. */
+      await drainRequest(req);
       sendError(res, err);
     }
     return true;

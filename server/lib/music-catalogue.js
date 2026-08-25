@@ -11,7 +11,7 @@ const { assertSafeId } = require("./ids");
 const MUSIC_TYPE = "music";
 const ALLOWED_KINDS = new Set(["ambience", "creature", "music"]);
 const ALLOWED_MIME = new Set(["audio/mpeg", "audio/mp3", "audio/mpeg3"]);
-const MAX_AUDIO_BYTES = 40 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 50 * 1024 * 1024;
 const EXT_BY_MIME = {
   "audio/mpeg": "mp3",
   "audio/mp3": "mp3",
