@@ -7,8 +7,10 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 `js/core/map-panel.js` → `window.MapPanel`
 
 ## UI structure
-- Tabs: **Map** | **Party** (Party is not stacked under the map)
+- Tabs: **Map** | **Party** | **Music**
 - Map tab: selector → compact primary actions (Measure, + Token, Layers, +, Expand, Map settings) → map stage → collapsible **Map settings** (UVTT import/meta, grid, snap, ft/grid)
+- Party tab: catalogue roster (see `docs/README/PARTY.md`)
+- Music tab: campaign mixer over Music catalogue tracks (see `docs/README/MUSIC-MIXER-UI.md`)
 - **Layers** popover replaces the permanent pin checkbox list (same filter persistence)
 - Expand uses `LayoutPanels.setMapMode("expanded")` — same MapPanel instance (zoom/pan/tokens preserved)
 

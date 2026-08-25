@@ -104,11 +104,12 @@
       </div>
     </main>
 
-    <aside class="map-panel" id="map-panel" data-map-mode="sidebar" aria-label="Map and party">
+    <aside class="map-panel" id="map-panel" data-map-mode="sidebar" aria-label="Map, party, and music">
       <header class="map-panel__header">
         <div class="map-panel__tabs" role="tablist" aria-label="Map panel sections">
           <button type="button" class="map-panel__tab" role="tab" id="map-tab-btn" data-map-tab="map" aria-selected="true" aria-controls="map-tab-panel">Map</button>
           <button type="button" class="map-panel__tab" role="tab" id="party-tab-btn" data-map-tab="party" aria-selected="false" aria-controls="party-tab-panel">Party</button>
+          <button type="button" class="map-panel__tab" role="tab" id="music-tab-btn" data-map-tab="music" aria-selected="false" aria-controls="music-tab-panel">Music</button>
         </div>
         <div class="map-panel__header-actions">
           <span id="map-expanded-title" class="map-panel__expanded-title" hidden></span>
@@ -180,9 +181,24 @@
             <div id="party-list" class="party-list"></div>
           </section>
         </div>
+
+        <div id="music-tab-panel" class="map-tab-panel" role="tabpanel" data-map-tab-panel="music" aria-labelledby="music-tab-btn" hidden>
+          <section class="music-mixer-section" aria-labelledby="music-heading">
+            <h3 id="music-heading" class="party-heading">Music</h3>
+            <div id="music-mixer-list" class="music-mixer-list"></div>
+          </section>
+        </div>
       </div>
     </aside>
   </div>
+
+  <dialog id="music-mixer-dialog" class="map-pin-dialog">
+    <div class="modal-header">
+      <h2 id="music-mixer-dialog-title">Add music</h2>
+      <button type="button" class="modal-close" id="music-mixer-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="music-mixer-dialog-body"></div>
+  </dialog>
 
   <dialog id="party-dialog" class="map-pin-dialog">
     <div class="modal-header">
@@ -297,6 +313,7 @@
   <script src="../../js/core/campaign-state-ui.js"></script>
   <script src="../../js/core/campaign-prefs.js"></script>
   <script src="../../js/core/campaign-map-state.js"></script>
+  <script src="../../js/core/campaign-music-mixer.js"></script>
   <script src="../../js/core/campaign-locations.js"></script>
   <script src="../../js/core/campaign-locations-ui.js"></script>
   <script src="../../js/core/chronicle-store.js"></script>
@@ -304,6 +321,7 @@
   <script src="../../js/core/scene-meta.js"></script>
   <script src="../../js/core/scene-ui.js"></script>
   <script src="../../js/core/party.js"></script>
+  <script src="../../js/core/music-mixer-ui.js"></script>
   <script src="../../js/core/combat-sheet-modal.js"></script>
   <script src="../../js/core/media-bar.js"></script>
   <script src="../../js/campaigns/stormwreck-isle/adventure.js"></script>

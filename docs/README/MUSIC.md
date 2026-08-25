@@ -1,7 +1,7 @@
 # MUSIC (catalogue)
 
 ## Purpose
-DM-only **Music** catalogue for long-form ambience / creature atmosphere / music tracks. Foundation for a future Pocket Bard multi-track mixer. This phase is upload → organize → browse → preview only (no mixer).
+DM-only **Music** catalogue for long-form ambience / creature atmosphere / music tracks. Campaign map-rail **Music** tab mixes catalogue tracks per campaign (see `docs/README/MUSIC-MIXER-UI.md`).
 
 ## Files
 | Path | Role |
@@ -59,5 +59,5 @@ Playback:
 - Entry `DELETE` sends `Content-Type: application/json` from the client; server also accepts DELETE with no Content-Type
 - Audio object cleanup failures after metadata delete are logged, not surfaced as a failed delete
 
-## Out of scope (later Pocket Bard)
-Multi-track mixer, scene presets, fades, player controls, SFX, YouTube migration.
+## Out of scope (later)
+Scene presets, fades, player-facing controls, SFX library, YouTube migration into this mixer.

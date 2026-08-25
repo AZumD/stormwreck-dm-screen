@@ -477,7 +477,8 @@ window.MapPanel = (function () {
     });
 
     function setActiveTab(tab) {
-      const next = tab === "party" ? "party" : "map";
+      const allowed = new Set(["map", "party", "music"]);
+      const next = allowed.has(tab) ? tab : "map";
       panel.dataset.activeTab = next;
       panel.querySelectorAll("[data-map-tab]").forEach((btn) => {
         const on = btn.dataset.mapTab === next;
@@ -491,6 +492,9 @@ window.MapPanel = (function () {
       if (next === "party" && window.PartyRoster) {
         PartyRoster.syncWindowParty();
         PartyRoster.render(partyList);
+      }
+      if (next === "music" && window.MusicMixerUi) {
+        MusicMixerUi.render(document.getElementById("music-mixer-list"));
       }
     }
 

@@ -148,6 +148,7 @@
       LayoutPanels.applyChromeFromPrefs(CampaignPrefs.get(campaignId));
     }
     if (window.CampaignMapState) await CampaignMapState.bootstrap(campaignId);
+    if (window.CampaignMusicMixer) await CampaignMusicMixer.bootstrap(campaignId);
     if (window.CampaignLocations) await CampaignLocations.bootstrap(campaignId);
     if (window.SectionEditor?.bootstrap) {
       await SectionEditor.bootstrap(campaignId, ADVENTURE.sections || []);
@@ -192,6 +193,7 @@
     if (window.DayTimeUI) DayTimeUI.init();
     if (window.ChronicleStore) await ChronicleStore.init(campaignId);
     if (window.PartyRoster) PartyRoster.init();
+    if (window.MusicMixerUi) MusicMixerUi.init({ campaignId });
     if (window.SceneUI) {
       SceneUI.init({
         campaignId,

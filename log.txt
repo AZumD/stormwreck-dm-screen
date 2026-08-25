@@ -84,4 +84,5 @@
 [2026-08-25] Site favicon from root favicon.png (HTML link + /favicon.ico alias). See docs/README/FAVICON.md
 [2026-08-25] Fix music delete/upload CSRF: DELETE may omit Content-Type; client always sends JSON CT on mutations; Origin vs X-Forwarded-Host. See authorize.js, local-api-client.js
 [2026-08-25] Music uploads via JSON base64; soft audio cleanup on delete; shrink favicon to 64px (source kept). Restart local server to pick up music type.
+[2026-08-25] Campaign Music mixer tab (Map|Party|Music): catalogue picker, play/volume, drag reorder, music-mixer.json. See MUSIC-MIXER-UI.md
 

@@ -28,7 +28,8 @@ const CAMPAIGN_DOC_KINDS = Object.freeze([
   "map-state",
   "maps",
   "locations",
-  "prefs"
+  "prefs",
+  "music-mixer"
 ]);
 
 const ASSET_KINDS = Object.freeze(["portraits", "maps"]);

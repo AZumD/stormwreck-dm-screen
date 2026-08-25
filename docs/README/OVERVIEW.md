@@ -39,6 +39,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **History** — structured timeline entries; Session Notes remain freeform
 - **Chronicle** — authored Story So Far, session prose, and curated Key Events (`chronicle.json`) — separate from History
 - **Party** — add/remove PCs and companion NPCs from catalogues (no hardcoded placeholders)
+- **Music mixer** — map-rail Music tab; campaign-persisted catalogue tracks with play/volume/reorder (`docs/README/MUSIC-MIXER-UI.md`)
 
 ## Scene runtime
 - Default **Play** view focuses one scene (content, notes, At this scene, connections)
@@ -91,6 +92,8 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/scene-meta.js` | Scene cast + connections (design data) |
 | `js/core/scene-ui.js` | At this scene tray + connection UI (edit-mode Link scene) |
 | `js/core/party.js` | Party roster UI from catalogue refs |
+| `js/core/campaign-music-mixer.js` | Campaign music mixer document state |
+| `js/core/music-mixer-ui.js` | Map-rail Music tab (play / volume / reorder) |
 | `js/core/campaign-locations.js` | Which location catalogue entries belong to a campaign |
 | `js/core/campaign-locations-ui.js` | Locations panel add/remove UI |
 | `js/core/map-panel.js` | Map rail tabs, pins, expand mode, Layers popover |
@@ -111,6 +114,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 - Race catalogue holds species + subspecies (`@race:`); class catalogue holds class + subclass (`@class:`)
 - Locations may nest via `parentLocationRef`; monsters carry `source` / `tags`
 - **Music** catalogue (`music-katalog`) — DM-only track metadata; MP3s under `assets/audio/` or S3 (`docs/README/MUSIC.md`)
+- Campaign **Music** tab mixes those tracks per campaign (`music-mixer.json`)
 
 ## Tests
 ```bash

@@ -1,5 +1,5 @@
 /**
- * Validates DM UI cleanup: Map|Party tabs, expand mode shell, Layers popover,
+ * Validates DM UI cleanup: Map|Party|Music tabs, expand mode shell, Layers popover,
  * collapsible map settings, compact ambience strip + dock.
  * Run: node test/validate-dm-ui.js
  */
@@ -31,9 +31,9 @@ for (const [label, html] of [
   ["stormwreck", stormHtml],
   ["sandbox", sandboxHtml]
 ]) {
-  if (!html.includes('data-map-tab="map"') || !html.includes('data-map-tab="party"')) {
-    fail(`${label} missing Map|Party tabs`);
-  } else pass(`${label} has Map|Party tabs`);
+  if (!html.includes('data-map-tab="map"') || !html.includes('data-map-tab="party"') || !html.includes('data-map-tab="music"')) {
+    fail(`${label} missing Map|Party|Music tabs`);
+  } else pass(`${label} has Map|Party|Music tabs`);
 
   if (!html.includes("map-primary-actions") || !html.includes("map-layers-btn") || !html.includes("map-expand-btn")) {
     fail(`${label} missing primary map actions`);
