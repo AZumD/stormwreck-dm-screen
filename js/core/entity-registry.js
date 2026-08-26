@@ -482,6 +482,30 @@ window.EntityRegistry = (function () {
     };
   }
 
+  function sourceToEntity(entry) {
+    const id = linkId(entry);
+    const chapters = Array.isArray(entry.chapters) ? entry.chapters : [];
+    const chapterTitles = chapters.map((c) => c?.title).filter(Boolean).join(", ");
+    const details = joinBlocks([
+      entry.summary,
+      chapterTitles && `**Chapters:** ${chapterTitles}`,
+      entry.notes && `**Notes:**\n${entry.notes}`
+    ]);
+    return {
+      id,
+      catalogueId: entry.id,
+      type: "source",
+      name: asString(entry.name) || id,
+      summary: asString(entry.summary || entry.name).slice(0, 140),
+      stats: pickStats({
+        Abbr: entry.abbreviation,
+        Publisher: entry.publisher
+      }),
+      details,
+      tags: [...asArray(entry.tags), entry.abbreviation, entry.publisher].filter(Boolean)
+    };
+  }
+
   const CONVERTERS = {
     npc: npcToEntity,
     monster: monsterToEntity,
@@ -492,7 +516,8 @@ window.EntityRegistry = (function () {
     class: classToEntity,
     spell: spellToEntity,
     skill: skillToEntity,
-    feature: featureToEntity
+    feature: featureToEntity,
+    source: sourceToEntity
   };
 
   /** Register or replace a converter for a catalogue type (future types). */

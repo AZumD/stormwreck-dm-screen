@@ -12,18 +12,20 @@ const pcCatalogueMirror = require("./pc-catalogue-mirror");
 const { parseEntityRef } = require("./entity-ref");
 const { assertSafeId, assertCatalogueType } = require("./ids");
 
-const PLAYER_CATALOGUE_TYPES = new Set([
-  "item",
+const PLAYER_LIBRARY_BROWSE_TYPES = new Set([
   "skill",
   "feature",
   "spell",
   "race",
   "class",
-  "monster",
-  "location"
+  "location",
+  "source"
 ]);
 
-const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc", "music"]);
+/** Detail access (browse + inventory item open). Monster intentionally blocked. */
+const PLAYER_CATALOGUE_TYPES = new Set([...PLAYER_LIBRARY_BROWSE_TYPES, "item"]);
+
+const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc", "music", "monster"]);
 
 const LIBRARY_ATTACH_ACTIONS = new Set([
   "inventory",
@@ -849,7 +851,7 @@ async function toPlayerCatalogueDto(safeType, safeId) {
     summary: entry.summary || entry.effect || entry.trait || "",
     level: entry.level ?? entry.spellLevel ?? null,
     school: entry.school || null,
-    category: entry.category || entry.locationType || entry.itemType || null,
+    category: entry.category || entry.locationType || entry.itemType || entry.abbreviation || null,
     rarity: entry.rarity || null,
     tags: Array.isArray(entry.tags) ? entry.tags : [],
     portraitUrl: entry.portrait || entry.portraitUrl || entry.image || entry.mapImage || null,
@@ -861,6 +863,9 @@ async function toPlayerCatalogueDto(safeType, safeId) {
     range: entry.range || null,
     components: entry.components || null,
     duration: entry.duration || null,
+    abbreviation: entry.abbreviation || null,
+    publisher: entry.publisher || null,
+    chapters: safeType === "source" && Array.isArray(entry.chapters) ? entry.chapters : undefined,
     actions,
     rawSafe: {
       castingTime: entry.castingTime || null,
@@ -873,6 +878,12 @@ async function toPlayerCatalogueDto(safeType, safeId) {
 }
 
 function entrySearchBlob(entry) {
+  const chapterBlob = Array.isArray(entry.chapters)
+    ? entry.chapters
+        .map((ch) => [ch?.title, ch?.content, ...(ch?.subchapters || []).map((s) => `${s?.title} ${s?.content}`)])
+        .flat()
+        .join(" ")
+    : "";
   return [
     entry.name,
     entry.id,
@@ -883,6 +894,9 @@ function entrySearchBlob(entry) {
     entry.rarity,
     entry.itemType,
     entry.locationType,
+    entry.abbreviation,
+    entry.publisher,
+    chapterBlob,
     ...(Array.isArray(entry.tags) ? entry.tags : [])
   ]
     .filter(Boolean)
@@ -894,7 +908,7 @@ async function listPlayerCatalogue(req, campaignId, type, query = {}) {
   requireDb();
   await authorize.requireCampaignMember(req, campaignId);
   const safeType = assertCatalogueType(type);
-  if (PLAYER_BLOCKED_CATALOGUE_TYPES.has(safeType) || !PLAYER_CATALOGUE_TYPES.has(safeType)) {
+  if (PLAYER_BLOCKED_CATALOGUE_TYPES.has(safeType) || !PLAYER_LIBRARY_BROWSE_TYPES.has(safeType)) {
     const err = new Error("Catalogue type not available to players");
     err.status = 403;
     throw err;
@@ -1171,6 +1185,7 @@ async function readCataloguePortrait(req, campaignId, type, id) {
 
 module.exports = {
   PLAYER_CATALOGUE_TYPES,
+  PLAYER_LIBRARY_BROWSE_TYPES,
   PLAYER_BLOCKED_CATALOGUE_TYPES,
   PLAYER_STATE_WHITELIST,
   PLAYER_SHEET_WHITELIST,

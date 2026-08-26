@@ -52,16 +52,7 @@
     createCharacterCancel: document.getElementById("create-character-cancel")
   };
 
-  const LIBRARY_TYPES = [
-    "item",
-    "spell",
-    "skill",
-    "feature",
-    "race",
-    "class",
-    "monster",
-    "location"
-  ];
+  const LIBRARY_TYPES = ["spell", "skill", "feature", "race", "class", "location", "source"];
 
   const ATTACH_LABELS = {
     inventory: "Add to inventory",
@@ -87,10 +78,14 @@
     characterId: null,
     party: [],
     notes: [],
+    noteId: null,
+    notesQ: "",
+    notesTag: "",
+    notesCharacterId: "",
     tab: "characters",
     editingNoteId: null,
     collapsed: loadCollapsed(),
-    libraryType: "item",
+    libraryType: "spell",
     libraryQ: "",
     libraryEntries: [],
     libraryTotal: 0,
@@ -648,25 +643,110 @@
     if (!els.noteDialog.open) els.noteDialog.showModal();
   }
 
+  function extractNoteTags(notes) {
+    const tags = new Set();
+    for (const n of notes || []) {
+      const body = String(n.body || "");
+      const re = /#([a-zA-Z0-9_-]{2,40})/g;
+      let m;
+      while ((m = re.exec(body))) tags.add(m[1].toLowerCase());
+    }
+    return [...tags].sort();
+  }
+
+  function filteredNotes() {
+    const q = String(state.notesQ || "").trim().toLowerCase();
+    const tag = String(state.notesTag || "").trim().toLowerCase();
+    const charId = String(state.notesCharacterId || "");
+    return (state.notes || []).filter((n) => {
+      if (charId === "__campaign" && n.characterId) return false;
+      if (charId && charId !== "__campaign" && n.characterId !== charId) return false;
+      if (tag && !String(n.body || "").toLowerCase().includes(`#${tag}`)) return false;
+      if (!q) return true;
+      const blob = `${n.title || ""} ${n.body || ""}`.toLowerCase();
+      return blob.includes(q);
+    });
+  }
+
+  function noteBodyHtml(body) {
+    const text = String(body || "");
+    if (!text.trim()) return `<p class="empty">Empty note.</p>`;
+    return `<div class="note-body">${esc(text).replace(/\n/g, "<br>")}</div>`;
+  }
+
   function renderNotes() {
-    const list = state.notes.length
-      ? `<ul class="list">${state.notes
-          .map(
-            (n) => `<li class="card">
-            <h3>${esc(n.title || "Untitled")}</h3>
-            <p class="meta">${esc((n.body || "").slice(0, 140))}${(n.body || "").length > 140 ? "…" : ""}</p>
-            <p class="meta">${esc(noteTimestampLine(n))}</p>
-            <div class="row">
-              <button type="button" class="btn btn-ghost" data-edit="${esc(n.id)}">Edit</button>
-            </div>
-          </li>`
-          )
+    const tags = extractNoteTags(state.notes);
+    const filtered = filteredNotes();
+    if (state.noteId && !filtered.some((n) => n.id === state.noteId)) {
+      state.noteId = filtered[0]?.id || null;
+    }
+    if (!state.noteId && filtered.length) state.noteId = filtered[0].id;
+    const selected = filtered.find((n) => n.id === state.noteId) || null;
+
+    const charOpts =
+      `<option value="">All notes</option>` +
+      `<option value="__campaign"${state.notesCharacterId === "__campaign" ? " selected" : ""}>Campaign only</option>` +
+      state.characters
+        .map((c) => {
+          const on = c.id === state.notesCharacterId ? " selected" : "";
+          return `<option value="${esc(c.id)}"${on}>${esc(c.name)}</option>`;
+        })
+        .join("");
+
+    const tagChips = tags.length
+      ? `<div class="notes-tags">${tags
+          .map((t) => {
+            const on = state.notesTag === t ? " is-active" : "";
+            return `<button type="button" class="chip${on}" data-notes-tag="${esc(t)}">#${esc(t)}</button>`;
+          })
+          .join("")}${
+          state.notesTag
+            ? `<button type="button" class="chip" data-notes-tag="">Clear tag</button>`
+            : ""
+        }</div>`
+      : "";
+
+    const nav = filtered.length
+      ? `<ul class="notes-nav-list">${filtered
+          .map((n) => {
+            const on = n.id === state.noteId ? " is-active" : "";
+            return `<li>
+              <button type="button" class="notes-nav-item${on}" data-note-select="${esc(n.id)}">
+                <span class="notes-nav-title">${esc(n.title || "Untitled")}</span>
+                <span class="meta">${esc(noteTimestampLine(n))}</span>
+              </button>
+            </li>`;
+          })
           .join("")}</ul>`
-      : `<p class="empty">No notes yet.</p>`;
+      : `<p class="empty">No matching notes.</p>`;
+
+    const main = selected
+      ? `<article class="note-reader card">
+          <header class="note-reader__head">
+            <h2>${esc(selected.title || "Untitled")}</h2>
+            <p class="meta">${esc(noteTimestampLine(selected))}</p>
+            <div class="row">
+              <button type="button" class="btn btn-ghost" data-edit="${esc(selected.id)}">Edit</button>
+            </div>
+          </header>
+          ${noteBodyHtml(selected.body)}
+        </article>`
+      : `<p class="empty">${state.notes.length ? "Select a note." : "No notes yet."}</p>`;
+
     els.main.innerHTML = `
-      <div class="notes-panel">
-        <p><button type="button" class="btn btn-primary" data-note-new>New note</button></p>
-        ${list}
+      <div class="notes-layout notes-panel">
+        <aside class="notes-sidebar" aria-label="Notes navigation">
+          <p><button type="button" class="btn btn-primary" data-note-new>New note</button></p>
+          <label class="notes-search">Search
+            <input type="search" id="notes-q" value="${esc(state.notesQ)}" placeholder="Title or body…" autocomplete="off">
+          </label>
+          <label class="notes-filter">Character
+            <select id="notes-character">${charOpts}</select>
+          </label>
+          ${tagChips}
+          ${nav}
+        </aside>
+        <div class="notes-main">${main}</div>
       </div>`;
   }
 
@@ -778,7 +858,7 @@
       </label>
       <div class="library-types" role="tablist" aria-label="Catalogue type">${types}</div>
       <p class="meta">${charHint} Showing ${state.libraryEntries.length} of ${state.libraryTotal}.
-        ${(state.libraryType === "monster" || state.libraryType === "location")
+        ${(state.libraryType === "location")
           ? " Lookup only — no sheet attach."
           : ""}</p>
       ${list}
@@ -836,6 +916,24 @@
   }
 
   function detailFieldHtml(entry) {
+    if (entry.type === "source" || Array.isArray(entry.chapters)) {
+      const bits = [];
+      if (entry.summary) bits.push(`<p class="detail-block">${esc(entry.summary)}</p>`);
+      if (entry.publisher || entry.abbreviation) {
+        bits.push(
+          `<p class="meta">${esc([entry.abbreviation, entry.publisher].filter(Boolean).join(" · "))}</p>`
+        );
+      }
+      if (window.SourceUi) {
+        bits.push(SourceUi.renderChaptersWiki(entry.chapters || [], { player: true }));
+      } else if (entry.description) {
+        bits.push(`<p class="detail-block">${esc(entry.description)}</p>`);
+      }
+      if (Array.isArray(entry.tags) && entry.tags.length) {
+        bits.push(`<p class="meta">Tags: ${esc(entry.tags.join(", "))}</p>`);
+      }
+      return bits.join("") || `<p class="empty">No description available.</p>`;
+    }
     const lines = [
       entry.summary,
       entry.description,
@@ -1296,9 +1394,18 @@
     if (e.target && e.target.id === "library-q") {
       scheduleLibrarySearch(String(e.target.value || ""));
     }
+    if (e.target && e.target.id === "notes-q") {
+      state.notesQ = String(e.target.value || "");
+      renderNotes();
+    }
   });
 
   els.main.addEventListener("change", async (e) => {
+    if (e.target && e.target.id === "notes-character") {
+      state.notesCharacterId = String(e.target.value || "");
+      renderNotes();
+      return;
+    }
     const equip = e.target.closest("[data-equip-inv]");
     if (equip) {
       await updateInventoryEntry(equip.getAttribute("data-equip-inv"), {
@@ -1318,6 +1425,18 @@
   els.main.addEventListener("click", async (e) => {
     if (e.target.closest("[data-create-character]")) {
       openCreateCharacterDialog();
+      return;
+    }
+    const noteSelect = e.target.closest("[data-note-select]");
+    if (noteSelect) {
+      state.noteId = noteSelect.getAttribute("data-note-select");
+      renderNotes();
+      return;
+    }
+    const notesTag = e.target.closest("[data-notes-tag]");
+    if (notesTag) {
+      state.notesTag = notesTag.getAttribute("data-notes-tag") || "";
+      renderNotes();
       return;
     }
     if (e.target.closest("[data-library-more]")) {

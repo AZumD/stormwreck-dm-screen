@@ -52,13 +52,14 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - **Notes** tab cards and note editor use stained-paper texture; campaign **read-aloud** blocks use the same asset
 
 ## Library UI (Phase 5C)
-- Fourth tab: browse/search item, spell, skill, feature, race, class, monster, location
+- Fourth tab: browse/search spell, skill, feature, race, class, location, **source**
 - Debounced search; horizontal type chips; detail dialog with rules text
 - **Load more** uses server `offset` / `total` (pages of 40)
-- Monster / location are lookup-only (no sheet attach)
-- Attach actions (controlled character): inventory / spell / skill / feature / set race / set class
+- Location / source are lookup-only (no sheet attach)
+- Item and monster catalogues are **not** listed in the player Library (inventory still opens owned item details)
+- Attach actions (controlled character): inventory (via + / edit) / spell / skill / feature / set race / set class
 - Custom freeform sheet lines still work via Edit sheet / inline add
-- NPC and PC catalogues blocked; DM `/api/catalogues/*` still unavailable to players
+- NPC, PC, music, monster catalogues blocked for browse; DM `/api/catalogues/*` still unavailable to players
 
 ## People UI (Phase 5D)
 - Tab lists NPCs the DM has revealed for the campaign (portrait + optional DM note)
@@ -68,13 +69,16 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 ## Party UI
 - Cards show name, race/class (pretty-printed), level, and shared vitals (`hpCurrent` / `hpMax` / `conditions`) for fellow player PCs
 
+## Notes UI
+- Sidebar: search, character filter, `#tag` chips (from body hashtags), note title list
+- Main pane shows the **full** note body (no truncation)
+- Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional character, Save, Cancel, and Delete with confirmation. No `prompt()` / `confirm()`
+
 ## Sheet whitelist (trusted player)
 `name`, `level`, `race`, `class`, `subclass`, `background`, `alignment`, `abilities`, `ac`, `speed`, `initiative`, `proficiencyBonus`, `hitDice`, `savingThrows`, `languages`, `skills`, `skillRefs`, `featureRefs`, `spellRefs`, `currency`
 
 ## State whitelist
 `hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`
-## Notes UI
-Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional character, Save, Cancel, and Delete with an in-sheet confirmation. No `prompt()` / `confirm()`. List and editor show created/updated timestamps.
 
 ## Mobile layout
 - `.view-shell` bottom padding and `scroll-padding-bottom` clear the fixed tab bar (including `safe-area-inset-bottom`).
@@ -86,7 +90,7 @@ Create/edit/delete use an in-app dialog (`#note-dialog`): title, body, optional 
 - Full mechanical DTO only for characters in `character_controllers`.
 - Party returns `type='player'` cards only (name/race/class/level/portrait + shared HP/conditions)
 - Notes are private to `user_id` (DM does not auto-read).
-- Catalogue browse/detail allowlist: item, skill, feature, spell, race, class, monster, location. Blocked: npc, pc.
+- Catalogue browse/detail allowlist: skill, feature, spell, race, class, location, source (+ item detail for inventory). Blocked browse: npc, pc, music, monster, item list.
 - Library attach requires character control; action must match entry type.
 - Mutable state whitelist: `hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`.
 - Player sheet UI includes **Death saves**, **Spell slots**, and **Class resources**. DM combat sheet mirrors the same for PCs.

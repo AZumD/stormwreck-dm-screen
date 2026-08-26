@@ -22,3 +22,5 @@ Declarative list of catalogue entity types used by EntityRegistry, ContentParser
 4. Optional: seeds + `{type}-katalog/index.html` + landing link
 
 Parser and campaign search pick up linkable types automatically — no hardcoded four-type regex.
+
+Current types include `music` (not linkable) and `source` (linkable Source Catalogue).

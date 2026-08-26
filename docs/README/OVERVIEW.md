@@ -7,10 +7,10 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - DM Library (`/dm/`) — Stormwreck + **Create new campaign** + **Import browser data**
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
-- Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location
+- Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / Music / **Source**
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
-- Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`)
+- Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; Source Catalogue browseable; item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `SOURCE.md`)
 
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.

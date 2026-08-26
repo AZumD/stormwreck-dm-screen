@@ -305,6 +305,9 @@ window.CatalogueApp = (function () {
     if (field.type === "image") return !value;
     if (field.type === "uvtt") return !value || typeof value !== "object";
     if (field.type === "audio") return !value || typeof value !== "object" || !value.key;
+    if (field.type === "chapters") {
+      return window.SourceUi ? SourceUi.isEmpty(value) : !Array.isArray(value) || !value.length;
+    }
     return value === undefined || value === null || String(value).trim() === "";
   }
 
@@ -359,6 +362,11 @@ window.CatalogueApp = (function () {
     }
     if (field.type === "textarea") {
       return `<div class="cat-wiki__prose">${formatWikiText(value)}</div>`;
+    }
+    if (field.type === "chapters") {
+      return window.SourceUi
+        ? SourceUi.renderChaptersWiki(value, { player: false })
+        : `<p class="cat-wiki__empty">Source UI unavailable.</p>`;
     }
     if (field.refType || (typeof value === "string" && value.includes("@"))) {
       return `<div class="cat-wiki__value">${renderEntityRefHtml(value, field.refType)}</div>`;
@@ -493,6 +501,20 @@ window.CatalogueApp = (function () {
               entry[field.id] = JSON.parse(raw);
             } catch {
               entry[field.id] = null;
+            }
+          }
+          return;
+        }
+        if (field.type === "chapters") {
+          const editor = root.querySelector("[data-chapters-editor]");
+          if (editor && window.SourceUi) {
+            entry[field.id] = SourceUi.readChaptersFromEditor(editor);
+          } else {
+            const raw = root.querySelector(`[data-chapters-value]`)?.value || "[]";
+            try {
+              entry[field.id] = JSON.parse(raw);
+            } catch {
+              entry[field.id] = [];
             }
           }
           return;
@@ -695,6 +717,13 @@ window.CatalogueApp = (function () {
 
     if (field.type === "audio") {
       return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${renderAudioField(field, value, entry)}</div>`;
+    }
+
+    if (field.type === "chapters") {
+      const html = window.SourceUi
+        ? SourceUi.renderChapterEditor(value)
+        : `<p class="cat-field-hint">Source UI missing.</p>`;
+      return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${html}</div>`;
     }
 
     if (field.type === "checkbox") {
@@ -1135,6 +1164,8 @@ window.CatalogueApp = (function () {
         const form = editorEl.querySelector(".cat-form");
         hydrateImageFields(form, entry);
         bindFormEvents(form);
+        const chaptersHost = form?.querySelector("[data-chapters-editor]");
+        if (chaptersHost && window.SourceUi) SourceUi.bindChapterEditor(chaptersHost);
       } else {
         imageCache = {};
         editorEl.innerHTML = renderWikiView(entry, config);

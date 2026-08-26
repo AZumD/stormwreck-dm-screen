@@ -597,6 +597,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   display: flex;
   gap: 0.35rem;
   overflow-x: auto;
+  margin-top: 0.85rem;
   margin-bottom: var(--space);
   -webkit-overflow-scrolling: touch;
   padding-bottom: 0.15rem;
@@ -716,6 +717,120 @@ textarea { min-height: 6.5rem; resize: vertical; }
 .notes-panel .btn-ghost {
   border-color: rgba(110, 90, 60, 0.4);
   color: #3d3428;
+}
+
+.notes-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.85rem;
+}
+@media (min-width: 720px) {
+  .notes-layout {
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.notes-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.notes-search,
+.notes-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.notes-search input,
+.notes-filter select {
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--elev);
+  color: inherit;
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+}
+.notes-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.notes-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  max-height: min(50vh, 28rem);
+  overflow: auto;
+}
+.notes-nav-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+}
+.notes-nav-item.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.notes-nav-title {
+  font-weight: 600;
+}
+.note-reader {
+  margin: 0;
+}
+.note-reader__head {
+  margin-bottom: 0.75rem;
+}
+.note-reader__head h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--display);
+  font-size: 1.45rem;
+}
+.note-body {
+  font-size: 1rem;
+  line-height: 1.55;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.source-chapters {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+}
+.source-chapter,
+.source-subchapter {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0.15rem 0.55rem 0.55rem;
+}
+.source-chapter__title,
+.source-subchapter__title {
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--display);
+  padding: 0.45rem 0;
+}
+.source-prose {
+  line-height: 1.5;
+}
+.source-prose .read-aloud {
+  margin: 0.65rem 0;
 }
 
 .dialog-note .dialog-inner {

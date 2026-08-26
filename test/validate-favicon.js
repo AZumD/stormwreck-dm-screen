@@ -33,6 +33,7 @@ const pages = [
   "dm/index.html",
   "player/index.html",
   "music-katalog/index.html",
+  "source-katalog/index.html",
   "pc-katalog/index.html",
   "npc-katalog/index.html",
   "monster-katalog/index.html",

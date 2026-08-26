@@ -1540,5 +1540,69 @@ window.CatalogueConfigs = {
       loopByDefault: true,
       audio: null
     }
+  },
+
+  source: {
+    type: "source",
+    title: "Source Catalogue",
+    subtitle: "Paste adventure and rulebook text — chapters, read-aloud, and links.",
+    newLabel: "New source",
+    searchPlaceholder: "Search sources…",
+    listIcon: "📖",
+    searchFields: ["name", "abbreviation", "publisher", "summary", "tags", "notes"],
+    facets: [{ id: "publisher", label: "Publisher" }],
+    groupBy: "publisher",
+    groupLabels: { "": "Uncategorized" },
+    listMeta: ["abbreviation", "publisher"],
+    sections: [
+      {
+        title: "Identity",
+        fields: [
+          { id: "name", label: "Title", type: "text", required: true, grid: "full" },
+          {
+            id: "abbreviation",
+            label: "Abbreviation",
+            type: "text",
+            grid: "half",
+            placeholder: "PHB, DIP…"
+          },
+          {
+            id: "publisher",
+            label: "Publisher / origin",
+            type: "text",
+            grid: "half",
+            placeholder: "Wizards of the Coast…"
+          },
+          { id: "summary", label: "Short summary", type: "textarea", rows: 2, grid: "full" }
+        ]
+      },
+      {
+        title: "Chapters",
+        fields: [
+          {
+            id: "chapters",
+            label: "Chapters & subchapters",
+            type: "chapters",
+            grid: "full"
+          }
+        ]
+      },
+      {
+        title: "Notes & tags",
+        fields: [
+          { id: "notes", label: "Personal notes", type: "textarea", rows: 3, grid: "full" },
+          { id: "tags", label: "Tags", type: "list", grid: "full", placeholder: "adventure, rules, stormwreck…" }
+        ]
+      }
+    ],
+    defaults: {
+      name: "Untitled source",
+      abbreviation: "",
+      publisher: "",
+      summary: "",
+      chapters: [],
+      notes: "",
+      tags: []
+    }
   }
 };

@@ -159,13 +159,29 @@ if (!clientSrc.includes("libraryAttach") || !clientSrc.includes("library:")) {
   fail("player-api-client missing library helpers");
 } else pass("player-api-client library helpers");
 if (
-  !player.PLAYER_CATALOGUE_TYPES?.has("monster") ||
-  !player.PLAYER_CATALOGUE_TYPES?.has("location") ||
+  !player.PLAYER_LIBRARY_BROWSE_TYPES?.has("source") ||
+  !player.PLAYER_LIBRARY_BROWSE_TYPES?.has("location") ||
+  player.PLAYER_LIBRARY_BROWSE_TYPES?.has("item") ||
+  player.PLAYER_LIBRARY_BROWSE_TYPES?.has("monster") ||
+  !player.PLAYER_CATALOGUE_TYPES?.has("item") ||
+  !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("monster") ||
   !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("npc") ||
   !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("pc")
 ) {
   fail("player catalogue allow/deny sets");
 } else pass("player catalogue allow/deny sets");
+if (!appSrc.includes('"source"') || appSrc.includes('LIBRARY_TYPES = [\n    "item"')) {
+  fail("player library types should include source and drop item/monster browse");
+} else pass("player library types updated");
+if (!appSrc.includes("notes-layout") || !appSrc.includes("note-body") || appSrc.includes(".slice(0, 140)")) {
+  /* people still slices summaries — check notes specifically */
+}
+if (!appSrc.includes("notes-layout") || !appSrc.includes("data-note-select")) {
+  fail("player notes sidebar missing");
+} else pass("player notes sidebar");
+if (/\(n\.body \|\| \"\"\)\.slice\(0,\s*140\)/.test(appSrc)) {
+  fail("player notes still truncate body previews");
+} else pass("player notes show full body");
 if (!apiSrc.includes("listPlayerCatalogue") || !apiSrc.includes("library-attach")) {
   fail("api missing player library routes");
 } else pass("api player library routes");
@@ -607,25 +623,37 @@ async function liveTests() {
   if (catOk.status !== 200) fail(`catalogue resolve ${catOk.status}`);
   else pass("player catalogue entity resolution works");
 
-  const catList = await httpRequest(
+  const catItemList = await httpRequest(
     "GET",
     `/api/player/campaigns/${campaignId}/catalogues/item?q=flint&limit=20`,
     { cookie: c1 }
   );
-  if (
-    catList.status !== 200 ||
-    !(catList.data.entries || []).some((e) => e.id === "sw-flint-knife")
-  ) {
-    fail(`catalogue browse/search ${catList.status}`);
-  } else pass("player catalogue browse/search returns entries");
+  if (catItemList.status !== 403) fail(`item catalogue browse expected 403 got ${catItemList.status}`);
+  else pass("item catalogue browse blocked (inventory detail still allowed)");
+
+  const catList = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/spell?limit=20`,
+    { cookie: c1 }
+  );
+  if (catList.status !== 200) fail(`catalogue browse/search ${catList.status}`);
+  else pass("player catalogue browse/search returns entries");
 
   const catMonster = await httpRequest(
     "GET",
     `/api/player/campaigns/${campaignId}/catalogues/monster?limit=5`,
     { cookie: c1 }
   );
-  if (catMonster.status !== 200) fail(`monster catalogue browse ${catMonster.status}`);
-  else pass("monster catalogue browse allowed for players");
+  if (catMonster.status !== 403) fail(`monster catalogue browse expected 403 got ${catMonster.status}`);
+  else pass("monster catalogue browse blocked for players");
+
+  const catSource = await httpRequest(
+    "GET",
+    `/api/player/campaigns/${campaignId}/catalogues/source?limit=5`,
+    { cookie: c1 }
+  );
+  if (catSource.status !== 200) fail(`source catalogue browse ${catSource.status}`);
+  else pass("source catalogue browse allowed for players");
 
   const catNpc = await httpRequest(
     "GET",

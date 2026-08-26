@@ -14,7 +14,8 @@ const CATALOGUE_TYPES = Object.freeze([
   "item",
   "monster",
   "location",
-  "music"
+  "music",
+  "source"
 ]);
 
 const CAMPAIGN_DOC_KINDS = Object.freeze([

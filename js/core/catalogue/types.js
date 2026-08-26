@@ -22,7 +22,8 @@ window.CatalogueTypes = (function () {
     { id: "spell", label: "Spell", linkable: true, folder: "spell-katalog" },
     { id: "skill", label: "Skill", linkable: true, folder: "skill-katalog" },
     { id: "feature", label: "Feature", linkable: true, folder: "feature-katalog" },
-    { id: "music", label: "Music", linkable: false, folder: "music-katalog" }
+    { id: "music", label: "Music", linkable: false, folder: "music-katalog" },
+    { id: "source", label: "Source", linkable: true, folder: "source-katalog" }
   ];
 
   function all() {
