@@ -71,25 +71,20 @@ window.SourceUi = (function () {
     if (!list.length) {
       return `<p class="cat-wiki__empty">No chapters yet. Edit this entry to paste source text.</p>`;
     }
-    return `<div class="source-chapters">${list
-      .map((ch) => {
+    const reader = Boolean(opts.player);
+    const wrapClass = reader ? "source-chapters source-chapters--reader" : "source-chapters";
+    return `<div class="${wrapClass}">${list
+      .map((ch, i) => {
         const body = formatProse(ch.content, opts);
+        const openAttr = !reader || i === 0 ? " open" : "";
         const subs = (ch.subchapters || [])
-          .map((sub) => {
+          .map((sub, si) => {
             const subBody = formatProse(sub.content, opts);
-            return `<details class="source-subchapter" open>
-              <summary class="source-subchapter__title">${escapeHtml(sub.title)}</summary>
-              <div class="source-prose">${subBody || `<p class="empty">Empty.</p>`}</div>
-            </details>`;
+            const subOpen = !reader || (i === 0 && si === 0) ? " open" : "";
+            return `<details class="source-subchapter"${subOpen}><summary class="source-subchapter__title">${escapeHtml(sub.title)}</summary><div class="source-prose">${subBody || `<p class="empty">Empty.</p>`}</div></details>`;
           })
           .join("");
-        return `<details class="source-chapter" open>
-          <summary class="source-chapter__title">${escapeHtml(ch.title)}</summary>
-          <div class="source-chapter__body">
-            ${body ? `<div class="source-prose">${body}</div>` : ""}
-            ${subs}
-          </div>
-        </details>`;
+        return `<details class="source-chapter"${openAttr}><summary class="source-chapter__title">${escapeHtml(ch.title)}</summary><div class="source-chapter__body">${body ? `<div class="source-prose">${body}</div>` : ""}${subs}</div></details>`;
       })
       .join("")}</div>`;
   }

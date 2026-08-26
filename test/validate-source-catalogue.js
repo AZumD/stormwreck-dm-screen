@@ -36,6 +36,14 @@ else pass("CatalogueTypes source");
 if (!configs.includes("source:") || !configs.includes('type: "chapters"')) {
   fail("configs missing source / chapters field");
 } else pass("source config + chapters field");
+if (
+  !configs.includes('value: "Adventures"') ||
+  !configs.includes('value: "Rulebooks"') ||
+  !configs.includes('value: "Others"') ||
+  !configs.includes('groupBy: "category"')
+) {
+  fail("source config missing Kind (Adventures/Rulebooks/Others)");
+} else pass("source Kind select + groupBy");
 if (!app.includes('field.type === "chapters"') || !app.includes("SourceUi") || !app.includes("cat-field--chapters")) {
   fail("CatalogueApp missing chapters wiring");
 } else pass("CatalogueApp chapters wiring");
@@ -51,10 +59,21 @@ if (!page.includes('CatalogueApp.init("source")') || !page.includes("source-ui.j
 if (!player.includes("PLAYER_LIBRARY_BROWSE_TYPES") || !player.includes('"source"')) {
   fail("player allowlist missing source browse");
 } else pass("player source browse allowlist");
-if (!playerApp.includes('"source"') || !/LIBRARY_TYPES = \[[^\]]*source/.test(playerApp)) {
+if (!player.includes("isPlayerVisibleSource") || !player.includes("PLAYER_HIDDEN_SOURCE_CATEGORIES")) {
+  fail("player missing adventure source filter");
+} else pass("player adventure source filter");
+{
+  const browseBlock = player.match(/PLAYER_LIBRARY_BROWSE_TYPES = new Set\(\[([\s\S]*?)\]\)/);
+  if (browseBlock && /"location"/.test(browseBlock[1])) {
+    fail("player browse still includes location");
+  } else pass("player browse excludes location");
+}if (!playerApp.includes('"source"') || !/LIBRARY_TYPES = \[[^\]]*source/.test(playerApp)) {
   fail("player-app LIBRARY_TYPES missing source");
 } else pass("player-app source chip");
-if (!docs.includes("Source Catalogue")) fail("SOURCE.md incomplete");
+if (/LIBRARY_TYPES = \[[^\]]*location/.test(playerApp)) {
+  fail("player-app LIBRARY_TYPES still has location");
+} else pass("player-app drops location chip");
+if (!docs.includes("Source Catalogue") || !docs.includes("Adventures")) fail("SOURCE.md incomplete");
 else pass("SOURCE.md");
 
 const sandbox = { window: {}, console };
@@ -73,9 +92,24 @@ else pass("normalizeChapters");
 const wiki = SourceUi.renderChaptersWiki(chapters, { player: true });
 if (!wiki.includes("source-chapter") || !wiki.includes("Ch 1")) fail("renderChaptersWiki");
 else pass("renderChaptersWiki");
+if (!wiki.includes("source-chapters--reader")) fail("player wiki missing reader class");
+else pass("player wiki reader class");
 const stripped = SourceUi.playerSafeMarkup("ok {{dm-note}}secret{{/dm-note}} end");
 if (stripped.includes("secret") || !stripped.includes("ok")) fail("playerSafeMarkup");
 else pass("playerSafeMarkup strips dm-note");
+
+try {
+  const playerMod = require(path.join(root, "server/lib/player.js"));
+  if (
+    playerMod.isPlayerVisibleSource({ category: "Adventures" }) ||
+    !playerMod.isPlayerVisibleSource({ category: "Rulebooks" }) ||
+    !playerMod.isPlayerVisibleSource({ category: "" })
+  ) {
+    fail("isPlayerVisibleSource runtime");
+  } else pass("isPlayerVisibleSource runtime");
+} catch (err) {
+  fail(`player module load: ${err.message}`);
+}
 
 if (failed) {
   console.error(`\n${failed} check(s) failed`);

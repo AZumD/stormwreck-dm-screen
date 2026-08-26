@@ -10,7 +10,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / Music / **Source**
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
-- Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; Source Catalogue browseable; item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `SOURCE.md`)
+- Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; Source Catalogue browseable (Rulebooks/Others only — Adventures + locations hidden); item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `SOURCE.md`)
 
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
@@ -112,6 +112,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ## Catalogues
 - Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)
 - Items use controlled `category` + freeform `itemType` / `tags`
+- **Source** catalogue uses Kind: Adventures (DM-only for players), Rulebooks, Others
 - Race catalogue holds species + subspecies (`@race:`); class catalogue holds class + subclass (`@class:`)
 - Locations may nest via `parentLocationRef`; monsters carry `source` / `tags`
 - **Music** catalogue (`music-katalog`) — DM-only track metadata; MP3s under `assets/audio/` or S3 (`docs/README/MUSIC.md`)

@@ -1549,16 +1549,38 @@ window.CatalogueConfigs = {
     newLabel: "New source",
     searchPlaceholder: "Search sources…",
     listIcon: "📖",
-    searchFields: ["name", "abbreviation", "publisher", "summary", "tags", "notes"],
-    facets: [{ id: "publisher", label: "Publisher" }],
-    groupBy: "publisher",
+    searchFields: ["name", "abbreviation", "publisher", "category", "summary", "tags", "notes"],
+    facets: [
+      {
+        id: "category",
+        label: "Kind",
+        options: [
+          { value: "Adventures", label: "Adventures" },
+          { value: "Rulebooks", label: "Rulebooks" },
+          { value: "Others", label: "Others" }
+        ]
+      },
+      { id: "publisher", label: "Publisher" }
+    ],
+    groupBy: "category",
     groupLabels: { "": "Uncategorized" },
-    listMeta: ["abbreviation", "publisher"],
+    listMeta: ["category", "abbreviation", "publisher"],
     sections: [
       {
         title: "Identity",
         fields: [
           { id: "name", label: "Title", type: "text", required: true, grid: "full" },
+          {
+            id: "category",
+            label: "Kind",
+            type: "select",
+            grid: "half",
+            options: [
+              { value: "Adventures", label: "Adventures (DM only)" },
+              { value: "Rulebooks", label: "Rulebooks" },
+              { value: "Others", label: "Others" }
+            ]
+          },
           {
             id: "abbreviation",
             label: "Abbreviation",
@@ -1597,6 +1619,7 @@ window.CatalogueConfigs = {
     ],
     defaults: {
       name: "Untitled source",
+      category: "Others",
       abbreviation: "",
       publisher: "",
       summary: "",

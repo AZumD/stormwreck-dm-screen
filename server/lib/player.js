@@ -18,14 +18,32 @@ const PLAYER_LIBRARY_BROWSE_TYPES = new Set([
   "spell",
   "race",
   "class",
-  "location",
   "source"
 ]);
 
 /** Detail access (browse + inventory item open). Monster intentionally blocked. */
 const PLAYER_CATALOGUE_TYPES = new Set([...PLAYER_LIBRARY_BROWSE_TYPES, "item"]);
 
-const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc", "music", "monster"]);
+const PLAYER_BLOCKED_CATALOGUE_TYPES = new Set(["npc", "pc", "music", "monster", "location"]);
+
+/** Source kinds hidden from the player companion (spoilers). */
+const PLAYER_HIDDEN_SOURCE_CATEGORIES = new Set(["adventures", "adventure"]);
+
+function normalizeSourceCategory(entry) {
+  const raw = String(entry?.category || "").trim();
+  if (!raw) return "Others";
+  const key = raw.toLowerCase();
+  if (key === "adventure" || key === "adventures") return "Adventures";
+  if (key === "rulebook" || key === "rulebooks") return "Rulebooks";
+  if (key === "other" || key === "others") return "Others";
+  return "Others";
+}
+
+function isPlayerVisibleSource(entry) {
+  if (!entry || typeof entry !== "object") return false;
+  const kind = normalizeSourceCategory(entry).toLowerCase();
+  return !PLAYER_HIDDEN_SOURCE_CATEGORIES.has(kind);
+}
 
 const LIBRARY_ATTACH_ACTIONS = new Set([
   "inventory",
@@ -919,6 +937,9 @@ async function listPlayerCatalogue(req, campaignId, type, query = {}) {
   const offset = Math.max(0, Number(query.offset) || 0);
 
   let entries = await catalogues.list(safeType);
+  if (safeType === "source") {
+    entries = entries.filter(isPlayerVisibleSource);
+  }
   if (q) {
     entries = entries.filter((e) => entrySearchBlob(e).includes(q));
   }
@@ -928,7 +949,10 @@ async function listPlayerCatalogue(req, campaignId, type, query = {}) {
     id: e.id,
     name: e.name || e.title || e.id,
     summary: e.summary || e.effect || e.description || "",
-    category: e.category || e.locationType || e.itemType || e.school || null,
+    category:
+      safeType === "source"
+        ? normalizeSourceCategory(e)
+        : e.category || e.locationType || e.itemType || e.school || null,
     level: e.level ?? e.spellLevel ?? null,
     rarity: e.rarity || null,
     cr: e.cr || e.challengeRating || null,
@@ -949,11 +973,23 @@ async function resolveCatalogue(req, campaignId, type, id) {
     throw err;
   }
 
+  if (safeType === "source") {
+    const raw = await catalogues.get(safeType, safeId);
+    if (!raw || !isPlayerVisibleSource(raw)) {
+      const err = new Error("Not found");
+      err.status = 404;
+      throw err;
+    }
+  }
+
   const dto = await toPlayerCatalogueDto(safeType, safeId);
   if (!dto) {
     const err = new Error("Not found");
     err.status = 404;
     throw err;
+  }
+  if (safeType === "source") {
+    dto.category = normalizeSourceCategory(dto);
   }
   return dto;
 }
@@ -1187,9 +1223,12 @@ module.exports = {
   PLAYER_CATALOGUE_TYPES,
   PLAYER_LIBRARY_BROWSE_TYPES,
   PLAYER_BLOCKED_CATALOGUE_TYPES,
+  PLAYER_HIDDEN_SOURCE_CATEGORIES,
   PLAYER_STATE_WHITELIST,
   PLAYER_SHEET_WHITELIST,
   LIBRARY_ATTACH_ACTIONS,
+  normalizeSourceCategory,
+  isPlayerVisibleSource,
   abilityModifier,
   toMechanicalDto,
   toPartyCardDto,

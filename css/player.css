@@ -825,12 +825,180 @@ textarea { min-height: 6.5rem; resize: vertical; }
   font-weight: 600;
   font-family: var(--display);
   padding: 0.45rem 0;
+  list-style: none;
+}
+.source-chapter__title::-webkit-details-marker,
+.source-subchapter__title::-webkit-details-marker {
+  display: none;
 }
 .source-prose {
-  line-height: 1.5;
+  line-height: 1.55;
 }
 .source-prose .read-aloud {
   margin: 0.65rem 0;
+}
+
+/* Source reader — full-bleed reading surface (not a nested card stack) */
+.dialog.dialog-source {
+  width: min(96vw, 680px);
+  max-height: min(94dvh, 920px);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.dialog-source .dialog-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: min(94dvh, 920px);
+  background-image:
+    linear-gradient(rgba(248, 242, 228, 0.97), rgba(236, 226, 208, 0.95)),
+    var(--paper-texture);
+  background-size: auto, cover;
+  background-position: center;
+  color: #2a241c;
+}
+.dialog-source .dialog-inner header {
+  flex-shrink: 0;
+  border-bottom-color: rgba(110, 90, 60, 0.28);
+  background: rgba(248, 242, 228, 0.72);
+  padding: 0.7rem 0.95rem;
+}
+.dialog-source .dialog-inner h2 {
+  color: #1a1510;
+  font-size: clamp(1.15rem, 4vw, 1.45rem);
+  line-height: 1.25;
+}
+.dialog-source .dialog-inner .btn-ghost {
+  border-color: rgba(110, 90, 60, 0.4);
+  color: #3d3428;
+}
+.dialog-source .dialog-body {
+  white-space: normal;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.65rem 1rem 1.35rem;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #2a241c;
+}
+.dialog-source .detail-meta {
+  color: #5a5040;
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+}
+.dialog-source .detail-block {
+  margin: 0 0 0.85rem;
+  white-space: normal;
+  color: #3a3228;
+}
+.dialog-source .source-chapters--reader {
+  gap: 0;
+  margin: 0;
+}
+.dialog-source .source-chapters--reader .source-chapter,
+.dialog-source .source-chapters--reader .source-subchapter {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+.dialog-source .source-chapters--reader .source-chapter + .source-chapter {
+  margin-top: 0.35rem;
+  border-top: 1px solid rgba(110, 90, 60, 0.22);
+  padding-top: 0.15rem;
+}
+.dialog-source .source-chapters--reader .source-chapter__title,
+.dialog-source .source-chapters--reader .source-subchapter__title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0.55rem 0 0.4rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1510;
+  background: linear-gradient(180deg, rgba(248, 242, 228, 0.98), rgba(248, 242, 228, 0.92));
+}
+.dialog-source .source-chapters--reader .source-chapter__title::before,
+.dialog-source .source-chapters--reader .source-subchapter__title::before {
+  content: "▸ ";
+  color: #8a7340;
+  font-size: 0.85em;
+}
+.dialog-source .source-chapters--reader .source-chapter[open] > .source-chapter__title::before,
+.dialog-source .source-chapters--reader .source-subchapter[open] > .source-subchapter__title::before {
+  content: "▾ ";
+}
+.dialog-source .source-chapters--reader .source-chapter__body {
+  padding: 0.15rem 0 1rem;
+}
+.dialog-source .source-chapters--reader .source-subchapter {
+  margin: 0.55rem 0 0;
+  padding-left: 0.35rem;
+  border-left: 2px solid rgba(138, 115, 64, 0.35);
+}
+.dialog-source .source-chapters--reader .source-subchapter__title {
+  font-size: 1.02rem;
+  background: transparent;
+  position: static;
+}
+.dialog-source .source-prose {
+  line-height: 1.72;
+  overflow-wrap: break-word;
+}
+.dialog-source .source-prose p {
+  margin: 0 0 0.85rem;
+}
+.dialog-source .source-prose .empty {
+  color: #6a5e4c;
+  font-style: italic;
+}
+.dialog-source .read-aloud {
+  background-color: #ebe4d4;
+  background-image:
+    linear-gradient(rgba(255, 252, 245, 0.55), rgba(240, 230, 210, 0.4)),
+    var(--paper-texture);
+  background-size: auto, cover;
+  border: 1px solid rgba(110, 90, 60, 0.28);
+  border-left: 3px solid #a88630;
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  margin: 0.9rem 0;
+  color: #2a241c;
+  font-family: var(--display);
+  font-style: italic;
+  line-height: 1.65;
+}
+.dialog-source .read-aloud-label {
+  display: block;
+  font-family: var(--font);
+  font-style: normal;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6b5a30;
+  margin-bottom: 0.45rem;
+}
+.dialog-source .collapse-block {
+  margin: 0.65rem 0;
+  border: 1px solid rgba(110, 90, 60, 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 252, 245, 0.45);
+}
+.dialog-source .collapse-block__summary {
+  cursor: pointer;
+  padding: 0.45rem 0.65rem;
+  font-weight: 600;
+  color: #3d3428;
+}
+.dialog-source .collapse-block__body {
+  padding: 0 0.65rem 0.7rem;
+}
+.dialog-source .library-actions {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(110, 90, 60, 0.22);
 }
 
 .dialog-note .dialog-inner {

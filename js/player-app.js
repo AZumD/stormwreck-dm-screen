@@ -52,7 +52,7 @@
     createCharacterCancel: document.getElementById("create-character-cancel")
   };
 
-  const LIBRARY_TYPES = ["spell", "skill", "feature", "race", "class", "location", "source"];
+  const LIBRARY_TYPES = ["spell", "skill", "feature", "race", "class", "source"];
 
   const ATTACH_LABELS = {
     inventory: "Add to inventory",
@@ -807,6 +807,7 @@
     const data = await safe(() => api.revealedNpc(state.campaignId, npcId));
     if (!data) return;
     const npc = data.npc || {};
+    els.dialog.classList.remove("dialog-source");
     els.detailTitle.textContent = npc.name || npcId;
     const bits = [npc.role].filter(Boolean);
     const portrait = npc.portraitUrl
@@ -858,8 +859,8 @@
       </label>
       <div class="library-types" role="tablist" aria-label="Catalogue type">${types}</div>
       <p class="meta">${charHint} Showing ${state.libraryEntries.length} of ${state.libraryTotal}.
-        ${(state.libraryType === "location")
-          ? " Lookup only — no sheet attach."
+        ${(state.libraryType === "source")
+          ? " Lookup only — adventures stay DM-only."
           : ""}</p>
       ${list}
       ${more}`;
@@ -919,9 +920,11 @@
     if (entry.type === "source" || Array.isArray(entry.chapters)) {
       const bits = [];
       if (entry.summary) bits.push(`<p class="detail-block">${esc(entry.summary)}</p>`);
-      if (entry.publisher || entry.abbreviation) {
+      if (entry.category || entry.publisher || entry.abbreviation) {
         bits.push(
-          `<p class="meta">${esc([entry.abbreviation, entry.publisher].filter(Boolean).join(" · "))}</p>`
+          `<p class="meta">${esc(
+            [entry.category, entry.abbreviation, entry.publisher].filter(Boolean).join(" · ")
+          )}</p>`
         );
       }
       if (window.SourceUi) {
@@ -1045,6 +1048,8 @@
     const data = await safe(() => api.catalogue(state.campaignId, type, id));
     if (!data) return;
     const entry = data.entry || {};
+    const isSource = entry.type === "source" || Array.isArray(entry.chapters);
+    els.dialog.classList.toggle("dialog-source", isSource);
     els.detailTitle.textContent = entry.name || id;
     const meta = libraryMetaLine(entry);
     els.detailBody.innerHTML = `

@@ -107,6 +107,15 @@ if (!fs.existsSync(path.join(root, paperAsset))) {
 if (!playerCss.includes("--paper-texture") || !playerCss.includes(".notes-panel")) {
   fail("player.css missing paper texture notes styling");
 } else pass("player.css paper notes styling");
+if (!playerCss.includes("dialog-source") || !playerCss.includes("source-chapters--reader")) {
+  fail("player.css missing source reader styles");
+} else pass("player.css source reader styles");
+if (!playerCss.includes(".dialog-source .dialog-body") || !/dialog-source[\s\S]*white-space:\s*normal/.test(playerCss)) {
+  fail("player.css source reader must override dialog pre-wrap");
+} else pass("player.css source reader whitespace");
+if (!appSrc.includes("dialog-source") || !appSrc.includes("classList.toggle(\"dialog-source\"")) {
+  fail("player-app missing dialog-source toggle");
+} else pass("player-app dialog-source toggle");
 const styleCss = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
 if (!styleCss.includes("grunge-stained-old-paper-texture") || !styleCss.includes(".read-aloud")) {
   fail("style.css read-aloud missing paper texture");
@@ -160,18 +169,33 @@ if (!clientSrc.includes("libraryAttach") || !clientSrc.includes("library:")) {
 } else pass("player-api-client library helpers");
 if (
   !player.PLAYER_LIBRARY_BROWSE_TYPES?.has("source") ||
-  !player.PLAYER_LIBRARY_BROWSE_TYPES?.has("location") ||
+  player.PLAYER_LIBRARY_BROWSE_TYPES?.has("location") ||
   player.PLAYER_LIBRARY_BROWSE_TYPES?.has("item") ||
   player.PLAYER_LIBRARY_BROWSE_TYPES?.has("monster") ||
   !player.PLAYER_CATALOGUE_TYPES?.has("item") ||
   !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("monster") ||
+  !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("location") ||
   !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("npc") ||
   !player.PLAYER_BLOCKED_CATALOGUE_TYPES?.has("pc")
 ) {
   fail("player catalogue allow/deny sets");
 } else pass("player catalogue allow/deny sets");
-if (!appSrc.includes('"source"') || appSrc.includes('LIBRARY_TYPES = [\n    "item"')) {
-  fail("player library types should include source and drop item/monster browse");
+if (
+  typeof player.isPlayerVisibleSource !== "function" ||
+  player.isPlayerVisibleSource({ category: "Adventures" }) ||
+  !player.isPlayerVisibleSource({ category: "Rulebooks" }) ||
+  !player.isPlayerVisibleSource({ category: "Others" }) ||
+  !player.isPlayerVisibleSource({}) ||
+  player.normalizeSourceCategory({ category: "adventure" }) !== "Adventures"
+) {
+  fail("source adventure visibility helpers");
+} else pass("source adventure visibility helpers");
+if (
+  !appSrc.includes('"source"') ||
+  /LIBRARY_TYPES = \[[^\]]*location/.test(appSrc) ||
+  appSrc.includes('LIBRARY_TYPES = [\n    "item"')
+) {
+  fail("player library types should include source and drop location/item/monster browse");
 } else pass("player library types updated");
 if (!appSrc.includes("notes-layout") || !appSrc.includes("note-body") || appSrc.includes(".slice(0, 140)")) {
   /* people still slices summaries — check notes specifically */

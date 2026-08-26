@@ -52,14 +52,15 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - **Notes** tab cards and note editor use stained-paper texture; campaign **read-aloud** blocks use the same asset
 
 ## Library UI (Phase 5C)
-- Fourth tab: browse/search spell, skill, feature, race, class, location, **source**
+- Fourth tab: browse/search spell, skill, feature, race, class, **source**
 - Debounced search; horizontal type chips; detail dialog with rules text
 - **Load more** uses server `offset` / `total` (pages of 40)
-- Location / source are lookup-only (no sheet attach)
-- Item and monster catalogues are **not** listed in the player Library (inventory still opens owned item details)
+- Source is lookup-only (no sheet attach); **Adventures** kind is DM-only
+- Source detail uses a wider parchment **reader** dialog (not the narrow nested card stack)
+- Item, monster, and **location** catalogues are **not** listed in the player Library (inventory still opens owned item details; locations stay DM-side to avoid spoilers)
 - Attach actions (controlled character): inventory (via + / edit) / spell / skill / feature / set race / set class
 - Custom freeform sheet lines still work via Edit sheet / inline add
-- NPC, PC, music, monster catalogues blocked for browse; DM `/api/catalogues/*` still unavailable to players
+- NPC, PC, music, monster, location catalogues blocked for browse; DM `/api/catalogues/*` still unavailable to players
 
 ## People UI (Phase 5D)
 - Tab lists NPCs the DM has revealed for the campaign (portrait + optional DM note)
@@ -90,7 +91,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - Full mechanical DTO only for characters in `character_controllers`.
 - Party returns `type='player'` cards only (name/race/class/level/portrait + shared HP/conditions)
 - Notes are private to `user_id` (DM does not auto-read).
-- Catalogue browse/detail allowlist: skill, feature, spell, race, class, location, source (+ item detail for inventory). Blocked browse: npc, pc, music, monster, item list.
+- Catalogue browse/detail allowlist: skill, feature, spell, race, class, source (+ item detail for inventory). Blocked: npc, pc, music, monster, location, item list. Source **Adventures** filtered from list/detail.
 - Library attach requires character control; action must match entry type.
 - Mutable state whitelist: `hp_current`, `hp_max`, `hp_temp`, `conditions`, `class_resources`, `spell_slots`, `inspiration`, `death_saves`.
 - Player sheet UI includes **Death saves**, **Spell slots**, and **Class resources**. DM combat sheet mirrors the same for PCs.
