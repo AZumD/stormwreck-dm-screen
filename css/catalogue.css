@@ -1072,9 +1072,20 @@
 .source-edit-content {
   width: 100%;
   font: inherit;
-  min-height: 6rem;
-  padding: 0.5rem;
+  min-height: 12rem;
+  padding: 0.65rem 0.75rem;
   resize: vertical;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, #000 35%, transparent);
+  color: inherit;
+  line-height: 1.45;
+}
+.cat-field--chapters {
+  border: 1px solid color-mix(in srgb, #c4a035 35%, transparent);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: color-mix(in srgb, #c4a035 6%, transparent);
 }
 .source-edit-sub {
   margin-left: 0.5rem;

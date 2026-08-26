@@ -36,7 +36,7 @@ else pass("CatalogueTypes source");
 if (!configs.includes("source:") || !configs.includes('type: "chapters"')) {
   fail("configs missing source / chapters field");
 } else pass("source config + chapters field");
-if (!app.includes('field.type === "chapters"') || !app.includes("SourceUi")) {
+if (!app.includes('field.type === "chapters"') || !app.includes("SourceUi") || !app.includes("cat-field--chapters")) {
   fail("CatalogueApp missing chapters wiring");
 } else pass("CatalogueApp chapters wiring");
 if (!sourceUi.includes("window.SourceUi") || !sourceUi.includes("renderChaptersWiki")) {

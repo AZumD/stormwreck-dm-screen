@@ -505,7 +505,7 @@ window.CatalogueApp = (function () {
           }
           return;
         }
-        if (field.type === "chapters") {
+        if (field.type === "chapters" || field.id === "chapters") {
           const editor = root.querySelector("[data-chapters-editor]");
           if (editor && window.SourceUi) {
             entry[field.id] = SourceUi.readChaptersFromEditor(editor);
@@ -517,6 +517,11 @@ window.CatalogueApp = (function () {
               entry[field.id] = [];
             }
           }
+          if (typeof entry[field.id] === "string") {
+            const title = String(entry[field.id]).trim() || "Chapter 1";
+            entry[field.id] = [{ id: "ch-1", title, content: "", subchapters: [] }];
+          }
+          if (window.SourceUi) entry[field.id] = SourceUi.normalizeChapters(entry[field.id]);
           return;
         }
         const el = root.querySelector(`[name="${field.id}"]`);
@@ -719,11 +724,22 @@ window.CatalogueApp = (function () {
       return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${renderAudioField(field, value, entry)}</div>`;
     }
 
-    if (field.type === "chapters") {
-      const html = window.SourceUi
-        ? SourceUi.renderChapterEditor(value)
-        : `<p class="cat-field-hint">Source UI missing.</p>`;
-      return `<div class="${gridClass}"><label>${escapeHtml(field.label)}</label>${html}</div>`;
+    if (field.type === "chapters" || field.id === "chapters") {
+      let chaptersVal = value;
+      if (typeof chaptersVal === "string" && chaptersVal.trim()) {
+        chaptersVal = [{ id: "ch-1", title: chaptersVal.trim(), content: "", subchapters: [] }];
+      }
+      if (window.SourceUi) {
+        return `<div class="${gridClass} cat-field--chapters">
+          <label>${escapeHtml(field.label)}</label>
+          <p class="cat-field-hint">Add chapters below, then paste book text into each <strong>body</strong> box.</p>
+          ${SourceUi.renderChapterEditor(chaptersVal)}
+        </div>`;
+      }
+      return `<div class="${gridClass}">
+        <label>${escapeHtml(field.label)}</label>
+        <p class="cat-field-hint">Source chapter editor failed to load. Hard-refresh the page (Ctrl+Shift+R).</p>
+      </div>`;
     }
 
     if (field.type === "checkbox") {
@@ -759,11 +775,16 @@ window.CatalogueApp = (function () {
         ? `<span class="cat-mod" data-mod-for="${field.id}">${mod(value) ? `(${mod(value)})` : ""}</span>`
         : "";
 
+    const safeInputType =
+      field.type === "number" || field.type === "text" || field.type === "email" || field.type === "url"
+        ? field.type
+        : "text";
+
     return `
       <div class="${gridClass}">
         <label for="field-${field.id}">${escapeHtml(field.label)}</label>
         <div class="cat-input-wrap">
-          <input id="field-${field.id}" name="${field.id}" type="${field.type || "text"}"
+          <input id="field-${field.id}" name="${field.id}" type="${safeInputType}"
             value="${escapeHtml(value ?? "")}"
             placeholder="${escapeHtml(field.placeholder || "")}">
           ${modHint}

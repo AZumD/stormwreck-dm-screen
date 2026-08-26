@@ -38,6 +38,9 @@ window.SourceUi = (function () {
   }
 
   function normalizeChapters(raw) {
+    if (typeof raw === "string" && raw.trim()) {
+      return [normalizeChapter({ title: raw.trim(), content: "", subchapters: [] })];
+    }
     if (!Array.isArray(raw)) return [];
     return raw.map(normalizeChapter);
   }
@@ -103,10 +106,10 @@ window.SourceUi = (function () {
           )}" placeholder="Chapter title" aria-label="Chapter title">
           <button type="button" class="cat-btn cat-btn--danger" data-ch-remove aria-label="Remove chapter">×</button>
         </div>
-        <textarea class="source-edit-content" data-ch-content rows="8" placeholder="Paste chapter text…">${escapeHtml(
+        <textarea class="source-edit-content" data-ch-content rows="12" placeholder="Paste chapter body text here (ebook / PDF copy)…">${escapeHtml(
           ch.content
         )}</textarea>
-        <p class="cat-field-hint">${escapeHtml(MARKUP_HINT)}</p>
+        <p class="cat-field-hint"><strong>Chapter body</strong> — ${escapeHtml(MARKUP_HINT)}</p>
         <div class="source-edit-subs" data-ch-subs>
           ${(ch.subchapters || [])
             .map(
@@ -118,9 +121,10 @@ window.SourceUi = (function () {
                 )}" placeholder="Subchapter title" aria-label="Subchapter title">
                 <button type="button" class="cat-btn cat-btn--danger" data-sub-remove aria-label="Remove subchapter">×</button>
               </div>
-              <textarea class="source-edit-content" data-sub-content rows="6" placeholder="Paste subchapter text…">${escapeHtml(
+              <textarea class="source-edit-content" data-sub-content rows="8" placeholder="Paste subchapter body text here…">${escapeHtml(
                 sub.content
               )}</textarea>
+              <p class="cat-field-hint"><strong>Subchapter body</strong></p>
             </div>`
             )
             .join("")}

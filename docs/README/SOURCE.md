@@ -36,7 +36,16 @@
 }
 ```
 
-## Player access
+## Where to paste text (DM)
+1. Open **DM Library → Source Catalogue** (`/source-katalog/`)
+2. **New source** (or pick an existing entry → **Edit**)
+3. Fill **Identity** (title, abbreviation…) as usual
+4. Scroll to **Chapters & subchapters**
+5. Paste into the large chapter textarea (or **+ Chapter** / **+ Subchapter** for more sections)
+6. Use the markup hint under the box (`**bold**`, `@npc:…`, `{{read-aloud}}…`, etc.)
+7. **Done** saves; wiki view shows collapsible chapters
+
+New entries start with one empty “Chapter 1” so the paste field is visible immediately.
 - Browseable under Library → **source**
 - Item / monster catalogue browse removed from the player Library (inventory item detail still works)
 - Player view strips `{{dm-note}}` blocks

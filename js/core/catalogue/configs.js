@@ -1600,7 +1600,14 @@ window.CatalogueConfigs = {
       abbreviation: "",
       publisher: "",
       summary: "",
-      chapters: [],
+      chapters: [
+        {
+          id: "ch-1",
+          title: "Chapter 1",
+          content: "",
+          subchapters: []
+        }
+      ],
       notes: "",
       tags: []
     }

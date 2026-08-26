@@ -90,3 +90,4 @@
 
 [2026-08-25] Polish queue: mixer pause/loop/badge + URL refresh; map Fit/show-on-map + play prev/next; player inventory/class resources/refs/people/load-more/soft refresh; party vitals; reveal notes; combat class resources; health/shutdown/401/backup. See PLAYER.md, BACKUP-DUAL-STORE.md
 [2026-08-26] Source Catalogue (chapters + scene markup); player library drops item/monster browse, adds source; notes full body + sidebar; library chip spacing. See SOURCE.md, SOURCE-UI.md, PLAYER.md
+[2026-08-26] Fix Source Catalogue chapter editor rendering as plain text; cache-bust source-katalog; clearer paste boxes. See source-ui.js, catalogue/app.js
