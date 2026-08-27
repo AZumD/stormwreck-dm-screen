@@ -334,11 +334,29 @@ func (m *Model) buildSceneNavRows(innerW int) []sceneNavRow {
 		} else if s.Status == "completed" {
 			mark = "✓"
 			markStyle = AppTheme.Muted
+		} else if s.Status == "skipped" {
+			mark = "–"
+			markStyle = AppTheme.Muted
 		}
-		label := TruncateVisible(s.Title, max(4, innerW-4))
+		st := ""
+		switch s.Status {
+		case "current":
+			st = ""
+		case "completed":
+			st = ""
+		case "skipped":
+			st = " · sk"
+		case "unseen":
+			st = ""
+		default:
+			if s.Status != "" {
+				st = " · " + s.Status[:min(3, len(s.Status))]
+			}
+		}
+		label := TruncateVisible(s.Title+st, max(4, innerW-4))
 		line := markStyle.Render(mark) + " " + AppTheme.Text.Render(label)
 		if m.scenePane == scenePaneNav && i == m.sceneListCursor {
-			line = AppTheme.Selection.Width(innerW).Render("▶ " + mark + " " + label)
+			line = AppTheme.Selection.Width(innerW).Render("▶ " + mark + " " + TruncateVisible(s.Title+" ["+s.Status+"]", max(4, innerW-4)))
 		}
 		rows = append(rows, sceneNavRow{text: line, sceneIdx: i})
 	}

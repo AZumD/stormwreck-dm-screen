@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -63,6 +64,10 @@ const (
 	overlayCharSheet
 	overlayCatalogue
 	overlayLookup
+	overlaySceneEdit
+	overlaySceneSwitch
+	overlaySceneNote
+	overlayQuickNotes
 )
 
 type editMode int
@@ -77,11 +82,13 @@ const (
 
 type tickMsg time.Time
 type refreshDoneMsg struct {
-	snap model.Snapshot
-	err  error
+	snap  model.Snapshot
+	clock CampaignClock
+	err   error
 }
 type mutateDoneMsg struct {
-	err error
+	err       error
+	statusMsg string
 }
 type loginResultMsg struct {
 	user         string
@@ -110,6 +117,7 @@ type campaignOpenedMsg struct {
 	scene *sceneBundle
 	notes string
 	music []musicTrackRow
+	clock CampaignClock
 	err   error
 }
 type sceneBundle struct {
@@ -152,6 +160,8 @@ type Model struct {
 	editInput   textinput.Model
 	searchInput textinput.Model
 	notesInput  textinput.Model
+	switchInput textinput.Model
+	overlayTA   textarea.Model
 	focusPass   bool
 	searching   bool
 	editingNotes bool
@@ -182,6 +192,9 @@ type Model struct {
 	overlay       overlayKind
 	snap          model.Snapshot
 	selected      int
+	clock         CampaignClock
+	clockFocus    bool
+	clockExact    bool
 
 	// scene
 	sceneList   *api.SceneList
@@ -196,6 +209,10 @@ type Model struct {
 	sceneBodyLines    int // last rendered full line count
 	sceneBodyViewport int // last visible line budget
 	sceneNavScroll    int // line offset into SCENES list (below fixed search header)
+
+	// scene switcher
+	switchRows   []api.SceneListItem
+	switchCursor int
 
 	// notes
 	notesText string
@@ -212,6 +229,7 @@ type Model struct {
 	sheetState *api.CharacterState
 	sheetCursor int
 	sheetLinks  []sheetLink
+	sheetRows   []SheetRow
 
 	// master lookup (Ctrl+K)
 	lookupHits     []LookupHit
@@ -268,6 +286,11 @@ func New(cfg config.Config, password string) (*Model, error) {
 	ni.CharLimit = 8000
 	ni.Width = 60
 
+	sw := textinput.New()
+	sw.Placeholder = "filter scenes…"
+	sw.CharLimit = 120
+	sw.Width = 40
+
 	m := &Model{
 		cfg:         cfg,
 		password:    password,
@@ -280,10 +303,13 @@ func New(cfg config.Config, password string) (*Model, error) {
 		editInput:   ed,
 		searchInput: si,
 		notesInput:  ni,
+		switchInput: sw,
+		overlayTA:   newOverlayTextarea(),
 		width:       80,
 		height:      40,
 		musicVol:    70,
 		tab:         tabScene,
+		clock:       NormalizeClock(1, 8*60),
 	}
 	if cfg.Email != "" && password != "" {
 		m.status = "Signing in…"
@@ -324,11 +350,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.scheduleTick()
 		}
 		m.snap = msg.snap
+		m.clock = msg.clock
 		m.conn = connConnected
 		m.stale = false
 		m.errMsg = ""
 		m.lastFetch = time.Now()
 		m.selected = clampIndex(m.selected, len(m.snap.Entities))
+		if m.overlay == overlayCharSheet {
+			if e := m.selectedEntity(); e != nil && m.sheetState != nil {
+				m.sheetState.HPCurrent = e.HPCurrent
+				m.sheetState.HPMax = e.HPMax
+			}
+			m.rebuildSheetRows()
+		}
 		return m, m.scheduleTick()
 	case mutateDoneMsg:
 		if msg.err != nil {
@@ -339,7 +373,38 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.errMsg = ""
+		if msg.statusMsg != "" {
+			m.status = msg.statusMsg
+		}
 		return m, m.cmdRefresh(true)
+	case scenePatchedMsg:
+		if msg.err != nil {
+			if msg.err == api.ErrUnauthorized {
+				return m.forceLogin("Session expired — sign in again")
+			}
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.applyScenePatchLocal(msg.detail)
+		if msg.statusMsg != "" {
+			m.status = msg.statusMsg
+		}
+		m.errMsg = ""
+		if msg.reload && msg.detail != nil {
+			return m, m.cmdLoadSceneByID(msg.detail.ID)
+		}
+		return m, nil
+	case clockSavedMsg:
+		if msg.err != nil {
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.clock = msg.clock
+		if msg.statusMsg != "" {
+			m.status = msg.statusMsg
+		}
+		m.errMsg = ""
+		return m, nil
 	case loginResultMsg:
 		if msg.err != nil {
 			m.conn = connError
@@ -414,6 +479,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.campaignID = msg.id
 		m.campaignTitle = msg.title
 		m.snap = msg.snap
+		m.clock = msg.clock
 		m.applySceneBundle(msg.scene)
 		m.notesText = msg.notes
 		m.notesInput.SetValue(msg.notes)
@@ -421,6 +487,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.screen = screenCampaign
 		m.tab = tabScene
 		m.overlay = overlayNone
+		m.clockFocus = false
 		m.conn = connConnected
 		m.lastFetch = time.Now()
 		m.selected = 0
@@ -447,8 +514,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.sheetChar = msg.char
 		m.sheetState = msg.state
-		m.sheetLinks = buildSheetLinks(msg.char)
 		m.sheetCursor = 0
+		m.rebuildSheetRows()
 		m.overlay = overlayCharSheet
 		return m, nil
 	}
@@ -535,7 +602,8 @@ func (m *Model) cmdLoadLookupIndex() tea.Cmd {
 }
 
 func (m *Model) isEditing() bool {
-	return m.edit != editNone || m.searching || m.editingNotes || m.screen == screenLogin
+	return m.edit != editNone || m.searching || m.editingNotes || m.screen == screenLogin ||
+		m.textareaOverlayActive() || m.overlay == overlaySceneSwitch || m.clockFocus
 }
 
 func (m *Model) scheduleTick() tea.Cmd {
@@ -600,6 +668,7 @@ func (m *Model) cmdOpenCampaign(id string) tea.Cmd {
 		}
 		bundle, _ := loadSceneBundle(client, id)
 		notesRaw, _ := client.GetDocument(id, "notes")
+		csRaw, _ := client.GetDocument(id, "campaign-state")
 		mixerRaw, _ := client.GetDocument(id, "music-mixer")
 		musicCat, _ := client.ListCatalogue("music")
 		byID := map[string]map[string]any{}
@@ -615,6 +684,7 @@ func (m *Model) cmdOpenCampaign(id string) tea.Cmd {
 			scene: bundle,
 			notes: parseNotesText(notesRaw),
 			music: parseMusicMixerTracks(mixerRaw, byID),
+			clock: parseCampaignClock(csRaw),
 		}
 	}
 }
@@ -676,7 +746,8 @@ func (m *Model) cmdRefresh(background bool) tea.Cmd {
 	campaign := m.campaignID
 	return func() tea.Msg {
 		snap, err := fetchSnapshot(client, campaign)
-		return refreshDoneMsg{snap: snap, err: err}
+		csRaw, _ := client.GetDocument(campaign, "campaign-state")
+		return refreshDoneMsg{snap: snap, clock: parseCampaignClock(csRaw), err: err}
 	}
 }
 
@@ -688,9 +759,20 @@ func (m *Model) cmdMutate(mode editMode, raw string) tea.Cmd {
 	client := m.client
 	campaign := m.campaignID
 	ent := *e
+	statusHint := ""
+	switch mode {
+	case editHP:
+		statusHint = "HP updated"
+	case editAC:
+		statusHint = "AC updated"
+	case editInit:
+		statusHint = "Init updated"
+	case editCond:
+		statusHint = "Conditions updated"
+	}
 	return func() tea.Msg {
 		err := applyMutation(client, campaign, ent, mode, raw)
-		return mutateDoneMsg{err: err}
+		return mutateDoneMsg{err: err, statusMsg: statusHint}
 	}
 }
 
@@ -737,6 +819,18 @@ func (m *Model) View() string {
 	}
 	if m.overlay == overlayLookup && m.screen != screenLogin {
 		return m.viewLookup()
+	}
+	if m.overlay == overlaySceneEdit {
+		return m.viewSceneEditOverlay()
+	}
+	if m.overlay == overlaySceneNote {
+		return m.viewSceneNoteOverlay()
+	}
+	if m.overlay == overlayQuickNotes {
+		return m.viewQuickNotesOverlay()
+	}
+	if m.overlay == overlaySceneSwitch {
+		return m.viewSceneSwitchOverlay()
 	}
 	switch m.screen {
 	case screenLogin:

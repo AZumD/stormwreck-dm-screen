@@ -75,30 +75,37 @@ No bearer tokens, API keys, or TUI-specific auth.
 
 ## Hotkeys
 
-All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 stubs). While a text field is focused (login, search, notes, party edits), `editing=true` so single-letter globals do not fire. **`Ctrl+K` (master lookup) still works while searching or editing notes** (party inline edits: Esc first).
+All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 stubs). While a text field / textarea is focused (login, search, scene editor, notes, party edits), typing wins — single-letter globals do not fire. **`Ctrl+K` (master lookup) still works while searching** (party inline edits / scene editor: Esc first; editor also accepts `Ctrl+S`).
 
 | Key | Action |
 |-----|--------|
 | `1`–`5` | Scene / Notes / Party / Map / Music tabs |
-| `Tab` / `←` `→` | Scene tab: cycle SCENES / content / PARTY panes |
+| `Tab` / `Shift+Tab` | Scene tab: cycle SCENES / content / PARTY panes |
+| `←` `→` | Adjust: scene status (nav) · HP±1 (party) · volume (music) · sheet numerics |
+| `Shift+←` `Shift+→` | Large adjust (±5 HP / ±60m clock when time-focused) |
 | `j` `k` / `↑` `↓` | Scene body: **scroll** prose · elsewhere: move selection |
+| `PgUp` `PgDn` / `Ctrl+U` `Ctrl+D` | Scene body page scroll |
 | `[` `]` | Scene body: previous / next reference (Enter follows) |
 | `/` | Search (Home, Library, scene titles on Scene tab) |
-| `Ctrl+K` | **Master lookup** — search all catalogue types from anywhere (Esc closes; Enter opens entry) |
+| `Shift+E` | Edit scene content (textarea; `Ctrl+S` save · Esc cancel) |
+| `Shift+S` | Scene switcher (filter + Enter → load + set current) |
+| `n` | Scene play notes (PATCH scene `notes`) |
+| `t` | Focus campaign clock (`←→` ±10m, day ↑↓, Enter `HH:MM`) |
+| `Ctrl+K` | **Master lookup** — search all catalogue types from anywhere |
 | `Ctrl+H` | Home (leave campaign, keep session) |
 | `Ctrl+L` | Library overlay (from campaign; Esc returns) |
 | `↑` `↓` / `k` `j` | Move selection |
 | `Enter` | Open (scene, campaign, catalogue, sheet, follow ref) |
 | `Esc` / Backspace | Back (nav stack restores cursor) |
-| `Shift+N` | Notes edit (Notes tab) |
-| `h` `i` `c` `a` | Edit HP / initiative / conditions / AC (Party / Scene party pane) |
+| `Shift+N` | Quick notes overlay (PutDocument `notes`; history restore) |
+| `h` `i` `c` `a` | Edit HP / initiative / conditions / AC (Party / Scene party / sheet) |
 | `Space` | Music play/pause toggle |
-| `+` `-` | Volume |
+| `+` `-` / `←` `→` | Volume (Music tab) |
 | `L` | Loop toggle |
 | `S` | Stop playback |
 | `q` / Ctrl+C | Quit |
 
-Unicode and `@` in text fields work via `updateFocusedInput` (Windows AltGr fix).
+Unicode and `@` in text fields work via `updateFocusedInput` / `updateFocusedTextarea` (Windows AltGr fix).
 
 ## Music (local only)
 

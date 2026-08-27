@@ -19,7 +19,7 @@ Native terminal DM tracker client (Go + Bubble Tea). First-class alongside the b
 | `internal/config` | `--server` required; `--campaign` optional (empty → Home). |
 
 ## Hotkeys (summary)
-`1`–`5` tabs · `Ctrl+H` home · `Ctrl+K` master lookup (all catalogues) · `Ctrl+L` library overlay · `/` search · `Enter` open · `Esc` back · Party `h/i/c/a` · Music `Space`/`+/-`/`L`/`S` · `q` quit.
+`1`–`5` tabs · `Tab`/`Shift+Tab` panes · `←`/`→` adjust (status/HP/volume) · `Shift+E` scene edit · `Shift+S` switcher · `n` scene notes · `t` clock · `Shift+N` quick notes · `PgUp`/`PgDn` body page · `Ctrl+H` home · `Ctrl+K` lookup · `Ctrl+L` library · `/` search · Party `h/i/c/a` · Music `Space`/`+/-`/`L`/`S` · `q` quit.
 
 ## Docs
 Full usage, Pi build, controls, mpv optional dep: `tui/README.md`
@@ -27,5 +27,7 @@ Full usage, Pi build, controls, mpv optional dep: `tui/README.md`
 Architecture contract: `docs/CLIENT-ARCHITECTURE.md`
 
 Scene blocks API: `docs/README/SCENE-BLOCKS.md`
+
+Scene mutation API: `docs/README/SCENE-MUTATE.md`
 
 Requires Go 1.24+ (Bubble Tea ≥ 1.3.2 for Windows AltGr/`@` keyboard layouts).

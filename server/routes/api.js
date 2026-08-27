@@ -14,6 +14,7 @@ const authorize = require("../lib/authorize");
 const catalogueLocationMaps = require("../lib/catalogue-location-maps");
 const revealedNpcs = require("../lib/revealed-npcs");
 const sceneBlocks = require("../lib/scene-blocks");
+const sceneMutate = require("../lib/scene-mutate");
 const { sendJson, sendError, readJsonBody, readBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
 const { sendFileStream, cacheControlForAssetUrl, CACHE_CONTROL_IMMUTABLE } = require("../lib/http-cache");
 const {
@@ -902,6 +903,28 @@ function createApiRoutes() {
         if (!raw) return sendJson(res, 404, { ok: false, error: "Scene not found" });
         const scene = sceneBlocks.buildSceneDetail({ scene: raw, campaignState, sceneMeta });
         sendJson(res, 200, { ok: true, campaignId: id, scene });
+      }
+    ),
+
+    route(
+      "PATCH",
+      /^\/api\/campaigns\/([^/]+)\/scenes\/([^/]+)$/,
+      ["id", "sceneId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const sceneId = assertSafeId(p.sceneId, "scene id");
+        await authorize.requireDmIfAuthRequired(req, id);
+        const body = await readJsonBody(req);
+        try {
+          const scene = await sceneMutate.patchScene(id, sceneId, body || {});
+          sendJson(res, 200, { ok: true, campaignId: id, scene });
+        } catch (err) {
+          const status = err.status || 500;
+          if (status >= 400 && status < 500) {
+            return sendJson(res, status, { ok: false, error: err.message || "Bad request" });
+          }
+          throw err;
+        }
       }
     ),
 

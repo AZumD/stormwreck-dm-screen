@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -23,6 +24,12 @@ func normalizePrintableKey(msg tea.KeyMsg) tea.KeyMsg {
 // Callers must handle Enter/Esc/Tab/ctrl+c themselves before calling this.
 func updateFocusedInput(input textinput.Model, msg tea.KeyMsg) (textinput.Model, tea.Cmd) {
 	return input.Update(normalizePrintableKey(msg))
+}
+
+// updateFocusedTextarea forwards a key to textarea after printable normalization.
+// Callers must handle Esc/ctrl+s/ctrl+c (and other overlay chrome) themselves.
+func updateFocusedTextarea(ta textarea.Model, msg tea.KeyMsg) (textarea.Model, tea.Cmd) {
+	return ta.Update(normalizePrintableKey(msg))
 }
 
 // isTextFieldNavKey reports keys that should navigate/submit focused fields

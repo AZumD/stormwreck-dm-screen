@@ -31,6 +31,40 @@ if (!apiSrc.includes("/scenes") || !apiSrc.includes("sceneBlocks") || !apiSrc.in
   fail("scenes routes missing or unauthorized");
 } else pass("scenes API routes + DM gate");
 
+if (!apiSrc.includes('route(\n      "PATCH"') && !apiSrc.includes('"PATCH"') || !apiSrc.includes("sceneMutate")) {
+  // loose check: PATCH + sceneMutate present
+}
+if (!apiSrc.includes("sceneMutate") || !apiSrc.includes("PATCH")) {
+  fail("scene PATCH route missing");
+} else pass("scene PATCH route + sceneMutate");
+
+const sceneMutate = require("../server/lib/scene-mutate");
+{
+  try {
+    sceneMutate.normalizeScenePatch({ bogon: 1 });
+    fail("normalize should reject unknown");
+  } catch (e) {
+    if (e.status !== 400) fail("unknown field status");
+    else pass("normalizeScenePatch rejects unknown");
+  }
+  const applied = sceneMutate.applyContentPatch(
+    { groups: [], scenes: [{ id: "a", title: "A", content: "x" }, { id: "b", title: "B", content: "y" }] },
+    "a",
+    { title: "A2", content: "z" }
+  );
+  if (applied.structure.scenes[1].content !== "y" || applied.scene.title !== "A2") {
+    fail("applyContentPatch");
+  } else pass("applyContentPatch preserves siblings");
+
+  const st = sceneMutate.applyStatePatch(
+    { scenes: { a: { status: "current", notes: "" }, b: { status: "unseen", notes: "" } } },
+    "b",
+    { status: "current" }
+  );
+  if (st.scenes.a.status !== "completed" || st.scenes.b.status !== "current") fail("applyStatePatch current");
+  else pass("applyStatePatch demotes current");
+}
+
 const { parseBlocks, buildSceneList, buildSceneDetail } = require("../server/lib/scene-blocks");
 
 {
@@ -163,6 +197,95 @@ async function withTempData(fn) {
     const missing = await req("GET", "/api/campaigns/stormwreck-isle/scenes/nope");
     if (missing.status !== 404) fail("missing scene 404");
     else pass("missing scene 404");
+
+    const reqBody = (method, p, body) =>
+      new Promise((resolve, reject) => {
+        const payload = JSON.stringify(body);
+        const r = http.request(
+          {
+            hostname: "127.0.0.1",
+            port,
+            path: p,
+            method,
+            headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
+          },
+          (res) => {
+            let raw = "";
+            res.on("data", (c) => (raw += c));
+            res.on("end", () => {
+              let parsed = null;
+              try {
+                parsed = JSON.parse(raw);
+              } catch {
+                parsed = { raw };
+              }
+              resolve({ status: res.statusCode, body: parsed });
+            });
+          }
+        );
+        r.on("error", reject);
+        r.write(payload);
+        r.end();
+      });
+
+    const otherTitle = (await campaigns.getDocument("stormwreck-isle", "section-structure")).scenes?.[0]
+      ? null
+      : null;
+    await campaigns.putDocument("stormwreck-isle", "section-structure", {
+      groups: [{ id: "g1", title: "Act 1" }],
+      scenes: [
+        { id: "welcome", title: "Welcome", content: "{{read-aloud}}\nHi\n{{/read-aloud}}", groupId: "g1" },
+        { id: "other", title: "Other Scene", content: "Leave me alone", groupId: "g1" }
+      ]
+    });
+
+    const patched = await reqBody("PATCH", "/api/campaigns/stormwreck-isle/scenes/welcome", {
+      title: "Welcome Updated",
+      content: "{{dm-note}}\nSecret\n{{/dm-note}}\nProse @npc:runara|Runara"
+    });
+    if (patched.status !== 200 || patched.body?.scene?.title !== "Welcome Updated") {
+      fail(`PATCH content ${patched.status} ${JSON.stringify(patched.body)}`);
+    } else if (!patched.body.scene.content.includes("{{dm-note}}")) {
+      fail("PATCH content missing source");
+    } else if (!patched.body.scene.blocks?.some((b) => b.type === "dm-note")) {
+      fail("PATCH detail blocks");
+    } else pass("HTTP PATCH scene content");
+
+    const structureAfter = await campaigns.getDocument("stormwreck-isle", "section-structure");
+    const other = structureAfter.scenes.find((s) => s.id === "other");
+    if (!other || other.content !== "Leave me alone" || other.title !== "Other Scene") {
+      fail("unrelated scene clobbered");
+    } else pass("unrelated scene preserved");
+
+    const badField = await reqBody("PATCH", "/api/campaigns/stormwreck-isle/scenes/welcome", {
+      invented: true
+    });
+    if (badField.status !== 400) fail(`unknown field ${badField.status}`);
+    else pass("unknown field rejected");
+
+    const badId = await reqBody("PATCH", "/api/campaigns/stormwreck-isle/scenes/missing-scene", {
+      title: "x"
+    });
+    if (badId.status !== 404) fail(`missing PATCH ${badId.status}`);
+    else pass("missing scene PATCH 404");
+
+    const statusPatch = await reqBody("PATCH", "/api/campaigns/stormwreck-isle/scenes/other", {
+      status: "current"
+    });
+    if (statusPatch.status !== 200 || statusPatch.body?.scene?.status !== "current") {
+      fail("status PATCH");
+    } else pass("HTTP PATCH scene status");
+
+    const stateAfter = await campaigns.getDocument("stormwreck-isle", "campaign-state");
+    if (stateAfter.scenes?.welcome?.status === "current") fail("previous current not demoted");
+    else if (stateAfter.scenes?.other?.status !== "current") fail("new current missing");
+    else pass("current demotes previous");
+
+    const getReflects = await req("GET", "/api/campaigns/stormwreck-isle/scenes/welcome");
+    if (getReflects.body?.scene?.title !== "Welcome Updated") fail("GET after PATCH");
+    else pass("GET reflects mutation");
+
+    void otherTitle;
 
     await new Promise((r) => server.close(r));
   });

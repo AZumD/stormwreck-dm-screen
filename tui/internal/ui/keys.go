@@ -17,11 +17,20 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	// Master lookup works from anywhere (including while searching / notes).
 	// Party inline edits keep the edit field; Esc first, then Ctrl+K.
-	if strings.EqualFold(msg.String(), "ctrl+k") && m.edit == editNone {
+	if strings.EqualFold(msg.String(), "ctrl+k") && m.edit == editNone && !m.textareaOverlayActive() {
 		return m.openMasterLookup()
 	}
 	if m.edit != editNone {
 		return m.handleEditKey(msg)
+	}
+	if m.textareaOverlayActive() {
+		return m.handleTextareaOverlayKey(msg)
+	}
+	if m.overlay == overlaySceneSwitch {
+		return m.handleSceneSwitchKey(msg)
+	}
+	if m.clockFocus {
+		return m.handleClockKey(msg)
 	}
 	if m.searching {
 		return m.handleSearchKey(msg)
@@ -82,14 +91,50 @@ func (m *Model) dispatchAction(act actions.Action) (tea.Model, tea.Cmd) {
 		return m.setTab(tabMap)
 	case actions.CampaignMusic:
 		return m.setTab(tabMusic)
-	case actions.NotesNew:
-		if m.screen != screenCampaign {
+	case actions.NotesQuick, actions.NotesNew:
+		return m.beginQuickNotes()
+	case actions.SceneEdit:
+		return m.beginSceneEdit()
+	case actions.SceneSwitch:
+		return m.beginSceneSwitcher()
+	case actions.SceneNote:
+		return m.beginSceneNote()
+	case actions.SceneSave:
+		// Only meaningful while textarea overlay is focused (handled earlier).
+		return m, nil
+	case actions.TimeFocus:
+		if m.screen != screenCampaign || m.overlay != overlayNone {
 			return m, nil
 		}
-		m.tab = tabNotes
-		m.overlay = overlayNone
-		m.beginNotesEdit()
-		return m, textinput.Blink
+		m.clockFocus = true
+		m.status = "Time · ←→ ±10m · Shift±60 · ↑↓ day · Enter HH:MM · Esc"
+		return m, nil
+	case actions.AdjustDec:
+		return m.handleAdjust(-1)
+	case actions.AdjustInc:
+		return m.handleAdjust(1)
+	case actions.AdjustDecLarge:
+		return m.handleAdjust(-5)
+	case actions.AdjustIncLarge:
+		return m.handleAdjust(5)
+	case actions.ScrollPageUp:
+		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene && m.scenePane == scenePaneBody {
+			page := max(3, m.sceneBodyViewport-1)
+			if page <= 0 {
+				page = 10
+			}
+			m.scrollSceneBody(-page)
+		}
+		return m, nil
+	case actions.ScrollPageDown:
+		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene && m.scenePane == scenePaneBody {
+			page := max(3, m.sceneBodyViewport-1)
+			if page <= 0 {
+				page = 10
+			}
+			m.scrollSceneBody(page)
+		}
+		return m, nil
 	case actions.PanePrev:
 		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene {
 			m.scenePane = (m.scenePane + 2) % 3
@@ -201,6 +246,8 @@ func (m *Model) leaveCampaignToHome() {
 	m.searching = false
 	m.editingNotes = false
 	m.edit = editNone
+	m.clockFocus = false
+	m.clockExact = false
 }
 
 func (m *Model) openMasterLookup() (tea.Model, tea.Cmd) {
@@ -277,6 +324,25 @@ func (m *Model) beginLookupSearch() {
 
 func (m *Model) handleBack() (tea.Model, tea.Cmd) {
 	switch {
+	case m.clockFocus:
+		m.clockFocus = false
+		m.clockExact = false
+		m.editInput.Blur()
+		m.status = ""
+		return m, nil
+	case m.overlay == overlaySceneEdit || m.overlay == overlaySceneNote:
+		m.closeTextareaOverlay(false)
+		m.status = ""
+		return m, nil
+	case m.overlay == overlayQuickNotes:
+		m.closeTextareaOverlay(true)
+		m.status = ""
+		return m, nil
+	case m.overlay == overlaySceneSwitch:
+		m.switchInput.Blur()
+		m.overlay = overlayNone
+		m.status = ""
+		return m, nil
 	case m.overlay == overlayLookup:
 		m.searching = false
 		m.searchInput.Blur()
@@ -387,10 +453,14 @@ func (m *Model) restoreFrame(f nav.Frame) {
 			m.libType = ""
 		}
 		m.homeCursor = f.Cursor
-	case "campaign", "sheet":
+	case "campaign":
 		m.screen = screenCampaign
 		m.overlay = overlayNone
 		m.tab = campaignTab(f.Cursor)
+	case "sheet":
+		m.screen = screenCampaign
+		m.overlay = overlayCharSheet
+		m.sheetCursor = f.Cursor
 	default:
 		m.overlay = overlayNone
 	}
@@ -405,11 +475,16 @@ func (m *Model) moveSelection(delta int) {
 		}
 		m.lookupCursor = clampIndex(m.lookupCursor+delta, n)
 	case m.overlay == overlayCharSheet:
-		n := len(m.sheetLinks)
+		n := len(m.sheetRows)
 		if n == 0 {
 			return
 		}
-		m.sheetCursor = clampIndex(m.sheetCursor+delta, n)
+		for i := 0; i < n; i++ {
+			m.sheetCursor = clampIndex(m.sheetCursor+delta, n)
+			if m.sheetRows[m.sheetCursor].Kind != sheetRowHeader {
+				return
+			}
+		}
 	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
 		n := len(m.detailLinks)
 		if n == 0 {
@@ -488,13 +563,37 @@ func (m *Model) handleOpen() (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case m.overlay == overlayCharSheet:
-		if m.sheetCursor >= 0 && m.sheetCursor < len(m.sheetLinks) {
-			link := m.sheetLinks[m.sheetCursor]
-			if link.Type != "" && link.ID != "" {
+		if m.sheetCursor < 0 || m.sheetCursor >= len(m.sheetRows) {
+			return m, nil
+		}
+		row := m.sheetRows[m.sheetCursor]
+		switch row.Kind {
+		case sheetRowLink:
+			if row.Type != "" && row.ID != "" {
 				m.history.Push(nav.Frame{Name: "sheet", Cursor: m.sheetCursor})
 				m.overlay = overlayCatalogue
-				return m, m.cmdLoadCatalogue(link.Type, link.ID)
+				return m, m.cmdLoadCatalogue(row.Type, row.ID)
 			}
+		case sheetRowHP:
+			return m.beginPartyEdit(editHP, "HP (+/-/delta or =n or n/m)", "")
+		case sheetRowAC:
+			cur := ""
+			if e := m.selectedEntity(); e != nil && e.AC != nil {
+				cur = trimNum(*e.AC)
+			}
+			return m.beginPartyEdit(editAC, "AC", cur)
+		case sheetRowInit:
+			cur := ""
+			if e := m.selectedEntity(); e != nil && e.Initiative != 0 {
+				cur = trimNum(e.Initiative)
+			}
+			return m.beginPartyEdit(editInit, "Initiative (0 clears)", cur)
+		case sheetRowCond:
+			cur := ""
+			if e := m.selectedEntity(); e != nil {
+				cur = e.Conditions
+			}
+			return m.beginPartyEdit(editCond, "Conditions (comma-separated)", cur)
 		}
 		return m, nil
 	case m.overlay == overlayLibrary && m.libType == "":

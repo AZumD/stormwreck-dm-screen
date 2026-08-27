@@ -105,3 +105,5 @@
 [2026-08-27] TUI CRT visual polish: Lip Gloss bordered panes, theme palette, styled scene blocks/refs. See tui/internal/ui/theme.go
 [2026-08-27] Scene body j/k scroll; [ ] cycle refs. See tui/internal/ui/scene_view.go
 [2026-08-27] TUI Ctrl+K master lookup: search all catalogues from anywhere. See tui/internal/ui/catalogue.go, test/validate-tui-lookup.js
+[2026-08-27] TUI functionality pass: scene edit/switch/notes, clock, sheet rows, adjust keys, quick notes. See tui/internal/ui/scene_overlays.go, test/validate-tui-functionality.js
+[2026-08-27] PATCH /api/campaigns/:id/scenes/:sceneId via scene-mutate.js (content + status/notes). See docs/README/SCENE-MUTATE.md

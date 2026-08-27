@@ -24,6 +24,9 @@ func TestEditingSuppressesSingleLetterGlobals(t *testing.T) {
 	if act, ok := actions.Resolve("ctrl+k", true); !ok || act != actions.AppLookup {
 		t.Fatalf("ctrl+k while editing: got %s %v", act, ok)
 	}
+	if act, ok := actions.Resolve("ctrl+s", true); !ok || act != actions.SceneSave {
+		t.Fatalf("ctrl+s while editing: got %s %v", act, ok)
+	}
 }
 
 func TestAppLookupBinding(t *testing.T) {
@@ -49,10 +52,21 @@ func TestTabs1to5(t *testing.T) {
 	}
 }
 
-func TestShiftN(t *testing.T) {
+func TestShiftNQuickNotes(t *testing.T) {
 	got, ok := actions.Resolve("shift+n", false)
-	if !ok || got != actions.NotesNew {
+	if !ok || got != actions.NotesQuick {
 		t.Fatalf("got %s %v", got, ok)
+	}
+}
+
+func TestSceneEditAndSwitch(t *testing.T) {
+	got, ok := actions.Resolve("shift+e", false)
+	if !ok || got != actions.SceneEdit {
+		t.Fatalf("shift+e: %s %v", got, ok)
+	}
+	got, ok = actions.Resolve("shift+s", false)
+	if !ok || got != actions.SceneSwitch {
+		t.Fatalf("shift+s: %s %v", got, ok)
 	}
 }
 
@@ -61,9 +75,17 @@ func TestPaneKeys(t *testing.T) {
 	if !ok || got != actions.PaneNext {
 		t.Fatalf("tab: %s %v", got, ok)
 	}
-	got, ok = actions.Resolve("left", false)
+	got, ok = actions.Resolve("shift+tab", false)
 	if !ok || got != actions.PanePrev {
-		t.Fatalf("left: %s %v", got, ok)
+		t.Fatalf("shift+tab: %s %v", got, ok)
+	}
+	got, ok = actions.Resolve("left", false)
+	if !ok || got != actions.AdjustDec {
+		t.Fatalf("left should AdjustDec, got %s %v", got, ok)
+	}
+	got, ok = actions.Resolve("right", false)
+	if !ok || got != actions.AdjustInc {
+		t.Fatalf("right should AdjustInc, got %s %v", got, ok)
 	}
 }
 
@@ -87,5 +109,20 @@ func TestF13(t *testing.T) {
 	if !ok || got != actions.MusicToggle {
 		t.Fatalf("F16: got %s %v", got, ok)
 	}
+	got, ok = actions.LookupFKey("f15")
+	if !ok || got != actions.NotesQuick {
+		t.Fatalf("F15: got %s %v", got, ok)
+	}
 }
 
+func TestCycleSceneStatus(t *testing.T) {
+	if actions.CycleSceneStatus("unseen", 1) != "current" {
+		t.Fatal()
+	}
+	if actions.CycleSceneStatus("skipped", 1) != "unseen" {
+		t.Fatal()
+	}
+	if actions.CycleSceneStatus("current", -1) != "unseen" {
+		t.Fatal()
+	}
+}

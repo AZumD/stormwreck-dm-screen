@@ -276,11 +276,12 @@ func (c *Client) ListScenes(campaignID string) (*SceneList, error) {
 	return &out.SceneList, nil
 }
 
-// SceneDetail is GET /api/campaigns/:id/scenes/:sceneId.
+// SceneDetail is GET/PATCH /api/campaigns/:id/scenes/:sceneId.
 type SceneDetail struct {
 	ID          string          `json:"id"`
 	Title       string          `json:"title"`
 	GroupID     string          `json:"groupId"`
+	Content     string          `json:"content"`
 	Status      string          `json:"status"`
 	Notes       string          `json:"notes"`
 	LocationID  string          `json:"locationId"`
@@ -296,6 +297,19 @@ func (c *Client) GetScene(campaignID, sceneID string) (*SceneDetail, error) {
 	}
 	path := fmt.Sprintf("api/campaigns/%s/scenes/%s", url.PathEscape(campaignID), url.PathEscape(sceneID))
 	if err := c.doJSON(http.MethodGet, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Scene, nil
+}
+
+// PatchScene applies a narrow scene mutation (content and/or live status/notes).
+func (c *Client) PatchScene(campaignID, sceneID string, patch map[string]any) (*SceneDetail, error) {
+	var out struct {
+		OK    bool        `json:"ok"`
+		Scene SceneDetail `json:"scene"`
+	}
+	path := fmt.Sprintf("api/campaigns/%s/scenes/%s", url.PathEscape(campaignID), url.PathEscape(sceneID))
+	if err := c.doJSON(http.MethodPatch, path, patch, &out); err != nil {
 		return nil, err
 	}
 	return &out.Scene, nil

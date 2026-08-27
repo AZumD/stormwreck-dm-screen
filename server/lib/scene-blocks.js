@@ -193,6 +193,8 @@ function buildSceneDetail({ scene, campaignState, sceneMeta }) {
     id: scene.id,
     title: scene.title || scene.id,
     groupId: scene.groupId || null,
+    // Raw campaign source markup (for TUI/browser editors). Pretty blocks stay separate.
+    content: typeof scene.content === "string" ? scene.content : "",
     status: st.status || "unseen",
     notes: typeof st.notes === "string" ? st.notes : "",
     locationId: m.locationId || null,

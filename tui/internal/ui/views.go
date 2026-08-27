@@ -276,6 +276,17 @@ func (m *Model) campaignChrome() string {
 		connStyled = AppTheme.ConnWarn.Render("● " + strings.ToUpper(conn))
 	}
 
+	clockStr := FormatClockCompact(m.clock)
+	var clockStyled string
+	if m.clockFocus {
+		clockStyled = AppTheme.Amber.Render("⏱ " + clockStr)
+		if m.clockExact {
+			clockStyled += " " + m.editInput.View()
+		}
+	} else {
+		clockStyled = AppTheme.Muted.Render("⏱ " + clockStr)
+	}
+
 	tabs := []string{"1 SCENE", "2 NOTES", "3 PARTY", "4 MAP", "5 MUSIC"}
 	var rendered []string
 	for i, t := range tabs {
@@ -293,8 +304,9 @@ func (m *Model) campaignChrome() string {
 		innerW = 20
 	}
 
-	headLeft := AppTheme.Title.Render(TruncateVisible(title, max(8, innerW-lipgloss.Width(connStyled)-3)))
-	head := lipgloss.JoinHorizontal(lipgloss.Top, headLeft, "  ", connStyled)
+	rightMeta := lipgloss.JoinHorizontal(lipgloss.Top, clockStyled, "  ", connStyled)
+	headLeft := AppTheme.Title.Render(TruncateVisible(title, max(8, innerW-lipgloss.Width(rightMeta)-3)))
+	head := lipgloss.JoinHorizontal(lipgloss.Top, headLeft, "  ", rightMeta)
 	tabRow := strings.Join(rendered, "   ")
 	inner := lipgloss.JoinVertical(lipgloss.Left, head, tabRow)
 	return AppTheme.Chrome.Width(innerW).Render(inner)
@@ -321,6 +333,9 @@ func (m *Model) connLabel() string {
 }
 
 func (m *Model) statusBar() string {
+	if strings.TrimSpace(m.status) != "" {
+		return AppTheme.Success.Render(m.status)
+	}
 	parts := []string{}
 	if e := m.selectedEntity(); e != nil && (m.tab == tabParty || m.tab == tabMap) {
 		parts = append(parts, fmt.Sprintf("%s HP %s AC %s",
@@ -350,19 +365,22 @@ func (m *Model) footerHints() string {
 	case tabScene:
 		pairs = append([][2]string{
 			{"Tab", "panes"},
+			{"Shift+E", "edit"},
+			{"Shift+S", "switch"},
+			{"←→", "status/HP"},
 			{"j/k", "scroll"},
-			{"[/]", "refs"},
-			{"Enter", "open"},
-			{"/", "search"},
+			{"PgUp/Dn", "page"},
+			{"t", "time"},
+			{"n", "scene note"},
 		}, base...)
 	case tabNotes:
-		pairs = append([][2]string{{"Shift+N", "edit"}, {"Enter", "save"}}, base...)
+		pairs = append([][2]string{{"Shift+N", "quick notes"}}, base...)
 	case tabParty:
-		pairs = append([][2]string{{"↑↓", "select"}, {"Enter", "sheet"}, {"h/i/c/a", "edit"}}, base...)
+		pairs = append([][2]string{{"↑↓", "select"}, {"←→", "HP±1"}, {"Enter", "sheet"}, {"h/i/c/a", "edit"}}, base...)
 	case tabMap:
 		pairs = append([][2]string{{"↑↓", "select"}}, base...)
 	case tabMusic:
-		pairs = append([][2]string{{"Space", "play"}, {"+/-", "vol"}, {"L", "loop"}, {"S", "stop"}}, base...)
+		pairs = append([][2]string{{"Space", "play"}, {"←→/+-", "vol"}, {"L", "loop"}, {"S", "stop"}}, base...)
 	default:
 		pairs = base
 	}
@@ -378,7 +396,7 @@ func (m *Model) viewNotesTab() string {
 	} else {
 		t := m.notesText
 		if strings.TrimSpace(t) == "" {
-			t = "(empty — Shift+N to edit)"
+			t = "(empty — Shift+N quick notes)"
 			b.WriteString(dimStyle.Render(t))
 		} else {
 			b.WriteString(t)
@@ -487,6 +505,7 @@ func (m *Model) viewMusicTab() string {
 }
 
 func (m *Model) viewCharSheet() string {
+	mainW, inspW, mainH, inspH := layout.PaneSizes(m.width, m.height-4)
 	var b strings.Builder
 	name := "Character"
 	if m.sheetChar != nil {
@@ -494,31 +513,48 @@ func (m *Model) viewCharSheet() string {
 	}
 	b.WriteString(titleStyle.Render(name + " — Sheet"))
 	b.WriteString("\n\n")
-	if m.sheetChar != nil && len(m.sheetChar.Sheet) > 0 {
+	if len(m.sheetRows) == 0 && m.sheetChar != nil && len(m.sheetChar.Sheet) > 0 {
 		var sheet map[string]any
 		if json.Unmarshal(m.sheetChar.Sheet, &sheet) == nil {
 			b.WriteString(FormatPCSheet(sheet, m.sheetState))
-			b.WriteString("\n")
 		}
-	} else if m.sheetState != nil {
-		b.WriteString(fmt.Sprintf("HP %s\n", model.FormatHP(m.sheetState.HPCurrent, m.sheetState.HPMax)))
-	}
-	if len(m.sheetLinks) > 0 {
-		b.WriteString("\n")
-		b.WriteString(titleStyle.Render("Linked"))
-		b.WriteString("\n")
-		for i, l := range m.sheetLinks {
-			line := "  " + l.Label
-			if i == m.sheetCursor {
-				line = selStyle.Render("▶ " + l.Label)
+	} else {
+		for i, row := range m.sheetRows {
+			var line string
+			switch row.Kind {
+			case sheetRowHeader:
+				line = titleStyle.Render(row.Label)
+			case sheetRowLink:
+				line = "  " + row.Label
+				if i == m.sheetCursor {
+					line = selStyle.Render("▶ " + row.Label)
+				}
+			default:
+				val := row.Value
+				if val == "" {
+					val = "—"
+				}
+				text := fmt.Sprintf("%-12s %s", row.Label, val)
+				line = "  " + text
+				if i == m.sheetCursor {
+					line = selStyle.Render("▶ " + text)
+				}
 			}
 			b.WriteString(line)
 			b.WriteByte('\n')
 		}
 	}
-	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("Enter follow · Esc back · h/i/c/a edit party vitals"))
-	return b.String()
+	insp := dimStyle.Render("↑↓ rows · ←→ adjust · Enter open/edit · Esc back")
+	if row := m.selectedSheetRow(); row != nil && row.Kind == sheetRowLink && row.Type != "" {
+		insp = fmt.Sprintf("%s\n%s:%s\n\nEnter to open catalogue.", row.Label, row.Type, row.ID)
+	} else if row := m.selectedSheetRow(); row != nil {
+		insp = fmt.Sprintf("%s\n%s\n\n←→ adjust · Enter exact edit", row.Label, emptyDash(row.Value))
+	}
+	body := m.splitPanes(b.String(), insp, mainW, inspW, mainH, inspH)
+	if m.errMsg != "" {
+		return body + "\n" + errStyle.Render(m.errMsg)
+	}
+	return body
 }
 
 func (m *Model) splitPanes(main, insp string, mainW, inspW, mainH, inspH int) string {
