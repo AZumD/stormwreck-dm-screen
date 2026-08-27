@@ -60,3 +60,45 @@ func PaneSizes(width, height int) (mainW, inspW, mainH, inspH int) {
 	}
 	return
 }
+
+// SceneTripleMinWidth is the terminal width for nav | scene | party side-by-side.
+const SceneTripleMinWidth = 110
+
+// SceneColumns returns left (scene nav), middle (content), right (party) widths.
+// Below SceneTripleMinWidth, left/right may be 0 — the UI should show the focused side only.
+func SceneColumns(width int) (left, mid, right int) {
+	if width < 1 {
+		width = 1
+	}
+	if width < SceneTripleMinWidth {
+		return 0, width, 0
+	}
+	left = width * 22 / 100
+	if left < 20 {
+		left = 20
+	}
+	right = width * 20 / 100
+	if right < 18 {
+		right = 18
+	}
+	mid = width - left - right
+	if mid < 30 {
+		need := 30 - mid
+		takeL := need / 2
+		takeR := need - takeL
+		left -= takeL
+		right -= takeR
+		mid = width - left - right
+	}
+	if left < 12 {
+		left = 12
+	}
+	if right < 12 {
+		right = 12
+	}
+	mid = width - left - right
+	if mid < 1 {
+		mid = 1
+	}
+	return left, mid, right
+}

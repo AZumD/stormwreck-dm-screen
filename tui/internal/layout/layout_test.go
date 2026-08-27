@@ -40,3 +40,17 @@ func TestPaneSizesNarrow(t *testing.T) {
 		t.Fatalf("inspector should be smaller stacked pane: %d %d", mainH, inspH)
 	}
 }
+
+func TestSceneColumns(t *testing.T) {
+	l, m, r := layout.SceneColumns(150)
+	if l+m+r != 150 {
+		t.Fatalf("%d+%d+%d", l, m, r)
+	}
+	if l == 0 || r == 0 {
+		t.Fatal("wide should have side panes")
+	}
+	l, m, r = layout.SceneColumns(90)
+	if l != 0 || r != 0 || m != 90 {
+		t.Fatalf("narrow expected mid-only, got %d %d %d", l, m, r)
+	}
+}

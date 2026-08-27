@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -129,62 +128,6 @@ func FilterCatalogueEntries(entries []map[string]any, query string) []map[string
 		}
 	}
 	return out
-}
-
-// FormatInspector renders a compact summary from JSON fields that are actually present.
-func FormatInspector(entry map[string]any, typ string) string {
-	if entry == nil {
-		return "(nothing selected)"
-	}
-	var b strings.Builder
-	name := strField(entry, "name", "title")
-	id := strField(entry, "id")
-	if name != "" {
-		b.WriteString(name)
-	} else if id != "" {
-		b.WriteString(id)
-	} else {
-		b.WriteString("(unnamed)")
-	}
-	if typ != "" {
-		b.WriteString(" [")
-		b.WriteString(typ)
-		b.WriteByte(']')
-	}
-	b.WriteByte('\n')
-	if id != "" {
-		b.WriteString("id: ")
-		b.WriteString(id)
-		b.WriteByte('\n')
-	}
-	for _, key := range []string{
-		"summary", "description", "notes", "ac", "hp", "level", "cr", "type",
-		"category", "rarity", "size", "alignment", "speed", "challenge",
-	} {
-		if v, ok := entry[key]; ok && v != nil {
-			switch t := v.(type) {
-			case string:
-				if strings.TrimSpace(t) == "" {
-					continue
-				}
-				b.WriteString(key)
-				b.WriteString(": ")
-				b.WriteString(truncate(t, 200))
-				b.WriteByte('\n')
-			case float64:
-				b.WriteString(key)
-				b.WriteString(": ")
-				b.WriteString(trimNum(t))
-				b.WriteByte('\n')
-			case bool:
-				b.WriteString(key)
-				b.WriteString(": ")
-				b.WriteString(fmt.Sprintf("%v", t))
-				b.WriteByte('\n')
-			}
-		}
-	}
-	return strings.TrimRight(b.String(), "\n")
 }
 
 // HomeRow is one selectable row on the Home screen.

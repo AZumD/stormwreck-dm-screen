@@ -100,3 +100,5 @@
 [2026-08-27] Fix TUI text input swallowing @ (Windows AltGr/KeyCtrlAt); normalize printable keys into textinput. See tui/internal/ui/input.go
 [2026-08-27] TUI IA building blocks: actions/nav/layout/music/scene packages under tui/internal/. See docs/README/TUI.md
 [2026-08-27] TUI IA rewrite: scene-first Home→Library/Campaigns→Scene|Notes|Party|Map|Music; API scenes/music; mpv optional. See tui/README.md, docs/README/SCENE-BLOCKS.md
+[2026-08-27] TUI Home always lists built-in stormwreck-isle; source chapters + PC sheet layouts. See tui/internal/ui/sheet.go
+[2026-08-27] Scene tab: left scene list (/ search) + right party PCs; Tab/←→ switch panes. See tui/internal/ui/scene_view.go

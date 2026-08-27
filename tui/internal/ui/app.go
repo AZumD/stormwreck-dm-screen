@@ -47,6 +47,14 @@ const (
 	tabMusic
 )
 
+type scenePane int
+
+const (
+	scenePaneNav scenePane = iota
+	scenePaneBody
+	scenePaneParty
+)
+
 type overlayKind int
 
 const (
@@ -75,8 +83,9 @@ type mutateDoneMsg struct {
 	err error
 }
 type loginResultMsg struct {
-	user string
-	err  error
+	user         string
+	memberships []api.Membership
+	err         error
 }
 type homeLoadedMsg struct {
 	types     []string
@@ -156,6 +165,10 @@ type Model struct {
 	libCursor  int
 	libDetail  map[string]any
 	libDetailT string
+	detailLinks  []sheetLink
+	detailCursor int
+
+	memberships []api.Membership
 
 	// campaign
 	campaignID    string
@@ -170,8 +183,10 @@ type Model struct {
 	sceneDetail *api.SceneDetail
 	sceneBlocks []scene.Block
 	sceneRefs   []scene.Ref
-	sceneCursor int // 0 = body focus; refs selected via sceneRefSel
 	sceneRefSel int
+	scenePane   scenePane // nav | body | party
+	sceneListCursor  int
+	scenePartyCursor int
 
 	// notes
 	notesText string
@@ -319,6 +334,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.password = ""
 		m.user = msg.user
+		m.memberships = msg.memberships
 		m.conn = connConnected
 		m.status = fmt.Sprintf("Signed in as %s", msg.user)
 		if m.cfg.CampaignID != "" {
@@ -335,7 +351,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.catalogueTypes = ResolveCatalogueTypes(msg.types)
-		m.campaigns = msg.campaigns
+		m.campaigns = MergeHomeCampaigns(msg.campaigns, m.memberships)
 		m.rebuildHomeRows()
 		return m, nil
 	case libraryLoadedMsg:
@@ -354,6 +370,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.libDetail = msg.entry
 		m.libDetailT = msg.typ
+		m.detailLinks = buildEntryLinks(msg.entry, msg.typ)
+		m.detailCursor = 0
 		return m, nil
 	case campaignOpenedMsg:
 		if msg.err != nil {
@@ -426,6 +444,7 @@ func (m *Model) applySceneBundle(b *sceneBundle) {
 	m.sceneBlocks = b.blocks
 	m.sceneRefs = b.refs
 	m.sceneRefSel = clampIndex(m.sceneRefSel, len(m.sceneRefs))
+	m.syncSceneListCursor()
 }
 
 func (m *Model) rebuildHomeRows() {
@@ -465,7 +484,7 @@ func (m *Model) cmdLogin(email, password string) tea.Cmd {
 		if err != nil {
 			return loginResultMsg{err: err}
 		}
-		return loginResultMsg{user: res.User.Email}
+		return loginResultMsg{user: res.User.Email, memberships: res.Memberships}
 	}
 }
 
@@ -547,7 +566,14 @@ func loadSceneBundle(client *api.Client, campaignID string) (*sceneBundle, error
 	if sid == "" {
 		return b, nil
 	}
-	detail, err := client.GetScene(campaignID, sid)
+	return fillSceneDetail(client, campaignID, b, sid)
+}
+
+func fillSceneDetail(client *api.Client, campaignID string, b *sceneBundle, sceneID string) (*sceneBundle, error) {
+	if b == nil {
+		b = &sceneBundle{}
+	}
+	detail, err := client.GetScene(campaignID, sceneID)
 	if err != nil {
 		return b, err
 	}
@@ -559,6 +585,17 @@ func loadSceneBundle(client *api.Client, campaignID string) (*sceneBundle, error
 	b.blocks = blocks
 	b.refs = scene.FlattenRefs(blocks)
 	return b, nil
+}
+
+func (m *Model) cmdLoadSceneByID(sceneID string) tea.Cmd {
+	client := m.client
+	campaign := m.campaignID
+	list := m.sceneList
+	return func() tea.Msg {
+		b := &sceneBundle{list: list}
+		filled, err := fillSceneDetail(client, campaign, b, sceneID)
+		return sceneLoadedMsg{bundle: filled, err: err}
+	}
 }
 
 func (m *Model) cmdRefresh(background bool) tea.Cmd {

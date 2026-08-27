@@ -15,7 +15,7 @@ Native terminal DM tracker client (Go + Bubble Tea). First-class alongside the b
 | `internal/music` | Optional local `mpv` player (`ErrUnavailable` if missing); `MpvArgs` + cookie HTTP headers. |
 | `internal/scene` | `Block` JSON shape + `FormatBlocks` + `FlattenRefs`. |
 | `internal/api` | Session cookie client: health/catalogueTypes, campaigns, scenes, documents, music stream. |
-| `internal/ui` | Screens: login, home, library, catalogue detail, campaign tabs + overlays. |
+| `internal/ui` | Screens: login, home, library, catalogue detail, campaign tabs + overlays. `MergeHomeCampaigns` always includes built-in `stormwreck-isle`. Type-aware PC/source/spell/item/statblock layouts in `sheet.go`. Scene tab: left scene nav (`/` search) + right party PCs (`scene_view.go`). |
 | `internal/config` | `--server` required; `--campaign` optional (empty → Home). |
 
 ## Hotkeys (summary)

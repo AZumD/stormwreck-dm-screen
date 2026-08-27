@@ -83,6 +83,18 @@ func (m *Model) dispatchAction(act actions.Action) (tea.Model, tea.Cmd) {
 		m.overlay = overlayNone
 		m.beginNotesEdit()
 		return m, textinput.Blink
+	case actions.PanePrev:
+		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene {
+			m.scenePane = (m.scenePane + 2) % 3
+			return m, nil
+		}
+		return m, nil
+	case actions.PaneNext:
+		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene {
+			m.scenePane = (m.scenePane + 1) % 3
+			return m, nil
+		}
+		return m, nil
 	case actions.SelUp:
 		m.moveSelection(-1)
 		return m, nil
@@ -168,6 +180,25 @@ func (m *Model) handleBack() (tea.Model, tea.Cmd) {
 	switch {
 	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
 		if f, ok := m.history.Pop(); ok {
+			if f.Name == "catalogue" {
+				m.detailCursor = f.Cursor
+				typ, id := f.Data["type"], f.Data["id"]
+				if typ != "" && id != "" {
+					if m.campaignID != "" {
+						m.overlay = overlayCatalogue
+						m.screen = screenCampaign
+					} else {
+						m.screen = screenCatalogueDetail
+						m.overlay = overlayNone
+					}
+					return m, m.cmdLoadCatalogue(typ, id)
+				}
+			}
+			if f.Name == "sheet" {
+				m.overlay = overlayCharSheet
+				m.sheetCursor = f.Cursor
+				return m, nil
+			}
 			m.restoreFrame(f)
 			return m, nil
 		}
@@ -252,6 +283,12 @@ func (m *Model) moveSelection(delta int) {
 			return
 		}
 		m.sheetCursor = clampIndex(m.sheetCursor+delta, n)
+	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
+		n := len(m.detailLinks)
+		if n == 0 {
+			return
+		}
+		m.detailCursor = clampIndex(m.detailCursor+delta, n)
 	case m.overlay == overlayLibrary && m.libType == "":
 		types := FilterCatalogueTypes(m.catalogueTypes, "")
 		if len(types) == 0 {
@@ -271,16 +308,31 @@ func (m *Model) moveSelection(delta int) {
 		m.libCursor = clampIndex(m.libCursor+delta, len(ents))
 	case m.screen == screenCampaign && m.overlay == overlayNone:
 		switch m.tab {
+		case tabScene:
+			switch m.scenePane {
+			case scenePaneNav:
+				scenes := m.filteredScenes()
+				if len(scenes) == 0 {
+					return
+				}
+				m.sceneListCursor = clampIndex(m.sceneListCursor+delta, len(scenes))
+			case scenePaneBody:
+				if len(m.sceneRefs) == 0 {
+					return
+				}
+				m.sceneRefSel = clampIndex(m.sceneRefSel+delta, len(m.sceneRefs))
+			case scenePaneParty:
+				pcs := m.partyPCEntities()
+				if len(pcs) == 0 {
+					return
+				}
+				m.scenePartyCursor = clampIndex(m.scenePartyCursor+delta, len(pcs))
+			}
 		case tabParty, tabMap:
 			if len(m.snap.Entities) == 0 {
 				return
 			}
 			m.selected = clampIndex(m.selected+delta, len(m.snap.Entities))
-		case tabScene:
-			if len(m.sceneRefs) == 0 {
-				return
-			}
-			m.sceneRefSel = clampIndex(m.sceneRefSel+delta, len(m.sceneRefs))
 		case tabMusic:
 			if len(m.musicTracks) == 0 {
 				return
@@ -292,6 +344,23 @@ func (m *Model) moveSelection(delta int) {
 
 func (m *Model) handleOpen() (tea.Model, tea.Cmd) {
 	switch {
+	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
+		if m.detailCursor >= 0 && m.detailCursor < len(m.detailLinks) {
+			link := m.detailLinks[m.detailCursor]
+			if link.Type != "" && link.ID != "" {
+				m.history.Push(nav.Frame{Name: "catalogue", Cursor: m.detailCursor, Data: map[string]string{
+					"type": m.libDetailT,
+					"id":   strField(m.libDetail, "id"),
+				}})
+				if m.screen == screenCampaign {
+					m.overlay = overlayCatalogue
+				} else {
+					m.screen = screenCatalogueDetail
+				}
+				return m, m.cmdLoadCatalogue(link.Type, link.ID)
+			}
+		}
+		return m, nil
 	case m.overlay == overlayCharSheet:
 		if m.sheetCursor >= 0 && m.sheetCursor < len(m.sheetLinks) {
 			link := m.sheetLinks[m.sheetCursor]
@@ -350,11 +419,40 @@ func (m *Model) handleOpen() (tea.Model, tea.Cmd) {
 	case m.screen == screenCampaign && m.overlay == overlayNone:
 		switch m.tab {
 		case tabScene:
-			if m.sceneRefSel >= 0 && m.sceneRefSel < len(m.sceneRefs) {
-				r := m.sceneRefs[m.sceneRefSel]
-				m.history.Push(nav.Frame{Name: "campaign", Cursor: int(m.tab), Data: map[string]string{"campaignId": m.campaignID}})
-				m.overlay = overlayCatalogue
-				return m, m.cmdLoadCatalogue(r.Type, r.ID)
+			switch m.scenePane {
+			case scenePaneNav:
+				scenes := m.filteredScenes()
+				if m.sceneListCursor < 0 || m.sceneListCursor >= len(scenes) {
+					return m, nil
+				}
+				return m, m.cmdLoadSceneByID(scenes[m.sceneListCursor].ID)
+			case scenePaneBody:
+				if m.sceneRefSel >= 0 && m.sceneRefSel < len(m.sceneRefs) {
+					r := m.sceneRefs[m.sceneRefSel]
+					m.history.Push(nav.Frame{Name: "campaign", Cursor: int(m.tab), Data: map[string]string{"campaignId": m.campaignID}})
+					m.overlay = overlayCatalogue
+					return m, m.cmdLoadCatalogue(r.Type, r.ID)
+				}
+				return m, nil
+			case scenePaneParty:
+				pcs := m.partyPCEntities()
+				if m.scenePartyCursor < 0 || m.scenePartyCursor >= len(pcs) {
+					return m, nil
+				}
+				pc := pcs[m.scenePartyCursor]
+				if pc.CharacterID == "" {
+					m.errMsg = "PC has no character id"
+					return m, nil
+				}
+				// Keep party-tab selection in sync for edits
+				for i, e := range m.snap.Entities {
+					if e.Key == pc.Key {
+						m.selected = i
+						break
+					}
+				}
+				m.history.Push(nav.Frame{Name: "campaign", Cursor: int(m.tab)})
+				return m, m.cmdLoadSheet(pc.CharacterID)
 			}
 		case tabParty:
 			e := m.selectedEntity()
@@ -386,6 +484,9 @@ func (m *Model) beginSearch() {
 	m.searchInput.SetValue("")
 	m.searchInput.Focus()
 	m.errMsg = ""
+	if m.screen == screenCampaign && m.tab == tabScene {
+		m.scenePane = scenePaneNav
+	}
 }
 
 func (m *Model) handleSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -394,6 +495,9 @@ func (m *Model) handleSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.searching = false
 		m.searchInput.Blur()
 		m.rebuildHomeRows()
+		if m.screen == screenCampaign && m.tab == tabScene {
+			m.syncSceneListCursor()
+		}
 		return m, nil
 	case "enter":
 		m.searching = false
@@ -401,6 +505,13 @@ func (m *Model) handleSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.rebuildHomeRows()
 		if m.screen == screenLibraryList || m.overlay == overlayLibrary {
 			m.libCursor = clampIndex(m.libCursor, len(m.filteredLibEntries()))
+		}
+		if m.screen == screenCampaign && m.tab == tabScene {
+			scenes := m.filteredScenes()
+			m.sceneListCursor = clampIndex(m.sceneListCursor, len(scenes))
+			if len(scenes) > 0 {
+				return m, m.cmdLoadSceneByID(scenes[m.sceneListCursor].ID)
+			}
 		}
 		return m, nil
 	case "ctrl+c":
@@ -410,6 +521,9 @@ func (m *Model) handleSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	m.searchInput, cmd = updateFocusedInput(m.searchInput, msg)
 	if m.screen == screenHome {
 		m.rebuildHomeRows()
+	}
+	if m.screen == screenCampaign && m.tab == tabScene {
+		m.sceneListCursor = clampIndex(m.sceneListCursor, len(m.filteredScenes()))
 	}
 	return m, cmd
 }
@@ -497,8 +611,23 @@ func (m *Model) handleNotesEditKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) beginPartyEdit(mode editMode, placeholder, cur string) (tea.Model, tea.Cmd) {
-	if m.screen != screenCampaign || (m.tab != tabParty && m.overlay != overlayCharSheet) {
+	onParty := m.screen == screenCampaign && m.tab == tabParty
+	onSceneParty := m.screen == screenCampaign && m.tab == tabScene && m.scenePane == scenePaneParty
+	onSheet := m.overlay == overlayCharSheet
+	if !onParty && !onSceneParty && !onSheet {
 		return m, nil
+	}
+	if onSceneParty {
+		pcs := m.partyPCEntities()
+		if m.scenePartyCursor >= 0 && m.scenePartyCursor < len(pcs) {
+			pc := pcs[m.scenePartyCursor]
+			for i, e := range m.snap.Entities {
+				if e.Key == pc.Key {
+					m.selected = i
+					break
+				}
+			}
+		}
 	}
 	e := m.selectedEntity()
 	if e == nil {

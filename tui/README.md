@@ -57,6 +57,10 @@ Login → Home
 
 Wide terminals (≥100 cols): main | inspector. Narrow: stacked.
 
+Built-in campaign **Dragons of Stormwreck Isle** (`stormwreck-isle`) always appears under CAMPAIGNS even when `GET /api/campaigns` is empty (same as the browser DM landing card). DM memberships from login are merged in as well.
+
+Catalogue detail pages use type-aware terminal layouts (PC sheet, source chapters, spell/item/statblock) rather than raw JSON dumps.
+
 ## Login
 
 1. `POST /api/auth/login` with email/password
@@ -72,14 +76,15 @@ All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 
 | Key | Action |
 |-----|--------|
 | `1`–`5` | Scene / Notes / Party / Map / Music tabs |
+| `Tab` / `←` `→` | Scene tab: cycle SCENES / content / PARTY panes |
+| `/` | Search (Home, Library, scene titles on Scene tab) |
 | `Ctrl+H` | Home (leave campaign, keep session) |
 | `Ctrl+L` | Library overlay (from campaign; Esc returns) |
-| `/` | Search / filter (Home, Library) |
 | `↑` `↓` / `k` `j` | Move selection |
-| `Enter` | Open (campaign, catalogue, sheet, follow ref) |
+| `Enter` | Open (scene, campaign, catalogue, sheet, follow ref) |
 | `Esc` / Backspace | Back (nav stack restores cursor) |
 | `Shift+N` | Notes edit (Notes tab) |
-| `h` `i` `c` `a` | Edit HP / initiative / conditions / AC (Party) |
+| `h` `i` `c` `a` | Edit HP / initiative / conditions / AC (Party / Scene party pane) |
 | `Space` | Music play/pause toggle |
 | `+` `-` | Volume |
 | `L` | Loop toggle |

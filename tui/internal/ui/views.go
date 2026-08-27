@@ -8,7 +8,6 @@ import (
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/api"
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/layout"
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/model"
-	"github.com/AZumD/stormwreck-dm-screen/tui/internal/scene"
 )
 
 func (m *Model) viewLogin() string {
@@ -155,25 +154,22 @@ func (m *Model) viewCatalogueDetail() string {
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("Catalogue · " + CatalogueTypeTitle(m.libDetailT)))
 	b.WriteString("\n\n")
-	b.WriteString(FormatInspector(m.libDetail, m.libDetailT))
-	b.WriteString("\n\n")
-	if m.libDetail != nil {
-		// dump remaining string fields lightly
-		for k, v := range m.libDetail {
-			switch k {
-			case "id", "name", "title", "summary", "description", "notes", "ac", "hp", "level", "cr", "type", "category", "rarity", "size", "alignment", "speed", "challenge":
-				continue
+	b.WriteString(FormatCatalogueDetail(m.libDetail, m.libDetailT))
+	if len(m.detailLinks) > 0 {
+		b.WriteString("\n\n")
+		b.WriteString(titleStyle.Render("Linked"))
+		b.WriteString("\n")
+		for i, l := range m.detailLinks {
+			line := "  " + l.Label
+			if i == m.detailCursor {
+				line = selStyle.Render("▶ " + l.Label)
 			}
-			if s, ok := v.(string); ok && strings.TrimSpace(s) != "" {
-				b.WriteString(k)
-				b.WriteString(": ")
-				b.WriteString(truncate(s, 120))
-				b.WriteByte('\n')
-			}
+			b.WriteString(line)
+			b.WriteByte('\n')
 		}
 	}
 	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("Esc back"))
+	b.WriteString(dimStyle.Render("↑↓ links · Enter follow · Esc back"))
 	if m.errMsg != "" {
 		b.WriteString("\n")
 		b.WriteString(errStyle.Render(m.errMsg))
@@ -268,7 +264,7 @@ func (m *Model) footerHints() string {
 	base := "Ctrl+H home · Ctrl+L library · Esc back · q quit"
 	switch m.tab {
 	case tabScene:
-		return dimStyle.Render("↑↓ refs · Enter follow · " + base)
+		return dimStyle.Render("Tab/←→ panes · ↑↓ select · Enter open · / search scenes · " + base)
 	case tabNotes:
 		return dimStyle.Render("Shift+N edit · Enter save · " + base)
 	case tabParty:
@@ -280,44 +276,6 @@ func (m *Model) footerHints() string {
 	default:
 		return dimStyle.Render(base)
 	}
-}
-
-func (m *Model) viewSceneTab() string {
-	var b strings.Builder
-	title := "(no scene)"
-	if m.sceneDetail != nil {
-		title = m.sceneDetail.Title
-		if title == "" {
-			title = m.sceneDetail.ID
-		}
-	} else if m.sceneList != nil && m.sceneList.CurrentSceneID != "" {
-		title = m.sceneList.CurrentSceneID
-	}
-	b.WriteString(titleStyle.Render(title))
-	b.WriteString("\n\n")
-	if len(m.sceneBlocks) > 0 {
-		b.WriteString(scene.FormatBlocks(m.sceneBlocks))
-	} else {
-		b.WriteString(dimStyle.Render("(empty scene content)"))
-	}
-	if len(m.sceneRefs) > 0 {
-		b.WriteString("\n\n")
-		b.WriteString(titleStyle.Render("Refs"))
-		b.WriteString("\n")
-		for i, r := range m.sceneRefs {
-			label := r.Label
-			if label == "" {
-				label = r.ID
-			}
-			line := fmt.Sprintf("  @%s:%s %s", r.Type, r.ID, label)
-			if i == m.sceneRefSel {
-				line = selStyle.Render("▶ " + strings.TrimPrefix(line, "  "))
-			}
-			b.WriteString(line)
-			b.WriteByte('\n')
-		}
-	}
-	return b.String()
 }
 
 func (m *Model) viewNotesTab() string {
@@ -445,20 +403,18 @@ func (m *Model) viewCharSheet() string {
 	}
 	b.WriteString(titleStyle.Render(name + " — Sheet"))
 	b.WriteString("\n\n")
-	if m.sheetState != nil {
-		b.WriteString(fmt.Sprintf("HP %s", model.FormatHP(m.sheetState.HPCurrent, m.sheetState.HPMax)))
-		b.WriteString("\n")
-	}
 	if m.sheetChar != nil && len(m.sheetChar.Sheet) > 0 {
 		var sheet map[string]any
 		if json.Unmarshal(m.sheetChar.Sheet, &sheet) == nil {
-			b.WriteString(FormatInspector(sheet, "pc"))
+			b.WriteString(FormatPCSheet(sheet, m.sheetState))
 			b.WriteString("\n")
 		}
+	} else if m.sheetState != nil {
+		b.WriteString(fmt.Sprintf("HP %s\n", model.FormatHP(m.sheetState.HPCurrent, m.sheetState.HPMax)))
 	}
 	if len(m.sheetLinks) > 0 {
 		b.WriteString("\n")
-		b.WriteString(titleStyle.Render("Refs"))
+		b.WriteString(titleStyle.Render("Linked"))
 		b.WriteString("\n")
 		for i, l := range m.sheetLinks {
 			line := "  " + l.Label
@@ -519,45 +475,85 @@ func buildSheetLinks(ch *api.Character) []sheetLink {
 	if err := json.Unmarshal(ch.Sheet, &sheet); err != nil {
 		return nil
 	}
+	return buildEntryLinks(sheet, "pc")
+}
+
+func buildEntryLinks(entry map[string]any, typ string) []sheetLink {
+	if entry == nil {
+		return nil
+	}
+	keys := []string{"equipment", "inventory", "skillRefs", "skills", "featureRefs", "features", "spellRefs", "spells"}
+	if strings.EqualFold(typ, "source") {
+		// chapters are content, not catalogue links
+		keys = nil
+	}
 	var out []sheetLink
-	for _, key := range []string{"inventory", "equipment", "spells", "features", "skills"} {
-		arr, ok := sheet[key].([]any)
-		if !ok {
+	seen := map[string]bool{}
+	for _, key := range keys {
+		v, ok := entry[key]
+		if !ok || v == nil {
 			continue
 		}
-		for _, item := range arr {
-			switch t := item.(type) {
-			case string:
-				// maybe "type:id" or bare id
-				if strings.Contains(t, ":") {
-					parts := strings.SplitN(t, ":", 2)
-					out = append(out, sheetLink{Label: key + ": " + t, Type: parts[0], ID: parts[1]})
-				}
-			case map[string]any:
-				id := strField(t, "id", "catalogueId")
-				typ := strField(t, "type", "catalogueType")
-				name := strField(t, "name", "title", "label")
-				if typ == "" {
-					switch key {
-					case "spells":
-						typ = "spell"
-					case "features":
-						typ = "feature"
-					case "skills":
-						typ = "skill"
-					default:
-						typ = "item"
+		switch t := v.(type) {
+		case string:
+			appendRefLink(&out, seen, key, t)
+		case []any:
+			for _, item := range t {
+				switch it := item.(type) {
+				case string:
+					appendRefLink(&out, seen, key, it)
+				case map[string]any:
+					id := strField(it, "id", "catalogueId")
+					linkType := strField(it, "type", "catalogueType")
+					name := strField(it, "name", "title", "label")
+					if linkType == "" {
+						linkType = defaultLinkType(key)
 					}
+					if id == "" {
+						continue
+					}
+					sk := linkType + ":" + id
+					if seen[sk] {
+						continue
+					}
+					seen[sk] = true
+					if name == "" {
+						name = id
+					}
+					out = append(out, sheetLink{Label: name, Type: linkType, ID: id})
 				}
-				if id == "" {
-					continue
-				}
-				if name == "" {
-					name = id
-				}
-				out = append(out, sheetLink{Label: key + ": " + name, Type: typ, ID: id})
 			}
 		}
 	}
 	return out
+}
+
+func defaultLinkType(key string) string {
+	switch key {
+	case "spells", "spellRefs":
+		return "spell"
+	case "features", "featureRefs":
+		return "feature"
+	case "skills", "skillRefs":
+		return "skill"
+	default:
+		return "item"
+	}
+}
+
+func appendRefLink(out *[]sheetLink, seen map[string]bool, _key, raw string) {
+	typ, id, label, ok := ParseCatalogueRef(raw)
+	if !ok {
+		return
+	}
+	sk := typ + ":" + id
+	if seen[sk] {
+		return
+	}
+	seen[sk] = true
+	name := label
+	if name == "" {
+		name = id
+	}
+	*out = append(*out, sheetLink{Label: name, Type: typ, ID: id})
 }

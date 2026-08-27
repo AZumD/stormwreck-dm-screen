@@ -21,6 +21,8 @@ const (
 	SelUp          Action = "selection.up"
 	SelDown        Action = "selection.down"
 	SelOpen        Action = "selection.open"
+	PanePrev       Action = "selection.pane_prev"
+	PaneNext       Action = "selection.pane_next"
 	CharHP         Action = "character.hp.edit"
 	CharCond       Action = "character.conditions.edit"
 	CharInit       Action = "character.initiative.edit"
@@ -49,6 +51,8 @@ func DefaultBindings() map[Action][]string {
 		SelUp:         {"k", "up"},
 		SelDown:       {"j", "down"},
 		SelOpen:       {"enter"},
+		PanePrev:      {"left", "shift+tab"},
+		PaneNext:      {"right", "tab"},
 		CharHP:        {"h"},
 		CharCond:      {"c"},
 		CharInit:      {"i"},

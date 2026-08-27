@@ -46,6 +46,17 @@ func TestShiftN(t *testing.T) {
 	}
 }
 
+func TestPaneKeys(t *testing.T) {
+	got, ok := actions.Resolve("tab", false)
+	if !ok || got != actions.PaneNext {
+		t.Fatalf("tab: %s %v", got, ok)
+	}
+	got, ok = actions.Resolve("left", false)
+	if !ok || got != actions.PanePrev {
+		t.Fatalf("left: %s %v", got, ok)
+	}
+}
+
 func TestF13(t *testing.T) {
 	got, ok := actions.LookupFKey("f13")
 	if !ok || got != actions.CampaignScene {
@@ -56,3 +67,4 @@ func TestF13(t *testing.T) {
 		t.Fatalf("F16: got %s %v", got, ok)
 	}
 }
+
