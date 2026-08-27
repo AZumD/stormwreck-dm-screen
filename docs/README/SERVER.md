@@ -37,6 +37,7 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library. Loca
 | `server/lib/ids.js` | Safe id / type validation |
 | `server/lib/catalogues.js` | One JSON file per catalogue entry |
 | `server/lib/campaigns.js` | Campaign registry + documents (+ Postgres sync on auth create); `PATCH` deep-merge |
+| `server/lib/scene-blocks.js` | Scene markup → TUI-neutral blocks; scene list/detail helpers |
 | `server/lib/deep-merge.js` | Recursive document merge for partial updates |
 | `server/lib/assets.js` | Portrait / map image files under `{dataRoot}/assets` |
 | `scripts/data-init.mjs` | One-shot empty-volume seed (`npm run data:init`) |
@@ -57,8 +58,13 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library. Loca
 
 Startup logs the **resolved** data directory (honors `DM_DATA_ROOT`).
 
+## Scene read API (DM)
+- `GET /api/campaigns/:id/scenes` — list + `currentSceneId` from `campaign-state` (DM-gated)
+- `GET /api/campaigns/:id/scenes/:sceneId` — structured blocks from `section-structure` markup (`server/lib/scene-blocks.js`)
+See `docs/README/SCENE-BLOCKS.md`, `docs/README/VALIDATE-SCENES-API.md`.
+
 ## Health
-- `GET /api/health` — Railway healthcheck; **503** in auth-required mode if Postgres is down (no secrets in body)
+- `GET /api/health` — Railway healthcheck; **503** in auth-required mode if Postgres is down (no secrets in body); includes `catalogueTypes`
 - `GET /api/db/health` — dedicated DB probe
 
 ## Privacy

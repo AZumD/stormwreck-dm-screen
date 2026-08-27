@@ -51,12 +51,25 @@ func (c *Client) BaseURL() string {
 }
 
 func (c *Client) HasSessionCookie() bool {
+	return c.sessionCookieValue() != ""
+}
+
+func (c *Client) sessionCookieValue() string {
 	for _, ck := range c.jar.Cookies(c.base) {
 		if ck.Name == cookieName && ck.Value != "" {
-			return true
+			return ck.Value
 		}
 	}
-	return false
+	return ""
+}
+
+// SessionCookieHeader returns "Cookie: sw_session=…" for mpv --http-header-fields.
+func (c *Client) SessionCookieHeader() string {
+	v := c.sessionCookieValue()
+	if v == "" {
+		return ""
+	}
+	return "Cookie: " + cookieName + "=" + v
 }
 
 func (c *Client) URL(parts ...string) string {
@@ -190,11 +203,128 @@ func (c *Client) Me() (*LoginResponse, error) {
 	return &out, nil
 }
 
-func (c *Client) Health() error {
+// HealthInfo is GET /api/health.
+type HealthInfo struct {
+	OK             bool     `json:"ok"`
+	CatalogueTypes []string `json:"catalogueTypes"`
+}
+
+func (c *Client) Health() (*HealthInfo, error) {
+	var out HealthInfo
+	if err := c.doJSON(http.MethodGet, "api/health", nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type Campaign struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+	Level       string `json:"level,omitempty"`
+	BuiltIn     bool   `json:"builtIn,omitempty"`
+}
+
+func (c *Client) ListCampaigns() ([]Campaign, error) {
+	var out struct {
+		OK        bool       `json:"ok"`
+		Campaigns []Campaign `json:"campaigns"`
+	}
+	if err := c.doJSON(http.MethodGet, "api/campaigns", nil, &out); err != nil {
+		return nil, err
+	}
+	return out.Campaigns, nil
+}
+
+func (c *Client) GetCampaign(id string) (*Campaign, error) {
+	var out struct {
+		OK       bool     `json:"ok"`
+		Campaign Campaign `json:"campaign"`
+	}
+	path := fmt.Sprintf("api/campaigns/%s", url.PathEscape(id))
+	if err := c.doJSON(http.MethodGet, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Campaign, nil
+}
+
+// SceneListItem is one row from GET …/scenes.
+type SceneListItem struct {
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	GroupID    string `json:"groupId"`
+	Status     string `json:"status"`
+	LocationID string `json:"locationId"`
+}
+
+// SceneList is GET /api/campaigns/:id/scenes.
+type SceneList struct {
+	Groups         []map[string]any `json:"groups"`
+	CurrentSceneID string           `json:"currentSceneId"`
+	Scenes         []SceneListItem  `json:"scenes"`
+}
+
+func (c *Client) ListScenes(campaignID string) (*SceneList, error) {
 	var out struct {
 		OK bool `json:"ok"`
+		SceneList
 	}
-	return c.doJSON(http.MethodGet, "api/health", nil, &out)
+	path := fmt.Sprintf("api/campaigns/%s/scenes", url.PathEscape(campaignID))
+	if err := c.doJSON(http.MethodGet, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.SceneList, nil
+}
+
+// SceneDetail is GET /api/campaigns/:id/scenes/:sceneId.
+type SceneDetail struct {
+	ID          string          `json:"id"`
+	Title       string          `json:"title"`
+	GroupID     string          `json:"groupId"`
+	Status      string          `json:"status"`
+	Notes       string          `json:"notes"`
+	LocationID  string          `json:"locationId"`
+	Entities    json.RawMessage `json:"entities"`
+	Connections json.RawMessage `json:"connections"`
+	Blocks      json.RawMessage `json:"blocks"`
+}
+
+func (c *Client) GetScene(campaignID, sceneID string) (*SceneDetail, error) {
+	var out struct {
+		OK    bool        `json:"ok"`
+		Scene SceneDetail `json:"scene"`
+	}
+	path := fmt.Sprintf("api/campaigns/%s/scenes/%s", url.PathEscape(campaignID), url.PathEscape(sceneID))
+	if err := c.doJSON(http.MethodGet, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Scene, nil
+}
+
+// MusicPlayback is GET /api/catalogues/music/:id/audio.
+type MusicPlayback struct {
+	Mode      string `json:"mode"`
+	URL       string `json:"url"`
+	MimeType  string `json:"mimeType"`
+	EntryID   string `json:"entryId"`
+	ExpiresIn int    `json:"expiresIn,omitempty"`
+}
+
+func (c *Client) MusicPlayback(id string) (*MusicPlayback, error) {
+	var out struct {
+		OK       bool          `json:"ok"`
+		Playback MusicPlayback `json:"playback"`
+	}
+	path := fmt.Sprintf("api/catalogues/music/%s/audio", url.PathEscape(id))
+	if err := c.doJSON(http.MethodGet, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Playback, nil
+}
+
+// MusicStreamURL returns an absolute URL to the authenticated audio stream.
+func (c *Client) MusicStreamURL(id string) string {
+	return c.URL("api", "catalogues", "music", id, "audio", "stream")
 }
 
 func (c *Client) GetDocument(campaignID, kind string) (json.RawMessage, error) {
@@ -204,6 +334,18 @@ func (c *Client) GetDocument(campaignID, kind string) (json.RawMessage, error) {
 	}
 	path := fmt.Sprintf("api/campaigns/%s/documents/%s", url.PathEscape(campaignID), url.PathEscape(kind))
 	if err := c.doJSON(http.MethodGet, path, nil, &out); err != nil {
+		return nil, err
+	}
+	return out.Document, nil
+}
+
+func (c *Client) PutDocument(campaignID, kind string, body any) (json.RawMessage, error) {
+	var out struct {
+		OK       bool            `json:"ok"`
+		Document json.RawMessage `json:"document"`
+	}
+	path := fmt.Sprintf("api/campaigns/%s/documents/%s", url.PathEscape(campaignID), url.PathEscape(kind))
+	if err := c.doJSON(http.MethodPut, path, body, &out); err != nil {
 		return nil, err
 	}
 	return out.Document, nil

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/api"
@@ -96,6 +97,79 @@ func TestUnauthorized(t *testing.T) {
 	_, err = c.GetDocument("stormwreck-isle", "map-state")
 	if err != api.ErrUnauthorized {
 		t.Fatalf("got %v want ErrUnauthorized", err)
+	}
+}
+
+func TestHealthCatalogueTypes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":             true,
+			"catalogueTypes": []string{"item", "monster"},
+		})
+	}))
+	defer srv.Close()
+	c, err := api.New(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, err := c.Health()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(h.CatalogueTypes) != 2 || h.CatalogueTypes[0] != "item" {
+		t.Fatalf("%#v", h)
+	}
+}
+
+func TestMusicStreamURLAndCookieHeader(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/auth/login", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "sw_session", Value: "tok-xyz", Path: "/"})
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":   true,
+			"user": map[string]string{"id": "u1", "email": "a@b.c"},
+		})
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	c, err := api.New(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Login("a@b.c", "x"); err != nil {
+		t.Fatal(err)
+	}
+	hdr := c.SessionCookieHeader()
+	if hdr != "Cookie: sw_session=tok-xyz" {
+		t.Fatalf("header %q", hdr)
+	}
+	u := c.MusicStreamURL("track-1")
+	if !strings.HasSuffix(u, "/api/catalogues/music/track-1/audio/stream") {
+		t.Fatalf("url %q", u)
+	}
+}
+
+func TestListScenes(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/campaigns/c1/scenes", func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":             true,
+			"currentSceneId": "welcome",
+			"scenes":         []any{map[string]any{"id": "welcome", "title": "Welcome"}},
+		})
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	c, err := api.New(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list, err := c.ListScenes("c1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if list.CurrentSceneID != "welcome" || len(list.Scenes) != 1 {
+		t.Fatalf("%#v", list)
 	}
 }
 

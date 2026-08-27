@@ -11,7 +11,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
 - Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; Source Catalogue browseable (Rulebooks/Others only — Adventures + locations hidden); item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `SOURCE.md`)
-- Terminal DM client (`tui/`) — Go + Bubble Tea tracker over the same HTTPS API (see `tui/README.md`, `docs/CLIENT-ARCHITECTURE.md`)
+- Terminal DM client (`tui/`) — Go + Bubble Tea **scene-first** tracker over the same HTTPS API (Home → Library/Campaigns → Scene|Notes|Party|Map|Music; see `tui/README.md`, `docs/CLIENT-ARCHITECTURE.md`)
 
 ## Persistence (authoritative)
 **Windows:** double-click `start-dm-screen.bat` (or `npm start`) → `http://127.0.0.1:3000`. User data is stored under `/data` (JSON + asset files), not only in the browser.
@@ -104,7 +104,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/map-panel.js` | Map rail tabs, pins, expand mode, Layers popover |
 | `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
 | `js/core/combat-sheet-modal.js` | Live HP/AC/conditions; initiative → `initiativeTracker` |
-| `docs/CLIENT-ARCHITECTURE.md` | Server-canonical multi-client contract (browser DM/player + future TUI) |
+| `docs/CLIENT-ARCHITECTURE.md` | Server-canonical multi-client contract (browser DM/player + native TUI) |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/core/catalogue/music-ui.js` | Music upload dialog + single-track preview |

@@ -13,6 +13,7 @@ const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
 const catalogueLocationMaps = require("../lib/catalogue-location-maps");
 const revealedNpcs = require("../lib/revealed-npcs");
+const sceneBlocks = require("../lib/scene-blocks");
 const { sendJson, sendError, readJsonBody, readBody, UVTT_BODY_LIMIT } = require("../lib/http-util");
 const { sendFileStream, cacheControlForAssetUrl, CACHE_CONTROL_IMMUTABLE } = require("../lib/http-cache");
 const {
@@ -870,6 +871,39 @@ function createApiRoutes() {
       const removed = await campaigns.removeCampaign(id);
       sendJson(res, 200, { ok: true, removed });
     }),
+
+    route("GET", /^\/api\/campaigns\/([^/]+)\/scenes$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      await authorize.requireDmIfAuthRequired(req, id);
+      const [structure, campaignState, sceneMeta] = await Promise.all([
+        campaigns.getDocument(id, "section-structure"),
+        campaigns.getDocument(id, "campaign-state"),
+        campaigns.getDocument(id, "scene-meta")
+      ]);
+      const payload = sceneBlocks.buildSceneList({ structure, campaignState, sceneMeta });
+      sendJson(res, 200, { ok: true, campaignId: id, ...payload });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/campaigns\/([^/]+)\/scenes\/([^/]+)$/,
+      ["id", "sceneId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const sceneId = assertSafeId(p.sceneId, "scene id");
+        await authorize.requireDmIfAuthRequired(req, id);
+        const [structure, campaignState, sceneMeta] = await Promise.all([
+          campaigns.getDocument(id, "section-structure"),
+          campaigns.getDocument(id, "campaign-state"),
+          campaigns.getDocument(id, "scene-meta")
+        ]);
+        const scenes = Array.isArray(structure?.scenes) ? structure.scenes : [];
+        const raw = scenes.find((s) => s && s.id === sceneId);
+        if (!raw) return sendJson(res, 404, { ok: false, error: "Scene not found" });
+        const scene = sceneBlocks.buildSceneDetail({ scene: raw, campaignState, sceneMeta });
+        sendJson(res, 200, { ok: true, campaignId: id, scene });
+      }
+    ),
 
     route(
       "GET",

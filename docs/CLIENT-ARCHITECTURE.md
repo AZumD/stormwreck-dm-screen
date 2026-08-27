@@ -1,6 +1,6 @@
 # Client architecture
 
-How Stormwreck DM Screen treats the server, browser clients, and a future native TUI.
+How Stormwreck DM Screen treats the server, browser clients, and the native TUI.
 
 ## Canonical source
 
@@ -14,17 +14,18 @@ Clients are views and editors over that API. They must not keep a separate autho
 |--------|------|
 | **Browser DM** | Existing campaign screen, catalogues, map rail, combat sheet — fully supported |
 | **Browser player** | Existing `/player/` companion — fully supported |
-| **Native TUI DM** | Second DM client (`tui/` — Go + Bubble Tea; e.g. Raspberry Pi 3B) |
+| **Native TUI DM** | Second DM client (`tui/` — Go + Bubble Tea; scene-first IA; e.g. Raspberry Pi 3B) |
 
 The TUI does **not** replace the browser DM client. Both DM clients share the same online server. See `tui/README.md`.
 
-## How the TUI will connect
+## How the TUI connects
 
 - Use the existing HTTPS `/api` against the deployed server.
 - Authenticate with `POST /api/auth/login` and keep the returned **session cookie** (same as the browser).
-- No bearer / API-token auth in the first TUI version.
+- No bearer / API-token auth.
 - No CORS changes for the TUI: browser clients stay same-origin; a native client is not a browser origin.
 - Do not ship a local authoritative copy of campaign state on the Pi.
+- IA: Home (Library + Campaigns) → campaign tabs Scene | Notes | Party | Map | Music. Map is secondary; Scene is default.
 
 ## Shared campaign / table state
 

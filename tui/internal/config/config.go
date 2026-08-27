@@ -20,7 +20,7 @@ type Config struct {
 func Default() Config {
 	return Config{
 		ServerURL:  "http://127.0.0.1:3000",
-		CampaignID: "stormwreck-isle",
+		CampaignID: "", // empty → Home after login; --campaign is optional shortcut
 		PollMs:     2000,
 	}
 }
@@ -55,6 +55,7 @@ func LoadFile(path string) (Config, error) {
 }
 
 // Parse merges optional config file with CLI flags. Password is never loaded from disk.
+// CampaignID may be empty (Home after login). Only --server is required.
 func Parse(args []string) (Config, string, error) {
 	cfg, err := LoadFile("")
 	if err != nil {
@@ -62,7 +63,7 @@ func Parse(args []string) (Config, string, error) {
 	}
 	fs := flag.NewFlagSet("stormwreck", flag.ContinueOnError)
 	server := fs.String("server", cfg.ServerURL, "Stormwreck server base URL (https://…)")
-	campaign := fs.String("campaign", cfg.CampaignID, "campaign id")
+	campaign := fs.String("campaign", cfg.CampaignID, "optional campaign id shortcut into workspace after login")
 	email := fs.String("email", cfg.Email, "login email (password is prompted if needed)")
 	password := fs.String("password", "", "login password (prefer interactive prompt; not stored)")
 	poll := fs.Int("poll-ms", cfg.PollMs, "shared-state poll interval in milliseconds")
@@ -85,9 +86,6 @@ func Parse(args []string) (Config, string, error) {
 	}
 	if cfg.ServerURL == "" {
 		return cfg, "", fmt.Errorf("server URL is required (--server)")
-	}
-	if cfg.CampaignID == "" {
-		return cfg, "", fmt.Errorf("campaign id is required (--campaign)")
 	}
 	if cfg.PollMs < 500 {
 		cfg.PollMs = 500

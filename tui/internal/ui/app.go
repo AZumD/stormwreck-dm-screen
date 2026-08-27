@@ -1,19 +1,19 @@
 package ui
 
 import (
+	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/api"
-	"github.com/AZumD/stormwreck-dm-screen/tui/internal/asciimap"
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/config"
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/model"
+	"github.com/AZumD/stormwreck-dm-screen/tui/internal/music"
+	"github.com/AZumD/stormwreck-dm-screen/tui/internal/nav"
+	"github.com/AZumD/stormwreck-dm-screen/tui/internal/scene"
 )
 
 type connState int
@@ -31,7 +31,29 @@ type screen int
 
 const (
 	screenLogin screen = iota
-	screenTable
+	screenHome
+	screenLibraryList
+	screenCatalogueDetail
+	screenCampaign
+)
+
+type campaignTab int
+
+const (
+	tabScene campaignTab = iota
+	tabNotes
+	tabParty
+	tabMap
+	tabMusic
+)
+
+type overlayKind int
+
+const (
+	overlayNone overlayKind = iota
+	overlayLibrary
+	overlayCharSheet
+	overlayCatalogue
 )
 
 type editMode int
@@ -52,31 +74,134 @@ type refreshDoneMsg struct {
 type mutateDoneMsg struct {
 	err error
 }
+type loginResultMsg struct {
+	user string
+	err  error
+}
+type homeLoadedMsg struct {
+	types     []string
+	campaigns []api.Campaign
+	err       error
+}
+type libraryLoadedMsg struct {
+	typ     string
+	entries []map[string]any
+	err     error
+}
+type catalogueLoadedMsg struct {
+	typ   string
+	entry map[string]any
+	err   error
+}
+type campaignOpenedMsg struct {
+	id    string
+	title string
+	snap  model.Snapshot
+	scene *sceneBundle
+	notes string
+	music []musicTrackRow
+	err   error
+}
+type sceneBundle struct {
+	list   *api.SceneList
+	detail *api.SceneDetail
+	blocks []scene.Block
+	refs   []scene.Ref
+}
+type sceneLoadedMsg struct {
+	bundle *sceneBundle
+	err    error
+}
+type notesSavedMsg struct {
+	err error
+}
+type sheetLoadedMsg struct {
+	char  *api.Character
+	state *api.CharacterState
+	err   error
+}
 
 type Model struct {
 	cfg      config.Config
 	password string
 	client   *api.Client
+	player   *music.Player
 
 	screen screen
 	conn   connState
 	status string
 	errMsg string
+	user   string
 
-	emailInput textinput.Model
-	passInput  textinput.Model
-	editInput  textinput.Model
-	focusPass  bool
+	emailInput  textinput.Model
+	passInput   textinput.Model
+	editInput   textinput.Model
+	searchInput textinput.Model
+	notesInput  textinput.Model
+	focusPass   bool
+	searching   bool
+	editingNotes bool
 
-	snap     model.Snapshot
-	selected int
-	edit     editMode
-	width    int
-	height   int
+	history nav.Stack
+
+	// home
+	catalogueTypes []string
+	campaigns      []api.Campaign
+	homeRows       []HomeRow
+	homeCursor     int
+
+	// library
+	libType    string
+	libEntries []map[string]any
+	libCursor  int
+	libDetail  map[string]any
+	libDetailT string
+
+	// campaign
+	campaignID    string
+	campaignTitle string
+	tab           campaignTab
+	overlay       overlayKind
+	snap          model.Snapshot
+	selected      int
+
+	// scene
+	sceneList   *api.SceneList
+	sceneDetail *api.SceneDetail
+	sceneBlocks []scene.Block
+	sceneRefs   []scene.Ref
+	sceneCursor int // 0 = body focus; refs selected via sceneRefSel
+	sceneRefSel int
+
+	// notes
+	notesText string
+
+	// music
+	musicTracks []musicTrackRow
+	musicCursor int
+	musicVol    float64
+	musicLoop   bool
+	nowPlaying  string
+
+	// character sheet
+	sheetChar  *api.Character
+	sheetState *api.CharacterState
+	sheetCursor int
+	sheetLinks  []sheetLink
+
+	width  int
+	height int
 
 	refreshing bool
 	lastFetch  time.Time
 	stale      bool
+	edit       editMode
+}
+
+type sheetLink struct {
+	Label string
+	Type  string
+	ID    string
 }
 
 func New(cfg config.Config, password string) (*Model, error) {
@@ -102,17 +227,32 @@ func New(cfg config.Config, password string) (*Model, error) {
 	ed.CharLimit = 200
 	ed.Width = 40
 
+	si := textinput.New()
+	si.Placeholder = "filter…"
+	si.CharLimit = 120
+	si.Width = 32
+
+	ni := textinput.New()
+	ni.Placeholder = "notes"
+	ni.CharLimit = 8000
+	ni.Width = 60
+
 	m := &Model{
-		cfg:        cfg,
-		password:   password,
-		client:     client,
-		screen:     screenLogin,
-		conn:       connOffline,
-		emailInput: ei,
-		passInput:  pi,
-		editInput:  ed,
-		width:      80,
-		height:     40,
+		cfg:         cfg,
+		password:    password,
+		client:      client,
+		player:      &music.Player{},
+		screen:      screenLogin,
+		conn:        connOffline,
+		emailInput:  ei,
+		passInput:   pi,
+		editInput:   ed,
+		searchInput: si,
+		notesInput:  ni,
+		width:       80,
+		height:      40,
+		musicVol:    70,
+		tab:         tabScene,
 	}
 	if cfg.Email != "" && password != "" {
 		m.status = "Signing in…"
@@ -137,7 +277,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	case tickMsg:
-		if m.screen == screenTable && !m.refreshing && m.conn != connUnauthorized {
+		if m.screen == screenCampaign && m.overlay == overlayNone && !m.refreshing && m.conn != connUnauthorized {
 			return m, m.cmdRefresh(true)
 		}
 		return m, m.scheduleTick()
@@ -145,11 +285,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.refreshing = false
 		if msg.err != nil {
 			if msg.err == api.ErrUnauthorized {
-				m.conn = connUnauthorized
-				m.screen = screenLogin
-				m.errMsg = "Session expired — sign in again"
-				m.password = ""
-				return m, nil
+				return m.forceLogin("Session expired — sign in again")
 			}
 			m.conn = connError
 			m.stale = true
@@ -161,17 +297,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stale = false
 		m.errMsg = ""
 		m.lastFetch = time.Now()
-		if m.selected >= len(m.snap.Entities) {
-			m.selected = max(0, len(m.snap.Entities)-1)
-		}
+		m.selected = clampIndex(m.selected, len(m.snap.Entities))
 		return m, m.scheduleTick()
 	case mutateDoneMsg:
 		if msg.err != nil {
 			if msg.err == api.ErrUnauthorized {
-				m.conn = connUnauthorized
-				m.screen = screenLogin
-				m.errMsg = "Session expired — sign in again"
-				return m, nil
+				return m.forceLogin("Session expired — sign in again")
 			}
 			m.errMsg = msg.err.Error()
 			return m, nil
@@ -186,145 +317,140 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.password = ""
 			return m, nil
 		}
-		m.password = "" // do not retain plaintext
-		m.screen = screenTable
+		m.password = ""
+		m.user = msg.user
 		m.conn = connConnected
 		m.status = fmt.Sprintf("Signed in as %s", msg.user)
-		return m, tea.Batch(m.cmdRefresh(false), m.scheduleTick())
-	}
-	return m, nil
-}
-
-type loginResultMsg struct {
-	user string
-	err  error
-}
-
-func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if m.screen == screenLogin {
-		return m.handleLoginKey(msg)
-	}
-	if m.edit != editNone {
-		return m.handleEditKey(msg)
-	}
-	switch msg.String() {
-	case "ctrl+c", "q":
-		return m, tea.Quit
-	case "up", "k":
-		if m.selected > 0 {
-			m.selected--
+		if m.cfg.CampaignID != "" {
+			return m, m.cmdOpenCampaign(m.cfg.CampaignID)
 		}
-	case "down", "j":
-		if m.selected < len(m.snap.Entities)-1 {
-			m.selected++
-		}
-	case "r":
-		return m, m.cmdRefresh(true)
-	case "h":
-		if e := m.selectedEntity(); e != nil && e.EditableHP {
-			m.beginEdit(editHP, "HP (+/-/delta or =n or n/m)")
-		} else {
-			m.errMsg = "HP not editable for this entity (monster tokens are read-only in TUI MVP)"
-		}
-	case "i":
-		if e := m.selectedEntity(); e != nil {
-			cur := ""
-			if e.Initiative != 0 {
-				cur = trimNum(e.Initiative)
+		m.screen = screenHome
+		return m, tea.Batch(m.cmdLoadHome(), m.scheduleTick())
+	case homeLoadedMsg:
+		if msg.err != nil {
+			if msg.err == api.ErrUnauthorized {
+				return m.forceLogin("Session expired — sign in again")
 			}
-			m.beginEdit(editInit, "Initiative (0 clears)")
-			m.editInput.SetValue(cur)
-		}
-	case "c":
-		if e := m.selectedEntity(); e != nil && e.EditableCond {
-			m.beginEdit(editCond, "Conditions (comma-separated)")
-			m.editInput.SetValue(e.Conditions)
-		} else {
-			m.errMsg = "Conditions not editable for this entity"
-		}
-	case "a":
-		if e := m.selectedEntity(); e != nil && e.EditableAC {
-			cur := ""
-			if e.AC != nil {
-				cur = trimNum(*e.AC)
-			}
-			m.beginEdit(editAC, "AC")
-			m.editInput.SetValue(cur)
-		} else {
-			m.errMsg = "AC not editable for this entity"
-		}
-	}
-	return m, nil
-}
-
-func (m *Model) handleLoginKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "ctrl+c":
-		return m, tea.Quit
-	case "tab", "down":
-		m.focusPass = true
-		m.emailInput.Blur()
-		m.passInput.Focus()
-		return m, textinput.Blink
-	case "shift+tab", "up":
-		m.focusPass = false
-		m.passInput.Blur()
-		m.emailInput.Focus()
-		return m, textinput.Blink
-	case "enter":
-		email := strings.TrimSpace(m.emailInput.Value())
-		pass := m.passInput.Value()
-		if email == "" || pass == "" {
-			m.errMsg = "email and password required"
+			m.errMsg = msg.err.Error()
 			return m, nil
 		}
-		m.conn = connConnecting
-		m.errMsg = ""
-		return m, m.cmdLogin(email, pass)
-	}
-	/* Printable runes (incl. @ . + etc.) go to textinput before any other routing. */
-	var cmd tea.Cmd
-	if m.focusPass {
-		m.passInput, cmd = updateFocusedInput(m.passInput, msg)
-	} else {
-		m.emailInput, cmd = updateFocusedInput(m.emailInput, msg)
-	}
-	return m, cmd
-}
-
-func (m *Model) handleEditKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
-		m.edit = editNone
-		m.editInput.Blur()
+		m.catalogueTypes = ResolveCatalogueTypes(msg.types)
+		m.campaigns = msg.campaigns
+		m.rebuildHomeRows()
 		return m, nil
-	case "enter":
-		val := m.editInput.Value()
-		mode := m.edit
-		m.edit = editNone
-		m.editInput.Blur()
-		return m, m.cmdMutate(mode, val)
-	case "ctrl+c":
-		return m, tea.Quit
+	case libraryLoadedMsg:
+		if msg.err != nil {
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.libType = msg.typ
+		m.libEntries = msg.entries
+		m.libCursor = clampIndex(m.libCursor, len(m.filteredLibEntries()))
+		return m, nil
+	case catalogueLoadedMsg:
+		if msg.err != nil {
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.libDetail = msg.entry
+		m.libDetailT = msg.typ
+		return m, nil
+	case campaignOpenedMsg:
+		if msg.err != nil {
+			if msg.err == api.ErrUnauthorized {
+				return m.forceLogin("Session expired — sign in again")
+			}
+			m.errMsg = msg.err.Error()
+			m.screen = screenHome
+			return m, m.cmdLoadHome()
+		}
+		m.campaignID = msg.id
+		m.campaignTitle = msg.title
+		m.snap = msg.snap
+		m.applySceneBundle(msg.scene)
+		m.notesText = msg.notes
+		m.notesInput.SetValue(msg.notes)
+		m.musicTracks = msg.music
+		m.screen = screenCampaign
+		m.tab = tabScene
+		m.overlay = overlayNone
+		m.conn = connConnected
+		m.lastFetch = time.Now()
+		m.selected = 0
+		return m, m.scheduleTick()
+	case sceneLoadedMsg:
+		if msg.err != nil {
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.applySceneBundle(msg.bundle)
+		return m, nil
+	case notesSavedMsg:
+		if msg.err != nil {
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.errMsg = ""
+		m.status = "Notes saved"
+		return m, nil
+	case sheetLoadedMsg:
+		if msg.err != nil {
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.sheetChar = msg.char
+		m.sheetState = msg.state
+		m.sheetLinks = buildSheetLinks(msg.char)
+		m.sheetCursor = 0
+		m.overlay = overlayCharSheet
+		return m, nil
 	}
-	var cmd tea.Cmd
-	m.editInput, cmd = updateFocusedInput(m.editInput, msg)
-	return m, cmd
+	return m, nil
 }
 
-func (m *Model) beginEdit(mode editMode, placeholder string) {
-	m.edit = mode
-	m.editInput.Placeholder = placeholder
-	m.editInput.SetValue("")
-	m.editInput.Focus()
-	m.errMsg = ""
+func (m *Model) forceLogin(msg string) (tea.Model, tea.Cmd) {
+	m.conn = connUnauthorized
+	m.screen = screenLogin
+	m.errMsg = msg
+	m.password = ""
+	m.overlay = overlayNone
+	return m, nil
 }
 
-func (m *Model) selectedEntity() *model.Entity {
-	if m.selected < 0 || m.selected >= len(m.snap.Entities) {
-		return nil
+func (m *Model) applySceneBundle(b *sceneBundle) {
+	if b == nil {
+		return
 	}
-	return &m.snap.Entities[m.selected]
+	m.sceneList = b.list
+	m.sceneDetail = b.detail
+	m.sceneBlocks = b.blocks
+	m.sceneRefs = b.refs
+	m.sceneRefSel = clampIndex(m.sceneRefSel, len(m.sceneRefs))
+}
+
+func (m *Model) rebuildHomeRows() {
+	hc := make([]HomeCampaign, 0, len(m.campaigns))
+	for _, c := range m.campaigns {
+		hc = append(hc, HomeCampaign{ID: c.ID, Title: c.Title})
+	}
+	q := ""
+	if m.searching {
+		q = m.searchInput.Value()
+	}
+	m.homeRows = BuildHomeRows(m.catalogueTypes, hc, q)
+	m.homeCursor = clampIndex(m.homeCursor, len(m.homeRows))
+}
+
+func (m *Model) filteredLibEntries() []map[string]any {
+	q := ""
+	if m.searching {
+		q = m.searchInput.Value()
+	}
+	return FilterCatalogueEntries(m.libEntries, q)
+}
+
+func (m *Model) isEditing() bool {
+	return m.edit != editNone || m.searching || m.editingNotes || m.screen == screenLogin
 }
 
 func (m *Model) scheduleTick() tea.Cmd {
@@ -343,8 +469,100 @@ func (m *Model) cmdLogin(email, password string) tea.Cmd {
 	}
 }
 
+func (m *Model) cmdLoadHome() tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		h, err := client.Health()
+		types := []string{}
+		if err == nil && h != nil {
+			types = h.CatalogueTypes
+		}
+		camps, err2 := client.ListCampaigns()
+		if err2 != nil {
+			return homeLoadedMsg{types: types, err: err2}
+		}
+		return homeLoadedMsg{types: types, campaigns: camps}
+	}
+}
+
+func (m *Model) cmdLoadLibrary(typ string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		entries, err := client.ListCatalogue(typ)
+		return libraryLoadedMsg{typ: typ, entries: entries, err: err}
+	}
+}
+
+func (m *Model) cmdLoadCatalogue(typ, id string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		entry, err := client.GetCatalogue(typ, id)
+		return catalogueLoadedMsg{typ: typ, entry: entry, err: err}
+	}
+}
+
+func (m *Model) cmdOpenCampaign(id string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		camp, err := client.GetCampaign(id)
+		title := id
+		if err == nil && camp != nil && camp.Title != "" {
+			title = camp.Title
+		}
+		snap, err := fetchSnapshot(client, id)
+		if err != nil {
+			return campaignOpenedMsg{err: err}
+		}
+		bundle, _ := loadSceneBundle(client, id)
+		notesRaw, _ := client.GetDocument(id, "notes")
+		mixerRaw, _ := client.GetDocument(id, "music-mixer")
+		musicCat, _ := client.ListCatalogue("music")
+		byID := map[string]map[string]any{}
+		for _, e := range musicCat {
+			if eid, _ := e["id"].(string); eid != "" {
+				byID[eid] = e
+			}
+		}
+		return campaignOpenedMsg{
+			id:    id,
+			title: title,
+			snap:  snap,
+			scene: bundle,
+			notes: parseNotesText(notesRaw),
+			music: parseMusicMixerTracks(mixerRaw, byID),
+		}
+	}
+}
+
+func loadSceneBundle(client *api.Client, campaignID string) (*sceneBundle, error) {
+	list, err := client.ListScenes(campaignID)
+	if err != nil {
+		return nil, err
+	}
+	b := &sceneBundle{list: list}
+	sid := list.CurrentSceneID
+	if sid == "" && len(list.Scenes) > 0 {
+		sid = list.Scenes[0].ID
+	}
+	if sid == "" {
+		return b, nil
+	}
+	detail, err := client.GetScene(campaignID, sid)
+	if err != nil {
+		return b, err
+	}
+	b.detail = detail
+	var blocks []scene.Block
+	if detail != nil && len(detail.Blocks) > 0 {
+		_ = json.Unmarshal(detail.Blocks, &blocks)
+	}
+	b.blocks = blocks
+	b.refs = scene.FlattenRefs(blocks)
+	return b, nil
+}
+
 func (m *Model) cmdRefresh(background bool) tea.Cmd {
-	if m.refreshing {
+	if m.refreshing || m.campaignID == "" {
 		return nil
 	}
 	m.refreshing = true
@@ -352,7 +570,7 @@ func (m *Model) cmdRefresh(background bool) tea.Cmd {
 		m.conn = connRefreshing
 	}
 	client := m.client
-	campaign := m.cfg.CampaignID
+	campaign := m.campaignID
 	return func() tea.Msg {
 		snap, err := fetchSnapshot(client, campaign)
 		return refreshDoneMsg{snap: snap, err: err}
@@ -365,7 +583,7 @@ func (m *Model) cmdMutate(mode editMode, raw string) tea.Cmd {
 		return nil
 	}
 	client := m.client
-	campaign := m.cfg.CampaignID
+	campaign := m.campaignID
 	ent := *e
 	return func() tea.Msg {
 		err := applyMutation(client, campaign, ent, mode, raw)
@@ -373,298 +591,34 @@ func (m *Model) cmdMutate(mode editMode, raw string) tea.Cmd {
 	}
 }
 
-func fetchSnapshot(client *api.Client, campaignID string) (model.Snapshot, error) {
-	mapRaw, err := client.GetDocument(campaignID, "map-state")
-	if err != nil {
-		return model.Snapshot{}, err
+func (m *Model) cmdSaveNotes() tea.Cmd {
+	client := m.client
+	campaign := m.campaignID
+	text := m.notesInput.Value()
+	return func() tea.Msg {
+		_, err := client.PutDocument(campaign, "notes", map[string]any{"text": text})
+		return notesSavedMsg{err: err}
 	}
-	csRaw, err := client.GetDocument(campaignID, "campaign-state")
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-	locRaw, err := client.GetDocument(campaignID, "locations")
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-	ms, err := model.ParseMapState(mapRaw)
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-	cs, err := model.ParseCampaignState(csRaw)
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-	locs, err := model.ParseLocations(locRaw)
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-
-	locCat, err := client.ListCatalogue("location")
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-	chars, err := client.ListCharacters(campaignID)
-	if err != nil {
-		return model.Snapshot{}, err
-	}
-
-	sheets := map[string]*api.Character{}
-	states := map[string]*api.CharacterState{}
-	for _, ch := range chars {
-		c, err := client.GetCharacter(campaignID, ch.ID)
-		if err == nil {
-			sheets[ch.ID] = c
-		}
-		st, err := client.GetCharacterState(campaignID, ch.ID)
-		if err == nil {
-			states[ch.ID] = st
-		}
-	}
-
-	npcByID := map[string]map[string]any{}
-	for _, ref := range cs.Party {
-		if ref.Type != "npc" {
-			continue
-		}
-		entry, err := client.GetCatalogue("npc", ref.ID)
-		if err == nil {
-			npcByID[ref.ID] = entry
-		}
-	}
-
-	snap := model.BuildSnapshot(model.BuildInput{
-		CampaignID:  campaignID,
-		MapState:    ms,
-		Campaign:    cs,
-		Locations:   locs,
-		LocationCat: locCat,
-		Characters:  chars,
-		CharSheets:  sheets,
-		CharStates:  states,
-		NPCByID:     npcByID,
-	})
-	return snap, nil
 }
 
-func applyMutation(client *api.Client, campaignID string, e model.Entity, mode editMode, raw string) error {
-	switch mode {
-	case editInit:
-		v := 0.0
-		s := strings.TrimSpace(raw)
-		if s != "" {
-			f, err := strconv.ParseFloat(s, 64)
-			if err != nil {
-				return err
-			}
-			v = f
-		}
-		patch := model.InitiativePatch(e.Key, e.Name, e.Kind, v)
-		_, err := client.PatchDocument(campaignID, "map-state", patch)
-		return err
-	case editHP:
-		if !e.EditableHP {
-			return fmt.Errorf("HP read-only")
-		}
-		cur, max, err := model.ApplyHPInput(e.HPCurrent, e.HPMax, raw)
+func (m *Model) cmdLoadSheet(characterID string) tea.Cmd {
+	client := m.client
+	campaign := m.campaignID
+	return func() tea.Msg {
+		ch, err := client.GetCharacter(campaign, characterID)
 		if err != nil {
-			return err
+			return sheetLoadedMsg{err: err}
 		}
-		if e.Kind == "pc" && e.CharacterID != "" {
-			body := map[string]any{}
-			if cur != nil {
-				body["hp_current"] = *cur
-			}
-			if max != nil {
-				body["hp_max"] = *max
-			}
-			_, err := client.PutCharacterState(campaignID, e.CharacterID, body)
-			return err
-		}
-		if e.Kind == "npc" && e.CatalogueID != "" {
-			entry, err := client.GetCatalogue("npc", e.CatalogueID)
-			if err != nil {
-				return err
-			}
-			entry["hp"] = model.FormatNPCHealth(cur, max)
-			_, err = client.PutCatalogue("npc", e.CatalogueID, entry)
-			return err
-		}
-		return fmt.Errorf("unsupported HP target")
-	case editCond:
-		if !e.EditableCond {
-			return fmt.Errorf("conditions read-only")
-		}
-		if e.Kind == "pc" && e.CharacterID != "" {
-			_, err := client.PutCharacterState(campaignID, e.CharacterID, map[string]any{
-				"conditions": model.TextToConditionsExport(raw),
-			})
-			return err
-		}
-		if e.Kind == "npc" && e.CatalogueID != "" {
-			entry, err := client.GetCatalogue("npc", e.CatalogueID)
-			if err != nil {
-				return err
-			}
-			entry["combatConditions"] = strings.TrimSpace(raw)
-			_, err = client.PutCatalogue("npc", e.CatalogueID, entry)
-			return err
-		}
-		return fmt.Errorf("unsupported conditions target")
-	case editAC:
-		if !e.EditableAC {
-			return fmt.Errorf("AC read-only")
-		}
-		f, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
-		if err != nil {
-			return err
-		}
-		if e.Kind == "pc" && e.CharacterID != "" {
-			_, err := client.PatchCharacter(campaignID, e.CharacterID, map[string]any{"ac": f})
-			return err
-		}
-		if e.Kind == "npc" && e.CatalogueID != "" {
-			entry, err := client.GetCatalogue("npc", e.CatalogueID)
-			if err != nil {
-				return err
-			}
-			entry["ac"] = trimNum(f)
-			_, err = client.PutCatalogue("npc", e.CatalogueID, entry)
-			return err
-		}
-		return fmt.Errorf("unsupported AC target")
-	default:
+		st, _ := client.GetCharacterState(campaign, characterID)
+		return sheetLoadedMsg{char: ch, state: st}
+	}
+}
+
+func (m *Model) selectedEntity() *model.Entity {
+	if m.selected < 0 || m.selected >= len(m.snap.Entities) {
 		return nil
 	}
-}
-
-func (m *Model) View() string {
-	if m.width < 40 || m.height < 12 {
-		return "Terminal too small — resize to at least 40×12"
-	}
-	if m.screen == screenLogin {
-		return m.viewLogin()
-	}
-	return m.viewTable()
-}
-
-var (
-	titleStyle = lipgloss.NewStyle().Bold(true)
-	dimStyle   = lipgloss.NewStyle().Faint(true)
-	errStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-	selStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("10"))
-	boxStyle   = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(0, 1)
-)
-
-func (m *Model) viewLogin() string {
-	var b strings.Builder
-	b.WriteString(titleStyle.Render("Stormwreck DM — Terminal"))
-	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("Tracker client · server is canonical · not a combat engine"))
-	b.WriteString("\n\n")
-	b.WriteString(fmt.Sprintf("Server:   %s\n", m.cfg.ServerURL))
-	b.WriteString(fmt.Sprintf("Campaign: %s\n\n", m.cfg.CampaignID))
-	b.WriteString("Email:\n")
-	b.WriteString(m.emailInput.View())
-	b.WriteString("\n\nPassword:\n")
-	b.WriteString(m.passInput.View())
-	b.WriteString("\n\n")
-	b.WriteString(dimStyle.Render("Enter sign in · Tab switch field · Ctrl+C quit"))
-	if m.errMsg != "" {
-		b.WriteString("\n\n")
-		b.WriteString(errStyle.Render(m.errMsg))
-	}
-	if m.conn == connConnecting {
-		b.WriteString("\n\nConnecting…")
-	}
-	return b.String()
-}
-
-func (m *Model) viewTable() string {
-	conn := "offline"
-	switch m.conn {
-	case connConnected:
-		conn = "connected"
-	case connRefreshing:
-		conn = "refreshing"
-	case connError:
-		conn = "error"
-	case connConnecting:
-		conn = "connecting"
-	}
-	if m.stale {
-		conn += " · STALE"
-	}
-
-	header := fmt.Sprintf("%s  [%s]  map:%s", m.cfg.CampaignID, conn, m.snap.ActiveMap)
-	if m.snap.MapTitle != "" {
-		header += " (" + m.snap.MapTitle + ")"
-	}
-	if !m.lastFetch.IsZero() {
-		header += "  @" + m.lastFetch.Format("15:04:05")
-	}
-
-	mapH := max(6, m.height/3)
-	mapW := max(20, m.width-4)
-	mapView, _ := asciimap.Project(mapW, mapH, m.snap.GridSizeX, m.snap.GridSizeY, m.snap.Entities, m.selectedKey())
-
-	var table strings.Builder
-	table.WriteString(fmt.Sprintf("%-4s %-14s %-9s %-4s %-4s %s\n", "INIT", "NAME", "HP", "AC", "PP", "KIND"))
-	for i, e := range m.snap.Entities {
-		init := "—"
-		if e.Initiative != 0 {
-			init = trimNum(e.Initiative)
-		}
-		ac := "—"
-		if e.AC != nil {
-			ac = trimNum(*e.AC)
-		}
-		pp := "—"
-		if e.PP != nil {
-			pp = trimNum(*e.PP)
-		}
-		line := fmt.Sprintf("%-4s %-14s %-9s %-4s %-4s %s",
-			init, truncate(e.Name, 14), model.FormatHP(e.HPCurrent, e.HPMax), ac, pp, e.Kind)
-		if i == m.selected {
-			line = selStyle.Render("▶ " + line)
-		} else {
-			line = "  " + line
-		}
-		table.WriteString(line)
-		table.WriteByte('\n')
-	}
-	if len(m.snap.Entities) == 0 {
-		table.WriteString(dimStyle.Render("  (no party / tokens / initiative yet)"))
-		table.WriteByte('\n')
-	}
-
-	detail := "(nothing selected)"
-	if e := m.selectedEntity(); e != nil {
-		detail = fmt.Sprintf("%s [%s]\nHP %s  AC %s  PP %s  Init %s\nConditions: %s\nFlags: hp=%v ac=%v cond=%v  mapPos=%v",
-			e.Name, e.Kind,
-			model.FormatHP(e.HPCurrent, e.HPMax),
-			fmtAC(e.AC), fmtAC(e.PP),
-			fmtInit(e.Initiative),
-			emptyDash(e.Conditions),
-			e.EditableHP, e.EditableAC, e.EditableCond, e.OnActiveMap && e.HasWorldPos,
-		)
-	}
-
-	hints := "↑↓/jk select · h HP · i init · c conditions · a AC · r refresh · q quit"
-	if m.edit != editNone {
-		hints = m.editInput.View() + "  (Enter save · Esc cancel)"
-	}
-
-	body := strings.Join([]string{
-		titleStyle.Render(header),
-		boxStyle.Width(m.width - 2).Render(mapView),
-		strings.TrimRight(table.String(), "\n"),
-		boxStyle.Width(m.width - 2).Render(detail),
-		dimStyle.Render(hints),
-	}, "\n")
-	if m.errMsg != "" {
-		body += "\n" + errStyle.Render(m.errMsg)
-	}
-	return body
+	return &m.snap.Entities[m.selected]
 }
 
 func (m *Model) selectedKey() string {
@@ -674,45 +628,31 @@ func (m *Model) selectedKey() string {
 	return ""
 }
 
-func trimNum(f float64) string {
-	if f == float64(int64(f)) {
-		return strconv.FormatInt(int64(f), 10)
+func (m *Model) View() string {
+	if m.width < 40 || m.height < 12 {
+		return "Terminal too small — resize to at least 40×12"
 	}
-	return strconv.FormatFloat(f, 'f', 1, 64)
-}
-
-func truncate(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
+	switch m.screen {
+	case screenLogin:
+		return m.viewLogin()
+	case screenHome:
+		return m.viewHome()
+	case screenLibraryList:
+		return m.viewLibraryList()
+	case screenCatalogueDetail:
+		return m.viewCatalogueDetail()
+	case screenCampaign:
+		if m.overlay == overlayLibrary {
+			return m.viewLibraryList()
+		}
+		if m.overlay == overlayCatalogue {
+			return m.viewCatalogueDetail()
+		}
+		if m.overlay == overlayCharSheet {
+			return m.viewCharSheet()
+		}
+		return m.viewCampaign()
+	default:
+		return m.viewLogin()
 	}
-	return string(r[:n-1]) + "…"
-}
-
-func fmtAC(v *float64) string {
-	if v == nil {
-		return "—"
-	}
-	return trimNum(*v)
-}
-
-func fmtInit(v float64) string {
-	if v == 0 {
-		return "—"
-	}
-	return trimNum(v)
-}
-
-func emptyDash(s string) string {
-	if strings.TrimSpace(s) == "" {
-		return "—"
-	}
-	return s
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

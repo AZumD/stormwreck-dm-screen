@@ -24,3 +24,16 @@ func TestParseFlags(t *testing.T) {
 		t.Fatalf("%#v pass=%q", cfg, pass)
 	}
 }
+
+func TestParseAllowsEmptyCampaign(t *testing.T) {
+	cfg, _, err := config.Parse([]string{"--server", "http://127.0.0.1:3000"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.CampaignID != "" {
+		t.Fatalf("expected empty campaign, got %q", cfg.CampaignID)
+	}
+	if cfg.ServerURL != "http://127.0.0.1:3000" {
+		t.Fatalf("server %q", cfg.ServerURL)
+	}
+}
