@@ -95,6 +95,26 @@ func (m *Model) dispatchAction(act actions.Action) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m, nil
+	case actions.RefPrev:
+		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene {
+			if len(m.sceneRefs) == 0 {
+				return m, nil
+			}
+			m.scenePane = scenePaneBody
+			m.sceneRefSel = clampIndex(m.sceneRefSel-1, len(m.sceneRefs))
+			return m, nil
+		}
+		return m, nil
+	case actions.RefNext:
+		if m.screen == screenCampaign && m.overlay == overlayNone && m.tab == tabScene {
+			if len(m.sceneRefs) == 0 {
+				return m, nil
+			}
+			m.scenePane = scenePaneBody
+			m.sceneRefSel = clampIndex(m.sceneRefSel+1, len(m.sceneRefs))
+			return m, nil
+		}
+		return m, nil
 	case actions.SelUp:
 		m.moveSelection(-1)
 		return m, nil
@@ -317,10 +337,7 @@ func (m *Model) moveSelection(delta int) {
 				}
 				m.sceneListCursor = clampIndex(m.sceneListCursor+delta, len(scenes))
 			case scenePaneBody:
-				if len(m.sceneRefs) == 0 {
-					return
-				}
-				m.sceneRefSel = clampIndex(m.sceneRefSel+delta, len(m.sceneRefs))
+				m.scrollSceneBody(delta)
 			case scenePaneParty:
 				pcs := m.partyPCEntities()
 				if len(pcs) == 0 {

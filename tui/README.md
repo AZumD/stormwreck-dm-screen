@@ -55,11 +55,15 @@ Login → Home
                 └─ 5 Music   — local mpv over mixer tracks (not campaign authority)
 ```
 
-Wide terminals (≥100 cols): main | inspector. Narrow: stacked.
+Wide terminals (≥110 cols): three **bordered** Lip Gloss panes — SCENES | SCENE | PARTY — with gutters and focus borders (CRT green when focused).
+Medium (80–109): scene body + focused side pane.
+Narrow: focused pane fills the workspace.
 
 Built-in campaign **Dragons of Stormwreck Isle** (`stormwreck-isle`) always appears under CAMPAIGNS even when `GET /api/campaigns` is empty (same as the browser DM landing card). DM memberships from login are merged in as well.
 
 Catalogue detail pages use type-aware terminal layouts (PC sheet, source chapters, spell/item/statblock) rather than raw JSON dumps.
+
+Visual language: dark console + warm off-white text + phosphor green (selection/links/connected) + amber (DM notes / group headers). See `tui/internal/ui/theme.go`.
 
 ## Login
 
@@ -77,6 +81,8 @@ All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 
 |-----|--------|
 | `1`–`5` | Scene / Notes / Party / Map / Music tabs |
 | `Tab` / `←` `→` | Scene tab: cycle SCENES / content / PARTY panes |
+| `j` `k` / `↑` `↓` | Scene body: **scroll** prose · elsewhere: move selection |
+| `[` `]` | Scene body: previous / next reference (Enter follows) |
 | `/` | Search (Home, Library, scene titles on Scene tab) |
 | `Ctrl+H` | Home (leave campaign, keep session) |
 | `Ctrl+L` | Library overlay (from campaign; Esc returns) |

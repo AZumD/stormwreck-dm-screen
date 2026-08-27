@@ -1,7 +1,7 @@
-// Package scene formats server scene blocks for terminal display.
 package scene
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -19,6 +19,26 @@ type Block struct {
 	Title  string  `json:"title,omitempty"`
 	Refs   []Ref   `json:"refs,omitempty"`
 	Blocks []Block `json:"blocks,omitempty"`
+}
+
+var refDisplayRE = regexp.MustCompile(
+	`@(pc|npc|race|class|skill|feature|spell|item|monster|location|music|source):([a-zA-Z0-9][a-zA-Z0-9._-]{0,127})(?:\|([^@\n[{]*))?`,
+)
+
+// DisplayText replaces @type:id|Label markers with the display label (or id).
+// Canonical campaign prose is unchanged; this is for terminal rendering only.
+func DisplayText(raw string) string {
+	return refDisplayRE.ReplaceAllStringFunc(raw, func(m string) string {
+		sub := refDisplayRE.FindStringSubmatch(m)
+		if sub == nil {
+			return m
+		}
+		label := strings.TrimSpace(sub[3])
+		if label != "" {
+			return label
+		}
+		return sub[2]
+	})
 }
 
 // FlattenRefs returns unique refs from blocks (depth-first), preserving first occurrence.
@@ -45,8 +65,8 @@ func FlattenRefs(blocks []Block) []Ref {
 	return out
 }
 
-// FormatBlocks renders blocks for the terminal with READ ALOUD / DM NOTE labels
-// and collapse titles.
+// FormatBlocks renders blocks as plain terminal text with READ ALOUD / DM NOTE labels.
+// @-references are shown as display labels (not raw syntax).
 func FormatBlocks(blocks []Block) string {
 	var b strings.Builder
 	for i, block := range blocks {
@@ -86,11 +106,11 @@ func writeBlock(b *strings.Builder, block Block, depth int) {
 				writeBlock(b, child, depth+1)
 			}
 		} else if t := strings.TrimSpace(block.Text); t != "" {
-			writeIndented(b, t, depth+1)
+			writeIndented(b, DisplayText(t), depth+1)
 		}
 	default: // text and unknown
 		if t := strings.TrimSpace(block.Text); t != "" {
-			writeIndented(b, t, depth)
+			writeIndented(b, DisplayText(t), depth)
 		} else if len(block.Blocks) > 0 {
 			for i, child := range block.Blocks {
 				if i > 0 {
@@ -104,7 +124,7 @@ func writeBlock(b *strings.Builder, block Block, depth int) {
 
 func writeBody(b *strings.Builder, block Block, depth int) {
 	if t := strings.TrimSpace(block.Text); t != "" {
-		writeIndented(b, t, depth)
+		writeIndented(b, DisplayText(t), depth)
 		return
 	}
 	for i, child := range block.Blocks {

@@ -23,6 +23,8 @@ const (
 	SelOpen        Action = "selection.open"
 	PanePrev       Action = "selection.pane_prev"
 	PaneNext       Action = "selection.pane_next"
+	RefPrev        Action = "selection.ref_prev"
+	RefNext        Action = "selection.ref_next"
 	CharHP         Action = "character.hp.edit"
 	CharCond       Action = "character.conditions.edit"
 	CharInit       Action = "character.initiative.edit"
@@ -53,6 +55,8 @@ func DefaultBindings() map[Action][]string {
 		SelOpen:       {"enter"},
 		PanePrev:      {"left", "shift+tab"},
 		PaneNext:      {"right", "tab"},
+		RefPrev:       {"[", "shift+k", "shift+up"},
+		RefNext:       {"]", "shift+j", "shift+down"},
 		CharHP:        {"h"},
 		CharCond:      {"c"},
 		CharInit:      {"i"},

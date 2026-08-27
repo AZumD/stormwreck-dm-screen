@@ -4,17 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/charmbracelet/lipgloss"
-)
-
-var (
-	titleStyle = lipgloss.NewStyle().Bold(true)
-	dimStyle   = lipgloss.NewStyle().Faint(true)
-	errStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-	selStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("10"))
-	tabOnStyle = lipgloss.NewStyle().Bold(true).Underline(true)
-	boxStyle   = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).Padding(0, 1)
 )
 
 func trimNum(f float64) string {
@@ -24,12 +13,9 @@ func trimNum(f float64) string {
 	return strconv.FormatFloat(f, 'f', 1, 64)
 }
 
+// truncate keeps visible-cell-aware truncation for list labels.
 func truncate(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n-1]) + "…"
+	return TruncateVisible(s, n)
 }
 
 func fmtAC(v *float64) string {

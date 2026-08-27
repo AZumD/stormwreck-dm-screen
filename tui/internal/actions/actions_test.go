@@ -57,6 +57,17 @@ func TestPaneKeys(t *testing.T) {
 	}
 }
 
+func TestRefKeys(t *testing.T) {
+	got, ok := actions.Resolve("]", false)
+	if !ok || got != actions.RefNext {
+		t.Fatalf("]: %s %v", got, ok)
+	}
+	got, ok = actions.Resolve("[", false)
+	if !ok || got != actions.RefPrev {
+		t.Fatalf("[: %s %v", got, ok)
+	}
+}
+
 func TestF13(t *testing.T) {
 	got, ok := actions.LookupFKey("f13")
 	if !ok || got != actions.CampaignScene {

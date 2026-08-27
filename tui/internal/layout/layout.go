@@ -61,11 +61,37 @@ func PaneSizes(width, height int) (mainW, inspW, mainH, inspH int) {
 	return
 }
 
-// SceneTripleMinWidth is the terminal width for nav | scene | party side-by-side.
-const SceneTripleMinWidth = 110
+// Scene layout breakpoints.
+const (
+	SceneTripleMinWidth = 110 // three bordered panes
+	SceneDualMinWidth   = 80  // body + one side pane
+	SceneGutter         = 1   // blank columns between panes
+)
 
-// SceneColumns returns left (scene nav), middle (content), right (party) widths.
-// Below SceneTripleMinWidth, left/right may be 0 — the UI should show the focused side only.
+// SceneMode describes how many scene panes fit.
+type SceneMode int
+
+const (
+	SceneModeNarrow SceneMode = iota // body only (sides via focus overlay)
+	SceneModeDual                    // body + focused side
+	SceneModeTriple                  // nav | body | party
+)
+
+// DetectSceneMode picks a scene layout for the terminal width.
+func DetectSceneMode(width int) SceneMode {
+	switch {
+	case width >= SceneTripleMinWidth:
+		return SceneModeTriple
+	case width >= SceneDualMinWidth:
+		return SceneModeDual
+	default:
+		return SceneModeNarrow
+	}
+}
+
+// SceneColumns returns outer pane widths (including borders) that sum with gutters
+// to at most `width`. For triple: left+gutter+mid+gutter+right == width.
+// For dual/narrow callers use Mid-only or Mid+one side from SceneDualWidths.
 func SceneColumns(width int) (left, mid, right int) {
 	if width < 1 {
 		width = 1
@@ -73,32 +99,64 @@ func SceneColumns(width int) (left, mid, right int) {
 	if width < SceneTripleMinWidth {
 		return 0, width, 0
 	}
-	left = width * 22 / 100
-	if left < 20 {
-		left = 20
+	g := SceneGutter
+	avail := width - 2*g
+	if avail < 40 {
+		avail = width
+		g = 0
 	}
-	right = width * 20 / 100
-	if right < 18 {
-		right = 18
+	left = avail * 22 / 100
+	right = avail * 22 / 100
+	if left < 22 {
+		left = 22
 	}
-	mid = width - left - right
-	if mid < 30 {
-		need := 30 - mid
+	if right < 20 {
+		right = 20
+	}
+	mid = avail - left - right
+	if mid < 36 {
+		need := 36 - mid
 		takeL := need / 2
 		takeR := need - takeL
 		left -= takeL
 		right -= takeR
-		mid = width - left - right
+		mid = avail - left - right
 	}
-	if left < 12 {
-		left = 12
+	if left < 16 {
+		left = 16
 	}
-	if right < 12 {
-		right = 12
+	if right < 16 {
+		right = 16
 	}
-	mid = width - left - right
+	mid = avail - left - right
 	if mid < 1 {
 		mid = 1
 	}
 	return left, mid, right
+}
+
+// SceneDualWidths returns (side, body) outer widths for dual layout (one gutter).
+func SceneDualWidths(width int, sideIsLeft bool) (side, body int) {
+	if width < 1 {
+		width = 1
+	}
+	g := SceneGutter
+	avail := width - g
+	if avail < 20 {
+		return 0, width
+	}
+	side = avail * 32 / 100
+	if side < 18 {
+		side = 18
+	}
+	if side > avail/2 {
+		side = avail / 2
+	}
+	body = avail - side
+	if body < 20 {
+		body = 20
+		side = avail - body
+	}
+	_ = sideIsLeft
+	return side, body
 }

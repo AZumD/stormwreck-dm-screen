@@ -187,6 +187,10 @@ type Model struct {
 	scenePane   scenePane // nav | body | party
 	sceneListCursor  int
 	scenePartyCursor int
+	sceneBodyScroll   int // line offset into scene body pane
+	sceneBodyLines    int // last rendered full line count
+	sceneBodyViewport int // last visible line budget
+	sceneNavScroll    int // line offset into SCENES list (below fixed search header)
 
 	// notes
 	notesText string
@@ -444,6 +448,7 @@ func (m *Model) applySceneBundle(b *sceneBundle) {
 	m.sceneBlocks = b.blocks
 	m.sceneRefs = b.refs
 	m.sceneRefSel = clampIndex(m.sceneRefSel, len(m.sceneRefs))
+	m.sceneBodyScroll = 0
 	m.syncSceneListCursor()
 }
 

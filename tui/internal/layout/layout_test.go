@@ -41,16 +41,32 @@ func TestPaneSizesNarrow(t *testing.T) {
 	}
 }
 
-func TestSceneColumns(t *testing.T) {
+func TestSceneColumnsTriple(t *testing.T) {
 	l, m, r := layout.SceneColumns(150)
-	if l+m+r != 150 {
-		t.Fatalf("%d+%d+%d", l, m, r)
+	total := l + layout.SceneGutter + m + layout.SceneGutter + r
+	if total != 150 {
+		t.Fatalf("triple widths+gutters %d+%d+%d+%d+%d = %d", l, layout.SceneGutter, m, layout.SceneGutter, r, total)
 	}
-	if l == 0 || r == 0 {
-		t.Fatal("wide should have side panes")
+	if l == 0 || r == 0 || m <= l || m <= r {
+		t.Fatalf("expected mid-dominant panes, got %d %d %d", l, m, r)
 	}
-	l, m, r = layout.SceneColumns(90)
+}
+
+func TestSceneColumnsNarrow(t *testing.T) {
+	l, m, r := layout.SceneColumns(90)
 	if l != 0 || r != 0 || m != 90 {
 		t.Fatalf("narrow expected mid-only, got %d %d %d", l, m, r)
+	}
+}
+
+func TestDetectSceneMode(t *testing.T) {
+	if layout.DetectSceneMode(150) != layout.SceneModeTriple {
+		t.Fatal("150 triple")
+	}
+	if layout.DetectSceneMode(90) != layout.SceneModeDual {
+		t.Fatal("90 dual")
+	}
+	if layout.DetectSceneMode(60) != layout.SceneModeNarrow {
+		t.Fatal("60 narrow")
 	}
 }

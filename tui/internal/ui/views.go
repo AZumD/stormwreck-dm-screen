@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/api"
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/layout"
 	"github.com/AZumD/stormwreck-dm-screen/tui/internal/model"
@@ -202,21 +204,48 @@ func (m *Model) viewCampaign() string {
 }
 
 func (m *Model) campaignChrome() string {
-	tabs := []string{"1 Scene", "2 Notes", "3 Party", "4 Map", "5 Music"}
-	var rendered []string
-	for i, t := range tabs {
-		if campaignTab(i) == m.tab {
-			rendered = append(rendered, tabOnStyle.Render(t))
-		} else {
-			rendered = append(rendered, dimStyle.Render(t))
-		}
-	}
 	title := m.campaignTitle
 	if title == "" {
 		title = m.campaignID
 	}
+	title = strings.ToUpper(strings.TrimSpace(title))
+	if title == "" {
+		title = "CAMPAIGN"
+	}
+
 	conn := m.connLabel()
-	return titleStyle.Render(title) + "  " + dimStyle.Render("["+conn+"]") + "\n" + strings.Join(rendered, "  ")
+	var connStyled string
+	switch m.conn {
+	case connConnected, connRefreshing:
+		connStyled = AppTheme.ConnOK.Render("● " + strings.ToUpper(conn))
+	case connError, connUnauthorized:
+		connStyled = AppTheme.ConnErr.Render("● " + strings.ToUpper(conn))
+	default:
+		connStyled = AppTheme.ConnWarn.Render("● " + strings.ToUpper(conn))
+	}
+
+	tabs := []string{"1 SCENE", "2 NOTES", "3 PARTY", "4 MAP", "5 MUSIC"}
+	var rendered []string
+	for i, t := range tabs {
+		if campaignTab(i) == m.tab {
+			rendered = append(rendered, AppTheme.TabActive.Render(t))
+		} else {
+			rendered = append(rendered, AppTheme.TabInactive.Render(t))
+		}
+	}
+
+	w := max(40, m.width-2)
+	hFrame := AppTheme.Chrome.GetHorizontalFrameSize()
+	innerW := w - hFrame
+	if innerW < 20 {
+		innerW = 20
+	}
+
+	headLeft := AppTheme.Title.Render(TruncateVisible(title, max(8, innerW-lipgloss.Width(connStyled)-3)))
+	head := lipgloss.JoinHorizontal(lipgloss.Top, headLeft, "  ", connStyled)
+	tabRow := strings.Join(rendered, "   ")
+	inner := lipgloss.JoinVertical(lipgloss.Left, head, tabRow)
+	return AppTheme.Chrome.Width(innerW).Render(inner)
 }
 
 func (m *Model) connLabel() string {
@@ -227,11 +256,13 @@ func (m *Model) connLabel() string {
 		return "refreshing"
 	case connError:
 		if m.stale {
-			return "error · STALE"
+			return "stale"
 		}
 		return "error"
 	case connConnecting:
 		return "connecting"
+	case connUnauthorized:
+		return "auth"
 	default:
 		return "offline"
 	}
@@ -241,41 +272,49 @@ func (m *Model) statusBar() string {
 	parts := []string{}
 	if e := m.selectedEntity(); e != nil && (m.tab == tabParty || m.tab == tabMap) {
 		parts = append(parts, fmt.Sprintf("%s HP %s AC %s",
-			truncate(e.Name, 16),
+			TruncateVisible(e.Name, 16),
 			model.FormatHP(e.HPCurrent, e.HPMax),
 			fmtAC(e.AC),
 		))
 	}
 	if m.player != nil && m.player.IsPlaying() {
-		parts = append(parts, "♪ playing")
+		parts = append(parts, AppTheme.Success.Render("♪ playing"))
 	} else if m.nowPlaying != "" {
-		parts = append(parts, "♪ "+truncate(m.nowPlaying, 20))
+		parts = append(parts, "♪ "+TruncateVisible(m.nowPlaying, 20))
 	}
 	if len(parts) == 0 {
-		return dimStyle.Render("—")
+		return AppTheme.Muted.Render("—")
 	}
-	return dimStyle.Render(strings.Join(parts, " · "))
+	return AppTheme.Muted.Render(strings.Join(parts, " · "))
 }
 
 func (m *Model) footerHints() string {
 	if m.edit != editNone {
-		return m.editInput.View() + "  (Enter save · Esc cancel)"
+		return m.editInput.View() + "  " + HelpHints([][2]string{{"Enter", "save"}, {"Esc", "cancel"}})
 	}
-	base := "Ctrl+H home · Ctrl+L library · Esc back · q quit"
+	base := [][2]string{{"Ctrl+H", "home"}, {"Ctrl+L", "library"}, {"Esc", "back"}, {"q", "quit"}}
+	var pairs [][2]string
 	switch m.tab {
 	case tabScene:
-		return dimStyle.Render("Tab/←→ panes · ↑↓ select · Enter open · / search scenes · " + base)
+		pairs = append([][2]string{
+			{"Tab", "panes"},
+			{"j/k", "scroll"},
+			{"[/]", "refs"},
+			{"Enter", "open"},
+			{"/", "search"},
+		}, base...)
 	case tabNotes:
-		return dimStyle.Render("Shift+N edit · Enter save · " + base)
+		pairs = append([][2]string{{"Shift+N", "edit"}, {"Enter", "save"}}, base...)
 	case tabParty:
-		return dimStyle.Render("↑↓ · Enter sheet · h/i/c/a edit · " + base)
+		pairs = append([][2]string{{"↑↓", "select"}, {"Enter", "sheet"}, {"h/i/c/a", "edit"}}, base...)
 	case tabMap:
-		return dimStyle.Render("↑↓ select · " + base)
+		pairs = append([][2]string{{"↑↓", "select"}}, base...)
 	case tabMusic:
-		return dimStyle.Render("Space play · +/- vol · L loop · S stop · " + base)
+		pairs = append([][2]string{{"Space", "play"}, {"+/-", "vol"}, {"L", "loop"}, {"S", "stop"}}, base...)
 	default:
-		return dimStyle.Render(base)
+		pairs = base
 	}
+	return HelpHints(pairs)
 }
 
 func (m *Model) viewNotesTab() string {
@@ -433,38 +472,13 @@ func (m *Model) viewCharSheet() string {
 func (m *Model) splitPanes(main, insp string, mainW, inspW, mainH, inspH int) string {
 	mode := layout.Detect(m.width)
 	if mode == layout.ModeWide {
-		left := boxStyle.Width(max(10, mainW-2)).Height(max(4, mainH-2)).Render(main)
-		right := boxStyle.Width(max(10, inspW-2)).Height(max(4, inspH-2)).Render(insp)
-		// simple side-by-side without lipgloss JoinHorizontal dependency issues
-		leftLines := strings.Split(left, "\n")
-		rightLines := strings.Split(right, "\n")
-		n := max(len(leftLines), len(rightLines))
-		var b strings.Builder
-		for i := 0; i < n; i++ {
-			l, r := "", ""
-			if i < len(leftLines) {
-				l = leftLines[i]
-			}
-			if i < len(rightLines) {
-				r = rightLines[i]
-			}
-			b.WriteString(l)
-			// pad
-			pad := mainW - lipglossWidth(l)
-			if pad < 1 {
-				pad = 1
-			}
-			b.WriteString(strings.Repeat(" ", pad))
-			b.WriteString(r)
-			b.WriteByte('\n')
-		}
-		return strings.TrimRight(b.String(), "\n")
+		left := RenderPane("MAIN", main, mainW, mainH, true)
+		right := RenderPane("SELECTED", insp, inspW, inspH, false)
+		return lipgloss.JoinHorizontal(lipgloss.Top, left, " ", right)
 	}
-	return boxStyle.Width(m.width-2).Render(main) + "\n" + boxStyle.Width(m.width-2).Render(insp)
-}
-
-func lipglossWidth(s string) int {
-	return len([]rune(strings.Split(s, "\n")[0]))
+	top := RenderPane("MAIN", main, m.width, mainH, true)
+	bot := RenderPane("SELECTED", insp, m.width, inspH, false)
+	return lipgloss.JoinVertical(lipgloss.Left, top, bot)
 }
 
 func buildSheetLinks(ch *api.Character) []sheetLink {

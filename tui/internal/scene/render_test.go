@@ -49,3 +49,27 @@ func TestFormatBlocksLabels(t *testing.T) {
 		}
 	}
 }
+
+func TestDisplayTextHidesRawRefs(t *testing.T) {
+	in := "See @location:stormwreck-isle|Stormwreck Isle on the horizon."
+	out := scene.DisplayText(in)
+	if strings.Contains(out, "@location") || strings.Contains(out, "stormwreck-isle|") {
+		t.Fatalf("raw ref leaked: %s", out)
+	}
+	if !strings.Contains(out, "Stormwreck Isle") {
+		t.Fatalf("%s", out)
+	}
+}
+
+func TestFormatBlocksUsesLabels(t *testing.T) {
+	out := scene.FormatBlocks([]scene.Block{
+		{Type: "text", Text: "Walk to @location:dragons-rest|Drakvilan."},
+	})
+	if strings.Contains(out, "@location") {
+		t.Fatalf("raw syntax: %s", out)
+	}
+	if !strings.Contains(out, "Drakvilan") {
+		t.Fatalf("%s", out)
+	}
+}
+
