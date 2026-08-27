@@ -104,3 +104,4 @@
 [2026-08-27] Scene tab: left scene list (/ search) + right party PCs; Tab/←→ switch panes. See tui/internal/ui/scene_view.go
 [2026-08-27] TUI CRT visual polish: Lip Gloss bordered panes, theme palette, styled scene blocks/refs. See tui/internal/ui/theme.go
 [2026-08-27] Scene body j/k scroll; [ ] cycle refs. See tui/internal/ui/scene_view.go
+[2026-08-27] TUI Ctrl+K master lookup: search all catalogues from anywhere. See tui/internal/ui/catalogue.go, test/validate-tui-lookup.js

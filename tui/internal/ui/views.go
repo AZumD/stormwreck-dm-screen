@@ -88,7 +88,7 @@ func (m *Model) viewHome() string {
 		b.WriteByte('\n')
 	}
 	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("/ search · Enter open · q quit"))
+	b.WriteString(dimStyle.Render("/ search · Ctrl+K lookup · Enter open · q quit"))
 	if m.errMsg != "" {
 		b.WriteString("\n")
 		b.WriteString(errStyle.Render(m.errMsg))
@@ -146,6 +146,58 @@ func (m *Model) viewLibraryList() string {
 	}
 	body := m.splitPanes(list.String(), insp, mainW, inspW, mainH, inspH)
 	footer := dimStyle.Render("↑↓ select · Enter detail · Esc back · / search")
+	if m.errMsg != "" {
+		return body + "\n" + errStyle.Render(m.errMsg) + "\n" + footer
+	}
+	return body + "\n" + footer
+}
+
+func (m *Model) viewLookup() string {
+	mainW, inspW, mainH, inspH := layout.PaneSizes(m.width, m.height-4)
+	var list strings.Builder
+	list.WriteString(titleStyle.Render("Master Lookup"))
+	list.WriteString("\n")
+	list.WriteString("Search: ")
+	list.WriteString(m.searchInput.View())
+	list.WriteString("\n")
+	if m.lookupLoading {
+		list.WriteString(dimStyle.Render("  Loading catalogues…"))
+		list.WriteByte('\n')
+	} else {
+		q := strings.TrimSpace(m.searchInput.Value())
+		hits := m.lookupFiltered
+		if q == "" && len(m.lookupHits) > 0 {
+			list.WriteString(dimStyle.Render(fmt.Sprintf("  %d entries — type to filter", len(m.lookupHits))))
+			list.WriteByte('\n')
+		}
+		viewport := max(3, mainH-5)
+		m.lookupScroll = EnsureVisibleScroll(m.lookupScroll, m.lookupCursor, viewport, len(hits))
+		end := min(len(hits), m.lookupScroll+viewport)
+		for i := m.lookupScroll; i < end; i++ {
+			label := LookupHitLabel(hits[i])
+			line := "  " + truncate(label, max(12, mainW-4))
+			if i == m.lookupCursor {
+				line = selStyle.Render("▶ " + truncate(label, max(12, mainW-6)))
+			}
+			list.WriteString(line)
+			list.WriteByte('\n')
+		}
+		if len(hits) == 0 && !m.lookupLoading {
+			msg := "  (no matches)"
+			if len(m.lookupHits) == 0 {
+				msg = "  (no catalogue entries)"
+			}
+			list.WriteString(dimStyle.Render(msg))
+			list.WriteByte('\n')
+		}
+	}
+	insp := dimStyle.Render("Type a name, id, or tag.\nSearches every catalogue type.")
+	if m.lookupCursor >= 0 && m.lookupCursor < len(m.lookupFiltered) {
+		hit := m.lookupFiltered[m.lookupCursor]
+		insp = FormatInspector(hit.Entry, hit.Type)
+	}
+	body := m.splitPanes(list.String(), insp, mainW, inspW, mainH, inspH)
+	footer := dimStyle.Render("↑↓ select · Enter open · Esc close · Ctrl+K refresh")
 	if m.errMsg != "" {
 		return body + "\n" + errStyle.Render(m.errMsg) + "\n" + footer
 	}
@@ -292,7 +344,7 @@ func (m *Model) footerHints() string {
 	if m.edit != editNone {
 		return m.editInput.View() + "  " + HelpHints([][2]string{{"Enter", "save"}, {"Esc", "cancel"}})
 	}
-	base := [][2]string{{"Ctrl+H", "home"}, {"Ctrl+L", "library"}, {"Esc", "back"}, {"q", "quit"}}
+	base := [][2]string{{"Ctrl+H", "home"}, {"Ctrl+K", "lookup"}, {"Ctrl+L", "library"}, {"Esc", "back"}, {"q", "quit"}}
 	var pairs [][2]string
 	switch m.tab {
 	case tabScene:

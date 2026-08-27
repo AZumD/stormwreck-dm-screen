@@ -21,6 +21,16 @@ func TestEditingSuppressesSingleLetterGlobals(t *testing.T) {
 	if act, ok := actions.Resolve("ctrl+c", true); !ok || act != actions.Quit {
 		t.Fatalf("ctrl+c: got %s %v", act, ok)
 	}
+	if act, ok := actions.Resolve("ctrl+k", true); !ok || act != actions.AppLookup {
+		t.Fatalf("ctrl+k while editing: got %s %v", act, ok)
+	}
+}
+
+func TestAppLookupBinding(t *testing.T) {
+	got, ok := actions.Resolve("ctrl+k", false)
+	if !ok || got != actions.AppLookup {
+		t.Fatalf("got %s %v", got, ok)
+	}
 }
 
 func TestTabs1to5(t *testing.T) {

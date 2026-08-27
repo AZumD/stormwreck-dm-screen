@@ -12,6 +12,7 @@ const (
 	AppBack        Action = "app.back"
 	AppSearch      Action = "app.search"
 	AppLibrary     Action = "app.library"
+	AppLookup      Action = "app.lookup"
 	CampaignScene  Action = "campaign.scene"
 	CampaignNotes  Action = "campaign.notes"
 	CampaignParty  Action = "campaign.party"
@@ -44,6 +45,7 @@ func DefaultBindings() map[Action][]string {
 		AppBack:       {"esc", "backspace"},
 		AppSearch:     {"/"},
 		AppLibrary:    {"ctrl+l"},
+		AppLookup:     {"ctrl+k"},
 		CampaignScene: {"1"},
 		CampaignNotes: {"2"},
 		CampaignParty: {"3"},
@@ -86,8 +88,8 @@ func reverseBindings() map[string]Action {
 var keyToAction = reverseBindings()
 
 // Resolve maps a key string to an Action.
-// When editing is true, only esc (back), enter (open/confirm), and ctrl+c (quit)
-// are accepted so single-letter globals (h/i/c/l/s/…) never fire.
+// When editing is true, only esc (back), enter (open/confirm), ctrl+c (quit),
+// and ctrl+k (master lookup) are accepted so single-letter globals never fire.
 func Resolve(key string, editing bool) (Action, bool) {
 	key = strings.ToLower(strings.TrimSpace(key))
 	if key == "" {
@@ -101,6 +103,8 @@ func Resolve(key string, editing bool) (Action, bool) {
 			return SelOpen, true
 		case "ctrl+c":
 			return Quit, true
+		case "ctrl+k":
+			return AppLookup, true
 		default:
 			return "", false
 		}

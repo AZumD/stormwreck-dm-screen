@@ -62,6 +62,7 @@ const (
 	overlayLibrary
 	overlayCharSheet
 	overlayCatalogue
+	overlayLookup
 )
 
 type editMode int
@@ -128,6 +129,10 @@ type sheetLoadedMsg struct {
 	char  *api.Character
 	state *api.CharacterState
 	err   error
+}
+type lookupIndexMsg struct {
+	hits []LookupHit
+	err  error
 }
 
 type Model struct {
@@ -207,6 +212,13 @@ type Model struct {
 	sheetState *api.CharacterState
 	sheetCursor int
 	sheetLinks  []sheetLink
+
+	// master lookup (Ctrl+K)
+	lookupHits     []LookupHit
+	lookupFiltered []LookupHit
+	lookupCursor   int
+	lookupScroll   int
+	lookupLoading  bool
 
 	width  int
 	height int
@@ -377,6 +389,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.detailLinks = buildEntryLinks(msg.entry, msg.typ)
 		m.detailCursor = 0
 		return m, nil
+	case lookupIndexMsg:
+		m.lookupLoading = false
+		if msg.err != nil {
+			if msg.err == api.ErrUnauthorized {
+				return m.forceLogin("Session expired — sign in again")
+			}
+			m.errMsg = msg.err.Error()
+			return m, nil
+		}
+		m.lookupHits = msg.hits
+		m.rebuildLookupFilter()
+		m.status = fmt.Sprintf("Lookup · %d catalogue entries", len(m.lookupHits))
+		return m, nil
 	case campaignOpenedMsg:
 		if msg.err != nil {
 			if msg.err == api.ErrUnauthorized {
@@ -471,6 +496,42 @@ func (m *Model) filteredLibEntries() []map[string]any {
 		q = m.searchInput.Value()
 	}
 	return FilterCatalogueEntries(m.libEntries, q)
+}
+
+func (m *Model) rebuildLookupFilter() {
+	q := ""
+	if m.searching || m.overlay == overlayLookup {
+		q = m.searchInput.Value()
+	}
+	m.lookupFiltered = FilterLookupHits(m.lookupHits, q)
+	m.lookupCursor = clampIndex(m.lookupCursor, len(m.lookupFiltered))
+}
+
+func (m *Model) cmdLoadLookupIndex() tea.Cmd {
+	client := m.client
+	types := ResolveCatalogueTypes(m.catalogueTypes)
+	return func() tea.Msg {
+		byType := make(map[string][]map[string]any, len(types))
+		var firstErr error
+		for _, typ := range types {
+			entries, err := client.ListCatalogue(typ)
+			if err != nil {
+				if err == api.ErrUnauthorized {
+					return lookupIndexMsg{err: err}
+				}
+				if firstErr == nil {
+					firstErr = err
+				}
+				continue
+			}
+			byType[typ] = entries
+		}
+		hits := BuildLookupHits(types, byType)
+		if len(hits) == 0 && firstErr != nil {
+			return lookupIndexMsg{err: firstErr}
+		}
+		return lookupIndexMsg{hits: hits}
+	}
 }
 
 func (m *Model) isEditing() bool {
@@ -673,6 +734,9 @@ func (m *Model) selectedKey() string {
 func (m *Model) View() string {
 	if m.width < 40 || m.height < 12 {
 		return "Terminal too small — resize to at least 40×12"
+	}
+	if m.overlay == overlayLookup && m.screen != screenLogin {
+		return m.viewLookup()
 	}
 	switch m.screen {
 	case screenLogin:

@@ -105,6 +105,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
 | `js/core/combat-sheet-modal.js` | Live HP/AC/conditions; initiative → `initiativeTracker` |
 | `docs/CLIENT-ARCHITECTURE.md` | Server-canonical multi-client contract (browser DM/player + native TUI) |
+| `tui/` | Native Bubble Tea DM tracker (`Ctrl+K` master catalogue lookup); see `docs/README/TUI.md` |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/core/catalogue/music-ui.js` | Music upload dialog + single-track preview |
@@ -128,5 +129,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-map-aspect`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-map-aspect`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, `validate-tui-lookup`, …); browser smoke HTML under `test/`.
 

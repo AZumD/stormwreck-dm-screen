@@ -15,6 +15,11 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.screen == screenLogin {
 		return m.handleLoginKey(msg)
 	}
+	// Master lookup works from anywhere (including while searching / notes).
+	// Party inline edits keep the edit field; Esc first, then Ctrl+K.
+	if strings.EqualFold(msg.String(), "ctrl+k") && m.edit == editNone {
+		return m.openMasterLookup()
+	}
 	if m.edit != editNone {
 		return m.handleEditKey(msg)
 	}
@@ -65,6 +70,8 @@ func (m *Model) dispatchAction(act actions.Action) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m, nil
+	case actions.AppLookup:
+		return m.openMasterLookup()
 	case actions.CampaignScene:
 		return m.setTab(tabScene)
 	case actions.CampaignNotes:
@@ -196,8 +203,90 @@ func (m *Model) leaveCampaignToHome() {
 	m.edit = editNone
 }
 
+func (m *Model) openMasterLookup() (tea.Model, tea.Cmd) {
+	if m.screen == screenLogin {
+		return m, nil
+	}
+	if m.overlay == overlayLookup {
+		// Already open — refocus search and refresh index.
+		m.editingNotes = false
+		m.beginLookupSearch()
+		m.lookupLoading = true
+		return m, tea.Batch(textinput.Blink, m.cmdLoadLookupIndex())
+	}
+	m.pushLookupReturnFrame()
+	m.editingNotes = false
+	m.edit = editNone
+	m.overlay = overlayLookup
+	m.lookupCursor = 0
+	m.lookupScroll = 0
+	m.lookupFiltered = nil
+	m.status = "Master lookup — search all catalogues"
+	m.beginLookupSearch()
+	m.lookupLoading = true
+	return m, tea.Batch(textinput.Blink, m.cmdLoadLookupIndex())
+}
+
+func (m *Model) pushLookupReturnFrame() {
+	switch {
+	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
+		m.history.Push(nav.Frame{
+			Name:   "catalogue",
+			Cursor: m.detailCursor,
+			Data: map[string]string{
+				"type": m.libDetailT,
+				"id":   strField(m.libDetail, "id"),
+			},
+		})
+	case m.overlay == overlayCharSheet:
+		m.history.Push(nav.Frame{Name: "sheet", Cursor: m.sheetCursor})
+	case m.overlay == overlayLibrary:
+		data := map[string]string{}
+		if m.libType != "" {
+			data["type"] = m.libType
+		}
+		name := "lib-types"
+		if m.libType != "" {
+			name = "library"
+		}
+		m.history.Push(nav.Frame{Name: name, Cursor: m.libCursor, Data: data})
+	case m.screen == screenLibraryList:
+		m.history.Push(nav.Frame{
+			Name:   "library",
+			Cursor: m.libCursor,
+			Data:   map[string]string{"type": m.libType},
+		})
+	case m.screen == screenCampaign:
+		m.history.Push(nav.Frame{
+			Name:   "campaign",
+			Cursor: int(m.tab),
+			Data:   map[string]string{"campaignId": m.campaignID},
+		})
+	case m.screen == screenHome:
+		m.history.Push(nav.Frame{Name: "home", Cursor: m.homeCursor})
+	}
+}
+
+func (m *Model) beginLookupSearch() {
+	m.searching = true
+	m.searchInput.Placeholder = "search all catalogues…"
+	m.searchInput.SetValue("")
+	m.searchInput.Focus()
+	m.errMsg = ""
+}
+
 func (m *Model) handleBack() (tea.Model, tea.Cmd) {
 	switch {
+	case m.overlay == overlayLookup:
+		m.searching = false
+		m.searchInput.Blur()
+		m.searchInput.Placeholder = "filter…"
+		if f, ok := m.history.Pop(); ok {
+			m.restoreFrame(f)
+			return m, nil
+		}
+		m.overlay = overlayNone
+		return m, nil
 	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
 		if f, ok := m.history.Pop(); ok {
 			if f.Name == "catalogue" {
@@ -271,6 +360,18 @@ func (m *Model) restoreFrame(f nav.Frame) {
 		m.screen = screenHome
 		m.overlay = overlayNone
 		m.homeCursor = f.Cursor
+	case "lookup":
+		m.overlay = overlayLookup
+		m.lookupCursor = f.Cursor
+		m.searchInput.Placeholder = "search all catalogues…"
+		if q := f.Data["q"]; q != "" {
+			m.searchInput.SetValue(q)
+		} else {
+			m.searchInput.SetValue("")
+		}
+		m.searching = true
+		m.searchInput.Focus()
+		m.rebuildLookupFilter()
 	case "library", "lib-types":
 		if m.campaignID != "" {
 			m.screen = screenCampaign
@@ -297,6 +398,12 @@ func (m *Model) restoreFrame(f nav.Frame) {
 
 func (m *Model) moveSelection(delta int) {
 	switch {
+	case m.overlay == overlayLookup:
+		n := len(m.lookupFiltered)
+		if n == 0 {
+			return
+		}
+		m.lookupCursor = clampIndex(m.lookupCursor+delta, n)
 	case m.overlay == overlayCharSheet:
 		n := len(m.sheetLinks)
 		if n == 0 {
@@ -361,6 +468,8 @@ func (m *Model) moveSelection(delta int) {
 
 func (m *Model) handleOpen() (tea.Model, tea.Cmd) {
 	switch {
+	case m.overlay == overlayLookup:
+		return m.openLookupSelection()
 	case m.overlay == overlayCatalogue || m.screen == screenCatalogueDetail:
 		if m.detailCursor >= 0 && m.detailCursor < len(m.detailLinks) {
 			link := m.detailLinks[m.detailCursor]
@@ -496,8 +605,32 @@ func (m *Model) handleOpen() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) openLookupSelection() (tea.Model, tea.Cmd) {
+	if m.lookupCursor < 0 || m.lookupCursor >= len(m.lookupFiltered) {
+		return m, nil
+	}
+	hit := m.lookupFiltered[m.lookupCursor]
+	m.history.Push(nav.Frame{
+		Name:   "lookup",
+		Cursor: m.lookupCursor,
+		Data:   map[string]string{"q": m.searchInput.Value()},
+	})
+	m.searching = false
+	m.searchInput.Blur()
+	m.searchInput.Placeholder = "filter…"
+	if m.campaignID != "" {
+		m.screen = screenCampaign
+		m.overlay = overlayCatalogue
+	} else {
+		m.screen = screenCatalogueDetail
+		m.overlay = overlayNone
+	}
+	return m, m.cmdLoadCatalogue(hit.Type, hit.ID)
+}
+
 func (m *Model) beginSearch() {
 	m.searching = true
+	m.searchInput.Placeholder = "filter…"
 	m.searchInput.SetValue("")
 	m.searchInput.Focus()
 	m.errMsg = ""
@@ -507,6 +640,26 @@ func (m *Model) beginSearch() {
 }
 
 func (m *Model) handleSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.overlay == overlayLookup {
+		switch msg.String() {
+		case "esc":
+			return m.handleBack()
+		case "enter":
+			return m.openLookupSelection()
+		case "up":
+			m.moveSelection(-1)
+			return m, nil
+		case "down":
+			m.moveSelection(1)
+			return m, nil
+		case "ctrl+c":
+			return m, tea.Quit
+		}
+		var cmd tea.Cmd
+		m.searchInput, cmd = updateFocusedInput(m.searchInput, msg)
+		m.rebuildLookupFilter()
+		return m, cmd
+	}
 	switch msg.String() {
 	case "esc":
 		m.searching = false

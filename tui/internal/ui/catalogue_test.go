@@ -39,6 +39,42 @@ func TestFilterCatalogueEntries(t *testing.T) {
 	}
 }
 
+func TestBuildAndFilterLookupHits(t *testing.T) {
+	byType := map[string][]map[string]any{
+		"item": {
+			{"id": "sw-herb-black-rose", "name": "Black Rose", "summary": "herb"},
+			{"id": "sw-sword", "name": "Longsword", "tags": []any{"weapon"}},
+		},
+		"npc": {
+			{"id": "sw-runara", "name": "Runara", "summary": "dragon mentor"},
+		},
+	}
+	hits := ui.BuildLookupHits([]string{"item", "npc"}, byType)
+	if len(hits) != 3 {
+		t.Fatalf("hits %d %#v", len(hits), hits)
+	}
+	got := ui.FilterLookupHits(hits, "rose")
+	if len(got) != 1 || got[0].ID != "sw-herb-black-rose" || got[0].Type != "item" {
+		t.Fatalf("%#v", got)
+	}
+	got = ui.FilterLookupHits(hits, "npc")
+	if len(got) != 1 || got[0].ID != "sw-runara" {
+		t.Fatalf("type filter %#v", got)
+	}
+	got = ui.FilterLookupHits(hits, "weapon")
+	if len(got) != 1 || got[0].ID != "sw-sword" {
+		t.Fatalf("tag filter %#v", got)
+	}
+	label := ui.LookupHitLabel(got[0])
+	if label != "Items · Longsword" {
+		t.Fatalf("label %q", label)
+	}
+	got = ui.FilterLookupHits(hits, "")
+	if len(got) != 3 {
+		t.Fatalf("empty %d", len(got))
+	}
+}
+
 func TestFormatInspectorNPC(t *testing.T) {
 	out := ui.FormatInspector(map[string]any{
 		"id":   "sw-1",

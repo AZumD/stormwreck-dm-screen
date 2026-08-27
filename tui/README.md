@@ -75,7 +75,7 @@ No bearer tokens, API keys, or TUI-specific auth.
 
 ## Hotkeys
 
-All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 stubs). While a text field is focused (login, search, notes, party edits), `editing=true` so single-letter globals do not fire.
+All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 stubs). While a text field is focused (login, search, notes, party edits), `editing=true` so single-letter globals do not fire. **`Ctrl+K` (master lookup) still works while searching or editing notes** (party inline edits: Esc first).
 
 | Key | Action |
 |-----|--------|
@@ -84,6 +84,7 @@ All non-login keys go through `actions.Resolve` (and `LookupFKey` for F13–F16 
 | `j` `k` / `↑` `↓` | Scene body: **scroll** prose · elsewhere: move selection |
 | `[` `]` | Scene body: previous / next reference (Enter follows) |
 | `/` | Search (Home, Library, scene titles on Scene tab) |
+| `Ctrl+K` | **Master lookup** — search all catalogue types from anywhere (Esc closes; Enter opens entry) |
 | `Ctrl+H` | Home (leave campaign, keep session) |
 | `Ctrl+L` | Library overlay (from campaign; Esc returns) |
 | `↑` `↓` / `k` `j` | Move selection |

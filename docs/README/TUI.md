@@ -9,7 +9,7 @@ Native terminal DM tracker client (Go + Bubble Tea). First-class alongside the b
 ## Packages
 | Package | Role |
 |---------|------|
-| `internal/actions` | Central Action constants + `DefaultBindings` / `Resolve` / `LookupFKey` (F13–F16 stubs). Editing suppresses single-letter globals. |
+| `internal/actions` | Central Action constants + `DefaultBindings` / `Resolve` / `LookupFKey` (F13–F16 stubs). Editing suppresses single-letter globals; `Ctrl+K` master lookup remains available. |
 | `internal/nav` | Frame stack (`Push` / `Pop` / `Replace`) for back-navigation history. |
 | `internal/layout` | `ModeWide` (≥100 cols) vs `ModeNarrow`; `PaneSizes` for main + inspector. |
 | `internal/music` | Optional local `mpv` player (`ErrUnavailable` if missing); `MpvArgs` + cookie HTTP headers. |
@@ -19,7 +19,7 @@ Native terminal DM tracker client (Go + Bubble Tea). First-class alongside the b
 | `internal/config` | `--server` required; `--campaign` optional (empty → Home). |
 
 ## Hotkeys (summary)
-`1`–`5` tabs · `Ctrl+H` home · `Ctrl+L` library overlay · `/` search · `Enter` open · `Esc` back · Party `h/i/c/a` · Music `Space`/`+/-`/`L`/`S` · `q` quit.
+`1`–`5` tabs · `Ctrl+H` home · `Ctrl+K` master lookup (all catalogues) · `Ctrl+L` library overlay · `/` search · `Enter` open · `Esc` back · Party `h/i/c/a` · Music `Space`/`+/-`/`L`/`S` · `q` quit.
 
 ## Docs
 Full usage, Pi build, controls, mpv optional dep: `tui/README.md`

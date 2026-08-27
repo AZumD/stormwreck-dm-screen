@@ -130,6 +130,73 @@ func FilterCatalogueEntries(entries []map[string]any, query string) []map[string
 	return out
 }
 
+// LookupHit is one entry in the master cross-catalogue index.
+type LookupHit struct {
+	Type  string
+	ID    string
+	Name  string
+	Entry map[string]any
+}
+
+// BuildLookupHits flattens catalogue type → entries into searchable hits.
+// types is the preferred order (from health); missing types still included.
+func BuildLookupHits(types []string, byType map[string][]map[string]any) []LookupHit {
+	if len(byType) == 0 {
+		return nil
+	}
+	order := ResolveCatalogueTypes(types)
+	seen := map[string]bool{}
+	var out []LookupHit
+	appendType := func(typ string) {
+		if seen[typ] {
+			return
+		}
+		seen[typ] = true
+		for _, e := range byType[typ] {
+			id := strField(e, "id")
+			if id == "" {
+				continue
+			}
+			name := strField(e, "name", "title")
+			if name == "" {
+				name = id
+			}
+			out = append(out, LookupHit{Type: typ, ID: id, Name: name, Entry: e})
+		}
+	}
+	for _, t := range order {
+		appendType(t)
+	}
+	for typ := range byType {
+		appendType(typ)
+	}
+	return out
+}
+
+// FilterLookupHits filters master-index hits by type title, id, name, summary, tags.
+func FilterLookupHits(hits []LookupHit, query string) []LookupHit {
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return append([]LookupHit(nil), hits...)
+	}
+	var out []LookupHit
+	for _, h := range hits {
+		hay := strings.ToLower(h.Type + " " + CatalogueTypeTitle(h.Type) + " " + h.ID + " " + h.Name)
+		if h.Entry != nil {
+			hay += " " + EntrySearchText(h.Entry)
+		}
+		if strings.Contains(hay, q) {
+			out = append(out, h)
+		}
+	}
+	return out
+}
+
+// LookupHitLabel formats a result row: "Item · Black Rose".
+func LookupHitLabel(h LookupHit) string {
+	return CatalogueTypeTitle(h.Type) + " · " + h.Name
+}
+
 // HomeRow is one selectable row on the Home screen.
 type HomeRow struct {
 	Kind  string // "library" | "campaign"
