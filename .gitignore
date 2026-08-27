@@ -23,6 +23,13 @@ venv/
 __pycache__/
 *.pyc
 
+# Go TUI local toolchain / build artifacts
+.go-toolchain/
+tui/.toolchain/
+tui/stormwreck
+tui/stormwreck.exe
+tui/stormwreck-linux-armv7
+
 # Logs / junk
 *.log
 npm-debug.log*

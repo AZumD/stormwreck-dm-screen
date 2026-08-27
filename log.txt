@@ -96,3 +96,5 @@
 
 [2026-08-27] Multi-client campaign document PATCH + canonical map-state.initiativeTracker; CLIENT-ARCHITECTURE.md. See server/lib/deep-merge.js, campaigns.js, campaign-map-state.js, combat-sheet-modal.js
 [2026-08-27] Multi-client campaign document PATCH + canonical map-state.initiativeTracker; CLIENT-ARCHITECTURE.md. See server/lib/deep-merge.js, campaigns.js, campaign-map-state.js, combat-sheet-modal.js
+[2026-08-27] TUI MVP1: Go+Bubble Tea DM tracker client under tui/ (session cookie, map-state PATCH, ASCII map, polling). See tui/README.md
+[2026-08-27] Fix TUI text input swallowing @ (Windows AltGr/KeyCtrlAt); normalize printable keys into textinput. See tui/internal/ui/input.go

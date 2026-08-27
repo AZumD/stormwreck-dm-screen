@@ -14,9 +14,9 @@ Clients are views and editors over that API. They must not keep a separate autho
 |--------|------|
 | **Browser DM** | Existing campaign screen, catalogues, map rail, combat sheet — fully supported |
 | **Browser player** | Existing `/player/` companion — fully supported |
-| **Native TUI DM** (future) | Second DM client (intended Go + Bubble Tea, e.g. Raspberry Pi 3B) |
+| **Native TUI DM** | Second DM client (`tui/` — Go + Bubble Tea; e.g. Raspberry Pi 3B) |
 
-The TUI does **not** replace the browser DM client. Both DM clients share the same online server.
+The TUI does **not** replace the browser DM client. Both DM clients share the same online server. See `tui/README.md`.
 
 ## How the TUI will connect
 
