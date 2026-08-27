@@ -899,6 +899,20 @@ function createApiRoutes() {
     ),
 
     route(
+      "PATCH",
+      /^\/api\/campaigns\/([^/]+)\/documents\/([^/]+)$/,
+      ["id", "kind"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const kind = assertDocKind(p.kind);
+        await authorize.requireDmIfAuthRequired(req, id);
+        const body = await readJsonBody(req);
+        const document = await campaigns.patchDocument(id, kind, body);
+        sendJson(res, 200, { ok: true, kind, document });
+      }
+    ),
+
+    route(
       "GET",
       /^\/api\/assets\/([^/]+)\/([^/]+)\/([^/]+)$/,
       ["kind", "type", "id"],

@@ -219,6 +219,16 @@ window.LocalApiClient = (function () {
     );
   }
 
+  async function patchCampaignDocument(campaignId, kind, patch) {
+    return trackWrite(`doc:${campaignId}:${kind}`, () =>
+      request(
+        "PATCH",
+        `/api/campaigns/${encodeURIComponent(campaignId)}/documents/${encodeURIComponent(kind)}`,
+        patch
+      ).then((d) => d.document)
+    );
+  }
+
   /* Assets */
   async function putCatalogueAsset(type, id, field, dataUrl) {
     return trackWrite(`asset:${type}:${id}:${field}`, () =>
@@ -376,6 +386,7 @@ window.LocalApiClient = (function () {
     removeCampaign,
     getCampaignDocument,
     putCampaignDocument,
+    patchCampaignDocument,
     putCatalogueAsset,
     deleteCatalogueAsset,
     importLocationUvtt,

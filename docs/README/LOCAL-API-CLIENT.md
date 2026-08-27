@@ -8,7 +8,7 @@ Browser HTTP client for the local file-backed API. Domain modules call this inst
 
 ## Behavior
 - Probes `GET /api/health`
-- Catalogue CRUD, campaign registry, campaign documents, assets
+- Catalogue CRUD, campaign registry, campaign documents (`get` / `put` / `patch`), assets
 - Music audio: `putMusicAudio`, `getMusicPlayback` (see `docs/README/MUSIC.md`)
 - Campaign maps / UVTT import helpers
 - Revealed NPCs: `listRevealedNpcs`, `revealNpc`, `unrevealNpc` (Phase 5D)
@@ -16,5 +16,12 @@ Browser HTTP client for the local file-backed API. Domain modules call this inst
 - Integrates with `SaveStatus` (Saving… / Saved / Save failed)
 - **Per-key write queue:** same persistence key serializes writes (factory starts only after prior settle); a failed write does not block the next; different keys stay concurrent
 
+## Campaign documents
+| Method | HTTP | Role |
+|--------|------|------|
+| `getCampaignDocument` | `GET` | Load full document |
+| `putCampaignDocument` | `PUT` | Replace full document |
+| `patchCampaignDocument` | `PATCH` | Partial deep-merge update; returns merged document |
+
 ## Related
-`CatalogueStore`, `CampaignRegistry`, `CampaignState`, `ChronicleStore`, `SceneMeta`, `SectionEditor`, `CampaignPrefs`, `CampaignMapState`
+`CatalogueStore`, `CampaignRegistry`, `CampaignState`, `ChronicleStore`, `SceneMeta`, `SectionEditor`, `CampaignPrefs`, `CampaignMapState`, `docs/CLIENT-ARCHITECTURE.md`

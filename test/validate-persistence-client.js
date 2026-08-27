@@ -41,6 +41,10 @@ if (!client.includes("startWrite") || !client.includes(".catch(() => undefined)"
   fail("LocalApiClient must serialize writes per key via factories");
 } else pass("LocalApiClient write serialization");
 
+if (!client.includes("patchCampaignDocument") || !client.includes("putCampaignDocument")) {
+  fail("LocalApiClient missing document put/patch");
+} else pass("LocalApiClient document put/patch");
+
 if (!campaignApp.includes("CatalogueStore.bootstrap") || !campaignApp.includes("CampaignPrefs.bootstrap")) {
   fail("campaign-app missing file-backed bootstrap");
 } else pass("campaign-app bootstrap");

@@ -36,7 +36,8 @@ Without `DATABASE_URL`, behaviour matches the original file-backed library. Loca
 | `server/lib/atomic-fs.js` | Atomic JSON/binary writes + `.bak`; `DM_DATA_ROOT` |
 | `server/lib/ids.js` | Safe id / type validation |
 | `server/lib/catalogues.js` | One JSON file per catalogue entry |
-| `server/lib/campaigns.js` | Campaign registry + documents (+ Postgres sync on auth create) |
+| `server/lib/campaigns.js` | Campaign registry + documents (+ Postgres sync on auth create); `PATCH` deep-merge |
+| `server/lib/deep-merge.js` | Recursive document merge for partial updates |
 | `server/lib/assets.js` | Portrait / map image files under `{dataRoot}/assets` |
 | `scripts/data-init.mjs` | One-shot empty-volume seed (`npm run data:init`) |
 | `db/` | Schema, migrations, seeds, auth bootstrap (see `docs/README/DB.md`, `AUTH.md`, `DEPLOY.md`) |

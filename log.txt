@@ -93,3 +93,6 @@
 [2026-08-26] Fix Source Catalogue chapter editor rendering as plain text; cache-bust source-katalog; clearer paste boxes. See source-ui.js, catalogue/app.js
 [2026-08-26] Source Kind Adventures/Rulebooks/Others (Adventures DM-only); remove location from player Library. See SOURCE.md, PLAYER.md, player.js
 [2026-08-26] Player source reader: parchment dialog, flatten chapter chrome, fix pre-wrap gap. See player.css, source-ui.js, SOURCE-UI.md
+
+[2026-08-27] Multi-client campaign document PATCH + canonical map-state.initiativeTracker; CLIENT-ARCHITECTURE.md. See server/lib/deep-merge.js, campaigns.js, campaign-map-state.js, combat-sheet-modal.js
+[2026-08-27] Multi-client campaign document PATCH + canonical map-state.initiativeTracker; CLIENT-ARCHITECTURE.md. See server/lib/deep-merge.js, campaigns.js, campaign-map-state.js, combat-sheet-modal.js

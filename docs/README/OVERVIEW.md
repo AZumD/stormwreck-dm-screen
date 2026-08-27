@@ -65,6 +65,8 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Mouse-wheel zoom / pan when zoomed (default cursor until dragging; measure shows a live tape line)
 - **+** under the map adds NPC / item / PC pins; **monster** places a combat token (instance HP/AC) on calibrated maps
 - Party cards and PC/NPC map pins open the shared **combat sheet** (`CombatSheetModal`) — PCs via Postgres, NPCs via catalogue, monsters via map tokens only
+- **Initiative** is temporary shared table state in `map-state.initiativeTracker` (not PC extras / NPC catalogue / token fields)
+- Multi-client: campaign documents support `PATCH` deep-merge so concurrent DM clients do not full-document overwrite each other (see `docs/CLIENT-ARCHITECTURE.md`)
 
 ## Portraits
 PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait** (or illustration) upload (files under `/data/assets/portraits`). Campaign tooltips, modals, and reference cards show them when present.
@@ -97,8 +99,11 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/music-mixer-ui.js` | Map-rail Music tab (play / volume / reorder) |
 | `js/core/campaign-locations.js` | Which location catalogue entries belong to a campaign |
 | `js/core/campaign-locations-ui.js` | Locations panel add/remove UI |
+| `js/core/campaign-map-state.js` | Map rail persistence + partial `PATCH` to `map-state` |
 | `js/core/map-panel.js` | Map rail tabs, pins, expand mode, Layers popover |
 | `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
+| `js/core/combat-sheet-modal.js` | Live HP/AC/conditions; initiative → `initiativeTracker` |
+| `docs/CLIENT-ARCHITECTURE.md` | Server-canonical multi-client contract (browser DM/player + future TUI) |
 | `js/core/catalogue/*` | Shared catalogue CRUD UI |
 | `js/core/catalogue/images.js` | Asset upload / hydrate (file-backed; IndexedDB legacy) |
 | `js/core/catalogue/music-ui.js` | Music upload dialog + single-track preview |

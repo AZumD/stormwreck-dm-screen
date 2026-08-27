@@ -69,7 +69,7 @@ if (!css.includes("width: 200px") && !css.includes("--media-player-size")) {
   fail("media-bar CSS should use a visible player size (200px or --media-player-size)");
 } else pass("media-bar CSS visible mini player");
 
-if (css.match(/\.media-bar__frame-wrap[\s\S]*?clip:\s*rect\(0/) || css.match(/\.media-dock__frames[\s\S]*?clip:\s*rect\(0/)) {
+if (css.match(/\.media-bar__frame-wrap\s*\{[^}]*clip:\s*rect\(0/) || css.match(/\.media-dock__frames\s*\{[^}]*clip:\s*rect\(0/)) {
   fail("media-bar frame-wrap must not be clipped to 0 (YouTube blocks autoplay)");
 } else pass("media-bar frame not clipped");
 

@@ -5,6 +5,7 @@
 
 const path = require("path");
 const { assertSafeId, assertDocKind } = require("./ids");
+const { deepMerge } = require("./deep-merge");
 const {
   dataRoot,
   writeJsonAtomic,
@@ -249,6 +250,27 @@ async function putDocument(campaignId, kind, body) {
   return body;
 }
 
+/**
+ * Partial update: deep-merge `patch` into the current document and atomically rewrite.
+ * Arrays replace; nested plain objects merge; `null` deletes a key.
+ */
+async function patchDocument(campaignId, kind, patch) {
+  assertSafeId(campaignId, "campaign id");
+  assertDocKind(kind);
+  if (patch === undefined || patch === null || typeof patch !== "object" || Array.isArray(patch)) {
+    const err = new Error("Body must be a JSON object");
+    err.status = 400;
+    throw err;
+  }
+  const current = (await getDocument(campaignId, kind)) || {};
+  const base =
+    current && typeof current === "object" && !Array.isArray(current) ? current : {};
+  const document = deepMerge(base, patch);
+  await ensureDir(campaignDir(campaignId));
+  await writeJsonAtomic(docPath(campaignId, kind), document);
+  return document;
+}
+
 async function deleteDocument(campaignId, kind) {
   return removeFile(docPath(campaignId, kind));
 }
@@ -263,6 +285,7 @@ module.exports = {
   removeCampaign,
   getDocument,
   putDocument,
+  patchDocument,
   deleteDocument,
   docPath,
   campaignDir,

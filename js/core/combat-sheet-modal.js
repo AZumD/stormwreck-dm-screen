@@ -65,6 +65,44 @@ window.CombatSheetModal = (function () {
     return Number.isFinite(n) ? n : 0;
   }
 
+  /** Stable keys: pc:<characterId>, npc:<catalogueId>, tok:<tokenId> */
+  function trackerKey(kind, id) {
+    if (!id) return null;
+    if (kind === "pc") return `pc:${id}`;
+    if (kind === "npc") return `npc:${id}`;
+    if (kind === "monster") return `tok:${id}`;
+    return null;
+  }
+
+  /**
+   * Canonical initiative lives in map-state.initiativeTracker.
+   * Legacy fields are read-only fallbacks when no tracker entry exists.
+   */
+  function readInitiative(key, legacyValue) {
+    const cid = campaignId();
+    const tracker = window.CampaignMapState?.get(cid)?.initiativeTracker;
+    if (key && tracker && Object.prototype.hasOwnProperty.call(tracker, key)) {
+      return normalizeInitiative(tracker[key]?.initiative);
+    }
+    return normalizeInitiative(legacyValue);
+  }
+
+  function syncInitiativeTracker(key, name, initiative, kind) {
+    const cid = campaignId();
+    if (!cid || !window.CampaignMapState || !key) return;
+    const init = normalizeInitiative(initiative);
+    if (!init) {
+      CampaignMapState.patch(cid, { initiativeTracker: { [key]: null } });
+    } else {
+      CampaignMapState.patch(cid, {
+        initiativeTracker: {
+          [key]: { name: name || key, initiative: init, kind: kind || "combatant" }
+        }
+      });
+    }
+    window.MapPanel?.refreshInitiative?.();
+  }
+
   function parseDeathSaves(raw) {
     const d = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
     return {
@@ -163,17 +201,6 @@ window.CombatSheetModal = (function () {
         <p class="combat-sheet__section-label">Class resources <span class="combat-sheet__hint">current / max</span></p>
         <div class="combat-sheet__slot-grid">${rows || `<p class="combat-sheet__hint">None yet — add on the player sheet.</p>`}</div>
       </div>`;
-  }
-
-  function syncInitiativeTracker(key, name, initiative, kind) {
-    const cid = campaignId();
-    if (!cid || !window.CampaignMapState || !key) return;
-    const all = { ...(CampaignMapState.get(cid)?.initiativeTracker || {}) };
-    const init = normalizeInitiative(initiative);
-    if (!init) delete all[key];
-    else all[key] = { name: name || key, initiative: init, kind: kind || "combatant" };
-    CampaignMapState.patch(cid, { initiativeTracker: all });
-    window.MapPanel?.refreshInitiative?.();
   }
 
   function setStatus(msg, isError) {
@@ -468,10 +495,9 @@ window.CombatSheetModal = (function () {
     const cid = current.campaignId;
     const mapId = current.mapId;
     if (!cid || !mapId || !window.CampaignMapState) throw new Error("Map state unavailable");
-    const all = { ...(CampaignMapState.get(cid)?.tokens || {}) };
-    const list = Array.isArray(all[mapId]) ? all[mapId].filter((t) => t.id !== current.tokenId) : [];
-    all[mapId] = list;
-    CampaignMapState.patch(cid, { tokens: all });
+    const prev = CampaignMapState.get(cid)?.tokens || {};
+    const list = Array.isArray(prev[mapId]) ? prev[mapId].filter((t) => t.id !== current.tokenId) : [];
+    CampaignMapState.patch(cid, { tokens: { [mapId]: list } });
     syncInitiativeTracker(`tok:${current.tokenId}`, current.name, 0, "monster");
     current.onRemoved?.();
     close();
@@ -526,7 +552,7 @@ window.CombatSheetModal = (function () {
       hpMax: state.hp_max ?? entry?.hpMax ?? null,
       hpTemp: state.hp_temp ?? 0,
       ac: sheet.ac ?? entry?.ac ?? null,
-      initiative: normalizeInitiative(extras.combat_initiative),
+      initiative: readInitiative(trackerKey("pc", bundle.characterId), extras.combat_initiative),
       conditions: conditionsToText(state.conditions),
       inspiration: Boolean(state.inspiration),
       deathSaves: parseDeathSaves(state.death_saves),
@@ -561,7 +587,7 @@ window.CombatSheetModal = (function () {
       hpCurrent: hp.current,
       hpMax: hp.max,
       ac: parseAc(entry.ac),
-      initiative: normalizeInitiative(entry.combatInitiative),
+      initiative: readInitiative(trackerKey("npc", catalogueId), entry.combatInitiative),
       conditions: entry.combatConditions || "",
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "npc")
     });
@@ -599,7 +625,7 @@ window.CombatSheetModal = (function () {
       hpCurrent: token.hpCurrent ?? null,
       hpMax: token.hpMax ?? null,
       ac: token.ac ?? null,
-      initiative: normalizeInitiative(token.initiative),
+      initiative: readInitiative(trackerKey("monster", token.id), token.initiative),
       conditions: token.conditions || "",
       removeFromMap: true,
       catalogueOpen: token.catalogueId
@@ -611,10 +637,9 @@ window.CombatSheetModal = (function () {
   }
 
   async function savePc(form) {
-    const extras = {
-      ...(current.extras || {}),
-      combat_initiative: normalizeInitiative(form.initiative)
-    };
+    const extras = { ...(current.extras || {}) };
+    /* Initiative is canonical in map-state.initiativeTracker — do not write combat_initiative. */
+    delete extras.combat_initiative;
     current.extras = extras;
     await LocalApiClient.putCharacterState(current.campaignId, current.characterId, {
       hp_current: form.hpCurrent,
@@ -630,7 +655,12 @@ window.CombatSheetModal = (function () {
     if (form.ac != null && Number.isFinite(form.ac)) {
       await LocalApiClient.patchCharacter(current.campaignId, current.characterId, { ac: form.ac });
     }
-    syncInitiativeTracker(`pc:${current.characterId}`, current.name, form.initiative, "pc");
+    syncInitiativeTracker(
+      trackerKey("pc", current.characterId),
+      current.name,
+      form.initiative,
+      "pc"
+    );
     refreshParty();
   }
 
@@ -643,10 +673,19 @@ window.CombatSheetModal = (function () {
     else if (cur !== "") entry.hp = String(cur);
     entry.ac = Number.isFinite(form.ac) ? String(form.ac) : form.ac == null ? entry.ac || "" : String(form.ac);
     entry.combatConditions = form.conditions || "";
-    entry.combatInitiative = normalizeInitiative(form.initiative);
+    /* Initiative is canonical in map-state.initiativeTracker — do not write combatInitiative. */
+    delete entry.combatInitiative;
     current.entry = await CatalogueStore.upsert("npc", entry);
+    delete current.entry.combatInitiative;
+    const live = CatalogueStore.get?.("npc", current.catalogueId);
+    if (live) delete live.combatInitiative;
     if (window.EntityRegistry?.build) EntityRegistry.build();
-    syncInitiativeTracker(`npc:${current.catalogueId}`, current.name, form.initiative, "npc");
+    syncInitiativeTracker(
+      trackerKey("npc", current.catalogueId),
+      current.name,
+      form.initiative,
+      "npc"
+    );
     refreshParty();
   }
 
@@ -654,21 +693,27 @@ window.CombatSheetModal = (function () {
     const cid = current.campaignId;
     const mapId = current.mapId;
     if (!cid || !mapId || !window.CampaignMapState) throw new Error("Map state unavailable");
-    const all = { ...(CampaignMapState.get(cid)?.tokens || {}) };
-    const list = Array.isArray(all[mapId]) ? all[mapId].slice() : [];
+    const prev = CampaignMapState.get(cid)?.tokens || {};
+    const list = Array.isArray(prev[mapId]) ? prev[mapId].slice() : [];
     const idx = list.findIndex((t) => t.id === current.tokenId);
     if (idx < 0) throw new Error("Token not found");
-    list[idx] = {
+    const nextTok = {
       ...list[idx],
       hpCurrent: form.hpCurrent,
       hpMax: form.hpMax,
       ac: form.ac,
-      conditions: form.conditions || "",
-      initiative: normalizeInitiative(form.initiative)
+      conditions: form.conditions || ""
     };
-    all[mapId] = list;
-    CampaignMapState.patch(cid, { tokens: all });
-    syncInitiativeTracker(`tok:${current.tokenId}`, current.name, form.initiative, "monster");
+    /* Initiative is canonical in map-state.initiativeTracker — do not persist on the token. */
+    delete nextTok.initiative;
+    list[idx] = nextTok;
+    CampaignMapState.patch(cid, { tokens: { [mapId]: list } });
+    syncInitiativeTracker(
+      trackerKey("monster", current.tokenId),
+      current.name,
+      form.initiative,
+      "monster"
+    );
   }
 
   async function save() {

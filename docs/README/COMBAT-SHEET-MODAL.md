@@ -10,14 +10,17 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 
 | Kind | Open from | Save target |
 |------|-----------|-------------|
-| **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `class_resources`, `extras.combat_initiative`) + sheet `ac`; remirrors to PC catalogue |
-| **NPC** | Party / map pin | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`, `combatInitiative`); NPC memory enricher still attaches |
-| **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` (incl. `initiative`) — never writes the monster catalogue |
+| **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `class_resources`, other `extras`) + sheet `ac`; remirrors to PC catalogue. **Not** `extras.combat_initiative`. |
+| **NPC** | Party / map pin | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`); NPC memory enricher still attaches. **Not** `combatInitiative`. |
+| **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` (HP/AC/conditions) — never writes the monster catalogue. **Not** token `initiative`. |
 
-## Initiative
-- Number input on every combat sheet (default `0`)
-- Values other than `0` sync into `map-state.initiativeTracker` and appear under the map (`#map-initiative`), highest first
-- Clearing to `0` removes the combatant from the list
+## Initiative (canonical)
+- Stored only in `map-state.initiativeTracker` via `CampaignMapState.patch`
+- Keys: `pc:<characterId>`, `npc:<catalogueId>`, `tok:<tokenId>`
+- Values: `{ name, initiative, kind: "pc"|"npc"|"monster" }`
+- Number input on every combat sheet (default `0`); `0` / blank removes the combatant (`null` delete in the patch)
+- List under the map (`#map-initiative`), highest first
+- Legacy `extras.combat_initiative` / `combatInitiative` / token `initiative` may still be **read** as fallback when no tracker entry exists; new saves do not write those fields
 
 ## UI
 - Name, type badge, portrait
@@ -35,4 +38,4 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 `EntityRegistry.byType` dedupes alias keys so add-monster / add-NPC pickers list each catalogue entry once.
 
 ## Related
-`LocalApiClient` character helpers, `CatalogueStore` NPC upsert, `MapSpatial`, `MapPanel.refreshInitiative`, `PartyRoster`, `CampaignStateUI.enrichEntityModal`
+`LocalApiClient` character helpers, `CatalogueStore` NPC upsert, `MapSpatial`, `MapPanel.refreshInitiative`, `PartyRoster`, `CampaignStateUI.enrichEntityModal`, `docs/CLIENT-ARCHITECTURE.md`

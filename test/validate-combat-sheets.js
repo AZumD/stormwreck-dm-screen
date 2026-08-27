@@ -103,7 +103,7 @@ if (!isle.includes("combat-sheet-modal.js") || !sandbox.includes("combat-sheet-m
   fail("Campaign HTML must load combat-sheet-modal.js");
 } else pass("Campaign HTML script tags");
 
-if (!docs.includes("CombatSheetModal") || !docs.includes("buildMonsterToken")) {
+if (!docs.includes("CombatSheetModal") || !docs.includes("buildMonsterToken") || !docs.includes("initiativeTracker")) {
   fail("COMBAT-SHEET-MODAL.md incomplete");
 } else pass("COMBAT-SHEET-MODAL.md");
 

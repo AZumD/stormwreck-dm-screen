@@ -1,10 +1,11 @@
 /**
- * Campaign map panel persistence (filters, positions, custom pins, active map).
+ * Campaign map panel persistence (filters, positions, custom pins, active map, tokens, initiative).
  */
 window.CampaignMapState = (function () {
   "use strict";
 
   const mem = new Map();
+  const BLOCKED_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
   function useApi() {
     return window.LocalApiClient && LocalApiClient.isAvailable();
@@ -17,8 +18,53 @@ window.CampaignMapState = (function () {
       pinPositions: {},
       partyPositions: {},
       customPins: {},
-      tokens: {}
+      tokens: {},
+      initiativeTracker: {}
     };
+  }
+
+  function isPlainObject(value) {
+    /* JSON document values only — avoid Object.prototype identity checks (cross-realm / iframe safe). */
+    return value != null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function cloneJson(value) {
+    if (value === undefined) return undefined;
+    if (value === null || typeof value !== "object") return value;
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  /** Same semantics as server/lib/deep-merge.js (objects merge, arrays replace, null deletes). */
+  function deepMerge(target, patch) {
+    if (patch === undefined) return cloneJson(target);
+    if (patch === null || Array.isArray(patch) || !isPlainObject(patch)) return cloneJson(patch);
+    const base = {};
+    if (isPlainObject(target)) {
+      for (const key of Object.keys(target)) {
+        if (BLOCKED_KEYS.has(key)) continue;
+        base[key] = cloneJson(target[key]);
+      }
+    }
+    for (const key of Object.keys(patch)) {
+      if (BLOCKED_KEYS.has(key)) continue;
+      const patchVal = patch[key];
+      if (patchVal === null) {
+        delete base[key];
+        continue;
+      }
+      if (isPlainObject(patchVal) && isPlainObject(base[key])) {
+        base[key] = deepMerge(base[key], patchVal);
+      } else if (isPlainObject(patchVal)) {
+        base[key] = deepMerge({}, patchVal);
+      } else {
+        base[key] = cloneJson(patchVal);
+      }
+    }
+    return base;
+  }
+
+  function normalize(doc) {
+    return { ...empty(), ...(doc && typeof doc === "object" ? doc : {}) };
   }
 
   function loadLocal(campaignId) {
@@ -30,6 +76,8 @@ window.CampaignMapState = (function () {
       data.partyPositions = JSON.parse(localStorage.getItem(`${campaignId}-party-positions`) || "{}") || {};
       data.customPins = JSON.parse(localStorage.getItem(`${campaignId}-custom-pins`) || "{}") || {};
       data.tokens = JSON.parse(localStorage.getItem(`${campaignId}-map-tokens`) || "{}") || {};
+      data.initiativeTracker =
+        JSON.parse(localStorage.getItem(`${campaignId}-initiative-tracker`) || "{}") || {};
     } catch {
       /* ignore */
     }
@@ -39,11 +87,17 @@ window.CampaignMapState = (function () {
   function saveLocal(campaignId, data) {
     try {
       if (data.activeMap != null) localStorage.setItem(`${campaignId}-active-map`, data.activeMap);
+      else localStorage.removeItem(`${campaignId}-active-map`);
       if (data.filters) localStorage.setItem(`${campaignId}-map-filters`, JSON.stringify(data.filters));
+      else localStorage.removeItem(`${campaignId}-map-filters`);
       localStorage.setItem(`${campaignId}-pin-positions`, JSON.stringify(data.pinPositions || {}));
       localStorage.setItem(`${campaignId}-party-positions`, JSON.stringify(data.partyPositions || {}));
       localStorage.setItem(`${campaignId}-custom-pins`, JSON.stringify(data.customPins || {}));
       localStorage.setItem(`${campaignId}-map-tokens`, JSON.stringify(data.tokens || {}));
+      localStorage.setItem(
+        `${campaignId}-initiative-tracker`,
+        JSON.stringify(data.initiativeTracker || {})
+      );
     } catch {
       /* ignore */
     }
@@ -54,15 +108,14 @@ window.CampaignMapState = (function () {
     return mem.get(campaignId);
   }
 
-  function persist(campaignId) {
-    const data = get(campaignId);
-    if (useApi()) {
-      LocalApiClient.putCampaignDocument(campaignId, "map-state", data).catch((err) => {
-        console.warn("map-state save failed:", err);
-      });
-    } else {
-      saveLocal(campaignId, data);
-    }
+  function reconcile(campaignId, doc) {
+    mem.set(campaignId, normalize(doc));
+    window.MapPanel?.refreshInitiative?.();
+    return get(campaignId);
+  }
+
+  function persistLocal(campaignId) {
+    saveLocal(campaignId, get(campaignId));
   }
 
   async function bootstrap(campaignId) {
@@ -70,7 +123,7 @@ window.CampaignMapState = (function () {
     if (useApi()) {
       try {
         const doc = await LocalApiClient.getCampaignDocument(campaignId, "map-state");
-        mem.set(campaignId, doc && typeof doc === "object" ? { ...empty(), ...doc } : empty());
+        mem.set(campaignId, normalize(doc));
         return get(campaignId);
       } catch (err) {
         console.warn("map-state API load failed:", err);
@@ -80,12 +133,41 @@ window.CampaignMapState = (function () {
     return get(campaignId);
   }
 
+  /**
+   * Apply a partial patch. When the API is available, sends ONLY the patch via PATCH
+   * (not a full-document PUT). Optimistically merges locally, then reconciles with
+   * the server's returned canonical document.
+   */
   function patch(campaignId, partial) {
-    const next = { ...get(campaignId), ...(partial || {}) };
-    mem.set(campaignId, next);
-    persist(campaignId);
-    return next;
+    const patchBody = partial && typeof partial === "object" ? partial : {};
+    const optimistic = deepMerge(get(campaignId), patchBody);
+    mem.set(campaignId, normalize(optimistic));
+
+    if (useApi()) {
+      LocalApiClient.patchCampaignDocument(campaignId, "map-state", patchBody)
+        .then((doc) => {
+          reconcile(campaignId, doc);
+        })
+        .catch((err) => {
+          console.warn("map-state patch failed:", err);
+        });
+    } else {
+      persistLocal(campaignId);
+    }
+    return get(campaignId);
   }
 
-  return { bootstrap, get, patch, persist, empty };
+  /** Full replace persist (rare); prefer patch() for concurrent-safe updates. */
+  function persist(campaignId) {
+    const data = get(campaignId);
+    if (useApi()) {
+      LocalApiClient.putCampaignDocument(campaignId, "map-state", data).catch((err) => {
+        console.warn("map-state save failed:", err);
+      });
+    } else {
+      persistLocal(campaignId);
+    }
+  }
+
+  return { bootstrap, get, patch, persist, empty, deepMerge };
 })();

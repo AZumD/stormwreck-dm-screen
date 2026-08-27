@@ -22,12 +22,33 @@ function read(rel) {
 
 const modal = read("js/core/combat-sheet-modal.js");
 const mapPanel = read("js/core/map-panel.js");
+const mapState = read("js/core/campaign-map-state.js");
 const player = read("js/player-app.js");
 const isle = read("campaigns/stormwreck-isle/index.html");
 
 if (!modal.includes('name="initiative"') || !modal.includes("syncInitiativeTracker")) {
   fail("combat sheet missing initiative field/tracker sync");
 } else pass("combat sheet initiative");
+
+if (!modal.includes("readInitiative") || !modal.includes("trackerKey")) {
+  fail("combat sheet must read canonical initiativeTracker");
+} else pass("canonical initiative read helpers");
+
+if (modal.includes("combat_initiative: normalizeInitiative(form.initiative)")) {
+  fail("must not write PC extras.combat_initiative on save");
+} else pass("no PC combat_initiative write");
+
+if (modal.includes("entry.combatInitiative = normalizeInitiative(form.initiative)")) {
+  fail("must not write NPC combatInitiative on save");
+} else pass("no NPC combatInitiative write");
+
+if (/initiative:\s*normalizeInitiative\(form\.initiative\)/.test(modal)) {
+  fail("must not write monster token.initiative on save");
+} else pass("no monster token initiative write");
+
+if (!mapState.includes("initiativeTracker") || !mapState.includes("initiative-tracker")) {
+  fail("map-state local fallback must persist initiativeTracker");
+} else pass("map-state initiativeTracker local fallback");
 
 if (!modal.includes("death_saves") || !modal.includes("spell_slots")) {
   fail("combat sheet missing death saves / spell slots for PCs");

@@ -55,6 +55,7 @@ async function main() {
     "server/lib/atomic-fs.js",
     "server/lib/catalogues.js",
     "server/lib/campaigns.js",
+    "server/lib/deep-merge.js",
     "server/lib/assets.js",
     "server/routes/api.js",
     "package.json",
@@ -257,6 +258,17 @@ async function main() {
     });
     if (!doc.body?.ok) fail("HTTP campaign doc");
     else pass("HTTP campaign doc");
+
+    const patchDoc = await req("PATCH", "/api/campaigns/stormwreck-isle/documents/scene-meta", {
+      opening: { note: "patched" }
+    });
+    if (
+      patchDoc.status !== 200 ||
+      patchDoc.body?.document?.opening?.locationId !== "dragons-rest" ||
+      patchDoc.body?.document?.opening?.note !== "patched"
+    ) {
+      fail("HTTP campaign doc PATCH merge");
+    } else pass("HTTP campaign doc PATCH merge");
 
     const restartRead = await req("GET", "/api/catalogues/npc/runara");
     if (restartRead.body?.entry?.name !== "Runara") fail("persistence across requests");
