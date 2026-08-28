@@ -19,6 +19,7 @@ Characters are linked via `characters.catalogue_pc_id` (usually equal to the cha
 - Postgres is the live play sheet
 - PC catalogue is the DM-facing editor/projection for linked PCs
 - Last successful write wins (no merge UI)
+- **Catalogue-only images** (`tokenImage`, `mapImage`) live on catalogue JSON + disk assets only — mirroring from Postgres preserves them from the incoming DM save body or existing catalogue file
 
 ## Exports
-`generatePcId`, `bundleToPcEntry`, `loadCharacterBundleById`, `findLinkedCharacters`, `mirrorCharacterToCatalogue`, `mirrorCharacterToCatalogueSafe`, `applyCatalogueEntryToCharacter`, `upsertPcFromDm`
+`generatePcId`, `bundleToPcEntry`, `mergeCatalogueOnlyFields`, `loadCharacterBundleById`, `findLinkedCharacters`, `mirrorCharacterToCatalogue`, `mirrorCharacterToCatalogueSafe`, `applyCatalogueEntryToCharacter`, `upsertPcFromDm`

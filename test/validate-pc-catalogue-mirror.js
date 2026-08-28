@@ -79,6 +79,38 @@ try {
   fail(`bundleToPcEntry: ${err.message}`);
 }
 
+try {
+  const merged = mirror.mergeCatalogueOnlyFields(
+    { id: "pc-1", name: "Hero" },
+    { tokenImage: "/api/assets/tokens/pc/pc-1" },
+    { tokenImage: "/api/assets/tokens/pc/old" }
+  );
+  assert.strictEqual(merged.tokenImage, "/api/assets/tokens/pc/pc-1");
+  assert.strictEqual(merged.name, "Hero");
+
+  const preserved = mirror.mergeCatalogueOnlyFields(
+    { id: "pc-1", name: "Hero" },
+    {},
+    { tokenImage: "/api/assets/tokens/pc/pc-1" }
+  );
+  assert.strictEqual(preserved.tokenImage, "/api/assets/tokens/pc/pc-1");
+
+  const cleared = mirror.mergeCatalogueOnlyFields(
+    { id: "pc-1", tokenImage: "/api/assets/tokens/pc/pc-1" },
+    { tokenImage: "" },
+    { tokenImage: "/api/assets/tokens/pc/pc-1" }
+  );
+  assert.strictEqual(cleared.tokenImage, "");
+  pass("mergeCatalogueOnlyFields preserves/clears tokenImage");
+} catch (err) {
+  fail(`mergeCatalogueOnlyFields: ${err.message}`);
+}
+
+const mirrorSrc = fs.readFileSync(path.join(root, "server/lib/pc-catalogue-mirror.js"), "utf8");
+if (!mirrorSrc.includes("mergeCatalogueOnlyFields") || !mirrorSrc.includes("tokenImage")) {
+  fail("pc-catalogue-mirror missing catalogue-only tokenImage merge");
+} else pass("mirror preserves catalogue-only tokenImage");
+
 if (!playerSrc.includes("async function createMyCharacter")) fail("player missing createMyCharacter");
 else pass("player createMyCharacter present");
 

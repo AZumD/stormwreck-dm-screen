@@ -13,6 +13,7 @@ node test/validate-pc-catalogue-mirror.js
 
 ## What it checks
 - `generatePcId` / `bundleToPcEntry` mapping
+- `mergeCatalogueOnlyFields` keeps `tokenImage` on mirror (DM save + player remirror)
 - `createMyCharacter` + mirror hooks in `player.js`
 - API create, DM `upsertPcFromDm`, remirror route
 - Player client `createCharacter` + UI create CTA

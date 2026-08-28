@@ -9,6 +9,22 @@ const catalogues = require("./catalogues");
 const { assertSafeId } = require("./ids");
 const { parseEntityRef } = require("./entity-ref");
 
+/** Image fields stored on catalogue JSON + disk, not in Postgres character rows. */
+const CATALOGUE_ONLY_IMAGE_FIELDS = Object.freeze(["tokenImage", "mapImage"]);
+
+function mergeCatalogueOnlyFields(base, ...sources) {
+  const out = { ...base };
+  for (const field of CATALOGUE_ONLY_IMAGE_FIELDS) {
+    for (const src of sources) {
+      if (!src || typeof src !== "object") continue;
+      if (!Object.prototype.hasOwnProperty.call(src, field)) continue;
+      out[field] = src[field] ? String(src[field]) : "";
+      break;
+    }
+  }
+  return out;
+}
+
 function requireDb() {
   if (!db.isDbConfigured()) {
     const err = new Error("DATABASE_URL is not configured");
@@ -256,10 +272,12 @@ function sheetFromPcEntry(raw, existingSheet) {
   return sheet;
 }
 
-async function mirrorCharacterToCatalogue(characterId) {
+async function mirrorCharacterToCatalogue(characterId, overrides = null) {
   const bundle = await loadCharacterBundleById(characterId);
   const entry = bundleToPcEntry(bundle.character, bundle.state, bundle.inventory);
-  const saved = await catalogues.upsert("pc", entry.id, entry);
+  const existing = await catalogues.get("pc", entry.id);
+  const merged = mergeCatalogueOnlyFields(entry, overrides || {}, existing || {});
+  const saved = await catalogues.upsert("pc", entry.id, merged);
 
   if (!bundle.character.catalogue_pc_id || bundle.character.catalogue_pc_id !== entry.id) {
     await db.query(`UPDATE characters SET catalogue_pc_id = $1, updated_at = now() WHERE id = $2`, [
@@ -337,7 +355,7 @@ async function upsertPcFromDm(cataloguePcId, body) {
       id: safeId
     });
   }
-  return mirrorCharacterToCatalogue(linked[0].id);
+  return mirrorCharacterToCatalogue(linked[0].id, body || {});
 }
 
 async function mirrorCharacterToCatalogueSafe(characterId) {
@@ -352,6 +370,7 @@ async function mirrorCharacterToCatalogueSafe(characterId) {
 module.exports = {
   generatePcId,
   bundleToPcEntry,
+  mergeCatalogueOnlyFields,
   loadCharacterBundleById,
   findLinkedCharacters,
   mirrorCharacterToCatalogue,
