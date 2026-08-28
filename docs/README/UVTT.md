@@ -31,7 +31,7 @@ Upload UVTT in the **Location catalogue**. On the campaign screen: **Map → + A
 ## Client
 | File | Role |
 |------|------|
-| `js/core/map-distance.js` | Client distance / coord helpers |
+| `js/core/map-distance.js` | Client distance / coord helpers (`snapWorldToCellCenter` for grid snap) |
 | `js/core/map-spatial.js` | Grid, measure, tokens; display prefs via location PATCH |
 | `js/core/map-panel.js` | Builds maps from campaign locations + catalogue |
 | `js/core/campaign-locations.js` | Which locations belong to the campaign |

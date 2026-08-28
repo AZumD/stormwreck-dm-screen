@@ -33,6 +33,20 @@ if (!spatialJs.includes("paintMeasure") || !spatialJs.includes("map-measure-line
   fail("map-spatial must paint live measure preview line");
 } else pass("measure preview paintMeasure present");
 
+if (!spatialJs.includes("snapWorldToCellCenter")) {
+  fail("map-spatial snap must use cell-center helper");
+} else pass("token drag snaps to cell center");
+
+const mapPanelJs = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
+if (!mapPanelJs.includes("snapWorldToCellCenter")) {
+  fail("map-panel pin drag must snap to cell center");
+} else pass("map-panel pin snap uses cell center");
+
+const mapDistJs = fs.readFileSync(path.join(root, "js/core/map-distance.js"), "utf8");
+if (!mapDistJs.includes("snapWorldToCellCenter")) {
+  fail("map-distance missing snapWorldToCellCenter");
+} else pass("map-distance exports cell-center snap");
+
 if (!spatialJs.includes('preview: true') && !spatialJs.includes("preview: true")) {
   fail("pointermove must call paintMeasure with preview: true");
 } else pass("pointermove drives tape preview");

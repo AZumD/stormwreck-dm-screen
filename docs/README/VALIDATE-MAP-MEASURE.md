@@ -17,3 +17,4 @@ node test/validate-map-measure.js
 - `map-spatial.js` has `paintMeasure` + preview line class
 - `pointermove` drives preview
 - Measure preview CSS + `MAP-SPATIAL.md` tape docs present
+- Snap drag uses `MapDistance.snapWorldToCellCenter` in `map-spatial.js` and `map-panel.js`

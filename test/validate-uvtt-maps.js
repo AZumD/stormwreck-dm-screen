@@ -95,6 +95,14 @@ const snapped = mapDistance.distanceBetween(
 if (snapped.distance !== 10) fail(`snap ${snapped.distance}`);
 else pass("snapped distance");
 
+const cellSnap = mapDistance.snapWorldToCellCenter({ x: 0.1, y: 0.9 });
+if (cellSnap.x !== 0.5 || cellSnap.y !== 0.5) fail(`cell center snap ${JSON.stringify(cellSnap)}`);
+else pass("snapWorldToCellCenter lands on cell center");
+
+const cornerSnap = mapDistance.snapWorldToCellCenter({ x: 1, y: 2 });
+if (cornerSnap.x !== 1.5 || cornerSnap.y !== 2.5) fail(`intersection snap ${JSON.stringify(cornerSnap)}`);
+else pass("snapWorldToCellCenter avoids grid intersections");
+
 /* custom scale not hard-coded */
 const d10 = mapDistance.distanceBetween(
   { x: 0, y: 0 },

@@ -44,6 +44,15 @@ window.MapDistance = (function () {
     return `${rounded} ${unit || "ft"}`;
   }
 
+  /** Snap world coords to the center of the nearest grid cell (not line intersections). */
+  function snapWorldToCellCenter(world) {
+    if (!world || typeof world !== "object") return world;
+    const x = Number(world.x);
+    const y = Number(world.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return world;
+    return { x: Math.round(x - 0.5) + 0.5, y: Math.round(y - 0.5) + 0.5 };
+  }
+
   function pixelToWorld(px, py, grid) {
     const ppg = Number(grid && grid.pixelsPerGrid) || 1;
     const ox = Number(grid && grid.origin && grid.origin.x) || 0;
@@ -69,5 +78,5 @@ window.MapDistance = (function () {
     return pixelToWorld((Number(pctX) / 100) * map.widthPx, (Number(pctY) / 100) * map.heightPx, map.grid);
   }
 
-  return { distanceBetween, formatDistance, pixelToWorld, worldToPercent, percentToWorld };
+  return { distanceBetween, formatDistance, pixelToWorld, worldToPercent, percentToWorld, snapWorldToCellCenter };
 })();

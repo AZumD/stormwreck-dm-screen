@@ -22,14 +22,14 @@ Falls back to injecting chrome if older pages lack the slots.
 4. Second click locks the line and final distance label.
 5. Toggle Measure off (or change map) clears the graphics.
 
-Snap measure (Map settings) applies to both preview and final distance when checked.
+Snap measure (Map settings) applies to both preview and final distance when checked. Token and pin drag with snap on aligns to **grid cell centers** (not line intersections) via `MapDistance.snapWorldToCellCenter`.
 
 ## Combat tokens (monster / NPC / PC)
 `bind()` returns `spawnMonsterToken(entry)` and `spawnCombatToken(kind, entry)` — builds tokens via `CombatSheetModal.buildCombatToken` / `buildNpcToken` / `buildPcToken`. Tokens render as **grid-aligned** footprints from D&D **Size** (`MapTokenSize`).
 
 - **Monster** — instance HP/AC; click opens monster-token combat sheet (**Remove from map**)
 - **NPC / PC** — click opens catalogue-backed combat sheet; art prefers own `tokenImage`, else race-bound monster token
-- Shift-click selects for distance; right-click removes; drag snaps when **Snap measure** is on
+- Shift-click selects for distance; right-click removes; drag snaps to **cell center** when **Snap measure** is on
 
 ## PC / NPC pins (non-calibrated or legacy)
 Wiki pins still exist for image maps. On calibrated maps, **Add** places combat tokens instead. Size still resolves from monster catalogue name match on `race`, then race catalogue, then defaults. See `docs/README/MAP-TOKEN-SIZE.md`.

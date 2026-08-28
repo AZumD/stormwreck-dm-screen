@@ -289,7 +289,7 @@ window.MapSpatial = (function () {
 
     function snapWorld(world, map) {
       if (!world || !map?.grid || !els.snap?.checked) return world;
-      return { x: Math.round(world.x), y: Math.round(world.y) };
+      return window.MapDistance?.snapWorldToCellCenter?.(world) || world;
     }
 
     function resolveCombatTokenImages(t) {
