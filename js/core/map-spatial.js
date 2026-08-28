@@ -290,6 +290,23 @@ window.MapSpatial = (function () {
       return { x: Math.round(world.x), y: Math.round(world.y) };
     }
 
+    function resolveCombatTokenImages(t) {
+      const kind = t.kind === "monster" ? "monster" : t.memberType || "npc";
+      let entry = null;
+      if (t.catalogueId && window.CatalogueStore?.get) {
+        entry = CatalogueStore.get(kind, t.catalogueId);
+        if (entry && window.CatalogueImages?.hydrate) entry = CatalogueImages.hydrate(kind, entry);
+      }
+      if (window.MapTokenSize?.resolvePinImageUrls) {
+        return MapTokenSize.resolvePinImageUrls(kind, entry, {
+          entityId: t.entityId,
+          partyId: t.partyId
+        });
+      }
+      const url = t.imageUrl || t.tokenImage || entry?.tokenImage || entry?.portrait || null;
+      return { url, fallbackUrl: null };
+    }
+
     function renderGridToken(t, map, pos, sel, extraClass, title, labelHtml) {
       const MTS = window.MapTokenSize;
       const cells =
@@ -299,14 +316,15 @@ window.MapSpatial = (function () {
       const span = MTS?.cellSpanPercent?.(cells, map) || { w: 2, h: 2, cells: 1 };
       const style = MTS?.gridTokenStyle?.(pos, span) || `left:${pos.left};top:${pos.top}`;
       const roundClass = span.cells === 1 ? " map-grid-token--round" : "";
-      const imgUrl = t.imageUrl || t.tokenImage || null;
-      const imgAttr = MTS?.tokenBackgroundAttr?.(imgUrl) || "";
+      const resolved = resolveCombatTokenImages(t);
+      const imgUrl = resolved.url || t.imageUrl || t.tokenImage || null;
       const hasImg = !!imgUrl;
       const inner =
         labelHtml != null
           ? labelHtml
           : hasImg
-            ? `<span class="map-grid-token__img"${imgAttr} aria-hidden="true"></span>`
+            ? MTS?.tokenImageHtml?.(imgUrl, t.label || t.id, resolved.fallbackUrl || t.fallbackUrl) ||
+              `<img class="map-grid-token__img" src="${escape(imgUrl)}" alt="" loading="lazy" draggable="false" onerror="this.remove()">`
             : `<span class="map-grid-token__label">${escape((t.label || "?").slice(0, 2))}</span>`;
       return `<button type="button" class="map-grid-token${extraClass}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${sel}" data-token-id="${escape(t.id)}"
             style="${style}"
@@ -333,7 +351,7 @@ window.MapSpatial = (function () {
               sel,
               " map-grid-token--monster",
               tokenTitle(t),
-              ""
+              null
             );
           }
           const cells = Number(t.gridCells);

@@ -21,7 +21,7 @@ Fields: `portrait`, `tokenImage` (PC/NPC/monster map tokens), `mapImage` (locati
 | Method | Role |
 |--------|------|
 | `preload(types)` | Load legacy IDB rows into memory only (does **not** HTTP-fetch every `/api/assets/…` image) |
-| `hydrate` / `hydrateAll` | Resolve markers / cache for UI |
+| `hydrate` / `hydrateAll` | Resolve markers / cache for UI; `__idb__` markers become `/api/assets/…` URLs when the local API is available |
 | `persistEntryImages` | Upload data URLs to `/api/catalogue-assets/…`; **empty fields do not delete files** |
 | `clear` / `persistEntryImages(..., { clearFields })` | Explicit remove only |
 | `migrateType` / `migrateAll` | Move IDB / inline data URLs into `/data/assets` + update JSON |

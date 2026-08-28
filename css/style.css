@@ -3548,6 +3548,7 @@ body[data-map-collapsed="true"] .map-panel {
 }
 .map-grid-token--round {
   border-radius: 50%;
+  overflow: hidden;
 }
 .map-grid-token:hover,
 .map-grid-token:focus-visible {
@@ -3575,10 +3576,10 @@ body[data-map-collapsed="true"] .map-panel {
   display: block;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  object-fit: cover;
+  object-position: center center;
   pointer-events: none;
+  border-radius: inherit;
 }
 .map-grid-token--has-img {
   background: rgba(10, 14, 20, 0.25);

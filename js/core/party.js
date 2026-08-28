@@ -80,7 +80,7 @@ window.PartyRoster = (function () {
       hp: String(hp),
       ac: entry.ac ?? "—",
       speed: entry.speed || "",
-      portrait: entry.portrait || "",
+      portrait: entry.tokenImage || entry.portrait || "",
       color: colorFromId(entry.id),
       notes: entry.notes || entry.backstory || entry.summary || ""
     };

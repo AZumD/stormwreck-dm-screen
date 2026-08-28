@@ -171,7 +171,8 @@ window.MapTokenSize = (function () {
     if (pin?.entityId && window.EntityRegistry) {
       const row = EntityRegistry.resolveCatalogueEntry?.(pin.entityId);
       if (row?.id) {
-        return { kind: row._catalogueType || pin.pinType || "npc", entry: row };
+        const kind = row._catalogueType || pin.pinType || "npc";
+        return { kind, entry: loadEntry(kind, row.id) || row };
       }
       const entity = EntityRegistry.resolve(pin.entityId);
       if (entity?.catalogueId) {
@@ -185,21 +186,123 @@ window.MapTokenSize = (function () {
     return { kind: pin?.pinType || "npc", entry: null };
   }
 
+  function isUsableUrl(url) {
+    if (!url || typeof url !== "string") return false;
+    const trimmed = url.trim();
+    return trimmed && trimmed !== "__idb__" && trimmed !== CatalogueImages?.MARKER;
+  }
+
+  function defaultAssetUrl(type, id, field) {
+    if (!type || !id) return null;
+    const kind = field === "tokenImage" ? "tokens" : field === "mapImage" ? "maps" : "portraits";
+    return `/api/assets/${kind}/${type}/${id}`;
+  }
+
   function resolveTokenUrl(entry) {
     if (!entry) return null;
     for (const field of ["tokenImage", "portrait"]) {
       const url = entry[field];
-      if (!url || typeof url !== "string") continue;
-      const trimmed = url.trim();
-      if (!trimmed || trimmed === "__idb__") continue;
-      return trimmed;
+      if (isUsableUrl(url)) return String(url).trim();
     }
     return null;
   }
 
-  function tokenBackgroundAttr(url) {
+  function isMarker(value) {
+    return value === "__idb__" || value === CatalogueImages?.MARKER;
+  }
+
+  function fieldHasAssetHint(sources, field) {
+    return (sources || []).some((src) => {
+      const value = src?.[field];
+      return isUsableUrl(value) || isMarker(value) || value === "__idb__";
+    });
+  }
+
+  function collectImageSources(kind, entry, pin) {
+    const sources = [];
+    const catalogueId =
+      entry?.id ||
+      (pin?.partyId && window.PARTY?.find((p) => p.id === pin.partyId)?.catalogueId) ||
+      (pin?.entityId && window.EntityRegistry?.resolve?.(pin.entityId)?.catalogueId) ||
+      null;
+
+    if (catalogueId && kind) {
+      const fresh = loadEntry(kind, catalogueId);
+      if (fresh) sources.push(fresh);
+    }
+    if (entry) sources.push(entry);
+    if (pin?.entityId && window.EntityRegistry?.resolve) {
+      const entity = EntityRegistry.resolve(pin.entityId);
+      if (entity) sources.push(entity);
+    }
+    if (pin?.entityId && window.EntityRegistry?.resolveCatalogueEntry) {
+      const row = EntityRegistry.resolveCatalogueEntry(pin.entityId);
+      if (row) sources.push(row);
+    }
+    if (pin?.partyId && window.PARTY) {
+      const member = PARTY.find((p) => p.id === pin.partyId);
+      if (member) sources.push(member);
+    }
+    return { sources, catalogueId };
+  }
+
+  function resolvePinImageUrls(kind, entry, pin) {
+    const { sources, catalogueId } = collectImageSources(kind, entry, pin);
+    let tokenUrl = null;
+    let portraitUrl = null;
+
+    for (const src of sources) {
+      if (!tokenUrl && isUsableUrl(src?.tokenImage)) tokenUrl = String(src.tokenImage).trim();
+      if (!portraitUrl && isUsableUrl(src?.portrait)) portraitUrl = String(src.portrait).trim();
+    }
+
+    if (catalogueId && kind && window.CatalogueImages?.getSync) {
+      if (!tokenUrl) {
+        const cached = CatalogueImages.getSync(kind, catalogueId, "tokenImage");
+        if (isUsableUrl(cached)) tokenUrl = String(cached).trim();
+      }
+      if (!portraitUrl) {
+        const cached = CatalogueImages.getSync(kind, catalogueId, "portrait");
+        if (isUsableUrl(cached)) portraitUrl = String(cached).trim();
+      }
+    }
+
+    if (catalogueId && kind && window.LocalApiClient?.isAvailable?.()) {
+      if (!tokenUrl && fieldHasAssetHint(sources, "tokenImage")) {
+        tokenUrl = defaultAssetUrl(kind, catalogueId, "tokenImage");
+      }
+      if (!portraitUrl && fieldHasAssetHint(sources, "portrait")) {
+        portraitUrl = defaultAssetUrl(kind, catalogueId, "portrait");
+      }
+    }
+
+    const url = tokenUrl || portraitUrl || null;
+    const fallbackUrl = tokenUrl && portraitUrl && tokenUrl !== portraitUrl ? portraitUrl : null;
+    return { url, fallbackUrl };
+  }
+
+  function resolveImageUrl(kind, entry, pin) {
+    return resolvePinImageUrls(kind, entry, pin).url;
+  }
+
+  function escapeAttr(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;");
+  }
+
+  function tokenImageHtml(url, label, fallbackUrl) {
     if (!url) return "";
-    return ` style="background-image:url('${String(url).replace(/'/g, "%27")}')"`;
+    const safe = escapeAttr(url);
+    const fallback =
+      fallbackUrl && fallbackUrl !== url ? escapeAttr(fallbackUrl) : "";
+    const onerr = fallback
+      ? `onerror="if(this.dataset.fallback&&!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback}else{this.remove()}"`
+      : `onerror="this.remove()"`;
+    const dataFallback = fallback ? ` data-fallback="${fallback}"` : "";
+    const alt = escapeAttr(label || "Token");
+    return `<img class="map-grid-token__img" src="${safe}"${dataFallback} alt="${alt}" loading="lazy" draggable="false" ${onerr}>`;
   }
 
   function resolvePinSize(pin, ctx) {
@@ -209,7 +312,8 @@ window.MapTokenSize = (function () {
     const { kind, entry } = resolvePinCatalogue(pin);
     const { dndSize, gridCells } = resolveGridCells(kind, entry);
     const span = cellSpanPercent(gridCells, map);
-    return { dndSize, gridCells, span, kind, tokenUrl: resolveTokenUrl(entry) };
+    const images = resolvePinImageUrls(kind, entry, pin);
+    return { dndSize, gridCells, span, kind, tokenUrl: images.url, fallbackUrl: images.fallbackUrl };
   }
 
   function gridTokenStyle(pos, span) {
@@ -232,7 +336,10 @@ window.MapTokenSize = (function () {
     resolveGridCells,
     resolvePinSize,
     resolveTokenUrl,
-    tokenBackgroundAttr,
+    resolveImageUrl,
+    resolvePinImageUrls,
+    tokenImageHtml,
+    defaultAssetUrl,
     gridTokenStyle,
     isCalibratedMap,
     lookupMonsterSizeByRace,

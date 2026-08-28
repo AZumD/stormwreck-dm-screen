@@ -696,5 +696,5 @@ window.EntityRegistry = (function () {
 
   build();
 
-  return { build, resolve, getAll, byType, linkId, register, formatRefMarkdown, TYPE_MAP, CONVERTERS };
+  return { build, resolve, getAll, byType, linkId, register, formatRefMarkdown, resolveCatalogueEntry, TYPE_MAP, CONVERTERS };
 })();

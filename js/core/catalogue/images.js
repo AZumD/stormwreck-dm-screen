@@ -181,8 +181,11 @@ window.CatalogueImages = (function () {
         out[field] = cached;
         return;
       }
-      /* Keep markers in place when nothing is cached — migrate/import can still find them */
-      if (isMarker(out[field]) && useApi()) out[field] = "";
+      if (isMarker(out[field]) && useApi()) {
+        const kind = field === "tokenImage" ? "tokens" : field === "mapImage" ? "maps" : "portraits";
+        out[field] = `/api/assets/${kind}/${type}/${entry.id}`;
+        return;
+      }
     });
     return out;
   }

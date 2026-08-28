@@ -117,6 +117,31 @@ if (MTS.resolveTokenUrl({ portrait: "/api/assets/portraits/npc/y" }) !== "/api/a
   fail("resolveTokenUrl should fall back to portrait");
 } else pass("resolveTokenUrl portrait fallback");
 
+const pinImages = MTS.resolvePinImageUrls("npc", { id: "sw-runara", portrait: "/api/assets/portraits/npc/sw-runara" }, {
+  entityId: "runara"
+});
+if (pinImages.url !== "/api/assets/portraits/npc/sw-runara") {
+  fail("resolvePinImageUrls should return portrait when no tokenImage");
+} else pass("resolvePinImageUrls portrait");
+
+const tokenFirst = MTS.resolvePinImageUrls(
+  "npc",
+  { id: "x", tokenImage: "/api/assets/tokens/npc/x", portrait: "/api/assets/portraits/npc/x" },
+  {}
+);
+if (tokenFirst.url !== "/api/assets/tokens/npc/x" || tokenFirst.fallbackUrl !== "/api/assets/portraits/npc/x") {
+  fail("resolvePinImageUrls should prefer token with portrait fallback");
+} else pass("resolvePinImageUrls token + fallback");
+
+const html = MTS.tokenImageHtml("/a", "Test", "/b");
+if (!html.includes('data-fallback="/b"') || !html.includes('src="/a"')) {
+  fail("tokenImageHtml should include fallback attr");
+} else pass("tokenImageHtml fallback attr");
+
+if (spatial.includes('tokenTitle(t),\n              ""')) {
+  fail("monster renderGridToken must not pass empty labelHtml (suppresses token art)");
+} else pass("monster tokens use null labelHtml");
+
 const docs = fs.readFileSync(path.join(root, "docs/README/MAP-TOKEN-SIZE.md"), "utf8");
 if (!docs.includes("validate-map-token-size.js")) fail("docs README missing");
 else pass("docs/README/MAP-TOKEN-SIZE.md");

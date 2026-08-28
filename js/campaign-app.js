@@ -182,6 +182,10 @@
       }
     }
 
+    window.addEventListener("focus", () => {
+      if (window.MapPanel?.refreshPins) MapPanel.refreshPins();
+    });
+
     EntityUI.init({
       tooltip: tooltip,
       modal: entityModal,

@@ -1031,10 +1031,9 @@ window.MapPanel = (function () {
               const style = MapTokenSize.gridTokenStyle(pos, sizeInfo.span);
               const roundClass = sizeInfo.gridCells === 1 ? " map-grid-token--round" : "";
               const title = `${label} (${sizeInfo.dndSize})`;
-              const imgAttr = MapTokenSize.tokenBackgroundAttr(sizeInfo.tokenUrl);
               const hasImg = !!sizeInfo.tokenUrl;
               const inner = hasImg
-                ? `<span class="map-grid-token__img"${imgAttr} aria-hidden="true"></span>`
+                ? MapTokenSize.tokenImageHtml(sizeInfo.tokenUrl, label, sizeInfo.fallbackUrl)
                 : "";
               return `<button type="button" class="map-grid-token map-grid-token--${pin.pinType}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${pin.custom ? " map-grid-token--custom" : ""}"
           style="${style}"
@@ -1218,6 +1217,7 @@ window.MapPanel = (function () {
     setActiveTab: (tab) => activeInstance?.setActiveTab?.(tab),
     selectMapByLocationId: (id) => activeInstance?.selectMapByLocationId?.(id),
     showLocationOnMap: (id) => activeInstance?.showLocationOnMap?.(id),
-    resetZoom: () => activeInstance?.resetZoom?.()
+    resetZoom: () => activeInstance?.resetZoom?.(),
+    refreshPins: () => activeInstance?.refreshPins?.()
   };
 })();

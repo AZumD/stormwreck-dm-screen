@@ -777,26 +777,35 @@ window.CombatSheetModal = (function () {
   /** One-time HP/AC copy from monster catalogue → map combat token. */
   function buildMonsterToken(entry, pos) {
     const hp = parseHpBlob(entry?.hp);
-    const sizeMeta = window.MapTokenSize?.resolveGridCells?.("monster", entry) || {
-      dndSize: entry?.size || "Medium",
+    const hydrated =
+      entry && window.CatalogueImages?.hydrate
+        ? CatalogueImages.hydrate("monster", entry)
+        : entry;
+    const sizeMeta = window.MapTokenSize?.resolveGridCells?.("monster", hydrated) || {
+      dndSize: hydrated?.size || "Medium",
       gridCells: 1
+    };
+    const images = window.MapTokenSize?.resolvePinImageUrls?.("monster", hydrated, {}) || {
+      url: hydrated?.tokenImage || hydrated?.portrait || null,
+      fallbackUrl: null
     };
     return {
       id: `tok-mon-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
-      label: entry?.name || "Monster",
+      label: hydrated?.name || "Monster",
       ref: null,
       kind: "monster",
-      catalogueId: entry?.id || null,
+      catalogueId: hydrated?.id || null,
       x: pos?.x ?? 0,
       y: pos?.y ?? 0,
       dndSize: sizeMeta.dndSize,
       gridCells: sizeMeta.gridCells,
       size: 1,
       visible: true,
-      imageUrl: entry?.tokenImage || entry?.portrait || null,
+      imageUrl: images.url,
+      fallbackUrl: images.fallbackUrl,
       hpCurrent: hp.current,
       hpMax: hp.max,
-      ac: parseAc(entry?.ac),
+      ac: parseAc(hydrated?.ac),
       conditions: "",
       initiative: 0
     };
