@@ -615,26 +615,30 @@ window.MapPanel = (function () {
 
     function getAllPins() {
       const map = maps[activeMapId];
+      const calibrated = window.MapTokenSize?.isCalibratedMap?.(map);
       const mapPins = (map?.pins || []).map((p) => ({ ...p }));
       const partySaved = loadPartyPositions(campaignId);
 
-      const pcPins = (window.PARTY || [])
-        .filter((m) => m.memberType !== "npc")
-        .map((m) => {
-          const override = partySaved[m.id];
-          const mapId = override?.mapId ?? m.mapId;
-          const x = override?.x ?? m.x;
-          const y = override?.y ?? m.y;
-          if (mapId !== activeMapId || x == null || y == null) return null;
-          return {
-            id: `pc-${m.id}`,
-            pinType: "pc",
-            partyId: m.id,
-            x,
-            y
-          };
-        })
-        .filter(Boolean);
+      /* Calibrated maps use combat tokens for party PCs (see MapSpatial.ensurePartyPcCombatTokens). */
+      const pcPins = calibrated
+        ? []
+        : (window.PARTY || [])
+            .filter((m) => m.memberType !== "npc")
+            .map((m) => {
+              const override = partySaved[m.id];
+              const mapId = override?.mapId ?? m.mapId;
+              const x = override?.x ?? m.x;
+              const y = override?.y ?? m.y;
+              if (mapId !== activeMapId || x == null || y == null) return null;
+              return {
+                id: `pc-${m.id}`,
+                pinType: "pc",
+                partyId: m.id,
+                x,
+                y
+              };
+            })
+            .filter(Boolean);
 
       const customPins = getCustomPinsForMap();
       const pinSaved = loadPinPositions(campaignId)[activeMapId] || {};
@@ -886,28 +890,54 @@ window.MapPanel = (function () {
       search?.focus();
     }
 
+    function resolveChoiceCatalogueId(pinType, choice) {
+      const entity = choice?.entityId ? EntityRegistry?.resolve?.(choice.entityId) : null;
+      let catalogueId =
+        choice?.catalogueId ||
+        entity?.catalogueId ||
+        (choice?.partyId && window.PARTY?.find((p) => p.id === choice.partyId)?.catalogueId) ||
+        null;
+
+      if (!catalogueId && choice?.partyId) {
+        const parts = String(choice.partyId).split(":");
+        if (parts[0] === "pc" && parts.length > 1) catalogueId = parts.slice(1).join(":");
+      }
+
+      if (!catalogueId && pinType === "monster") {
+        catalogueId = choice?.entityId || choice?.id || null;
+      }
+
+      if (!catalogueId && (pinType === "pc" || pinType === "npc")) {
+        const linkKey = choice?.entityId || choice?.id;
+        if (linkKey && window.EntityRegistry?.resolveCatalogueEntry) {
+          const row = EntityRegistry.resolveCatalogueEntry(linkKey);
+          if (row?.id) catalogueId = row.id;
+        }
+        if (!catalogueId) catalogueId = entity?.catalogueId || choice?.entityId || null;
+      }
+
+      return catalogueId;
+    }
+
     function addPinFromChoice(pinType, choice) {
       const map = maps[activeMapId];
       const calibrated = window.MapTokenSize?.isCalibratedMap?.(map);
 
       if (pinType === "monster" || ((pinType === "npc" || pinType === "pc") && calibrated)) {
         const entity = choice.entityId ? EntityRegistry?.resolve?.(choice.entityId) : null;
-        let catalogueId =
-          choice.catalogueId ||
-          entity?.catalogueId ||
-          (choice.partyId && window.PARTY?.find((p) => p.id === choice.partyId)?.catalogueId) ||
-          choice.entityId ||
-          null;
-        if (pinType === "monster" && !catalogueId) catalogueId = choice.entityId || choice.id;
+        const catalogueId = resolveChoiceCatalogueId(pinType, choice);
         const storeType = pinType === "pc" ? "pc" : pinType === "npc" ? "npc" : "monster";
         let entry = catalogueId && CatalogueStore?.get?.(storeType, catalogueId);
+        if (entry && window.CatalogueImages?.hydrate) {
+          entry = CatalogueImages.hydrate(storeType, entry);
+        }
         if (!entry && catalogueId) {
           entry = {
             id: catalogueId,
             name: choice.name || entity?.name || pinType,
-            race: entity?.race || "",
+            race: entity?.race || entity?.tags?.find?.((t) => t) || "",
             hp: entity?.hp || "",
-            ac: entity?.ac || ""
+            ac: entity?.ac || entity?.stats?.AC || ""
           };
         }
         if (!spatialApi?.spawnCombatToken && !spatialApi?.spawnMonsterToken) {
@@ -915,12 +945,22 @@ window.MapPanel = (function () {
           return;
         }
         const spawn =
-          spatialApi.spawnCombatToken?.(storeType, entry || { name: choice.name }) ||
+          spatialApi.spawnCombatToken?.(storeType, entry || { name: choice.name, id: catalogueId }, choice) ||
           (storeType === "monster"
             ? spatialApi.spawnMonsterToken?.(entry || { name: choice.name })
             : null);
         if (!spawn?.ok) {
           window.alert(spawn?.error || "Could not place combat token.");
+          return;
+        }
+        if (pinType === "pc" && choice.partyId && spawn.token) {
+          const partySaved = loadPartyPositions(campaignId);
+          const world = { x: spawn.token.x, y: spawn.token.y };
+          const pct = window.MapDistance?.worldToPercent?.(world.x, world.y, map);
+          if (pct) {
+            partySaved[choice.partyId] = { mapId: activeMapId, x: pct.x, y: pct.y };
+            savePartyPositions(campaignId, partySaved);
+          }
         }
         return;
       }
@@ -1179,6 +1219,8 @@ window.MapPanel = (function () {
         }
       },
       refreshInitiative: renderInitiativeList,
+      refreshPins: renderPins,
+      refreshTokens: () => spatialApi?.refreshTokens?.(),
       onLayoutChange,
       setActiveTab,
       selectMapByLocationId,
@@ -1261,6 +1303,7 @@ window.MapPanel = (function () {
     selectMapByLocationId: (id) => activeInstance?.selectMapByLocationId?.(id),
     showLocationOnMap: (id) => activeInstance?.showLocationOnMap?.(id),
     resetZoom: () => activeInstance?.resetZoom?.(),
-    refreshPins: () => activeInstance?.refreshPins?.()
+    refreshPins: () => activeInstance?.refreshPins?.(),
+    refreshTokens: () => activeInstance?.refreshTokens?.()
   };
 })();

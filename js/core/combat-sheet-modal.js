@@ -531,6 +531,12 @@ window.CombatSheetModal = (function () {
     const state = bundle.state || {};
     let entry = window.CatalogueStore?.get?.("pc", catalogueId);
     if (entry && window.CatalogueImages?.hydrate) entry = CatalogueImages.hydrate("pc", entry);
+    const portrait =
+      window.MapTokenSize?.resolvePinImageUrls?.("pc", entry, { catalogueId })?.url ||
+      entry?.tokenImage ||
+      entry?.portrait ||
+      opts.portrait ||
+      "";
     current = {
       kind: "pc",
       catalogueId,
@@ -547,7 +553,7 @@ window.CombatSheetModal = (function () {
       subtitle: [sheet.class || entry?.class, bundle.character?.level ? `Lv ${bundle.character.level}` : ""]
         .filter(Boolean)
         .join(" · "),
-      portrait: entry?.portrait || opts.portrait || "",
+      portrait,
       hpCurrent: state.hp_current ?? entry?.hpCurrent ?? null,
       hpMax: state.hp_max ?? entry?.hpMax ?? null,
       hpTemp: state.hp_temp ?? 0,
@@ -817,7 +823,7 @@ window.CombatSheetModal = (function () {
       ref: null,
       kind: type,
       catalogueId: hydrated?.id || null,
-      entityId: hydrated?.linkId || null,
+      entityId: hydrated?.linkId || hydrated?.id || null,
       x: pos?.x ?? 0,
       y: pos?.y ?? 0,
       dndSize: sizeMeta.dndSize,

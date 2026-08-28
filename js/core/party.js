@@ -81,6 +81,7 @@ window.PartyRoster = (function () {
       ac: entry.ac ?? "—",
       speed: entry.speed || "",
       portrait: entry.tokenImage || entry.portrait || "",
+      tokenImage: entry.tokenImage || "",
       color: colorFromId(entry.id),
       notes: entry.notes || entry.backstory || entry.summary || ""
     };

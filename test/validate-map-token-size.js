@@ -166,9 +166,19 @@ if (!combat.includes("buildNpcToken") || !combat.includes("buildPcToken") || !sp
   fail("NPC/PC combat token spawn helpers missing");
 } else pass("NPC/PC combat token spawn helpers");
 
-if (!panel.includes('spawnCombatToken') || !panel.includes('pinType === "npc"')) {
-  fail("map-panel should spawn NPC/PC combat tokens on calibrated maps");
-} else pass("map-panel spawns NPC/PC combat tokens");
+if (!spatial.includes("ensurePartyPcCombatTokens") || !spatial.includes("refreshTokens")) {
+  fail("map-spatial should auto-place party PC combat tokens and refreshTokens");
+} else pass("party PC combat token helpers");
+
+const partyJs = fs.readFileSync(path.join(root, "js/core/party.js"), "utf8");
+
+if (!panel.includes("resolveChoiceCatalogueId") || !panel.includes("const pcPins = calibrated")) {
+  fail("map-panel should resolve PC catalogue ids and skip party pins on calibrated maps");
+} else pass("calibrated map PC pin handling");
+
+if (!partyJs.includes("tokenImage: entry.tokenImage")) {
+  fail("party member should expose tokenImage for map art resolution");
+} else pass("party tokenImage field");
 
 const tokenHtml = MTS.tokenImageHtml("/a", "Test", "/b");
 if (!tokenHtml.includes('data-fallback="/b"') || !tokenHtml.includes('src="/a"')) {

@@ -182,8 +182,24 @@
       }
     }
 
-    window.addEventListener("focus", () => {
+    window.addEventListener("focus", async () => {
+      if (window.PartyRoster?.syncWindowParty) PartyRoster.syncWindowParty();
+      if (window.CatalogueStore?.bootstrap) {
+        try {
+          await CatalogueStore.bootstrap(["pc", "npc", "monster"]);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (window.EntityRegistry?.build) {
+        try {
+          await EntityRegistry.build();
+        } catch {
+          /* ignore */
+        }
+      }
       if (window.MapPanel?.refreshPins) MapPanel.refreshPins();
+      if (window.MapPanel?.refreshTokens) MapPanel.refreshTokens();
     });
 
     EntityUI.init({

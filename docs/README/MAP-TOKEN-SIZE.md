@@ -40,6 +40,8 @@ Tokens **with** uploaded art render **without** the colored type frame (transpar
 
 Map art: same override chain as NPC (`tokenImage` → race-bound monster token → portraits).
 
+On **calibrated maps**, party PCs render as **combat tokens** (not percentage pins). Existing party positions auto-spawn PC tokens when the map loads; use **+ → PC** to place manually. After uploading a token in the PC catalogue, refocus the campaign tab to reload art.
+
 ## Zoom
 Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin** dots on non-calibrated maps still counter-scale for readability.
 

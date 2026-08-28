@@ -333,6 +333,56 @@ window.MapSpatial = (function () {
             title="${escape(title)}" aria-label="${escape(title)}">${inner}</button>`;
     }
 
+    function tokenSpawnPos(map, choice) {
+      const mid = {
+        x: (Number(map?.grid?.sizeX) || Number(map?.grid?.width) || 10) / 2,
+        y: (Number(map?.grid?.sizeY) || Number(map?.grid?.height) || 10) / 2
+      };
+      if (!choice?.partyId || !map?.id) return mid;
+      const partySaved = window.CampaignMapState?.get(campaignId)?.partyPositions || {};
+      const saved = partySaved[choice.partyId];
+      if (!saved || saved.mapId !== map.id || saved.x == null || saved.y == null) return mid;
+      const world = window.MapDistance?.percentToWorld?.(saved.x, saved.y, map);
+      return world || mid;
+    }
+
+    function ensurePartyPcCombatTokens(map) {
+      if (!isCalibrated(map) || !window.PARTY?.length || !window.CombatSheetModal?.buildPcToken) return;
+      const partySaved = window.CampaignMapState?.get(campaignId)?.partyPositions || {};
+      let list = tokensForMap(map.id);
+      let changed = false;
+
+      for (const member of PARTY.filter((m) => m.memberType === "pc" && m.catalogueId)) {
+        const saved = partySaved[member.id];
+        if (!saved || saved.mapId !== map.id || saved.x == null || saved.y == null) continue;
+        if (list.some((t) => t.kind === "pc" && t.catalogueId === member.catalogueId)) continue;
+
+        let entry = window.CatalogueStore?.get?.("pc", member.catalogueId);
+        if (entry && window.CatalogueImages?.hydrate) entry = CatalogueImages.hydrate("pc", entry);
+        if (!entry) {
+          entry = { id: member.catalogueId, name: member.name || "PC", race: "" };
+        }
+
+        const world = window.MapDistance?.percentToWorld?.(saved.x, saved.y, map);
+        if (!world) continue;
+        const token = CombatSheetModal.buildPcToken(entry, world);
+        token.partyId = member.id;
+        list.push(token);
+        changed = true;
+      }
+
+      if (changed) {
+        setTokensForMap(map.id, list);
+      }
+    }
+
+    function refreshTokens() {
+      const map = activeMap();
+      if (!map) return;
+      ensurePartyPcCombatTokens(map);
+      renderTokens(map);
+    }
+
     function renderTokens(map) {
       const el = layers.tokens;
       if (!el) return;
@@ -536,6 +586,7 @@ window.MapSpatial = (function () {
       }
 
       renderGrid(detail);
+      ensurePartyPcCombatTokens(detail);
       renderTokens(detail);
       measureStart = null;
       if (els.measureOut) els.measureOut.hidden = true;
@@ -676,20 +727,18 @@ window.MapSpatial = (function () {
       paintMeasure(measureStart, world, map, { preview: true });
     });
 
-    function spawnCombatToken(kind, entry) {
+    function spawnCombatToken(kind, entry, choice) {
       const map = activeMap();
       if (!isCalibrated(map)) {
         return { ok: false, error: "Import or open a calibrated / UVTT map to place combat tokens." };
       }
-      const pos = {
-        x: (Number(map.grid?.sizeX) || Number(map.grid?.width) || 10) / 2,
-        y: (Number(map.grid?.sizeY) || Number(map.grid?.height) || 10) / 2
-      };
+      const pos = tokenSpawnPos(map, choice);
       let token = null;
       if (kind === "npc" && window.CombatSheetModal?.buildNpcToken) {
         token = CombatSheetModal.buildNpcToken(entry, pos);
       } else if (kind === "pc" && window.CombatSheetModal?.buildPcToken) {
         token = CombatSheetModal.buildPcToken(entry, pos);
+        if (token && choice?.partyId) token.partyId = choice.partyId;
       } else {
         token =
           window.CombatSheetModal?.buildMonsterToken?.(entry, pos) ||
@@ -713,7 +762,8 @@ window.MapSpatial = (function () {
       summaryToMapDef,
       loadCalibratedMaps,
       spawnMonsterToken,
-      spawnCombatToken
+      spawnCombatToken,
+      refreshTokens
     };
   }
 
