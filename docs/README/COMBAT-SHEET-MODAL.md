@@ -32,8 +32,15 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 - Optional “Open full catalogue” for wiki read view
 - NPC: campaign memory enricher still attaches below combat reference
 
-## Monster spawn
-`MapPanel` “Add monster” spawns a **grid-sized combat token** on calibrated maps via `MapSpatial.spawnMonsterToken` and `CombatSheetModal.buildMonsterToken` (one-time HP/AC copy + `gridCells` from monster catalogue **Size**). Generic **+ Token** markers stay as larger labelled tokens unless given `gridCells`.
+## Monster / NPC / PC spawn
+`MapPanel` **Add** on calibrated maps spawns grid combat tokens via `MapSpatial.spawnCombatToken` and `CombatSheetModal.buildCombatToken` (also `buildMonsterToken` / `buildNpcToken` / `buildPcToken`).
+
+| Kind | Art priority | Combat sheet |
+|------|--------------|--------------|
+| Monster | Monster `tokenImage` → `portrait` | Instance token (no catalogue write-back) |
+| NPC / PC | Own `tokenImage` → race-bound monster `tokenImage` → own `portrait` → race monster `portrait` | Catalogue / Postgres (same as pin open) |
+
+Generic **+ Token** markers stay labelled unless given `gridCells`.
 
 `EntityRegistry.byType` dedupes alias keys so add-monster / add-NPC pickers list each catalogue entry once.
 

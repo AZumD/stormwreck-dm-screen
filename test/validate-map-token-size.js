@@ -58,9 +58,16 @@ const sandbox = {
     _data: {
       monster: [
         { id: "sw-stirge", name: "Stirge", size: "Tiny" },
-        { id: "sw-merrow", name: "Merrow", size: "Large" }
+        { id: "sw-merrow", name: "Merrow", size: "Large" },
+        {
+          id: "sw-kobold",
+          name: "Kobold",
+          size: "Small",
+          tokenImage: "/api/assets/tokens/monster/sw-kobold"
+        }
       ],
-      race: [{ id: "race-halfling", name: "Halfling", size: "Small" }]
+      race: [{ id: "race-halfling", name: "Halfling", size: "Small" }],
+      npc: []
     },
     loadAll(type) {
       return sandbox.CatalogueStore._data[type] || [];
@@ -70,7 +77,8 @@ const sandbox = {
     }
   },
   PARTY: [],
-  EntityRegistry: null
+  EntityRegistry: null,
+  CatalogueImages: { MARKER: "__idb__", hydrate: (_t, e) => e, getSync: () => "" }
 };
 sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
@@ -132,6 +140,35 @@ const tokenFirst = MTS.resolvePinImageUrls(
 if (tokenFirst.url !== "/api/assets/tokens/npc/x" || tokenFirst.fallbackUrl !== "/api/assets/portraits/npc/x") {
   fail("resolvePinImageUrls should prefer token with portrait fallback");
 } else pass("resolvePinImageUrls token + fallback");
+
+const raceBound = MTS.resolvePinImageUrls("npc", { id: "sw-minn", race: "Kobold", name: "Minn" }, {});
+if (raceBound.url !== "/api/assets/tokens/monster/sw-kobold") {
+  fail(`NPC without token should use race-bound monster token, got ${raceBound.url}`);
+} else pass("NPC uses race-bound monster token");
+
+const npcOverride = MTS.resolvePinImageUrls(
+  "npc",
+  {
+    id: "sw-minn",
+    race: "Kobold",
+    tokenImage: "/api/assets/tokens/npc/sw-minn",
+    name: "Minn"
+  },
+  {}
+);
+if (npcOverride.url !== "/api/assets/tokens/npc/sw-minn") {
+  fail("NPC tokenImage should override race-bound monster token");
+} else if (npcOverride.fallbackUrl !== "/api/assets/tokens/monster/sw-kobold") {
+  fail(`NPC override fallback should be monster token, got ${npcOverride.fallbackUrl}`);
+} else pass("NPC tokenImage overrides race-bound monster");
+
+if (!combat.includes("buildNpcToken") || !combat.includes("buildPcToken") || !spatial.includes("spawnCombatToken")) {
+  fail("NPC/PC combat token spawn helpers missing");
+} else pass("NPC/PC combat token spawn helpers");
+
+if (!panel.includes('spawnCombatToken') || !panel.includes('pinType === "npc"')) {
+  fail("map-panel should spawn NPC/PC combat tokens on calibrated maps");
+} else pass("map-panel spawns NPC/PC combat tokens");
 
 const tokenHtml = MTS.tokenImageHtml("/a", "Test", "/b");
 if (!tokenHtml.includes('data-fallback="/b"') || !tokenHtml.includes('src="/a"')) {

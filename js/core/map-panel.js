@@ -757,15 +757,33 @@ window.MapPanel = (function () {
 
     function listChoices(pinType) {
       if (pinType === "pc") {
-        return (window.PARTY || [])
+        const partyRows = (window.PARTY || [])
           .filter((m) => m.memberType !== "npc")
           .map((m) => ({
             id: m.id,
             name: m.name,
             meta: m.class || "PC",
-            partyId: m.id
-          }))
-          .sort((a, b) => a.name.localeCompare(b.name));
+            partyId: m.id,
+            catalogueId: m.catalogueId || null,
+            entityId: m.entityId || null
+          }));
+        const seen = new Set(partyRows.map((r) => r.catalogueId).filter(Boolean));
+        const catalogueRows = (
+          window.EntityRegistry?.byType("pc") ||
+          Object.values(window.ENTITIES || {}).filter((e) => e.type === "pc")
+        )
+          .filter((e) => {
+            const cid = e.catalogueId || e.id;
+            return cid && !seen.has(cid);
+          })
+          .map((e) => ({
+            id: e.id,
+            name: e.name,
+            meta: e.summary || "PC",
+            entityId: e.id,
+            catalogueId: e.catalogueId || e.id
+          }));
+        return [...partyRows, ...catalogueRows].sort((a, b) => a.name.localeCompare(b.name));
       }
 
       const entities =
@@ -777,7 +795,8 @@ window.MapPanel = (function () {
           id: e.id,
           name: e.name,
           meta: e.summary || pinType,
-          entityId: e.id
+          entityId: e.id,
+          catalogueId: e.catalogueId || e.id
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
@@ -810,13 +829,16 @@ window.MapPanel = (function () {
         return;
       }
 
-      const labels = { npc: "NPC", monster: "Monster (combat)", item: "Item", pc: "PC" };
+      const labels = { npc: "NPC", monster: "Monster", item: "Item", pc: "PC" };
       const choices = listChoices(pinType);
+      const calibrated = window.MapTokenSize?.isCalibratedMap?.(maps[activeMapId]);
       pinDialogTitle.textContent = `Add ${labels[pinType] || pinType}`;
       const lead =
-        pinType === "monster"
-          ? `<p class="map-pin-dialog-lead">Places a combat token (independent HP/AC). Requires a calibrated / UVTT map.</p>`
-          : "";
+        pinType === "monster" || ((pinType === "npc" || pinType === "pc") && calibrated)
+          ? `<p class="map-pin-dialog-lead">Places a combat token (independent HP/AC on monsters; NPC/PC open combat sheet). Requires a calibrated / UVTT map.</p>`
+          : pinType === "npc" || pinType === "pc"
+            ? `<p class="map-pin-dialog-lead">Places a map pin. Open a calibrated / UVTT map to place grid combat tokens instead.</p>`
+            : "";
       pinDialogBody.innerHTML = `
         <button type="button" class="map-pin-back" data-pin-back>← Back</button>
         ${lead}
@@ -827,7 +849,7 @@ window.MapPanel = (function () {
               ? choices
                   .map(
                     (c) => `
-            <button type="button" class="map-pin-choice" data-choice-id="${escape(c.id)}" data-entity-id="${escape(c.entityId || "")}" data-party-id="${escape(c.partyId || "")}" data-name="${escape(c.name)}">
+            <button type="button" class="map-pin-choice" data-choice-id="${escape(c.id)}" data-entity-id="${escape(c.entityId || "")}" data-party-id="${escape(c.partyId || "")}" data-catalogue-id="${escape(c.catalogueId || "")}" data-name="${escape(c.name)}">
               <strong>${escape(c.name)}</strong>
               <span>${escape(c.meta || "")}</span>
             </button>`
@@ -854,6 +876,7 @@ window.MapPanel = (function () {
           addPinFromChoice(pinType, {
             entityId: btn.dataset.entityId || null,
             partyId: btn.dataset.partyId || null,
+            catalogueId: btn.dataset.catalogueId || null,
             name: btn.dataset.name
           });
           closePinDialog();
@@ -864,20 +887,40 @@ window.MapPanel = (function () {
     }
 
     function addPinFromChoice(pinType, choice) {
-      if (pinType === "monster") {
+      const map = maps[activeMapId];
+      const calibrated = window.MapTokenSize?.isCalibratedMap?.(map);
+
+      if (pinType === "monster" || ((pinType === "npc" || pinType === "pc") && calibrated)) {
         const entity = choice.entityId ? EntityRegistry?.resolve?.(choice.entityId) : null;
-        const catalogueId = entity?.catalogueId || choice.entityId || choice.id;
-        let entry = catalogueId && CatalogueStore?.get?.("monster", catalogueId);
+        let catalogueId =
+          choice.catalogueId ||
+          entity?.catalogueId ||
+          (choice.partyId && window.PARTY?.find((p) => p.id === choice.partyId)?.catalogueId) ||
+          choice.entityId ||
+          null;
+        if (pinType === "monster" && !catalogueId) catalogueId = choice.entityId || choice.id;
+        const storeType = pinType === "pc" ? "pc" : pinType === "npc" ? "npc" : "monster";
+        let entry = catalogueId && CatalogueStore?.get?.(storeType, catalogueId);
         if (!entry && catalogueId) {
-          entry = { id: catalogueId, name: choice.name || entity?.name || "Monster", hp: "", ac: "" };
+          entry = {
+            id: catalogueId,
+            name: choice.name || entity?.name || pinType,
+            race: entity?.race || "",
+            hp: entity?.hp || "",
+            ac: entity?.ac || ""
+          };
         }
-        if (!spatialApi?.spawnMonsterToken) {
-          window.alert("Open a calibrated / UVTT map to place combat monsters.");
+        if (!spatialApi?.spawnCombatToken && !spatialApi?.spawnMonsterToken) {
+          window.alert("Open a calibrated / UVTT map to place combat tokens.");
           return;
         }
-        const result = spatialApi.spawnMonsterToken(entry || { name: choice.name });
-        if (!result?.ok) {
-          window.alert(result?.error || "Could not place monster token.");
+        const spawn =
+          spatialApi.spawnCombatToken?.(storeType, entry || { name: choice.name }) ||
+          (storeType === "monster"
+            ? spatialApi.spawnMonsterToken?.(entry || { name: choice.name })
+            : null);
+        if (!spawn?.ok) {
+          window.alert(spawn?.error || "Could not place combat token.");
         }
         return;
       }

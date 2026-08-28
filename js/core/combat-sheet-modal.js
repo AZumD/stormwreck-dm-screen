@@ -776,25 +776,48 @@ window.CombatSheetModal = (function () {
 
   /** One-time HP/AC copy from monster catalogue → map combat token. */
   function buildMonsterToken(entry, pos) {
-    const hp = parseHpBlob(entry?.hp);
+    return buildCombatToken("monster", entry, pos);
+  }
+
+  /**
+   * Combat token for monster / npc / pc on calibrated maps.
+   * Art: own tokenImage overrides race-bound monster token (see MapTokenSize.resolvePinImageUrls).
+   */
+  function buildCombatToken(kind, entry, pos) {
+    const type = kind === "pc" || kind === "npc" || kind === "monster" ? kind : "monster";
     const hydrated =
       entry && window.CatalogueImages?.hydrate
-        ? CatalogueImages.hydrate("monster", entry)
+        ? CatalogueImages.hydrate(type, entry)
         : entry;
-    const sizeMeta = window.MapTokenSize?.resolveGridCells?.("monster", hydrated) || {
+    const sizeMeta = window.MapTokenSize?.resolveGridCells?.(type, hydrated) || {
       dndSize: hydrated?.size || "Medium",
       gridCells: 1
     };
-    const images = window.MapTokenSize?.resolvePinImageUrls?.("monster", hydrated, {}) || {
+    const images = window.MapTokenSize?.resolvePinImageUrls?.(type, hydrated, {}) || {
       url: hydrated?.tokenImage || hydrated?.portrait || null,
       fallbackUrl: null
     };
+    let hp;
+    if (type === "pc") {
+      const cur = hydrated?.hpCurrent;
+      const max = hydrated?.hpMax;
+      hp = {
+        current: cur === "" || cur == null ? null : Number(cur),
+        max: max === "" || max == null ? null : Number(max)
+      };
+      if (!Number.isFinite(hp.current)) hp.current = null;
+      if (!Number.isFinite(hp.max)) hp.max = null;
+    } else {
+      hp = parseHpBlob(hydrated?.hp);
+    }
+    const prefix = type === "monster" ? "tok-mon" : type === "npc" ? "tok-npc" : "tok-pc";
     return {
-      id: `tok-mon-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
-      label: hydrated?.name || "Monster",
+      id: `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      label: hydrated?.name || (type === "pc" ? "PC" : type === "npc" ? "NPC" : "Monster"),
       ref: null,
-      kind: "monster",
+      kind: type,
       catalogueId: hydrated?.id || null,
+      entityId: hydrated?.linkId || null,
       x: pos?.x ?? 0,
       y: pos?.y ?? 0,
       dndSize: sizeMeta.dndSize,
@@ -811,10 +834,21 @@ window.CombatSheetModal = (function () {
     };
   }
 
+  function buildNpcToken(entry, pos) {
+    return buildCombatToken("npc", entry, pos);
+  }
+
+  function buildPcToken(entry, pos) {
+    return buildCombatToken("pc", entry, pos);
+  }
+
   return {
     open,
     close,
     buildMonsterToken,
+    buildNpcToken,
+    buildPcToken,
+    buildCombatToken,
     parseHpBlob,
     parseAc,
     parseDeathSaves,

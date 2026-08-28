@@ -275,14 +275,16 @@ window.MapSpatial = (function () {
     }
 
     function tokenTitle(t) {
-      if (t.kind !== "monster") return t.label || t.id;
       const hp =
         t.hpMax != null && t.hpMax !== ""
           ? `${t.hpCurrent ?? "?"}/${t.hpMax}`
           : t.hpCurrent != null && t.hpCurrent !== ""
             ? String(t.hpCurrent)
             : "?";
-      return `${t.label || "Monster"} · HP ${hp} · AC ${t.ac ?? "?"}`;
+      if (t.kind === "monster" || t.kind === "npc" || t.kind === "pc") {
+        return `${t.label || t.kind} · HP ${hp} · AC ${t.ac ?? "?"}`;
+      }
+      return t.label || t.id;
     }
 
     function snapWorld(world, map) {
@@ -291,7 +293,7 @@ window.MapSpatial = (function () {
     }
 
     function resolveCombatTokenImages(t) {
-      const kind = t.kind === "monster" ? "monster" : t.memberType || "npc";
+      const kind = t.kind === "monster" || t.kind === "npc" || t.kind === "pc" ? t.kind : t.memberType || "npc";
       let entry = null;
       if (t.catalogueId && window.CatalogueStore?.get) {
         entry = CatalogueStore.get(kind, t.catalogueId);
@@ -343,13 +345,13 @@ window.MapSpatial = (function () {
         .map((t) => {
           const pos = worldToStyle(t.x, t.y, map);
           const sel = selectedTokenIds.includes(t.id) ? " is-selected" : "";
-          if (t.kind === "monster") {
+          if (t.kind === "monster" || t.kind === "npc" || t.kind === "pc") {
             return renderGridToken(
               t,
               map,
               pos,
               sel,
-              " map-grid-token--monster",
+              ` map-grid-token--${t.kind}`,
               tokenTitle(t),
               null
             );
@@ -400,19 +402,39 @@ window.MapSpatial = (function () {
           }
           if (!moved) {
             const tok = tokensForMap(map.id).find((t) => t.id === id);
-            if (tok?.kind === "monster" && !e.shiftKey && window.CombatSheetModal?.open) {
-              CombatSheetModal.open({
-                kind: "monster-token",
-                token: tok,
-                mapId: map.id,
-                campaignId,
-                onRemoved: () => {
-                  selectedTokenIds = selectedTokenIds.filter((x) => x !== id);
-                  renderTokens(map);
-                  updateTokenDistance(map);
-                }
-              });
-              return;
+            if (!e.shiftKey && window.CombatSheetModal?.open) {
+              if (tok?.kind === "monster") {
+                CombatSheetModal.open({
+                  kind: "monster-token",
+                  token: tok,
+                  mapId: map.id,
+                  campaignId,
+                  onRemoved: () => {
+                    selectedTokenIds = selectedTokenIds.filter((x) => x !== id);
+                    renderTokens(map);
+                    updateTokenDistance(map);
+                  }
+                });
+                return;
+              }
+              if (tok?.kind === "npc" && tok.catalogueId) {
+                CombatSheetModal.open({
+                  kind: "npc",
+                  catalogueId: tok.catalogueId,
+                  entityId: tok.entityId,
+                  name: tok.label
+                });
+                return;
+              }
+              if (tok?.kind === "pc" && tok.catalogueId) {
+                CombatSheetModal.open({
+                  kind: "pc",
+                  catalogueId: tok.catalogueId,
+                  entityId: tok.entityId,
+                  name: tok.label
+                });
+                return;
+              }
             }
             if (e.shiftKey || selectedTokenIds.length === 1) {
               if (selectedTokenIds.includes(id)) {
@@ -654,16 +676,26 @@ window.MapSpatial = (function () {
       paintMeasure(measureStart, world, map, { preview: true });
     });
 
-    function spawnMonsterToken(entry) {
+    function spawnCombatToken(kind, entry) {
       const map = activeMap();
       if (!isCalibrated(map)) {
-        return { ok: false, error: "Import or open a calibrated / UVTT map to place combat monsters." };
+        return { ok: false, error: "Import or open a calibrated / UVTT map to place combat tokens." };
       }
-      const token =
-        window.CombatSheetModal?.buildMonsterToken?.(entry, {
-          x: (Number(map.grid?.sizeX) || Number(map.grid?.width) || 10) / 2,
-          y: (Number(map.grid?.sizeY) || Number(map.grid?.height) || 10) / 2
-        }) || null;
+      const pos = {
+        x: (Number(map.grid?.sizeX) || Number(map.grid?.width) || 10) / 2,
+        y: (Number(map.grid?.sizeY) || Number(map.grid?.height) || 10) / 2
+      };
+      let token = null;
+      if (kind === "npc" && window.CombatSheetModal?.buildNpcToken) {
+        token = CombatSheetModal.buildNpcToken(entry, pos);
+      } else if (kind === "pc" && window.CombatSheetModal?.buildPcToken) {
+        token = CombatSheetModal.buildPcToken(entry, pos);
+      } else {
+        token =
+          window.CombatSheetModal?.buildMonsterToken?.(entry, pos) ||
+          window.CombatSheetModal?.buildCombatToken?.(kind || "monster", entry, pos) ||
+          null;
+      }
       if (!token) return { ok: false, error: "Combat sheet helper unavailable." };
       const list = tokensForMap(map.id);
       list.push(token);
@@ -672,11 +704,16 @@ window.MapSpatial = (function () {
       return { ok: true, token };
     }
 
+    function spawnMonsterToken(entry) {
+      return spawnCombatToken("monster", entry);
+    }
+
     return {
       refreshChrome,
       summaryToMapDef,
       loadCalibratedMaps,
-      spawnMonsterToken
+      spawnMonsterToken,
+      spawnCombatToken
     };
   }
 

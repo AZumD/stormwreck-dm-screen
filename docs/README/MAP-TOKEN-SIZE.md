@@ -27,9 +27,9 @@ Uses the monster catalogue entry `size` field (`buildMonsterToken` stores `dndSi
 3. **Built-in defaults** — common creature names when no catalogue row exists (kobold → Small)
 4. Fallback **Medium**
 
-Map art: catalogue **`tokenImage`**, then **`portrait`** fallback when set; otherwise colored grid square at resolved size.
+Map art: catalogue **`tokenImage`**, then **race-bound monster** `tokenImage` (NPC/PC `race` → monster catalogue name match), then **`portrait`** (own, then race monster). An uploaded NPC/PC map token always overrides the bound monster token.
 
-Image URLs are resolved via `resolvePinImageUrls` (checks catalogue row, party member, entity registry, memory cache, and `/api/assets/…` paths). If a token image 404s, the `<img>` automatically tries the portrait URL.
+Image URLs are resolved via `resolvePinImageUrls` (checks catalogue row, party member, entity registry, memory cache, and `/api/assets/…` paths). If a primary image 404s, the `<img>` tries the next URL in the chain.
 
 Tokens **with** uploaded art render **without** the colored type frame (transparent over the map). Empty placeholders keep the colored ring. Map-token uploads are stored as **PNG** so alpha is preserved — re-upload older tokens that were saved as JPEG with a dark matte.
 
@@ -38,7 +38,7 @@ Tokens **with** uploaded art render **without** the colored type frame (transpar
 2. Built-in defaults
 3. Fallback **Medium**
 
-Map art: catalogue **`tokenImage`**, then **`portrait`** fallback when set.
+Map art: same override chain as NPC (`tokenImage` → race-bound monster token → portraits).
 
 ## Zoom
 Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin** dots on non-calibrated maps still counter-scale for readability.
@@ -46,9 +46,9 @@ Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin*
 ## Consumers
 | Module | Use |
 |--------|-----|
-| `map-spatial.js` | Renders combat tokens as `.map-grid-token` sized to `gridCells`; snap drag when **Snap measure** is on |
-| `map-panel.js` | Renders PC/NPC/item pins as grid tokens on calibrated maps |
-| `combat-sheet-modal.js` | Sets `gridCells` when spawning monster tokens |
+| `map-spatial.js` | Renders monster/NPC/PC combat tokens as `.map-grid-token`; snap drag when **Snap measure** is on |
+| `map-panel.js` | Add-to-map spawns combat tokens on calibrated maps; pins on image maps |
+| `combat-sheet-modal.js` | `buildCombatToken` / `buildNpcToken` / `buildPcToken` / `buildMonsterToken` |
 
 ## API
 | Function | Role |
@@ -57,6 +57,7 @@ Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin*
 | `cellSpanPercent(cells, map)` | Cell span → `{ w, h }` % of map |
 | `resolveNpcSize(entry)` | NPC catalogue row → size label |
 | `resolvePcSize(entry)` | PC catalogue row → size label |
+| `lookupMonsterEntryByRace(race)` | Race text → monster catalogue row (size + art binding) |
 | `resolvePinSize(pin, { map })` | Map pin → `{ dndSize, gridCells, span, tokenUrl, fallbackUrl }` |
 | `resolvePinImageUrls(kind, entry, pin)` | `{ url, fallbackUrl }` for map / combat tokens |
 | `resolveImageUrl(kind, entry, pin)` | Primary image URL (shorthand) |

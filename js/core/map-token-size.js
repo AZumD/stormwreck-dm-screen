@@ -71,7 +71,7 @@ window.MapTokenSize = (function () {
     }
   }
 
-  function lookupMonsterSizeByRace(raceText) {
+  function lookupMonsterEntryByRace(raceText) {
     const tokens = tokenizeRace(raceText);
     if (!tokens.length) return null;
     const monsters = loadMonsters();
@@ -79,17 +79,21 @@ window.MapTokenSize = (function () {
 
     for (const token of tokens) {
       const exact = monsters.find((m) => String(m.name || "").toLowerCase() === token);
-      if (exact?.size) return exact.size;
+      if (exact) return exact;
     }
 
     for (const token of tokens) {
       const re = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
       const wordHits = monsters.filter((m) => re.test(String(m.name || "")));
-      if (wordHits.length === 1 && wordHits[0].size) return wordHits[0].size;
+      if (wordHits.length === 1) return wordHits[0];
       const contains = monsters.filter((m) => String(m.name || "").toLowerCase().includes(token));
-      if (contains.length === 1 && contains[0].size) return contains[0].size;
+      if (contains.length === 1) return contains[0];
     }
     return null;
+  }
+
+  function lookupMonsterSizeByRace(raceText) {
+    return lookupMonsterEntryByRace(raceText)?.size || null;
   }
 
   function lookupRaceSizeByName(raceText) {
@@ -250,37 +254,61 @@ window.MapTokenSize = (function () {
 
   function resolvePinImageUrls(kind, entry, pin) {
     const { sources, catalogueId } = collectImageSources(kind, entry, pin);
-    let tokenUrl = null;
-    let portraitUrl = null;
+    let ownToken = null;
+    let ownPortrait = null;
 
     for (const src of sources) {
-      if (!tokenUrl && isUsableUrl(src?.tokenImage)) tokenUrl = String(src.tokenImage).trim();
-      if (!portraitUrl && isUsableUrl(src?.portrait)) portraitUrl = String(src.portrait).trim();
+      if (!ownToken && isUsableUrl(src?.tokenImage)) ownToken = String(src.tokenImage).trim();
+      if (!ownPortrait && isUsableUrl(src?.portrait)) ownPortrait = String(src.portrait).trim();
     }
 
     if (catalogueId && kind && window.CatalogueImages?.getSync) {
-      if (!tokenUrl) {
+      if (!ownToken) {
         const cached = CatalogueImages.getSync(kind, catalogueId, "tokenImage");
-        if (isUsableUrl(cached)) tokenUrl = String(cached).trim();
+        if (isUsableUrl(cached)) ownToken = String(cached).trim();
       }
-      if (!portraitUrl) {
+      if (!ownPortrait) {
         const cached = CatalogueImages.getSync(kind, catalogueId, "portrait");
-        if (isUsableUrl(cached)) portraitUrl = String(cached).trim();
+        if (isUsableUrl(cached)) ownPortrait = String(cached).trim();
       }
     }
 
     if (catalogueId && kind && window.LocalApiClient?.isAvailable?.()) {
-      if (!tokenUrl && fieldHasAssetHint(sources, "tokenImage")) {
-        tokenUrl = defaultAssetUrl(kind, catalogueId, "tokenImage");
+      if (!ownToken && fieldHasAssetHint(sources, "tokenImage")) {
+        ownToken = defaultAssetUrl(kind, catalogueId, "tokenImage");
       }
-      if (!portraitUrl && fieldHasAssetHint(sources, "portrait")) {
-        portraitUrl = defaultAssetUrl(kind, catalogueId, "portrait");
+      if (!ownPortrait && fieldHasAssetHint(sources, "portrait")) {
+        ownPortrait = defaultAssetUrl(kind, catalogueId, "portrait");
       }
     }
 
-    const url = tokenUrl || portraitUrl || null;
-    const fallbackUrl = tokenUrl && portraitUrl && tokenUrl !== portraitUrl ? portraitUrl : null;
-    return { url, fallbackUrl };
+    /* NPC/PC race → monster catalogue art; own tokenImage always wins over that binding. */
+    let raceToken = null;
+    let racePortrait = null;
+    if ((kind === "npc" || kind === "pc") && entry?.race) {
+      const mon = lookupMonsterEntryByRace(entry.race);
+      if (mon?.id) {
+        const monEntry = loadEntry("monster", mon.id) || mon;
+        if (isUsableUrl(monEntry.tokenImage)) raceToken = String(monEntry.tokenImage).trim();
+        if (isUsableUrl(monEntry.portrait)) racePortrait = String(monEntry.portrait).trim();
+        if ((!raceToken || !racePortrait) && window.CatalogueImages?.getSync) {
+          if (!raceToken) {
+            const cached = CatalogueImages.getSync("monster", mon.id, "tokenImage");
+            if (isUsableUrl(cached)) raceToken = String(cached).trim();
+          }
+          if (!racePortrait) {
+            const cached = CatalogueImages.getSync("monster", mon.id, "portrait");
+            if (isUsableUrl(cached)) racePortrait = String(cached).trim();
+          }
+        }
+      }
+    }
+
+    const chain = [];
+    for (const u of [ownToken, raceToken, ownPortrait, racePortrait]) {
+      if (u && !chain.includes(u)) chain.push(u);
+    }
+    return { url: chain[0] || null, fallbackUrl: chain[1] || null };
   }
 
   function resolveImageUrl(kind, entry, pin) {
@@ -345,6 +373,7 @@ window.MapTokenSize = (function () {
     gridTokenStyle,
     isCalibratedMap,
     lookupMonsterSizeByRace,
+    lookupMonsterEntryByRace,
     CREATURE_DEFAULTS
   };
 })();
