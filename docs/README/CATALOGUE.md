@@ -8,7 +8,7 @@ Shared catalogue engine for PC / NPC / Race / Class / Skill / Feature / Spell / 
 - `js/core/catalogue/store.js` — file-backed CRUD (`/data/catalogues`, localStorage offline)
 - `js/core/catalogue/images.js` — file-backed portraits/maps (`/data/assets`, IndexedDB legacy)
 - `js/core/catalogue/configs.js` — field schemas
-- `js/core/catalogue/app.js` — list + wiki view + form editor
+- `js/core/catalogue/app.js` — list + wiki view + form editor (map tokens compress to PNG with alpha)
 
 ## Browse vs edit
 Selecting a list entry opens a **wiki-style read view** (title, summary, sections, portrait/map).

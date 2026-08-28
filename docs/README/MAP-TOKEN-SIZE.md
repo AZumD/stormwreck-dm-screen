@@ -31,6 +31,8 @@ Map art: catalogue **`tokenImage`**, then **`portrait`** fallback when set; othe
 
 Image URLs are resolved via `resolvePinImageUrls` (checks catalogue row, party member, entity registry, memory cache, and `/api/assets/…` paths). If a token image 404s, the `<img>` automatically tries the portrait URL.
 
+Tokens **with** uploaded art render **without** the colored type frame (transparent over the map). Empty placeholders keep the colored ring. Map-token uploads are stored as **PNG** so alpha is preserved — re-upload older tokens that were saved as JPEG with a dark matte.
+
 ### PC pin
 1. Race catalogue by PC `race`
 2. Built-in defaults

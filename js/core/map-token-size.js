@@ -189,7 +189,8 @@ window.MapTokenSize = (function () {
   function isUsableUrl(url) {
     if (!url || typeof url !== "string") return false;
     const trimmed = url.trim();
-    return trimmed && trimmed !== "__idb__" && trimmed !== CatalogueImages?.MARKER;
+    const marker = window.CatalogueImages?.MARKER || "__idb__";
+    return Boolean(trimmed && trimmed !== "__idb__" && trimmed !== marker);
   }
 
   function defaultAssetUrl(type, id, field) {
@@ -208,7 +209,8 @@ window.MapTokenSize = (function () {
   }
 
   function isMarker(value) {
-    return value === "__idb__" || value === CatalogueImages?.MARKER;
+    const marker = window.CatalogueImages?.MARKER || "__idb__";
+    return value === "__idb__" || value === marker;
   }
 
   function fieldHasAssetHint(sources, field) {

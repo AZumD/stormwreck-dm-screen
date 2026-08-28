@@ -900,13 +900,15 @@ window.CatalogueApp = (function () {
         </button>`;
   }
 
-  /** Resize/compress large photos; IndexedDB allows much bigger final sizes */
+  /** Resize/compress large photos; tokens keep PNG alpha (no opaque fill). */
   function compressImageFile(file, field) {
     const isPortrait = field?.kind === "portrait" || field?.id === "portrait";
     const isToken = field?.kind === "token" || field?.id === "tokenImage";
     const maxChars = isToken ? MAX_PORTRAIT_CHARS : isPortrait ? MAX_PORTRAIT_CHARS : MAX_MAP_CHARS;
     const maxWidth = isToken ? 1024 : isPortrait ? 1800 : 3200;
     const maxHeight = isToken ? 1024 : isPortrait ? 1800 : 3200;
+    /* Tokens: PNG preserves transparency. Portraits/maps: JPEG with dark matte. */
+    const preserveAlpha = isToken;
 
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);
@@ -919,14 +921,19 @@ window.CatalogueApp = (function () {
         }
 
         const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d", { alpha: false });
+        const ctx = canvas.getContext("2d", { alpha: preserveAlpha });
 
         function encode(width, height, quality) {
           canvas.width = width;
           canvas.height = height;
-          ctx.fillStyle = "#1a1f2a";
-          ctx.fillRect(0, 0, width, height);
+          if (preserveAlpha) {
+            ctx.clearRect(0, 0, width, height);
+          } else {
+            ctx.fillStyle = "#1a1f2a";
+            ctx.fillRect(0, 0, width, height);
+          }
           ctx.drawImage(img, 0, 0, width, height);
+          if (preserveAlpha) return canvas.toDataURL("image/png");
           return canvas.toDataURL("image/jpeg", quality);
         }
 
@@ -939,21 +946,26 @@ window.CatalogueApp = (function () {
         let quality = 0.92;
         let dataUrl = encode(width, height, quality);
 
-        while (dataUrl.length > maxChars && quality > 0.4) {
-          quality = Math.max(0.4, quality - 0.08);
-          dataUrl = encode(width, height, quality);
+        if (!preserveAlpha) {
+          while (dataUrl.length > maxChars && quality > 0.4) {
+            quality = Math.max(0.4, quality - 0.08);
+            dataUrl = encode(width, height, quality);
+          }
         }
 
         let guard = 0;
-        while (dataUrl.length > maxChars && guard < 10 && (width > 480 || height > 480)) {
+        const minEdge = preserveAlpha ? 128 : 480;
+        while (dataUrl.length > maxChars && guard < 10 && (width > minEdge || height > minEdge)) {
           guard += 1;
-          width = Math.max(480, Math.round(width * 0.75));
-          height = Math.max(480, Math.round(height * 0.75));
-          quality = Math.min(quality, 0.8);
+          width = Math.max(minEdge, Math.round(width * 0.75));
+          height = Math.max(minEdge, Math.round(height * 0.75));
+          if (!preserveAlpha) quality = Math.min(quality, 0.8);
           dataUrl = encode(width, height, quality);
-          while (dataUrl.length > maxChars && quality > 0.35) {
-            quality = Math.max(0.35, quality - 0.08);
-            dataUrl = encode(width, height, quality);
+          if (!preserveAlpha) {
+            while (dataUrl.length > maxChars && quality > 0.35) {
+              quality = Math.max(0.35, quality - 0.08);
+              dataUrl = encode(width, height, quality);
+            }
           }
         }
 

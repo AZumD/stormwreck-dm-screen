@@ -15,6 +15,8 @@ node test/validate-catalogue-token-image.js
 - `tokenImage` field on PC / NPC / monster configs
 - `CatalogueImages.IMAGE_FIELDS` + server `tokens` asset kind
 - Catalogue upload UI (`kind: "token"`)
+- Token compression uses PNG (`image/png`) to keep transparency
+- Frameless `.map-grid-token--has-img` styling on the map
 - `MapTokenSize.resolveTokenUrl` + `buildMonsterToken` using `tokenImage`
 
 ## See also

@@ -51,8 +51,17 @@ if (!mapToken.includes("resolveTokenUrl") || !mapToken.includes("tokenUrl")) {
   fail("MapTokenSize missing resolveTokenUrl");
 } else pass("MapTokenSize resolveTokenUrl");
 
-if (!combat.includes("entry?.tokenImage")) fail("buildMonsterToken should use tokenImage");
+if (!combat.includes("tokenImage")) fail("buildMonsterToken should use tokenImage");
 else pass("buildMonsterToken uses tokenImage");
+
+if (!app.includes('toDataURL("image/png")') || !app.includes("preserveAlpha")) {
+  fail("token compress should encode PNG with alpha");
+} else pass("token compress preserves PNG alpha");
+
+const style = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
+if (!style.includes(".map-grid-token--has-img") || !style.includes("background: transparent")) {
+  fail("map tokens with images should be frameless/transparent");
+} else pass("map-grid-token--has-img frameless");
 
 if (!css.includes(".cat-token-preview")) fail("css missing token preview");
 else pass("css token preview");

@@ -133,8 +133,8 @@ if (tokenFirst.url !== "/api/assets/tokens/npc/x" || tokenFirst.fallbackUrl !== 
   fail("resolvePinImageUrls should prefer token with portrait fallback");
 } else pass("resolvePinImageUrls token + fallback");
 
-const html = MTS.tokenImageHtml("/a", "Test", "/b");
-if (!html.includes('data-fallback="/b"') || !html.includes('src="/a"')) {
+const tokenHtml = MTS.tokenImageHtml("/a", "Test", "/b");
+if (!tokenHtml.includes('data-fallback="/b"') || !tokenHtml.includes('src="/a"')) {
   fail("tokenImageHtml should include fallback attr");
 } else pass("tokenImageHtml fallback attr");
 

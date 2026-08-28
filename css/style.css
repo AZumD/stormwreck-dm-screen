@@ -3581,11 +3581,25 @@ body[data-map-collapsed="true"] .map-panel {
   pointer-events: none;
   border-radius: inherit;
 }
+/* Uploaded art: no type-color frame; show PNG alpha over the map */
 .map-grid-token--has-img {
-  background: rgba(10, 14, 20, 0.25);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  border-radius: 0;
 }
-.map-grid-token--has-img.map-grid-token--round {
-  overflow: hidden;
+.map-grid-token--has-img .map-grid-token__img {
+  object-fit: contain;
+  border-radius: 0;
+}
+.map-grid-token--has-img:hover,
+.map-grid-token--has-img:focus-visible,
+.map-grid-token--has-img.is-selected {
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.map-grid-token--has-img.is-selected {
+  box-shadow: 0 0 0 3px #e8c86a, 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 .map-grid-token--pc { border-color: var(--accent); background: rgba(74, 144, 226, 0.35); }
 .map-grid-token--npc { border-color: var(--entity-npc); background: rgba(155, 89, 182, 0.35); }

@@ -17,6 +17,8 @@ Persists catalogue portrait / map images **on disk under `/data/assets`**, the s
 
 Fields: `portrait`, `tokenImage` (PC/NPC/monster map tokens), `mapImage` (locations).
 
+**Map tokens** are compressed to **PNG** (alpha preserved). Portraits and maps remain JPEG with an opaque matte.
+
 ## API
 | Method | Role |
 |--------|------|
