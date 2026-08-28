@@ -3539,7 +3539,7 @@ body[data-map-collapsed="true"] .map-panel {
   border-radius: 4px;
   cursor: grab;
   pointer-events: auto;
-  transform: scale(var(--map-pin-scale, 1));
+  transform: none;
   transform-origin: center center;
   box-sizing: border-box;
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
@@ -3597,12 +3597,20 @@ body[data-map-collapsed="true"] .map-panel {
   z-index: 2;
 }
 
+.map-grid-token--dragging,
 .map-pin--dragging {
   cursor: grabbing;
-  transform: scale(calc(var(--map-pin-scale, 1) * 1.35));
   z-index: 5;
   box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 14px rgba(0, 0, 0, 0.55);
   transition: none;
+}
+
+.map-grid-token--dragging {
+  transform: none;
+}
+
+.map-pin--dragging {
+  transform: scale(calc(var(--map-pin-scale, 1) * 1.35));
 }
 
 .map-source-hint {

@@ -793,7 +793,7 @@ window.CombatSheetModal = (function () {
       gridCells: sizeMeta.gridCells,
       size: 1,
       visible: true,
-      imageUrl: entry?.tokenImage || null,
+      imageUrl: entry?.tokenImage || entry?.portrait || null,
       hpCurrent: hp.current,
       hpMax: hp.max,
       ac: parseAc(entry?.ac),

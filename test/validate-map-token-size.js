@@ -48,8 +48,9 @@ else pass("has map-grid-token class");
 if (!html.includes("map-token-size.js")) fail("campaign HTML missing map-token-size.js");
 else pass("script tag in campaign HTML");
 
-if (!css.includes(".map-grid-token--monster")) fail("css missing grid token variants");
-else pass("css grid token variants");
+if (!css.includes(".map-grid-token") || css.match(/\.map-grid-token\s*\{[^}]*transform:\s*scale/)) {
+  fail("map-grid-token should not counter-scale with zoom");
+} else pass("map-grid-token skips pin counter-scale");
 
 const sandbox = {
   window: {},
@@ -107,6 +108,14 @@ else pass("Stirge → monster catalogue Tiny");
 
 if (MTS.resolveNpcSize({ race: "Halfling" }) !== "Small") fail("Halfling NPC should use race catalogue");
 else pass("Halfling NPC → race catalogue Small");
+
+if (MTS.resolveTokenUrl({ tokenImage: "/api/assets/tokens/npc/x" }) !== "/api/assets/tokens/npc/x") {
+  fail("resolveTokenUrl should return tokenImage url");
+} else pass("resolveTokenUrl returns tokenImage");
+
+if (MTS.resolveTokenUrl({ portrait: "/api/assets/portraits/npc/y" }) !== "/api/assets/portraits/npc/y") {
+  fail("resolveTokenUrl should fall back to portrait");
+} else pass("resolveTokenUrl portrait fallback");
 
 const docs = fs.readFileSync(path.join(root, "docs/README/MAP-TOKEN-SIZE.md"), "utf8");
 if (!docs.includes("validate-map-token-size.js")) fail("docs README missing");

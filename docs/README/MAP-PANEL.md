@@ -46,6 +46,7 @@ Roster UI is owned by `PartyRoster` (`js/core/party.js`) on the **Party** tab. M
 - When zoomed in, drag empty map area to pan
 - Cursor stays the default arrow while zoomed; grab/hand only while actively panning
 - Pins counter-scale so they grow slower than the map
+- **Grid tokens** on calibrated maps stay locked to grid cells at every zoom (no counter-scale)
 - Zoom resets when switching maps
 
 ## Aspect / expand

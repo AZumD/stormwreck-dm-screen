@@ -110,3 +110,4 @@
 [2026-08-27] Campaign sidebar always shows + Add scene (enables Edit mode on use). See js/campaign-app.js, test/validate-add-scene-nav.js
 [2026-08-28] Map tokens grid-locked to D&D Size (NPC race -> monster catalogue); MapTokenSize module. See js/core/map-token-size.js, map-spatial.js, map-panel.js
 [2026-08-28] Map token image upload on PC/NPC/monster catalogues (tokenImage -> /data/assets/tokens). See js/core/catalogue/configs.js, map-token-size.js, map-panel.js
+[2026-08-28] Fix grid tokens: no zoom counter-scale; resolve catalogue token/portrait for map pins. See map-token-size.js, style.css

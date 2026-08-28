@@ -938,7 +938,7 @@ window.MapPanel = (function () {
         moved = false;
         startX = e.clientX;
         startY = e.clientY;
-        btn.classList.add("map-pin--dragging");
+        btn.classList.add(btn.classList.contains("map-grid-token") ? "map-grid-token--dragging" : "map-pin--dragging");
         btn.setPointerCapture(e.pointerId);
       });
 
@@ -980,7 +980,7 @@ window.MapPanel = (function () {
       btn.addEventListener("pointerup", (e) => {
         if (!dragging) return;
         dragging = false;
-        btn.classList.remove("map-pin--dragging");
+        btn.classList.remove("map-pin--dragging", "map-grid-token--dragging");
         try {
           btn.releasePointerCapture(e.pointerId);
         } catch {
@@ -1001,7 +1001,7 @@ window.MapPanel = (function () {
 
       btn.addEventListener("pointercancel", () => {
         dragging = false;
-        btn.classList.remove("map-pin--dragging");
+        btn.classList.remove("map-pin--dragging", "map-grid-token--dragging");
       });
 
       btn.addEventListener("mouseenter", (e) => {

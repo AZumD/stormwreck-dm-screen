@@ -19,7 +19,7 @@ Footprint is expressed as a percentage of the map image (`cellSpanPercent`) so t
 ## Resolution order
 
 ### Monster / combat token
-Uses the monster catalogue entry `size` field (`buildMonsterToken` stores `dndSize` + `gridCells` on the token). Map art comes from catalogue **`tokenImage`** (separate from portrait).
+Uses the monster catalogue entry `size` field (`buildMonsterToken` stores `dndSize` + `gridCells` on the token). Map art: **`tokenImage`**, then **`portrait`** fallback.
 
 ### NPC pin
 1. **Monster catalogue** — match NPC `race` text to a creature name (e.g. `"Kobold"` → monster named Kobold)
@@ -27,14 +27,17 @@ Uses the monster catalogue entry `size` field (`buildMonsterToken` stores `dndSi
 3. **Built-in defaults** — common creature names when no catalogue row exists (kobold → Small)
 4. Fallback **Medium**
 
-Map art: catalogue **`tokenImage`** when set; otherwise colored grid square at resolved size.
+Map art: catalogue **`tokenImage`**, then **`portrait`** fallback when set; otherwise colored grid square at resolved size.
 
 ### PC pin
 1. Race catalogue by PC `race`
 2. Built-in defaults
 3. Fallback **Medium**
 
-Map art: catalogue **`tokenImage`** when set.
+Map art: catalogue **`tokenImage`**, then **`portrait`** fallback when set.
+
+## Zoom
+Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin** dots on non-calibrated maps still counter-scale for readability.
 
 ## Consumers
 | Module | Use |

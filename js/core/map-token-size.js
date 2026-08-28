@@ -153,9 +153,48 @@ window.MapTokenSize = (function () {
     return { dndSize: normalizeDndSize(dndSize), gridCells: dndSizeToGridCells(dndSize) };
   }
 
+  function loadEntry(type, id) {
+    if (!id || !window.CatalogueStore?.get) return null;
+    let entry = CatalogueStore.get(type, id);
+    if (!entry) return null;
+    if (window.CatalogueImages?.hydrate) entry = CatalogueImages.hydrate(type, entry);
+    return entry;
+  }
+
+  function resolvePinCatalogue(pin) {
+    if (pin?.partyId && window.PARTY) {
+      const member = PARTY.find((p) => p.id === pin.partyId);
+      if (member?.catalogueId) {
+        return { kind: "pc", entry: loadEntry("pc", member.catalogueId) };
+      }
+    }
+    if (pin?.entityId && window.EntityRegistry) {
+      const row = EntityRegistry.resolveCatalogueEntry?.(pin.entityId);
+      if (row?.id) {
+        return { kind: row._catalogueType || pin.pinType || "npc", entry: row };
+      }
+      const entity = EntityRegistry.resolve(pin.entityId);
+      if (entity?.catalogueId) {
+        const kind = entity.type || pin.pinType || "npc";
+        return { kind, entry: loadEntry(kind, entity.catalogueId) || entity };
+      }
+      if (entity?.type) {
+        return { kind: entity.type, entry: entity };
+      }
+    }
+    return { kind: pin?.pinType || "npc", entry: null };
+  }
+
   function resolveTokenUrl(entry) {
-    const url = entry?.tokenImage;
-    return url && String(url).trim() ? String(url).trim() : null;
+    if (!entry) return null;
+    for (const field of ["tokenImage", "portrait"]) {
+      const url = entry[field];
+      if (!url || typeof url !== "string") continue;
+      const trimmed = url.trim();
+      if (!trimmed || trimmed === "__idb__") continue;
+      return trimmed;
+    }
+    return null;
   }
 
   function tokenBackgroundAttr(url) {
@@ -167,25 +206,7 @@ window.MapTokenSize = (function () {
     const map = ctx?.map;
     if (!map?.grid) return null;
 
-    let entry = null;
-    let kind = pin?.pinType || "npc";
-
-    if (pin?.partyId && window.PARTY) {
-      const member = PARTY.find((p) => p.id === pin.partyId);
-      if (member?.catalogueId && window.CatalogueStore?.get) {
-        entry = CatalogueStore.get("pc", member.catalogueId);
-        kind = "pc";
-      }
-    } else if (pin?.entityId && window.EntityRegistry?.resolve) {
-      const entity = EntityRegistry.resolve(pin.entityId);
-      if (entity?.catalogueId && window.CatalogueStore?.get) {
-        entry = CatalogueStore.get(entity.type, entity.catalogueId);
-        kind = entity.type;
-      } else if (entity?.type) {
-        kind = entity.type;
-      }
-    }
-
+    const { kind, entry } = resolvePinCatalogue(pin);
     const { dndSize, gridCells } = resolveGridCells(kind, entry);
     const span = cellSpanPercent(gridCells, map);
     return { dndSize, gridCells, span, kind, tokenUrl: resolveTokenUrl(entry) };
