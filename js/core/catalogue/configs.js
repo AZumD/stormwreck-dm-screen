@@ -23,6 +23,17 @@ window.CatalogueConfigs = {
             emptyLabel: "No portrait uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
           },
+          {
+            id: "tokenImage",
+            label: "Map token",
+            type: "image",
+            kind: "token",
+            grid: "full",
+            uploadLabel: "Upload token",
+            clearLabel: "Remove token",
+            emptyLabel: "No token uploaded — map uses a colored square sized to race/creature",
+            hint: "Square image shown on calibrated maps. Scaled to D&D size (1×1, 2×2, etc.) regardless of file dimensions."
+          },
           { id: "class", label: "Class", type: "text", grid: "half" },
           { id: "level", label: "Level", type: "number", grid: "half" },
           { id: "race", label: "Race", type: "text", grid: "half" },
@@ -155,6 +166,7 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed PC",
       portrait: "",
+      tokenImage: "",
       class: "",
       level: 1,
       race: "",
@@ -212,6 +224,17 @@ window.CatalogueConfigs = {
             clearLabel: "Remove portrait",
             emptyLabel: "No portrait uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
+          },
+          {
+            id: "tokenImage",
+            label: "Map token",
+            type: "image",
+            kind: "token",
+            grid: "full",
+            uploadLabel: "Upload token",
+            clearLabel: "Remove token",
+            emptyLabel: "No token uploaded — map uses a colored square sized to race/creature",
+            hint: "Square image shown on calibrated maps. Scaled to D&D size (1×1, 2×2, etc.) regardless of file dimensions."
           },
           { id: "role", label: "Role / title", type: "text", grid: "half" },
           { id: "race", label: "Race", type: "text", grid: "half" },
@@ -340,6 +363,7 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed NPC",
       portrait: "",
+      tokenImage: "",
       role: "",
       race: "",
       alignment: "",
@@ -534,7 +558,7 @@ window.CatalogueConfigs = {
           { id: "name", label: "Name", type: "text", required: true, grid: "full" },
           {
             id: "portrait",
-            label: "Portrait / token",
+            label: "Portrait",
             type: "image",
             kind: "portrait",
             grid: "full",
@@ -542,6 +566,17 @@ window.CatalogueConfigs = {
             clearLabel: "Remove portrait",
             emptyLabel: "No portrait uploaded",
             hint: "Stored in this browser. Large files are resized automatically."
+          },
+          {
+            id: "tokenImage",
+            label: "Map token",
+            type: "image",
+            kind: "token",
+            grid: "full",
+            uploadLabel: "Upload token",
+            clearLabel: "Remove token",
+            emptyLabel: "No token uploaded — map uses a colored square sized to creature size",
+            hint: "Square image shown on calibrated maps. Scaled to D&D size (1×1, 2×2, etc.) regardless of file dimensions."
           },
           { id: "size", label: "Size", type: "text", grid: "third" },
           { id: "creatureType", label: "Type", type: "text", grid: "third", placeholder: "Humanoid, dragon…" },
@@ -683,6 +718,7 @@ window.CatalogueConfigs = {
     defaults: {
       name: "Unnamed monster",
       portrait: "",
+      tokenImage: "",
       size: "Medium",
       creatureType: "",
       alignment: "",

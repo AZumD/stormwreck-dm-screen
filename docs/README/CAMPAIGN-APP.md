@@ -35,9 +35,10 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 ## Edit mode
 - Toggle persists via `SectionEditor.setEditMode`
 - Passages come from `SectionEditor.getSections`
-- Add / delete controls only while edit mode is on
+- Delete / Link / inline Edit controls only while edit mode is on
+- **+ Add scene** in the left sidebar is always visible (turns Edit mode on when used)
 - **Link scene** opens the SceneUI connection picker (persists via SceneMeta)
-- Sidebar **groups**: New group, rename/delete group, drag scenes into/out of groups
+- Sidebar **groups**: New group, rename/delete group, drag scenes into/out of groups (edit mode)
 - Sidebar **drag-and-drop** reorders scenes and groups (edit mode only)
 - Passage editor draft is preserved across window `focus` (link-tag `prompt()`), scene-meta refreshes, and soft re-renders
 
@@ -48,7 +49,8 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 | `renderPlayScene` | Focused scene runtime |
 | `renderScrollDocument` | Document HTML + scene extras |
 | `jumpToSection` | Play focus or document scroll |
-| `addPassage` / `deletePassage` | Create / remove passages |
-| `buildNav` / `buildNavItems` / `bindNavDragReorder` | Sidebar list, groups, edit-mode DnD |
+| `addPassage` / `deletePassage` | Create / remove passages (`addPassage` enables edit mode) |
+| `ensureEditMode` | Turn on edit mode + sync chrome when adding from Play |
+| `buildNav` / `buildNavItems` / `bindNavDragReorder` | Sidebar list, groups, always-on Add scene, edit-mode DnD |
 | `openSectionEditor` | Inline title/content editor |
 | `bindCatalogueSearch` | Live catalogue dropdown → entity modal |

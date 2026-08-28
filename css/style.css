@@ -3532,6 +3532,66 @@ body[data-map-collapsed="true"] .map-panel {
 .map-pin--item { background: var(--entity-item); }
 .map-pin--monster { background: var(--entity-monster); }
 
+.map-grid-token {
+  position: absolute;
+  padding: 0;
+  border: 2px solid rgba(10, 14, 20, 0.88);
+  border-radius: 4px;
+  cursor: grab;
+  pointer-events: auto;
+  transform: scale(var(--map-pin-scale, 1));
+  transform-origin: center center;
+  box-sizing: border-box;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+  background: rgba(18, 24, 32, 0.55);
+  overflow: hidden;
+}
+.map-grid-token--round {
+  border-radius: 50%;
+}
+.map-grid-token:hover,
+.map-grid-token:focus-visible {
+  z-index: 2;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.map-grid-token.is-selected {
+  box-shadow: 0 0 0 3px #e8c86a, 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.map-grid-token__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #f3eee2;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+.map-grid-token__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+.map-grid-token--has-img {
+  background: rgba(10, 14, 20, 0.25);
+}
+.map-grid-token--has-img.map-grid-token--round {
+  overflow: hidden;
+}
+.map-grid-token--pc { border-color: var(--accent); background: rgba(74, 144, 226, 0.35); }
+.map-grid-token--npc { border-color: var(--entity-npc); background: rgba(155, 89, 182, 0.35); }
+.map-grid-token--monster { border-color: var(--entity-monster); background: rgba(192, 57, 43, 0.35); }
+.map-grid-token--item { border-color: var(--entity-item); background: rgba(241, 196, 15, 0.25); }
+.map-grid-token--poi { border-color: var(--entity-location); background: rgba(46, 204, 113, 0.25); }
+
 .map-pin.is-selected {
   box-shadow: 0 0 0 3px #e8c86a, 0 2px 8px rgba(0, 0, 0, 0.5);
   z-index: 2;

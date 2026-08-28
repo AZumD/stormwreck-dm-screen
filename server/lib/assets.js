@@ -40,7 +40,9 @@ const MIME_BY_EXT = {
 
 function fieldToKind(field) {
   const f = assertAssetField(field);
-  return f === "mapImage" ? "maps" : "portraits";
+  if (f === "mapImage") return "maps";
+  if (f === "tokenImage") return "tokens";
+  return "portraits";
 }
 
 function assetDir(kind, type) {

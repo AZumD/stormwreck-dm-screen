@@ -33,7 +33,7 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 - NPC: campaign memory enricher still attaches below combat reference
 
 ## Monster spawn
-`MapPanel` “Add monster” spawns a compact **map pin dot** (same size as PC/NPC pins) on calibrated maps via `MapSpatial.spawnMonsterToken` and `CombatSheetModal.buildMonsterToken` (one-time HP/AC copy). Generic **+ Token** markers stay as larger labelled tokens.
+`MapPanel` “Add monster” spawns a **grid-sized combat token** on calibrated maps via `MapSpatial.spawnMonsterToken` and `CombatSheetModal.buildMonsterToken` (one-time HP/AC copy + `gridCells` from monster catalogue **Size**). Generic **+ Token** markers stay as larger labelled tokens unless given `gridCells`.
 
 `EntityRegistry.byType` dedupes alias keys so add-monster / add-NPC pickers list each catalogue entry once.
 

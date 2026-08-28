@@ -9,7 +9,7 @@ window.CatalogueImages = (function () {
   const DB_VERSION = 1;
   const STORE = "images";
   const MARKER = "__idb__";
-  const IMAGE_FIELDS = ["portrait", "mapImage"];
+  const IMAGE_FIELDS = ["portrait", "mapImage", "tokenImage"];
 
   const memory = new Map();
   let dbPromise = null;
@@ -125,7 +125,9 @@ window.CatalogueImages = (function () {
       if (isDataUrl(dataUrl)) {
         putMemory(type, entryId, field, dataUrl);
         const result = await LocalApiClient.putCatalogueAsset(type, entryId, field, dataUrl);
-        const url = result.url || `/api/assets/${field === "mapImage" ? "maps" : "portraits"}/${type}/${entryId}`;
+        const url =
+          result.url ||
+          `/api/assets/${field === "mapImage" ? "maps" : field === "tokenImage" ? "tokens" : "portraits"}/${type}/${entryId}`;
         putMemory(type, entryId, field, url);
         return url;
       }

@@ -33,7 +33,7 @@ const CAMPAIGN_DOC_KINDS = Object.freeze([
   "music-mixer"
 ]);
 
-const ASSET_KINDS = Object.freeze(["portraits", "maps"]);
+const ASSET_KINDS = Object.freeze(["portraits", "maps", "tokens"]);
 
 const ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 
@@ -89,7 +89,7 @@ function assertAssetKind(kind) {
 
 function assertAssetField(field) {
   const f = String(field || "").trim();
-  if (f !== "portrait" && f !== "mapImage") {
+  if (f !== "portrait" && f !== "mapImage" && f !== "tokenImage") {
     const err = new Error(`Unknown asset field: ${f}`);
     err.status = 400;
     throw err;

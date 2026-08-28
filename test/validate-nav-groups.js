@@ -31,7 +31,8 @@ const i18n = fs.readFileSync(path.join(root, "js/i18n/en.js"), "utf8");
   "addNavGroup",
   "nav-group-collapsed",
   "moveScene",
-  "reorderGroups"
+  "reorderGroups",
+  "nav-add-scene"
 ].forEach((token) => {
   if (!app.includes(token)) fail(`campaign-app missing ${token}`);
   else pass(`campaign-app has ${token}`);

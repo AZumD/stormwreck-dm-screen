@@ -372,7 +372,7 @@ window.MapPanel = (function () {
     function canStartPan(e) {
       if (zoom <= 1.01) return false;
       if (e.button != null && e.button !== 0) return false;
-      if (e.target.closest?.(".map-pin, .map-token")) return false;
+      if (e.target.closest?.(".map-pin, .map-token, .map-grid-token")) return false;
       if (document.getElementById("map-measure-btn")?.getAttribute("aria-pressed") === "true") return false;
       return true;
     }
@@ -951,8 +951,26 @@ window.MapPanel = (function () {
 
         const rect = mapWorld.getBoundingClientRect();
         if (!rect.width || !rect.height) return;
-        const x = clamp(((e.clientX - rect.left) / rect.width) * 100, 1, 99);
-        const y = clamp(((e.clientY - rect.top) / rect.height) * 100, 1, 99);
+        let x = clamp(((e.clientX - rect.left) / rect.width) * 100, 1, 99);
+        let y = clamp(((e.clientY - rect.top) / rect.height) * 100, 1, 99);
+        const map = maps[activeMapId];
+        const snapOn = document.getElementById("map-snap-measure")?.checked;
+        if (
+          snapOn &&
+          window.MapTokenSize?.isCalibratedMap?.(map) &&
+          window.MapDistance?.percentToWorld &&
+          window.MapDistance?.worldToPercent
+        ) {
+          const world = MapDistance.percentToWorld(x, y, map);
+          if (world) {
+            const snapped = { x: Math.round(world.x), y: Math.round(world.y) };
+            const pct = MapDistance.worldToPercent(snapped.x, snapped.y, map);
+            if (pct) {
+              x = clamp(pct.x, 1, 99);
+              y = clamp(pct.y, 1, 99);
+            }
+          }
+        }
         btn.style.left = `${x}%`;
         btn.style.top = `${y}%`;
         btn.dataset.dragX = String(x);
@@ -1000,19 +1018,40 @@ window.MapPanel = (function () {
     }
 
     function renderPins() {
+      const map = maps[activeMapId];
+      const calibrated = window.MapTokenSize?.isCalibratedMap?.(map);
       const pins = getAllPins().filter((p) => filters[p.pinType] !== false);
       pinsLayer.innerHTML = pins
-        .map(
-          (pin) => `
-        <button type="button" class="map-pin map-pin--${pin.pinType}${pin.custom ? " map-pin--custom" : ""}"
+        .map((pin) => {
+          const label = getPinLabel(pin);
+          if (calibrated && window.MapTokenSize) {
+            const sizeInfo = MapTokenSize.resolvePinSize(pin, { map });
+            if (sizeInfo?.span) {
+              const pos = { left: `${pin.x}%`, top: `${pin.y}%` };
+              const style = MapTokenSize.gridTokenStyle(pos, sizeInfo.span);
+              const roundClass = sizeInfo.gridCells === 1 ? " map-grid-token--round" : "";
+              const title = `${label} (${sizeInfo.dndSize})`;
+              const imgAttr = MapTokenSize.tokenBackgroundAttr(sizeInfo.tokenUrl);
+              const hasImg = !!sizeInfo.tokenUrl;
+              const inner = hasImg
+                ? `<span class="map-grid-token__img"${imgAttr} aria-hidden="true"></span>`
+                : "";
+              return `<button type="button" class="map-grid-token map-grid-token--${pin.pinType}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${pin.custom ? " map-grid-token--custom" : ""}"
+          style="${style}"
+          data-pin-id="${escape(pin.id)}"
+          title="${escape(title)} · drag to move"
+          aria-label="${escape(title)}">${inner}</button>`;
+            }
+          }
+          return `<button type="button" class="map-pin map-pin--${pin.pinType}${pin.custom ? " map-pin--custom" : ""}"
           style="left:${pin.x}%;top:${pin.y}%"
           data-pin-id="${escape(pin.id)}"
           title="Drag to move · click for details"
-          aria-label="${escape(getPinLabel(pin))}"></button>`
-        )
+          aria-label="${escape(label)}"></button>`;
+        })
         .join("");
 
-      pinsLayer.querySelectorAll(".map-pin").forEach((btn) => {
+      pinsLayer.querySelectorAll("[data-pin-id]").forEach((btn) => {
         const pin = getAllPins().find((p) => p.id === btn.dataset.pinId);
         if (!pin) return;
         bindPinDrag(btn, pin);

@@ -777,6 +777,10 @@ window.CombatSheetModal = (function () {
   /** One-time HP/AC copy from monster catalogue → map combat token. */
   function buildMonsterToken(entry, pos) {
     const hp = parseHpBlob(entry?.hp);
+    const sizeMeta = window.MapTokenSize?.resolveGridCells?.("monster", entry) || {
+      dndSize: entry?.size || "Medium",
+      gridCells: 1
+    };
     return {
       id: `tok-mon-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
       label: entry?.name || "Monster",
@@ -785,9 +789,11 @@ window.CombatSheetModal = (function () {
       catalogueId: entry?.id || null,
       x: pos?.x ?? 0,
       y: pos?.y ?? 0,
+      dndSize: sizeMeta.dndSize,
+      gridCells: sizeMeta.gridCells,
       size: 1,
       visible: true,
-      imageUrl: entry?.portrait || null,
+      imageUrl: entry?.tokenImage || null,
       hpCurrent: hp.current,
       hpMax: hp.max,
       ac: parseAc(entry?.ac),

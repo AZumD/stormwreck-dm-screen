@@ -342,7 +342,12 @@ window.CatalogueApp = (function () {
     }
     if (field.type === "image") {
       const isPortrait = field.kind === "portrait" || field.id === "portrait";
-      const cls = isPortrait ? "cat-wiki__media cat-wiki__media--portrait" : "cat-wiki__media cat-wiki__media--map";
+      const isToken = field.kind === "token" || field.id === "tokenImage";
+      const cls = isToken
+        ? "cat-wiki__media cat-wiki__media--token"
+        : isPortrait
+          ? "cat-wiki__media cat-wiki__media--portrait"
+          : "cat-wiki__media cat-wiki__media--map";
       return `<img class="${cls}" src="${value}" alt="${escapeHtml(field.label || "")}" loading="lazy">`;
     }
     if (field.type === "list") {
@@ -630,15 +635,22 @@ window.CatalogueApp = (function () {
 
   function renderImageField(field, value) {
     const isPortrait = field.kind === "portrait" || field.id === "portrait";
-    const previewClass = isPortrait ? "cat-portrait-preview" : "cat-map-preview";
-    const emptyText = field.emptyLabel || (isPortrait ? "No portrait uploaded" : "No map uploaded");
-    const uploadLabel = field.uploadLabel || (isPortrait ? "Upload portrait" : "Upload map");
-    const clearLabel = field.clearLabel || (isPortrait ? "Remove portrait" : "Remove map");
+    const isToken = field.kind === "token" || field.id === "tokenImage";
+    const previewClass = isToken
+      ? "cat-token-preview"
+      : isPortrait
+        ? "cat-portrait-preview"
+        : "cat-map-preview";
+    const emptyText = field.emptyLabel || (isToken ? "No token uploaded" : isPortrait ? "No portrait uploaded" : "No map uploaded");
+    const uploadLabel = field.uploadLabel || (isToken ? "Upload token" : isPortrait ? "Upload portrait" : "Upload map");
+    const clearLabel = field.clearLabel || (isToken ? "Remove token" : isPortrait ? "Remove portrait" : "Remove map");
     const hint =
       field.hint ||
-      (isPortrait
-        ? "Portraits are saved under /data with your catalogue entries. Large files are resized automatically."
-        : "Maps are saved under /data with your catalogue entries. Large files are resized automatically.");
+      (isToken
+        ? "Map tokens are saved under /data and scaled to creature size on the grid."
+        : isPortrait
+          ? "Portraits are saved under /data with your catalogue entries. Large files are resized automatically."
+          : "Maps are saved under /data with your catalogue entries. Large files are resized automatically.");
 
     const preview = value
       ? `<img class="${previewClass}" src="${value}" alt="${escapeHtml(field.label || "Preview")}">`
@@ -646,8 +658,9 @@ window.CatalogueApp = (function () {
 
     /* Keep data URL off the attribute when huge — stash via data-has-image + JS on bind */
     const hasImage = !!value;
+    const fieldModifier = isToken ? " cat-image-field--token" : isPortrait ? " cat-image-field--portrait" : "";
     return `
-      <div class="cat-image-field${isPortrait ? " cat-image-field--portrait" : ""}" data-image-field="${field.id}">
+      <div class="cat-image-field${fieldModifier}" data-image-field="${field.id}">
         <input type="hidden" name="${field.id}" data-image-value="${field.id}" value="" data-has-image="${hasImage ? "1" : "0"}">
         ${preview}
         <div class="cat-image-actions">
@@ -890,9 +903,10 @@ window.CatalogueApp = (function () {
   /** Resize/compress large photos; IndexedDB allows much bigger final sizes */
   function compressImageFile(file, field) {
     const isPortrait = field?.kind === "portrait" || field?.id === "portrait";
-    const maxChars = isPortrait ? MAX_PORTRAIT_CHARS : MAX_MAP_CHARS;
-    const maxWidth = isPortrait ? 1800 : 3200;
-    const maxHeight = isPortrait ? 1800 : 3200;
+    const isToken = field?.kind === "token" || field?.id === "tokenImage";
+    const maxChars = isToken ? MAX_PORTRAIT_CHARS : isPortrait ? MAX_PORTRAIT_CHARS : MAX_MAP_CHARS;
+    const maxWidth = isToken ? 1024 : isPortrait ? 1800 : 3200;
+    const maxHeight = isToken ? 1024 : isPortrait ? 1800 : 3200;
 
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);

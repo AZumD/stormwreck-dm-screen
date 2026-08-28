@@ -25,7 +25,10 @@ Falls back to injecting chrome if older pages lack the slots.
 Snap measure (Map settings) applies to both preview and final distance when checked.
 
 ## Monster combat tokens
-`bind()` returns `spawnMonsterToken(entry)` — copies HP/AC once from the monster catalogue via `CombatSheetModal.buildMonsterToken`. Monsters render as compact **map pin dots** (same footprint as PC/NPC). Click opens the combat sheet (with **Remove from map**); Shift-click selects for distance; right-click also removes.
+`bind()` returns `spawnMonsterToken(entry)` — copies HP/AC once from the monster catalogue via `CombatSheetModal.buildMonsterToken`. Tokens render as **grid-aligned squares** sized from the creature's D&D **Size** (`MapTokenSize`: Tiny/S/M = 1×1, Large = 2×2, Huge = 3×3, Gargantuan = 4×4). Click opens the combat sheet (with **Remove from map**); Shift-click selects for distance; right-click also removes. Drag snaps to cell centers when **Snap measure** is on.
+
+## PC / NPC pins (calibrated maps)
+Wiki pins on UVTT maps use the same grid footprint. NPC size resolves from monster catalogue name match on `race`, then race catalogue, then built-in defaults (e.g. kobold → Small). See `docs/README/MAP-TOKEN-SIZE.md`.
 
 ## API
 `loadCalibratedMaps(campaignId)` (legacy campaign-maps list), `summaryToMapDef(summary)`, `bind(ctx)`, `attachChrome(panelBody)`, `ensureLayers(mapWorld)`

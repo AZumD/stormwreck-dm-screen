@@ -680,6 +680,7 @@ function createApiRoutes() {
       }
       const removed = await catalogues.remove(type, id);
       await assets.deleteAsset("portraits", type, id).catch(() => false);
+      await assets.deleteAsset("tokens", type, id).catch(() => false);
       await assets.deleteAsset("maps", type, id).catch(() => false);
       sendJson(res, 200, { ok: true, removed });
     }),

@@ -26,8 +26,9 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 - Optional grid overlay, measure tool, editable ft/grid on calibrated maps
 - DM tokens (world coordinates); select two for distance
 - **Add monster** places a **combat token** (independent HP/AC), not a wiki pin — requires a calibrated map
+- PC / NPC pins on calibrated maps are **grid-sized** from catalogue size (NPC race → creature catalogue lookup)
 - PC / NPC pin clicks open the **combat sheet**; POI / item / freeform still use the wiki modal
-- See `docs/README/UVTT.md`, `docs/README/MAP-SPATIAL.md`, and `docs/README/COMBAT-SHEET-MODAL.md`
+- See `docs/README/UVTT.md`, `docs/README/MAP-SPATIAL.md`, `docs/README/MAP-TOKEN-SIZE.md`, and `docs/README/COMBAT-SHEET-MODAL.md`
 
 ## Pin persistence
 | Key | Contents |

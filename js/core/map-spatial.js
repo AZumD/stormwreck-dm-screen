@@ -285,6 +285,34 @@ window.MapSpatial = (function () {
       return `${t.label || "Monster"} · HP ${hp} · AC ${t.ac ?? "?"}`;
     }
 
+    function snapWorld(world, map) {
+      if (!world || !map?.grid || !els.snap?.checked) return world;
+      return { x: Math.round(world.x), y: Math.round(world.y) };
+    }
+
+    function renderGridToken(t, map, pos, sel, extraClass, title, labelHtml) {
+      const MTS = window.MapTokenSize;
+      const cells =
+        Number(t.gridCells) ||
+        MTS?.dndSizeToGridCells?.(t.dndSize || t.catalogueSize) ||
+        1;
+      const span = MTS?.cellSpanPercent?.(cells, map) || { w: 2, h: 2, cells: 1 };
+      const style = MTS?.gridTokenStyle?.(pos, span) || `left:${pos.left};top:${pos.top}`;
+      const roundClass = span.cells === 1 ? " map-grid-token--round" : "";
+      const imgUrl = t.imageUrl || t.tokenImage || null;
+      const imgAttr = MTS?.tokenBackgroundAttr?.(imgUrl) || "";
+      const hasImg = !!imgUrl;
+      const inner =
+        labelHtml != null
+          ? labelHtml
+          : hasImg
+            ? `<span class="map-grid-token__img"${imgAttr} aria-hidden="true"></span>`
+            : `<span class="map-grid-token__label">${escape((t.label || "?").slice(0, 2))}</span>`;
+      return `<button type="button" class="map-grid-token${extraClass}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${sel}" data-token-id="${escape(t.id)}"
+            style="${style}"
+            title="${escape(title)}" aria-label="${escape(title)}">${inner}</button>`;
+    }
+
     function renderTokens(map) {
       const el = layers.tokens;
       if (!el) return;
@@ -298,9 +326,19 @@ window.MapSpatial = (function () {
           const pos = worldToStyle(t.x, t.y, map);
           const sel = selectedTokenIds.includes(t.id) ? " is-selected" : "";
           if (t.kind === "monster") {
-            return `<button type="button" class="map-pin map-pin--monster${sel}" data-token-id="${escape(t.id)}"
-            style="left:${pos.left};top:${pos.top}"
-            title="${escape(tokenTitle(t))}" aria-label="${escape(tokenTitle(t))}"></button>`;
+            return renderGridToken(
+              t,
+              map,
+              pos,
+              sel,
+              " map-grid-token--monster",
+              tokenTitle(t),
+              ""
+            );
+          }
+          const cells = Number(t.gridCells);
+          if (cells > 0) {
+            return renderGridToken(t, map, pos, sel, "", t.label || t.id, null);
           }
           const size = Math.max(0.5, Number(t.size) || 1);
           return `<button type="button" class="map-token${sel}" data-token-id="${escape(t.id)}"
@@ -323,8 +361,9 @@ window.MapSpatial = (function () {
         btn.addEventListener("pointermove", (e) => {
           if (!dragging) return;
           moved = true;
-          const world = clientToWorld(e.clientX, e.clientY, map);
+          let world = clientToWorld(e.clientX, e.clientY, map);
           if (!world) return;
+          world = snapWorld(world, map);
           const next = tokensForMap(map.id).map((t) =>
             t.id === id ? { ...t, x: world.x, y: world.y } : t
           );
@@ -564,7 +603,7 @@ window.MapSpatial = (function () {
 
     mapViewport?.addEventListener("pointerdown", (e) => {
       if (!measuring) return;
-      if (e.target.closest?.(".map-token, .map-pin")) return;
+      if (e.target.closest?.(".map-token, .map-pin, .map-grid-token")) return;
       const map = activeMap();
       if (!isCalibrated(map)) return;
       const world = clientToWorld(e.clientX, e.clientY, map);

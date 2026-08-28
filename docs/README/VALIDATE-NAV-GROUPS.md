@@ -11,7 +11,9 @@ node test/validate-nav-groups.js
 Included in `npm test`.
 
 ## Covers
-- `buildNavItems` / `nav-scene-group` / collapse key in `campaign-app.js`
+- `buildNavItems` / `nav-scene-group` / `nav-add-scene` / collapse key in `campaign-app.js`
 - Group chrome styles
 - `addGroup` / delete confirm strings
 - Runtime: `groupId` on `getSections`, reject unknown groups, strip on load
+
+Related: `test/validate-add-scene-nav.js` asserts Add scene stays outside edit-mode-only gating.

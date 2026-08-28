@@ -46,14 +46,16 @@ Booklet `ADVENTURE.sections` is **reference only**. On first bootstrap with a le
 | `isEditMode` / `setEditMode` | Edit mode flag |
 
 ## UI (campaign-app)
-In **Edit mode**:
-- **Edit** / **Link scene** / **Delete** on each passage
-- **+ New group** / **+ Add passage** in sidebar
-- **Drag** scenes onto groups / other scenes to reorder and regroup
-- **Drag** group headers to reorder groups
-- Rename / delete group from the group summary (delete keeps scenes)
-- Collapse open/closed state: `{campaignId}-nav-group-collapsed`
-- Group **drag handle** (grip on the left of the header) reorders groups; drop onto another group or the bottom add rows
-- Passage editor toolbar: Read aloud / DM note / Collapse / Bold / entity links / YouTube
+- Sidebar **+ Add scene** is always visible (not gated on Edit mode); clicking it enables Edit mode, prompts for a title, appends via `addSection`, and opens the passage editor
+- In **Edit mode**:
+  - **Edit** / **Link scene** / **Delete** on each passage
+  - **+ New group** in sidebar (plus drag reorder/regroup)
+  - **Drag** scenes onto groups / other scenes to reorder and regroup
+  - **Drag** group headers to reorder groups
+  - Rename / delete group from the group summary (delete keeps scenes)
+  - Collapse open/closed state: `{campaignId}-nav-group-collapsed`
+  - Group **drag handle** (grip on the left of the header) reorders groups; drop onto another group or the bottom add rows
+  - Passage editor toolbar: Read aloud / DM note / Collapse / Bold / entity links / YouTube
+  - Document-view **+ Add passage** rows between scenes (same `addPassage` path)
 
 No custom vs booklet badges, Reset, or restore-deleted UI.

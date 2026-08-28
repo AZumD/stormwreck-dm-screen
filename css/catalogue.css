@@ -835,6 +835,40 @@
   color: var(--landing-muted);
 }
 
+.cat-token-preview {
+  width: 128px;
+  height: 128px;
+  max-width: 100%;
+  object-fit: cover;
+  border: 2px solid rgba(196, 160, 53, 0.45);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.25);
+  image-rendering: auto;
+}
+
+.cat-token-preview--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--landing-muted);
+  border: 1px dashed var(--landing-border);
+  border-radius: var(--radius-sm);
+}
+
+.cat-wiki__media--token {
+  width: 128px;
+  height: 128px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+
 .cat-image-field--portrait .cat-portrait-preview--empty {
   width: 160px;
 }

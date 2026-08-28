@@ -10,8 +10,12 @@ Persists catalogue portrait / map images **on disk under `/data/assets`**, the s
 | Piece | Storage (server running) | Offline fallback |
 |-------|--------------------------|------------------|
 | Entry metadata | `data/catalogues/<type>/<id>.json` | `localStorage` `catalogue-{type}` |
-| Image bytes | `data/assets/{portraits\|maps}/<type>/<id>.<ext>` | IndexedDB `stormwreck-catalogue-images` |
+| Portrait bytes | `data/assets/portraits/<type>/<id>.<ext>` | IndexedDB |
+| **Map token** bytes | `data/assets/tokens/<type>/<id>.<ext>` | IndexedDB |
+| Map image bytes | `data/assets/maps/<type>/<id>.<ext>` | IndexedDB |
 | Pointer in entry | `/api/assets/…` URL (upload returns `?v=<mtimeMs>` for CDN cache busting) | `"__idb__"` marker |
+
+Fields: `portrait`, `tokenImage` (PC/NPC/monster map tokens), `mapImage` (locations).
 
 ## API
 | Method | Role |

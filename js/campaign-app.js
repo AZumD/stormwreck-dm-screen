@@ -526,7 +526,7 @@
       ? sections.find((s) => s.id === activeId)?.groupId || null
       : null;
 
-    if (!sections.length && !groups.length && editMode) {
+    if (!sections.length && !groups.length) {
       const li = document.createElement("li");
       li.className = "nav-empty-hint";
       li.textContent = t.noScenesHint || "No scenes yet — add one below.";
@@ -555,17 +555,18 @@
       addGroupBtn.addEventListener("click", () => addNavGroup());
       addGroupLi.appendChild(addGroupBtn);
       sectionNav.appendChild(addGroupLi);
-
-      const addLi = document.createElement("li");
-      addLi.className = "nav-add-scene";
-      const addBtn = document.createElement("button");
-      addBtn.type = "button";
-      addBtn.className = "nav-btn nav-add-scene-btn";
-      addBtn.textContent = `+ ${t.addPassage || "Add passage"}`;
-      addBtn.addEventListener("click", () => addPassage(null));
-      addLi.appendChild(addBtn);
-      sectionNav.appendChild(addLi);
     }
+
+    const addLi = document.createElement("li");
+    addLi.className = "nav-add-scene";
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "nav-btn nav-add-scene-btn";
+    addBtn.textContent = `+ ${t.addScene || t.addPassage || "Add scene"}`;
+    addBtn.title = t.addSceneHint || t.addScene || "Add a new scene";
+    addBtn.addEventListener("click", () => addPassage(null));
+    addLi.appendChild(addBtn);
+    sectionNav.appendChild(addLi);
   }
 
   function clearNavDropTargets() {
@@ -900,10 +901,18 @@
     });
   }
 
+  function ensureEditMode() {
+    if (SectionEditor.isEditMode()) return;
+    SectionEditor.setEditMode(true);
+    syncEditModeUI();
+  }
+
   function addPassage(afterId) {
     const title = prompt(t.newPassagePrompt, t.newPassageDefaultTitle);
     if (title == null) return;
     const trimmed = title.trim() || t.newPassageDefaultTitle;
+
+    ensureEditMode();
 
     const created = SectionEditor.addSection(campaignId, {
       afterId: afterId || null,

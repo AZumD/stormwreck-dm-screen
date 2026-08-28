@@ -50,7 +50,8 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 
 ## Campaign editing
 - **Edit mode** edits passage title/body; **drag** sidebar scenes to reorder or into groups
-- **Add passage** / **New group** — free-form ordered scenes + one-level sidebar folders
+- **+ Add scene** in the left sidebar is always available (turns Edit mode on); Document view also has **Add passage** rows while editing
+- **New group** — one-level sidebar folders (edit mode)
 - **Delete** removes a scene from the list (same for every scene); deleting a group only ungroups
 - Booklet `adventure.js` is reference only — not merged as live seed content after migrate
 - **YouTube** chips via `{{youtube:url|Label}}` layer in the sticky media bar (multi-track)
@@ -63,6 +64,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Upload maps / UVTT in Location catalogue; add/remove locations in campaign **Locations** panel
 - Static pin definitions remain in `js/campaigns/*/maps.js` keyed by `locationId`
 - Drag pins to save custom positions in `map-state.json`
+- **Grid token sizes** on calibrated maps follow D&D Size (Tiny/S/M = 1 cell, Large = 2×2, etc.); NPC race resolves via monster catalogue name match
 - Mouse-wheel zoom / pan when zoomed (default cursor until dragging; measure shows a live tape line)
 - **+** under the map adds NPC / item / PC pins; **monster** places a combat token (instance HP/AC) on calibrated maps
 - Party cards and PC/NPC map pins open the shared **combat sheet** (`CombatSheetModal`) — PCs via Postgres, NPCs via catalogue, monsters via map tokens only
@@ -102,6 +104,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/campaign-locations-ui.js` | Locations panel add/remove UI |
 | `js/core/campaign-map-state.js` | Map rail persistence + partial `PATCH` to `map-state` |
 | `js/core/map-panel.js` | Map rail tabs, pins, expand mode, Layers popover |
+| `js/core/map-token-size.js` | D&D size → grid token footprint; NPC race → creature lookup |
 | `js/core/map-spatial.js` | UVTT/calibrated measure, grid, tokens, import chrome |
 | `js/core/combat-sheet-modal.js` | Live HP/AC/conditions; initiative → `initiativeTracker` |
 | `docs/CLIENT-ARCHITECTURE.md` | Server-canonical multi-client contract (browser DM/player + native TUI) |
@@ -130,5 +133,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-map-aspect`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, `validate-tui-lookup`, `validate-tui-functionality`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-map-aspect`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, `validate-add-scene-nav`, `validate-tui-lookup`, `validate-tui-functionality`, …); browser smoke HTML under `test/`.
 

@@ -107,3 +107,6 @@
 [2026-08-27] TUI Ctrl+K master lookup: search all catalogues from anywhere. See tui/internal/ui/catalogue.go, test/validate-tui-lookup.js
 [2026-08-27] TUI functionality pass: scene edit/switch/notes, clock, sheet rows, adjust keys, quick notes. See tui/internal/ui/scene_overlays.go, test/validate-tui-functionality.js
 [2026-08-27] PATCH /api/campaigns/:id/scenes/:sceneId via scene-mutate.js (content + status/notes). See docs/README/SCENE-MUTATE.md
+[2026-08-27] Campaign sidebar always shows + Add scene (enables Edit mode on use). See js/campaign-app.js, test/validate-add-scene-nav.js
+[2026-08-28] Map tokens grid-locked to D&D Size (NPC race -> monster catalogue); MapTokenSize module. See js/core/map-token-size.js, map-spatial.js, map-panel.js
+[2026-08-28] Map token image upload on PC/NPC/monster catalogues (tokenImage -> /data/assets/tokens). See js/core/catalogue/configs.js, map-token-size.js, map-panel.js
