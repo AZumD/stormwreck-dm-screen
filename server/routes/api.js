@@ -9,6 +9,7 @@ const assets = require("../lib/assets");
 const db = require("../lib/db");
 const characters = require("../lib/characters");
 const player = require("../lib/player");
+const playerMap = require("../lib/player-map");
 const auth = require("../lib/auth");
 const authorize = require("../lib/authorize");
 const catalogueLocationMaps = require("../lib/catalogue-location-maps");
@@ -421,6 +422,44 @@ function createApiRoutes() {
       const result = await player.deleteNote(req, p.noteId);
       sendJson(res, 200, { ok: true, ...result });
     }),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/map-view$/,
+      ["id"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+        const characterId = assertSafeId(url.searchParams.get("characterId") || "", "character id");
+        const view = await playerMap.getPlayerMapView(req, id, characterId);
+        sendJson(res, 200, { ok: true, view });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/maps\/([^/]+)\/image$/,
+      ["id", "mapId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const mapId = assertSafeId(p.mapId, "map id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const qs = new URL(req.url, "http://local").searchParams;
+        const characterId = assertSafeId(qs.get("characterId") || "", "character id");
+        const asset = await playerMap.streamPlayerMapImage(req, id, mapId, characterId);
+        res.writeHead(200, {
+          "Content-Type": asset.mime,
+          "Cache-Control": "private, max-age=60, must-revalidate",
+          "Content-Length": asset.buffer.length
+        });
+        res.end(asset.buffer);
+      }
+    ),
 
     route(
       "GET",

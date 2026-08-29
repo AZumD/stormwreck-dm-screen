@@ -15,6 +15,7 @@ Document: `map-state.json`
 | `filters` | Pin type visibility |
 | `pinPositions` / `partyPositions` / `customPins` | Legacy % pins |
 | `tokens` | `{ [mapId]: Token[] }` world-space DM tokens |
+| `fog` | `{ [mapId]: { enabled, revision, revealedAll, strokes: { [id]: Stroke } } }` manual fog |
 | `initiativeTracker` | Canonical combatant initiative map (shared table state) |
 
 ## Persistence

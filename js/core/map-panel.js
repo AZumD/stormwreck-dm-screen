@@ -653,9 +653,20 @@ window.MapPanel = (function () {
 
     function persistPinPosition(pin, x, y) {
       if (pin.partyId) {
-        const partySaved = loadPartyPositions(campaignId);
-        partySaved[pin.partyId] = { mapId: activeMapId, x, y };
-        savePartyPositions(campaignId, partySaved);
+        if (window.MapPcPlacement?.placePcOnMap) {
+          const map = maps[activeMapId];
+          MapPcPlacement.placePcOnMap(campaignId, {
+            partyId: pin.partyId,
+            mapId: activeMapId,
+            map,
+            percent: { x, y }
+          });
+          spatialApi?.refreshTokens?.();
+        } else {
+          const partySaved = loadPartyPositions(campaignId);
+          partySaved[pin.partyId] = { mapId: activeMapId, x, y };
+          savePartyPositions(campaignId, partySaved);
+        }
         return;
       }
 
@@ -953,25 +964,27 @@ window.MapPanel = (function () {
           window.alert(spawn?.error || "Could not place combat token.");
           return;
         }
-        if (pinType === "pc" && choice.partyId && spawn.token) {
-          const partySaved = loadPartyPositions(campaignId);
-          const world = { x: spawn.token.x, y: spawn.token.y };
-          const pct = window.MapDistance?.worldToPercent?.(world.x, world.y, map);
-          if (pct) {
-            partySaved[choice.partyId] = { mapId: activeMapId, x: pct.x, y: pct.y };
-            savePartyPositions(campaignId, partySaved);
-          }
-        }
         return;
       }
 
       const spot = nextFreeSpot();
 
       if (pinType === "pc" && choice.partyId) {
-        const partySaved = loadPartyPositions(campaignId);
-        partySaved[choice.partyId] = { mapId: activeMapId, x: spot.x, y: spot.y };
-        savePartyPositions(campaignId, partySaved);
+        if (window.MapPcPlacement?.placePcOnMap) {
+          MapPcPlacement.placePcOnMap(campaignId, {
+            partyId: choice.partyId,
+            catalogueId: resolveChoiceCatalogueId(pinType, choice),
+            mapId: activeMapId,
+            map,
+            percent: { x: spot.x, y: spot.y }
+          });
+        } else {
+          const partySaved = loadPartyPositions(campaignId);
+          partySaved[choice.partyId] = { mapId: activeMapId, x: spot.x, y: spot.y };
+          savePartyPositions(campaignId, partySaved);
+        }
         renderPins();
+        spatialApi?.refreshTokens?.();
         return;
       }
 

@@ -58,6 +58,7 @@ window.MapSpatial = (function () {
       primary.insertAdjacentHTML(
         "afterbegin",
         `<button type="button" class="map-tool-btn" id="map-measure-btn" aria-pressed="false" hidden>Measure</button>
+         <button type="button" class="map-tool-btn" id="map-fog-btn" aria-pressed="false" hidden>Fog</button>
          <button type="button" class="map-tool-btn" id="map-add-token-btn" hidden>+ Token</button>`
       );
     }
@@ -77,6 +78,17 @@ window.MapSpatial = (function () {
           <label class="map-scale-label">ft/grid
             <input type="number" id="map-scale-input" min="0.1" step="0.5" value="5">
           </label>
+        </div>
+        <div id="map-fog-tools" class="map-fog-tools" hidden>
+          <label class="map-tool-check"><input type="checkbox" id="map-fog-enabled"> Fog enabled</label>
+          <span class="map-fog-modes">
+            <button type="button" class="map-tool-btn map-fog-mode is-active" data-fog-mode="reveal">Reveal</button>
+            <button type="button" class="map-tool-btn map-fog-mode" data-fog-mode="hide">Hide</button>
+          </span>
+          <span class="map-fog-brushes" id="map-fog-brushes"></span>
+          <button type="button" class="map-tool-btn" id="map-fog-undo">Undo</button>
+          <button type="button" class="map-tool-btn" id="map-fog-clear">Hide all</button>
+          <button type="button" class="map-tool-btn" id="map-fog-reveal-all">Reveal all</button>
         </div>
       </div>`;
 
@@ -147,6 +159,9 @@ window.MapSpatial = (function () {
     const layers = ensureLayers(mapWorld);
 
     let measuring = false;
+    let fogging = false;
+    let fogMode = "reveal";
+    let fogBrush = window.MapFog?.BRUSH_PRESETS?.[1] || 0.025;
     let measureStart = null;
     let selectedTokenIds = [];
     let fullMapCache = {};
@@ -159,6 +174,13 @@ window.MapSpatial = (function () {
       snap: document.getElementById("map-snap-measure"),
       measureBtn: document.getElementById("map-measure-btn"),
       addToken: document.getElementById("map-add-token-btn"),
+      fogBtn: document.getElementById("map-fog-btn"),
+      fogTools: document.getElementById("map-fog-tools"),
+      fogEnabled: document.getElementById("map-fog-enabled"),
+      fogBrushes: document.getElementById("map-fog-brushes"),
+      fogUndo: document.getElementById("map-fog-undo"),
+      fogClear: document.getElementById("map-fog-clear"),
+      fogRevealAll: document.getElementById("map-fog-reveal-all"),
       scale: document.getElementById("map-scale-input"),
       measureOut: document.getElementById("map-measure-readout"),
       tokenDist: document.getElementById("map-token-distance")
@@ -450,6 +472,12 @@ window.MapSpatial = (function () {
           } catch {
             /* ignore */
           }
+          if (moved) {
+            const tok = tokensForMap(map.id).find((t) => t.id === id);
+            if (tok?.kind === "pc" && window.MapPcPlacement?.syncTokenDrag) {
+              MapPcPlacement.syncTokenDrag(campaignId, map.id, tok, map);
+            }
+          }
           if (!moved) {
             const tok = tokensForMap(map.id).find((t) => t.id === id);
             if (!e.shiftKey && window.CombatSheetModal?.open) {
@@ -506,13 +534,18 @@ window.MapSpatial = (function () {
           const tok = tokensForMap(map.id).find((t) => t.id === id);
           const label = tok?.label || tok?.id || "this token";
           if (!window.confirm(`Remove “${label}” from this map?`)) return;
-          setTokensForMap(
-            map.id,
-            tokensForMap(map.id).filter((t) => t.id !== id)
-          );
+          if (tok?.kind === "pc" && window.MapPcPlacement?.removePcToken) {
+            MapPcPlacement.removePcToken(campaignId, map.id, tok, map);
+          } else {
+            setTokensForMap(
+              map.id,
+              tokensForMap(map.id).filter((t) => t.id !== id)
+            );
+          }
           selectedTokenIds = selectedTokenIds.filter((x) => x !== id);
           renderTokens(map);
           updateTokenDistance(map);
+          refreshPins?.();
         });
       });
       updateTokenDistance(map);
@@ -575,6 +608,13 @@ window.MapSpatial = (function () {
       }
       if (els.measureBtn) els.measureBtn.hidden = !calibrated;
       if (els.addToken) els.addToken.hidden = !calibrated;
+      if (els.fogBtn) els.fogBtn.hidden = false;
+      if (els.fogTools) els.fogTools.hidden = false;
+      if (window.MapFog) {
+        const fog = MapFog.getFogState(campaignId, map.id);
+        if (els.fogEnabled) els.fogEnabled.checked = Boolean(fog.enabled);
+        MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      }
       if (els.showGrid && detail.display) {
         els.showGrid.checked = Boolean(detail.display.showGrid);
       }
@@ -667,10 +707,99 @@ window.MapSpatial = (function () {
 
     els.measureBtn?.addEventListener("click", () => {
       measuring = !measuring;
+      if (measuring) {
+        fogging = false;
+        els.fogBtn?.classList.remove("is-active");
+        els.fogBtn?.setAttribute("aria-pressed", "false");
+      }
       els.measureBtn.setAttribute("aria-pressed", measuring ? "true" : "false");
       els.measureBtn.classList.toggle("is-active", measuring);
       clearMeasureGraphics();
     });
+
+    if (els.fogBrushes && window.MapFog) {
+      els.fogBrushes.innerHTML = MapFog.BRUSH_PRESETS.map(
+        (r, i) =>
+          `<button type="button" class="map-fog-brush${i === 1 ? " is-active" : ""}" data-fog-brush="${r}" title="Brush ${Math.round(r * 1000) / 10}%">${i + 1}</button>`
+      ).join("");
+    }
+
+    els.fogBtn?.addEventListener("click", () => {
+      fogging = !fogging;
+      if (fogging) {
+        measuring = false;
+        els.measureBtn?.classList.remove("is-active");
+        els.measureBtn?.setAttribute("aria-pressed", "false");
+        clearMeasureGraphics();
+      }
+      els.fogBtn.setAttribute("aria-pressed", fogging ? "true" : "false");
+      els.fogBtn.classList.toggle("is-active", fogging);
+      mapViewport?.classList.toggle("map-viewport--fog-paint", fogging);
+    });
+
+    document.querySelectorAll(".map-fog-mode").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        fogMode = btn.getAttribute("data-fog-mode") === "hide" ? "hide" : "reveal";
+        document.querySelectorAll(".map-fog-mode").forEach((b) => b.classList.toggle("is-active", b === btn));
+      });
+    });
+
+    els.fogBrushes?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-fog-brush]");
+      if (!btn) return;
+      fogBrush = Number(btn.getAttribute("data-fog-brush")) || fogBrush;
+      els.fogBrushes.querySelectorAll(".map-fog-brush").forEach((b) => b.classList.toggle("is-active", b === btn));
+    });
+
+    els.fogEnabled?.addEventListener("change", () => {
+      const map = activeMap();
+      if (!map || !window.MapFog) return;
+      MapFog.setEnabled(campaignId, map.id, els.fogEnabled.checked);
+      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+    });
+
+    els.fogUndo?.addEventListener("click", () => {
+      const map = activeMap();
+      if (!map || !window.MapFog) return;
+      MapFog.undoLastStroke(campaignId, map.id);
+      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+    });
+
+    els.fogClear?.addEventListener("click", () => {
+      const map = activeMap();
+      if (!map || !window.MapFog) return;
+      if (!window.confirm("Reset fog on this map (fully hidden)?")) return;
+      MapFog.clearFog(campaignId, map.id);
+      if (els.fogEnabled) els.fogEnabled.checked = true;
+      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+    });
+
+    els.fogRevealAll?.addEventListener("click", () => {
+      const map = activeMap();
+      if (!map || !window.MapFog) return;
+      MapFog.revealAll(campaignId, map.id);
+      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+    });
+
+    if (window.MapFog) {
+      MapFog.bindDm({
+        campaignId,
+        mapWorld,
+        mapViewport,
+        getActiveMapId,
+        isFogToolActive: () => fogging && Boolean(els.fogEnabled?.checked),
+        getFogMode: () => fogMode,
+        getBrushRadius: () => fogBrush
+      });
+    }
+
+    mapViewport?.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (fogging) e.stopPropagation();
+      },
+      true
+    );
 
     els.addToken?.addEventListener("click", () => {
       const map = activeMap();
@@ -739,6 +868,20 @@ window.MapSpatial = (function () {
       } else if (kind === "pc" && window.CombatSheetModal?.buildPcToken) {
         token = CombatSheetModal.buildPcToken(entry, pos);
         if (token && choice?.partyId) token.partyId = choice.partyId;
+        if (token && window.MapPcPlacement?.placePcOnMap) {
+          const pct = window.MapDistance?.worldToPercent?.(token.x, token.y, map);
+          MapPcPlacement.placePcOnMap(campaignId, {
+            partyId: choice?.partyId,
+            catalogueId: token.catalogueId || entry?.id,
+            mapId: map.id,
+            map,
+            percent: pct,
+            world: { x: token.x, y: token.y },
+            token
+          });
+          renderTokens(map);
+          return { ok: true, token };
+        }
       } else {
         token =
           window.CombatSheetModal?.buildMonsterToken?.(entry, pos) ||

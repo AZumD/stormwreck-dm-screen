@@ -289,11 +289,29 @@
     els.shellTitle.textContent =
       {
         characters: "Character sheet",
+        map: "Map",
         party: "Party",
         people: "People",
         library: "Library",
         notes: "Notes"
       }[state.tab] || "Companion";
+  }
+
+  function renderMapTab() {
+    if (!state.characterId || !window.PlayerMapView) {
+      els.main.innerHTML = `<p class="empty">No character selected.</p>`;
+      return;
+    }
+    els.main.innerHTML = `<div id="player-map-host" class="player-map-host"></div>`;
+    PlayerMapView.mount(document.getElementById("player-map-host"), {
+      campaignId: state.campaignId,
+      characterId: state.characterId,
+      api
+    });
+  }
+
+  function stopMapTab() {
+    if (window.PlayerMapView?.unmount) PlayerMapView.unmount();
   }
 
   function renderSwitcher() {
@@ -982,9 +1000,15 @@
 
   async function render() {
     if (state.tab === "characters") {
+      stopMapTab();
       renderCharacter();
       return;
     }
+    if (state.tab === "map") {
+      renderMapTab();
+      return;
+    }
+    stopMapTab();
     if (state.tab === "party") {
       const data = await safe(() => api.party(state.campaignId));
       if (!data) return;
@@ -1384,7 +1408,8 @@
     if (!btn) return;
     state.characterId = btn.getAttribute("data-character-id");
     renderSwitcher();
-    renderCharacter();
+    if (state.tab === "map") renderMapTab();
+    else renderCharacter();
   });
 
   document.querySelector(".tabs").addEventListener("click", async (e) => {

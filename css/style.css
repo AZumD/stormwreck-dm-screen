@@ -3345,6 +3345,7 @@ body[data-map-collapsed="true"] .map-panel {
 
 .map-grid-overlay,
 .map-measure-layer,
+.map-fog-layer,
 .map-tokens {
   position: absolute;
   inset: 0;
@@ -3352,6 +3353,33 @@ body[data-map-collapsed="true"] .map-panel {
   z-index: 1;
 }
 .map-tokens { z-index: 3; pointer-events: none; }
+.map-fog-layer {
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+}
+.map-fog-layer:not(.map-fog-layer--active) {
+  display: none;
+}
+.map-viewport--fog-paint {
+  cursor: crosshair;
+}
+.map-fog-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+.map-fog-modes,
+.map-fog-brushes {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+.map-fog-brush.is-active,
+.map-fog-mode.is-active {
+  outline: 1px solid var(--accent, #c4a035);
+}
 .map-pins { z-index: 2; }
 .map-measure-layer {
   width: 100%;

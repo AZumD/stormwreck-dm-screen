@@ -78,6 +78,11 @@ window.PlayerApiClient = (function () {
         { dataUrl }
       ),
     party: (campaignId) => request("GET", `/api/player/campaigns/${enc(campaignId)}/party`),
+    mapView: (campaignId, characterId) =>
+      request(
+        "GET",
+        `/api/player/campaigns/${enc(campaignId)}/map-view?characterId=${enc(characterId)}`
+      ),
     catalogue: (campaignId, type, id) =>
       request(
         "GET",

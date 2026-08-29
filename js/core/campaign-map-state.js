@@ -19,6 +19,7 @@ window.CampaignMapState = (function () {
       partyPositions: {},
       customPins: {},
       tokens: {},
+      fog: {},
       initiativeTracker: {}
     };
   }
@@ -76,6 +77,7 @@ window.CampaignMapState = (function () {
       data.partyPositions = JSON.parse(localStorage.getItem(`${campaignId}-party-positions`) || "{}") || {};
       data.customPins = JSON.parse(localStorage.getItem(`${campaignId}-custom-pins`) || "{}") || {};
       data.tokens = JSON.parse(localStorage.getItem(`${campaignId}-map-tokens`) || "{}") || {};
+      data.fog = JSON.parse(localStorage.getItem(`${campaignId}-map-fog`) || "{}") || {};
       data.initiativeTracker =
         JSON.parse(localStorage.getItem(`${campaignId}-initiative-tracker`) || "{}") || {};
     } catch {
@@ -94,6 +96,7 @@ window.CampaignMapState = (function () {
       localStorage.setItem(`${campaignId}-party-positions`, JSON.stringify(data.partyPositions || {}));
       localStorage.setItem(`${campaignId}-custom-pins`, JSON.stringify(data.customPins || {}));
       localStorage.setItem(`${campaignId}-map-tokens`, JSON.stringify(data.tokens || {}));
+      localStorage.setItem(`${campaignId}-map-fog`, JSON.stringify(data.fog || {}));
       localStorage.setItem(
         `${campaignId}-initiative-tracker`,
         JSON.stringify(data.initiativeTracker || {})
@@ -110,6 +113,9 @@ window.CampaignMapState = (function () {
 
   function reconcile(campaignId, doc) {
     mem.set(campaignId, normalize(doc));
+    if (window.MapPcPlacement?.normalizeDuplicates) {
+      MapPcPlacement.normalizeDuplicates(campaignId);
+    }
     window.MapPanel?.refreshInitiative?.();
     return get(campaignId);
   }
@@ -124,12 +130,18 @@ window.CampaignMapState = (function () {
       try {
         const doc = await LocalApiClient.getCampaignDocument(campaignId, "map-state");
         mem.set(campaignId, normalize(doc));
+        if (window.MapPcPlacement?.normalizeDuplicates) {
+          MapPcPlacement.normalizeDuplicates(campaignId);
+        }
         return get(campaignId);
       } catch (err) {
         console.warn("map-state API load failed:", err);
       }
     }
     mem.set(campaignId, loadLocal(campaignId));
+    if (window.MapPcPlacement?.normalizeDuplicates) {
+      MapPcPlacement.normalizeDuplicates(campaignId);
+    }
     return get(campaignId);
   }
 

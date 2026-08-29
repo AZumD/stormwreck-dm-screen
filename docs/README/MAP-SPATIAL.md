@@ -31,6 +31,9 @@ Snap measure (Map settings) applies to both preview and final distance when chec
 - **NPC / PC** — click opens catalogue-backed combat sheet; art prefers own `tokenImage`, else race-bound monster token
 - Shift-click selects for distance; right-click removes; drag snaps to **cell center** when **Snap measure** is on
 
+## Manual fog
+**Fog** tool (primary row) + settings: enable fog, Reveal/Hide brushes, Undo, Hide all, Reveal all. Strokes persist in `CampaignMapState.fog` — see `docs/README/MAP-FOG.md`.
+
 ## PC / NPC pins (non-calibrated or legacy)
 Wiki pins still exist for image maps. On calibrated maps, **Add** places combat tokens instead. Size still resolves from monster catalogue name match on `race`, then race catalogue, then defaults. See `docs/README/MAP-TOKEN-SIZE.md`.
 
