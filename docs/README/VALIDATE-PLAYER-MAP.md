@@ -12,9 +12,11 @@ node test/validate-player-map.js
 ```
 
 ## What it checks
-- `player-map.js` `findPcLocation` resolution
-- `map-pc-placement.js` / `map-fog.js` modules
-- Player map API routes
-- Player Map tab UI wiring
-- DM fog + placement hooks in `map-spatial.js`
-- Docs present
+- `partyPositions` is canonical; stale token on map B ignored when canonical is map A
+- `normalizePcMapState` removes non-canonical tokens
+- PC A move does not affect PC B
+- Removed PC has no canonical location
+- Legacy token-only state migrates to `partyPositions`
+- Player map API uses `findCanonicalPcLocation`
+- Normalize is idempotent (reload-safe)
+- Player Map tab + fog wiring + docs

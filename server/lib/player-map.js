@@ -1,5 +1,5 @@
 /**
- * Player-safe map view — derives map from PC token location only.
+ * Player-safe map view — derives map from canonical partyPositions only.
  */
 "use strict";
 
@@ -10,57 +10,10 @@ const locationMaps = require("./catalogue-location-maps");
 const assets = require("./assets");
 const authorize = require("./authorize");
 const { assertSafeId } = require("./ids");
-
-function partyIdFromCatalogueId(catalogueId) {
-  return catalogueId ? `pc:${catalogueId}` : null;
-}
-
-function catalogueIdFromPartyId(partyId) {
-  if (!partyId) return null;
-  const s = String(partyId);
-  return s.startsWith("pc:") ? s.slice(3) : null;
-}
-
-function matchesPcToken(token, catalogueId, partyId) {
-  if (!token || token.kind !== "pc") return false;
-  if (catalogueId && token.catalogueId === catalogueId) return true;
-  if (partyId && token.partyId === partyId) return true;
-  const derived = catalogueIdFromPartyId(token.partyId);
-  return Boolean(catalogueId && derived === catalogueId);
-}
-
-function tokenTimestamp(token) {
-  const m = String(token?.id || "").match(/^tok-pc-([a-z0-9]+)-/i);
-  if (m) return parseInt(m[1], 36) || 0;
-  return 0;
-}
-
-function findPcLocation(mapState, catalogueId) {
-  if (!mapState || !catalogueId) return null;
-  const partyId = partyIdFromCatalogueId(catalogueId);
-  const hits = [];
-
-  Object.entries(mapState.tokens || {}).forEach(([mapId, list]) => {
-    if (!Array.isArray(list)) return;
-    list.forEach((t) => {
-      if (matchesPcToken(t, catalogueId, partyId)) hits.push({ mapId, token: t });
-    });
-  });
-
-  if (hits.length === 1) return hits[0];
-  if (hits.length > 1) {
-    const partyMapId = mapState.partyPositions?.[partyId]?.mapId;
-    const preferred = hits.find((h) => h.mapId === partyMapId);
-    if (preferred) return preferred;
-    return hits.reduce((a, b) => (tokenTimestamp(b.token) > tokenTimestamp(a.token) ? b : a));
-  }
-
-  const saved = mapState.partyPositions?.[partyId];
-  if (saved?.mapId != null && saved.x != null && saved.y != null) {
-    return { mapId: saved.mapId, percent: { x: saved.x, y: saved.y } };
-  }
-  return null;
-}
+const {
+  findCanonicalPcLocation,
+  partyIdFromCatalogueId
+} = require("./map-pc-placement");
 
 function locationLinkId(entry) {
   if (!entry) return null;
@@ -109,10 +62,10 @@ function playerFogDto(fogRaw) {
   };
 }
 
-function buildRevision(mapId, fog, token) {
+function buildRevision(mapId, fog, location) {
   const fogRev = fog?.revision || 0;
-  const tx = token?.world?.x ?? token?.percent?.x ?? "";
-  const ty = token?.world?.y ?? token?.percent?.y ?? "";
+  const tx = location?.percent?.x ?? location?.token?.x ?? "";
+  const ty = location?.percent?.y ?? location?.token?.y ?? "";
   return `${mapId}:${fogRev}:${tx},${ty}`;
 }
 
@@ -145,7 +98,7 @@ async function getPlayerMapView(req, campaignId, characterId) {
   const character = await assertCharacterControl(req, campaignId, characterId);
   const catalogueId = character.catalogue_pc_id || character.id;
   const mapState = (await campaigns.getDocument(campaignId, "map-state")) || {};
-  const loc = findPcLocation(mapState, catalogueId);
+  const loc = findCanonicalPcLocation(mapState, catalogueId);
 
   if (!loc?.mapId) {
     return { available: false, revision: "none", characterId: character.id };
@@ -160,23 +113,21 @@ async function getPlayerMapView(req, campaignId, characterId) {
   const catalogueKey = entry.id;
   const uvtt = await locationMaps.getFullMap("location", catalogueKey);
   const calibrated = Boolean(entry.mapCalibration || uvtt?.grid);
-  const playerSrc = entry.playerMapImage || entry.mapImage || uvtt?.imageUrl || null;
   const imageUrl = `/api/player/campaigns/${encodeURIComponent(campaignId)}/maps/${encodeURIComponent(mapId)}/image?characterId=${encodeURIComponent(character.id)}`;
 
-  let tokenDto = null;
+  let tokenDto = {
+    label: character.name,
+    percent: { x: loc.percent.x, y: loc.percent.y },
+    gridCells: 1,
+    imageUrl: character.portrait_url || null
+  };
   if (loc.token) {
     tokenDto = {
       label: loc.token.label || character.name,
+      percent: loc.percent,
       world: { x: loc.token.x, y: loc.token.y },
       gridCells: loc.token.gridCells || 1,
       imageUrl: loc.token.imageUrl || character.portrait_url || null
-    };
-  } else if (loc.percent) {
-    tokenDto = {
-      label: character.name,
-      percent: { x: loc.percent.x, y: loc.percent.y },
-      gridCells: 1,
-      imageUrl: character.portrait_url || null
     };
   }
 
@@ -184,7 +135,7 @@ async function getPlayerMapView(req, campaignId, characterId) {
 
   return {
     available: true,
-    revision: buildRevision(mapId, fog, tokenDto),
+    revision: buildRevision(mapId, fog, loc),
     characterId: character.id,
     cataloguePcId: catalogueId,
     mapId,
@@ -204,7 +155,7 @@ async function streamPlayerMapImage(req, campaignId, mapId, characterId) {
   const character = await assertCharacterControl(req, campaignId, characterId);
   const catalogueId = character.catalogue_pc_id || character.id;
   const mapState = (await campaigns.getDocument(campaignId, "map-state")) || {};
-  const loc = findPcLocation(mapState, catalogueId);
+  const loc = findCanonicalPcLocation(mapState, catalogueId);
   if (!loc || loc.mapId !== assertSafeId(mapId, "map id")) {
     const err = new Error("Map not available for this character");
     err.status = 403;
@@ -218,7 +169,6 @@ async function streamPlayerMapImage(req, campaignId, mapId, characterId) {
     throw err;
   }
 
-  const playerField = entry.playerMapImage ? "playerMapImage" : "mapImage";
   const asset = await assets.readAsset("maps", "location", entry.id);
   if (!asset) {
     const err = new Error("Map image not found");
@@ -229,14 +179,13 @@ async function streamPlayerMapImage(req, campaignId, mapId, characterId) {
   return {
     buffer: asset.buffer,
     mime: asset.mime || "image/png",
-    playerField
+    playerField: entry.playerMapImage ? "playerMapImage" : "mapImage"
   };
 }
 
 module.exports = {
-  findPcLocation,
+  findCanonicalPcLocation,
   getPlayerMapView,
   streamPlayerMapImage,
-  partyIdFromCatalogueId,
-  catalogueIdFromPartyId
+  partyIdFromCatalogueId
 };

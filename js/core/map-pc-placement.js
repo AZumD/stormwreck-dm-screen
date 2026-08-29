@@ -1,6 +1,6 @@
 /**
- * Canonical PC map placement — one map per PC (catalogue id).
- * PC token / partyPositions are kept in sync; stale tokens on other maps are removed.
+ * Canonical PC map placement — partyPositions[pc:id] is the source of truth.
+ * tokens[mapId][] is kept synchronized as combat/map representation only.
  */
 window.MapPcPlacement = (function () {
   "use strict";
@@ -46,52 +46,31 @@ window.MapPcPlacement = (function () {
   }
 
   /**
-   * Find where a PC lives. Token on a map wins over partyPositions alone.
-   * @returns {{ mapId: string, token?: object, percent?: {x,y}, world?: {x,y} } | null}
+   * Canonical location from partyPositions. Token on that map is attached for world coords only.
    */
   function findPcLocation(mapState, catalogueId, partyId) {
     if (!mapState || !catalogueId) return null;
     const pid = partyId || partyIdFromCatalogueId(catalogueId);
-    const hits = [];
-
-    Object.entries(mapState.tokens || {}).forEach(([mapId, list]) => {
-      if (!Array.isArray(list)) return;
-      list.forEach((t) => {
-        if (matchesPcToken(t, catalogueId, pid)) hits.push({ mapId, token: t });
-      });
-    });
-
-    if (hits.length === 1) {
-      return { mapId: hits[0].mapId, token: hits[0].token };
-    }
-    if (hits.length > 1) {
-      const partyMapId = mapState.partyPositions?.[pid]?.mapId;
-      const preferred = hits.find((h) => h.mapId === partyMapId);
-      const winner = preferred || hits.reduce((a, b) =>
-        tokenTimestamp(b.token) > tokenTimestamp(a.token) ? b : a
-      );
-      return { mapId: winner.mapId, token: winner.token };
-    }
-
     const saved = mapState.partyPositions?.[pid];
-    if (saved?.mapId != null && saved.x != null && saved.y != null) {
-      return { mapId: saved.mapId, percent: { x: saved.x, y: saved.y } };
+    if (!saved?.mapId || saved.x == null || saved.y == null) return null;
+
+    const result = { mapId: saved.mapId, percent: { x: saved.x, y: saved.y } };
+    const list = mapState.tokens?.[saved.mapId];
+    if (Array.isArray(list)) {
+      const token = list.find((t) => matchesPcToken(t, catalogueId, pid));
+      if (token) result.token = token;
     }
-    return null;
+    return result;
   }
 
-  /**
-   * Remove duplicate PC tokens across maps. Prefer partyPositions.mapId, else newest token id.
-   */
-  function normalizeDuplicates(campaignId) {
-    if (!window.CampaignMapState?.get) return false;
-    const state = CampaignMapState.get(campaignId);
-    const tokens = state.tokens || {};
-    const partyPositions = state.partyPositions || {};
-    const byCatalogue = new Map();
+  function normalizePcMapState(mapState) {
+    const state = {
+      partyPositions: { ...(mapState?.partyPositions || {}) },
+      tokens: cloneTokensMap(mapState?.tokens)
+    };
 
-    Object.entries(tokens).forEach(([mapId, list]) => {
-      if (!Array.isArray(list)) return;
+    const byCatalogue = new Map();
+    Object.entries(state.tokens).forEach(([mapId, list]) => {
       list.forEach((t) => {
         if (t?.kind !== "pc") return;
         const cid = t.catalogueId || catalogueIdFromPartyId(t.partyId);
@@ -101,41 +80,84 @@ window.MapPcPlacement = (function () {
       });
     });
 
-    const tokenPatch = {};
-    let changed = false;
-
     byCatalogue.forEach((placements, catalogueId) => {
-      if (placements.length <= 1) return;
-      const pid = partyIdFromCatalogueId(catalogueId);
-      const partyMapId = partyPositions[pid]?.mapId;
-      let winner = placements.find((p) => p.mapId === partyMapId);
-      if (!winner) {
-        winner = placements.reduce((a, b) =>
+      const partyId = partyIdFromCatalogueId(catalogueId);
+      let canonical = state.partyPositions[partyId];
+
+      if (!canonical?.mapId && placements.length) {
+        const winner = placements.reduce((a, b) =>
           tokenTimestamp(b.token) > tokenTimestamp(a.token) ? b : a
         );
+        canonical = { mapId: winner.mapId, x: 50, y: 50 };
+        state.partyPositions[partyId] = canonical;
       }
+
+      if (!canonical?.mapId) {
+        placements.forEach((p) => {
+          state.tokens[p.mapId] = state.tokens[p.mapId].filter((t) => t.id !== p.token.id);
+        });
+        return;
+      }
+
+      const canonicalMapId = canonical.mapId;
       placements.forEach((p) => {
-        if (p.mapId === winner.mapId && p.token.id === winner.token.id) return;
-        if (!tokenPatch[p.mapId]) {
-          tokenPatch[p.mapId] = (tokens[p.mapId] || []).filter((t) => t.id !== p.token.id);
-        } else {
-          tokenPatch[p.mapId] = tokenPatch[p.mapId].filter((t) => t.id !== p.token.id);
+        if (p.mapId !== canonicalMapId) {
+          state.tokens[p.mapId] = state.tokens[p.mapId].filter((t) => t.id !== p.token.id);
         }
-        changed = true;
       });
+
+      const onCanonical = (state.tokens[canonicalMapId] || []).filter((t) =>
+        matchesPcToken(t, catalogueId, partyId)
+      );
+      if (onCanonical.length > 1) {
+        const keep = onCanonical.reduce((a, b) => (tokenTimestamp(b) > tokenTimestamp(a) ? b : a));
+        state.tokens[canonicalMapId] = state.tokens[canonicalMapId].filter(
+          (t) => !matchesPcToken(t, catalogueId, partyId) || t.id === keep.id
+        );
+      }
     });
 
-    if (changed) {
-      CampaignMapState.patch(campaignId, { tokens: tokenPatch });
-    }
-    return changed;
+    return state;
   }
 
-  /**
-   * Place/move/remove a PC on a map. Single patch updates partyPositions + tokens.
-   * @param {string} campaignId
-   * @param {{ catalogueId?: string, partyId?: string, mapId?: string|null, percent?: {x,y}, world?: {x,y}, map?: object, token?: object, remove?: boolean }} opts
-   */
+  function normalizeDuplicates(campaignId) {
+    if (!window.CampaignMapState?.get) return false;
+    const state = CampaignMapState.get(campaignId);
+    const beforeTokens = state.tokens || {};
+    const beforeParty = state.partyPositions || {};
+    const normalized = normalizePcMapState(state);
+
+    const tokensPatch = {};
+    const allMapIds = new Set([
+      ...Object.keys(beforeTokens),
+      ...Object.keys(normalized.tokens)
+    ]);
+    allMapIds.forEach((mapId) => {
+      const prev = beforeTokens[mapId] || [];
+      const next = normalized.tokens[mapId] || [];
+      if (JSON.stringify(prev) !== JSON.stringify(next)) tokensPatch[mapId] = next;
+    });
+
+    const partyPatch = {};
+    const allPartyIds = new Set([
+      ...Object.keys(beforeParty),
+      ...Object.keys(normalized.partyPositions)
+    ]);
+    allPartyIds.forEach((id) => {
+      const prev = beforeParty[id];
+      const next = normalized.partyPositions[id];
+      if (JSON.stringify(prev) !== JSON.stringify(next)) partyPatch[id] = next ?? null;
+    });
+
+    if (!Object.keys(tokensPatch).length && !Object.keys(partyPatch).length) return false;
+
+    const patch = {};
+    if (Object.keys(tokensPatch).length) patch.tokens = tokensPatch;
+    if (Object.keys(partyPatch).length) patch.partyPositions = partyPatch;
+    CampaignMapState.patch(campaignId, patch);
+    return true;
+  }
+
   function placePcOnMap(campaignId, opts) {
     if (!window.CampaignMapState?.get) return { ok: false, error: "Map state unavailable" };
     const { catalogueId, partyId } = resolveIds(opts || {});
@@ -143,9 +165,9 @@ window.MapPcPlacement = (function () {
 
     const state = CampaignMapState.get(campaignId);
     const allTokens = cloneTokensMap(state.tokens);
-    const partyPositions = { ...(state.partyPositions || {}) };
 
     if (opts.remove || !opts.mapId) {
+      const partyPositions = { ...(state.partyPositions || {}) };
       delete partyPositions[partyId];
       Object.keys(allTokens).forEach((mid) => {
         allTokens[mid] = (allTokens[mid] || []).filter((t) => !matchesPcToken(t, catalogueId, partyId));
@@ -170,8 +192,6 @@ window.MapPcPlacement = (function () {
       world = MapDistance.percentToWorld(percent.x, percent.y, map);
     }
     if (!percent) return { ok: false, error: "Missing position" };
-
-    partyPositions[partyId] = { mapId, x: percent.x, y: percent.y };
 
     Object.keys(allTokens).forEach((mid) => {
       if (mid === mapId) return;
@@ -204,7 +224,7 @@ window.MapPcPlacement = (function () {
     });
 
     CampaignMapState.patch(campaignId, {
-      partyPositions: { [partyId]: partyPositions[partyId] },
+      partyPositions: { [partyId]: { mapId, x: percent.x, y: percent.y } },
       tokens: tokensPatch
     });
     return { ok: true, mapId, partyId, catalogueId };
@@ -243,6 +263,7 @@ window.MapPcPlacement = (function () {
     partyIdFromCatalogueId,
     matchesPcToken,
     findPcLocation,
+    normalizePcMapState,
     normalizeDuplicates,
     placePcOnMap,
     syncTokenDrag,

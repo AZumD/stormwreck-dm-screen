@@ -5,10 +5,12 @@ Player-facing map tab — shows the map containing the player's PC token only.
 
 ## Flow
 ```
-characterId → catalogue_pc_id → PC token / partyPositions → mapId → player-safe payload
+characterId → catalogue_pc_id → partyPositions[pc:id] → mapId → player-safe payload
 ```
 
-No manual map picker. If the PC is on no map → **No map available.**
+Token arrays are **not** scanned to pick the map. A synced token on the canonical map may supply world coords for calibrated maps.
+
+No manual map picker. If the PC has no `partyPositions` entry → **No map available.**
 
 ## Client
 | File | Role |
