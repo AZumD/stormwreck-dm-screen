@@ -8,12 +8,12 @@ Calibrated / UVTT helpers for MapPanel: measure, grid overlay, DM tokens. Not a 
 
 ## Chrome
 Prefers static campaign markup:
-- Primary actions: `#map-measure-btn`, `#map-add-token-btn` (shown when map is calibrated)
-- Settings body: link to **Location catalogue** for UVTT, kind badge, meta (grid dims / px/grid / LOS·portals·lights), grid toggle, snap, ft/grid
+- Primary actions: `#map-measure-btn`, `#map-fog-btn`, `#map-add-token-btn` (shown when map is calibrated)
+- Settings body: link to **Location catalogue** for UVTT, kind badge, meta (grid dims / px/grid / LOS·portals·lights), grid toggle, snap, ft/grid, **fog tools**
+
+`attachChrome()` injects any missing slots incrementally (including fog on pages that already have measure/grid markup, and the fullscreen drawer).
 
 Display/scale toggles persist via `PATCH /api/catalogue-assets/location/:id/uvtt` (`LocalApiClient.patchLocationUvtt`).
-
-Falls back to injecting chrome if older pages lack the slots.
 
 ## Measure
 1. Toggle **Measure** (aria-pressed).

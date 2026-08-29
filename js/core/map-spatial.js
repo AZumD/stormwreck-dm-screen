@@ -45,22 +45,39 @@ window.MapSpatial = (function () {
    * Prefer static markup in campaign HTML (primary actions + collapsible settings).
    * Falls back to injecting chrome when older pages lack the slots.
    */
-  function attachChrome(panelBody) {
-    if (document.getElementById("map-measure-btn") && document.getElementById("map-show-grid")) {
-      return;
-    }
-    if (!panelBody || document.getElementById("map-spatial-chrome")) return;
+  const FOG_TOOLS_HTML = `
+        <div id="map-fog-tools" class="map-fog-tools" hidden>
+          <label class="map-tool-check"><input type="checkbox" id="map-fog-enabled"> Fog enabled</label>
+          <span class="map-fog-modes">
+            <button type="button" class="map-tool-btn map-fog-mode is-active" data-fog-mode="reveal">Reveal</button>
+            <button type="button" class="map-tool-btn map-fog-mode" data-fog-mode="hide">Hide</button>
+          </span>
+          <span class="map-fog-brushes" id="map-fog-brushes"></span>
+          <button type="button" class="map-tool-btn" id="map-fog-undo">Undo</button>
+          <button type="button" class="map-tool-btn" id="map-fog-clear">Hide all</button>
+          <button type="button" class="map-tool-btn" id="map-fog-reveal-all">Reveal all</button>
+        </div>`;
 
+  function attachChrome(panelBody) {
     const settingsBody = document.getElementById("map-settings-body");
     const primary = document.getElementById("map-primary-actions");
+    const host =
+      panelBody ||
+      document.querySelector(".map-panel__body") ||
+      document.getElementById("map-fullscreen-drawer-panel");
 
-    if (!document.getElementById("map-measure-btn") && primary) {
+    if (primary && !document.getElementById("map-measure-btn")) {
       primary.insertAdjacentHTML(
         "afterbegin",
         `<button type="button" class="map-tool-btn" id="map-measure-btn" aria-pressed="false" hidden>Measure</button>
          <button type="button" class="map-tool-btn" id="map-fog-btn" aria-pressed="false" hidden>Fog</button>
          <button type="button" class="map-tool-btn" id="map-add-token-btn" hidden>+ Token</button>`
       );
+    } else if (primary && !document.getElementById("map-fog-btn")) {
+      const measure = document.getElementById("map-measure-btn");
+      const fogHtml = `<button type="button" class="map-tool-btn" id="map-fog-btn" aria-pressed="false" hidden>Fog</button>`;
+      if (measure) measure.insertAdjacentHTML("afterend", fogHtml);
+      else primary.insertAdjacentHTML("afterbegin", fogHtml);
     }
 
     const settingsHtml = `
@@ -79,22 +96,13 @@ window.MapSpatial = (function () {
             <input type="number" id="map-scale-input" min="0.1" step="0.5" value="5">
           </label>
         </div>
-        <div id="map-fog-tools" class="map-fog-tools" hidden>
-          <label class="map-tool-check"><input type="checkbox" id="map-fog-enabled"> Fog enabled</label>
-          <span class="map-fog-modes">
-            <button type="button" class="map-tool-btn map-fog-mode is-active" data-fog-mode="reveal">Reveal</button>
-            <button type="button" class="map-tool-btn map-fog-mode" data-fog-mode="hide">Hide</button>
-          </span>
-          <span class="map-fog-brushes" id="map-fog-brushes"></span>
-          <button type="button" class="map-tool-btn" id="map-fog-undo">Undo</button>
-          <button type="button" class="map-tool-btn" id="map-fog-clear">Hide all</button>
-          <button type="button" class="map-tool-btn" id="map-fog-reveal-all">Reveal all</button>
-        </div>
+        ${FOG_TOOLS_HTML}
       </div>`;
 
-    if (settingsBody && !document.getElementById("map-spatial-chrome")) {
+    const spatialChrome = document.getElementById("map-spatial-chrome");
+    if (settingsBody && !spatialChrome) {
       settingsBody.insertAdjacentHTML("beforeend", settingsHtml);
-    } else if (!document.getElementById("map-spatial-chrome")) {
+    } else if (!spatialChrome && host) {
       const chrome = document.createElement("div");
       chrome.innerHTML = settingsHtml;
       const node = chrome.firstElementChild;
@@ -102,12 +110,14 @@ window.MapSpatial = (function () {
       if (mapSelect && mapSelect.parentNode) {
         mapSelect.parentNode.insertBefore(node, mapSelect.nextSibling);
       } else {
-        panelBody.insertBefore(node, panelBody.firstChild);
+        host.insertBefore(node, host.firstChild);
       }
+    } else if (spatialChrome && !document.getElementById("map-fog-tools")) {
+      spatialChrome.insertAdjacentHTML("beforeend", FOG_TOOLS_HTML);
     }
 
-    if (!document.getElementById("map-measure-readout") && panelBody) {
-      panelBody.insertAdjacentHTML(
+    if (!document.getElementById("map-measure-readout") && host) {
+      host.insertAdjacentHTML(
         "beforeend",
         `<p id="map-measure-readout" class="map-measure-readout" hidden></p>
          <p id="map-token-distance" class="map-token-distance" hidden></p>`
@@ -155,7 +165,10 @@ window.MapSpatial = (function () {
       refreshPins
     } = ctx;
 
-    attachChrome(document.querySelector(".map-panel__body"));
+    attachChrome(
+      document.querySelector(".map-panel__body") ||
+        document.getElementById("map-fullscreen-drawer-panel")
+    );
     const layers = ensureLayers(mapWorld);
 
     let measuring = false;

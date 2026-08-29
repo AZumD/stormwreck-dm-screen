@@ -88,6 +88,18 @@ if (fullscreenJs.includes("URLSearchParams") && fullscreenJs.includes("campaign"
   pass("URL builder sets campaign query param");
 } else fail("URL builder should set campaign param");
 
+if (!fullscreenJs.includes("drawerInitialized")) fail("map-fullscreen.js should guard drawer init");
+else pass("map-fullscreen.js guards duplicate drawer init");
+
+const spatialJs = fs.readFileSync(path.join(root, "js/core/map-spatial.js"), "utf8");
+if (!spatialJs.includes("map-fog-btn") || !spatialJs.includes("map-fog-tools")) {
+  fail("map-spatial.js missing fog chrome injection");
+} else pass("map-spatial.js injects fog controls");
+
+if (!spatialJs.includes("map-fullscreen-drawer-panel")) {
+  fail("map-spatial.js should support fullscreen drawer host");
+} else pass("map-spatial.js supports fullscreen drawer");
+
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);
   process.exit(1);

@@ -28,6 +28,7 @@ Campaign map tab → **Fullscreen** (`#map-fullscreen-btn`) → new tab:
 - Map stage: edge-to-edge (aspect preserved from map art)
 - **Tools drawer** (top-right): map selector, primary actions (measure, layers, +, fit, settings), map settings / fog / grid
 - Toggle collapses drawer; state persisted in `localStorage` (`{campaignId}-map-fullscreen-drawer-collapsed`)
+- **Fog** button appears in primary actions (same as in-page map); brush/mode controls live under **Map settings**
 - **Back to campaign** link returns to the originating campaign shell
 - Initiative list overlays the bottom of the viewport when active
 

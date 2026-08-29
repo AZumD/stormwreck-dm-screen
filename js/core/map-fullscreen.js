@@ -54,10 +54,13 @@ window.MapFullscreen = (function () {
     }
   }
 
+  let drawerInitialized = false;
+
   function initDrawer() {
     const drawer = document.getElementById("map-fullscreen-drawer");
     const toggle = document.getElementById("map-fullscreen-drawer-toggle");
-    if (!drawer || !toggle) return;
+    if (!drawer || !toggle || drawerInitialized) return;
+    drawerInitialized = true;
 
     let collapsed = false;
     try {
@@ -68,7 +71,8 @@ window.MapFullscreen = (function () {
     setDrawerCollapsed(drawer, toggle, collapsed);
 
     toggle.addEventListener("click", () => {
-      setDrawerCollapsed(drawer, toggle, drawer.dataset.collapsed !== "true");
+      const nextCollapsed = drawer.dataset.collapsed !== "true";
+      setDrawerCollapsed(drawer, toggle, nextCollapsed);
     });
   }
 
