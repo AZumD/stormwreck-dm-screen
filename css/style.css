@@ -3371,6 +3371,12 @@ body[data-map-collapsed="true"] .map-panel {
   align-items: center;
   margin-top: 0.35rem;
 }
+.map-fog-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
 .map-fog-modes,
 .map-fog-brushes {
   display: inline-flex;

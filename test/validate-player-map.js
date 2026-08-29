@@ -174,6 +174,16 @@ for (const doc of [
   else pass(`doc ${doc}`);
 }
 
+const spatialSrc = fs.readFileSync(path.join(root, "js/core/map-spatial.js"), "utf8");
+if (!spatialSrc.includes("setFogPaintActive") || !spatialSrc.includes("map-fog-hint")) {
+  fail("map-spatial missing fog paint mode UX");
+} else pass("map-spatial auto-activates fog paint mode");
+
+const mapPanelSrc = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
+if (!mapPanelSrc.includes('getElementById("map-fog-btn")')) {
+  fail("map-panel should block pan while fog paint is active");
+} else pass("map-panel blocks pan during fog paint");
+
 if (failed) {
   console.error(`\n${failed} failure(s)`);
   process.exit(1);

@@ -31,7 +31,12 @@ Strokes are **object-keyed** so PATCH merge appends without replacing the whole 
 Coordinates are **0–1 normalized** to map image space (pan/zoom independent).
 
 ## DM UI
-Map panel → **Fog** tool (Reveal / Hide brushes, Undo, Hide all, Reveal all). Layer `#map-fog-layer` inside `#map-world` (semi-transparent fog).
+1. Check **Fog enabled** (or click **Reveal** / **Hide** — both turn fog on and enter paint mode).
+2. The map cursor becomes a crosshair when paint mode is active (also toggled via the **Fog** button in the primary toolbar).
+3. **Click and drag** on the map to paint reveal (erase fog) or hide (add fog back) strokes.
+4. **Undo**, **Hide all** (reset to fully hidden), **Reveal all** (clear fog overlay).
+
+Layer `#map-fog-layer` inside `#map-world` (semi-transparent fog on DM view).
 
 ## Player
 Same stroke data rendered **opaque** on the player Map tab via `PlayerMapView` + `MapFog.render`.

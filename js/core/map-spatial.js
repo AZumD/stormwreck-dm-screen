@@ -46,6 +46,7 @@ window.MapSpatial = (function () {
    * Falls back to injecting chrome when older pages lack the slots.
    */
   const FOG_TOOLS_HTML = `
+        <p class="map-fog-hint" id="map-fog-hint">Check Fog enabled, then click and drag on the map to paint.</p>
         <div id="map-fog-tools" class="map-fog-tools" hidden>
           <label class="map-tool-check"><input type="checkbox" id="map-fog-enabled"> Fog enabled</label>
           <span class="map-fog-modes">
@@ -114,6 +115,11 @@ window.MapSpatial = (function () {
       }
     } else if (spatialChrome && !document.getElementById("map-fog-tools")) {
       spatialChrome.insertAdjacentHTML("beforeend", FOG_TOOLS_HTML);
+    } else if (spatialChrome && !document.getElementById("map-fog-hint")) {
+      spatialChrome.insertAdjacentHTML(
+        "afterbegin",
+        `<p class="map-fog-hint" id="map-fog-hint">Check Fog enabled, then click and drag on the map to paint.</p>`
+      );
     }
 
     if (!document.getElementById("map-measure-readout") && host) {
@@ -627,6 +633,7 @@ window.MapSpatial = (function () {
         const fog = MapFog.getFogState(campaignId, map.id);
         if (els.fogEnabled) els.fogEnabled.checked = Boolean(fog.enabled);
         MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+        updateFogHint?.();
       }
       if (els.showGrid && detail.display) {
         els.showGrid.checked = Boolean(detail.display.showGrid);
@@ -720,11 +727,7 @@ window.MapSpatial = (function () {
 
     els.measureBtn?.addEventListener("click", () => {
       measuring = !measuring;
-      if (measuring) {
-        fogging = false;
-        els.fogBtn?.classList.remove("is-active");
-        els.fogBtn?.setAttribute("aria-pressed", "false");
-      }
+      if (measuring) setFogPaintActive(false);
       els.measureBtn.setAttribute("aria-pressed", measuring ? "true" : "false");
       els.measureBtn.classList.toggle("is-active", measuring);
       clearMeasureGraphics();
@@ -738,22 +741,49 @@ window.MapSpatial = (function () {
     }
 
     els.fogBtn?.addEventListener("click", () => {
-      fogging = !fogging;
+      setFogPaintActive(!fogging);
+    });
+
+    function updateFogHint() {
+      const hint = document.getElementById("map-fog-hint");
+      if (!hint) return;
+      const enabled = Boolean(els.fogEnabled?.checked);
+      if (!enabled) {
+        hint.textContent = "Check Fog enabled, then click and drag on the map to paint.";
+      } else if (fogging) {
+        hint.textContent = `Paint mode on — drag on the map (${fogMode === "hide" ? "Hide" : "Reveal"}).`;
+      } else {
+        hint.textContent = "Click Fog in the toolbar or pick Reveal/Hide to start painting.";
+      }
+    }
+
+    function setFogPaintActive(active) {
+      fogging = Boolean(active);
       if (fogging) {
         measuring = false;
         els.measureBtn?.classList.remove("is-active");
         els.measureBtn?.setAttribute("aria-pressed", "false");
         clearMeasureGraphics();
       }
-      els.fogBtn.setAttribute("aria-pressed", fogging ? "true" : "false");
-      els.fogBtn.classList.toggle("is-active", fogging);
+      if (els.fogBtn) {
+        els.fogBtn.setAttribute("aria-pressed", fogging ? "true" : "false");
+        els.fogBtn.classList.toggle("is-active", fogging);
+      }
       mapViewport?.classList.toggle("map-viewport--fog-paint", fogging);
-    });
+      updateFogHint();
+    }
 
     document.querySelectorAll(".map-fog-mode").forEach((btn) => {
       btn.addEventListener("click", () => {
         fogMode = btn.getAttribute("data-fog-mode") === "hide" ? "hide" : "reveal";
         document.querySelectorAll(".map-fog-mode").forEach((b) => b.classList.toggle("is-active", b === btn));
+        const map = activeMap();
+        if (els.fogEnabled && !els.fogEnabled.checked && map && window.MapFog) {
+          els.fogEnabled.checked = true;
+          MapFog.setEnabled(campaignId, map.id, true);
+          MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+        }
+        setFogPaintActive(true);
       });
     });
 
@@ -769,6 +799,8 @@ window.MapSpatial = (function () {
       if (!map || !window.MapFog) return;
       MapFog.setEnabled(campaignId, map.id, els.fogEnabled.checked);
       MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      if (els.fogEnabled.checked) setFogPaintActive(true);
+      else setFogPaintActive(false);
     });
 
     els.fogUndo?.addEventListener("click", () => {

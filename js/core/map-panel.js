@@ -385,6 +385,7 @@ window.MapPanel = (function () {
       if (e.button != null && e.button !== 0) return false;
       if (e.target.closest?.(".map-pin, .map-token, .map-grid-token")) return false;
       if (document.getElementById("map-measure-btn")?.getAttribute("aria-pressed") === "true") return false;
+      if (document.getElementById("map-fog-btn")?.getAttribute("aria-pressed") === "true") return false;
       return true;
     }
 
