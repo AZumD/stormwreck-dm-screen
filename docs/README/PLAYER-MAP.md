@@ -1,7 +1,7 @@
 # PLAYER-MAP
 
 ## Purpose
-Player-facing map tab — shows the map containing the player's PC, fog, and visible combat tokens on that map.
+Player-facing map tab — shows the map containing the player's PC, fog, and visible tokens on that map.
 
 ## Flow
 ```
@@ -15,9 +15,17 @@ No manual map picker. If the PC has no `partyPositions` entry → **No map avail
 ## Client
 | File | Role |
 |------|------|
-| `js/core/player-map-view.js` | Full-bleed map, pan/zoom (+/−/Fit, wheel, pinch), fog, all visible tokens; polls every ~1.5s |
+| `js/core/player-map-view.js` | Full-bleed map, pan/zoom (+/−/Fit, wheel, pinch), fog, all visible tokens; grid-aligned sizing like DM; polls every ~1.5s |
 | `js/player-app.js` | Map tab |
 | `player/index.html` | Tab + scripts |
+
+## Server
+| File | Role |
+|------|------|
+| `server/lib/player-map.js` | Player-safe map view API, token + pin assembly |
+| `server/lib/map-token-size.js` | D&D size → grid footprint + catalogue image resolution (mirrors client) |
+| `server/lib/campaign-static-maps.js` | Loads static pins from `js/campaigns/{id}/maps.js` |
+| `server/lib/entity-link-aliases.js` | Map pin `entityId` → catalogue id |
 
 ## API (session auth)
 | Method | Path |
@@ -28,9 +36,20 @@ No manual map picker. If the PC has no `partyPositions` entry → **No map avail
 Implemented in `server/lib/player-map.js`.
 
 ## Player-safe payload
-`mapId`, map name, image URL, grid/size when calibrated, fog revision/strokes, and **visible combat tokens** on that map (`pc` / `npc` / `monster` — label, art, position, grid footprint). Own token is flagged with `isSelf: true`.
+`mapId`, map name, image URL, grid/size when calibrated, fog revision/strokes, and **visible tokens** on that map:
 
-Does **not** include DM pins, initiative, HP/AC, or hidden (`visible: false`) tokens.
+- Combat tokens from `map-state.tokens[mapId]` (`pc` / `npc` / `monster`)
+- Static + custom **map pins** of those types (same as DM `#map-pins` layer on calibrated maps)
+- Party PCs from `partyPositions` when not already present
+
+Each token includes label, fresh catalogue-resolved art (`imageUrl` + optional `fallbackUrl`), position, `gridCells`, and `spanW` / `spanH` (% footprint). Own token is flagged with `isSelf: true`.
+
+Token art is resolved server-side like the DM client (`tokenImage` → race-bound monster art → portrait → `/api/assets/…`), not stale stored `imageUrl` alone.
+
+Does **not** include POI/item pins, initiative, HP/AC, or hidden (`visible: false`) tokens.
+
+## Token sizing (player)
+On calibrated maps, tokens use the same grid footprint rules as DM `MapTokenSize.gridTokenStyle` — 1-cell tokens are round; Large+ are square multi-cell footprints sized as % of the map. Tokens **with art** render frameless (transparent PNG over the map, `object-fit: contain`); label-only placeholders keep the colored type ring.
 
 ## Future
 Location catalogue may add `playerMapImage` (player-safe art separate from DM `mapImage`).

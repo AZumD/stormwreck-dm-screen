@@ -6,6 +6,8 @@ Maps D&D creature **Size** categories to grid-cell footprints on calibrated / UV
 ## File
 `js/core/map-token-size.js` → `window.MapTokenSize`
 
+Server mirror: `server/lib/map-token-size.js` — same size chart and image resolution chain for the player map API (`server/lib/player-map.js`).
+
 ## Size chart (5e)
 | Size | Grid footprint |
 |------|----------------|

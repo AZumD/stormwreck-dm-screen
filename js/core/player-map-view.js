@@ -57,21 +57,32 @@ window.PlayerMapView = (function () {
     return [];
   }
 
+  function tokenSpan(token, view) {
+    const cells = Math.max(1, Number(token.gridCells) || 1);
+    if (token.spanW != null && token.spanH != null) {
+      return { w: token.spanW, h: token.spanH, cells };
+    }
+    if (view.calibrated && view.grid) {
+      const sx = Number(view.grid.sizeX) || 1;
+      const sy = Number(view.grid.sizeY) || 1;
+      return { w: (cells / sx) * 100, h: (cells / sy) * 100, cells };
+    }
+    return null;
+  }
+
   function tokenStyle(token, view) {
     const pos = tokenPosition(token, view);
     if (!pos) return null;
-    const cells = Math.max(1, Number(token.gridCells) || 1);
-    if (view.calibrated && view.grid && cells > 1) {
-      const sx = Number(view.grid.sizeX) || 1;
-      const sy = Number(view.grid.sizeY) || 1;
-      const w = (cells / sx) * 100;
-      const h = (cells / sy) * 100;
+    const span = tokenSpan(token, view);
+    if (span) {
+      const w = span.w;
+      const h = span.h;
       return {
         left: `${pos.x}%`,
         top: `${pos.y}%`,
         width: `${w}%`,
         height: `${h}%`,
-        transform: "translate(-50%, -50%)"
+        margin: `calc(-${h / 2}% 0 0 calc(-${w / 2}%)`
       };
     }
     return {
@@ -249,14 +260,20 @@ window.PlayerMapView = (function () {
         if (!style) return "";
         const kind = token.kind || "pc";
         const selfClass = token.isSelf ? " player-map-token--self" : "";
+        const span = tokenSpan(token, view);
+        const hasImg = Boolean(token.imageUrl);
+        const roundClass = span && span.cells === 1 && !hasImg ? " player-map-token--round" : "";
+        const imgClass = hasImg ? " player-map-token--has-img" : "";
         const styleStr = Object.entries(style)
           .map(([k, v]) => `${k}:${v}`)
           .join(";");
         const label = token.label || "?";
+        const fallback = token.fallbackUrl && token.fallbackUrl !== token.imageUrl ? escapeAttr(token.fallbackUrl) : "";
+        const onerr = fallback ? ` onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback='';}else{this.remove();}"` : ` onerror="this.remove()"`;
         const inner = token.imageUrl
-          ? `<img src="${escapeAttr(token.imageUrl)}" alt="" draggable="false">`
-          : escapeHtml(label.slice(0, 2));
-        return `<div class="player-map-token player-map-token--${kind}${selfClass}" style="${styleStr}" title="${escapeAttr(label)}"><span class="player-map-token__inner">${inner}</span></div>`;
+          ? `<img class="player-map-token__img" src="${escapeAttr(token.imageUrl)}"${fallback ? ` data-fallback="${fallback}"` : ""} alt="" draggable="false"${onerr}>`
+          : `<span class="player-map-token__label">${escapeHtml(label.slice(0, 2))}</span>`;
+        return `<div class="player-map-token player-map-token--${kind}${selfClass}${roundClass}${imgClass}" style="${styleStr}" title="${escapeAttr(label)}">${inner}</div>`;
       })
       .join("");
   }

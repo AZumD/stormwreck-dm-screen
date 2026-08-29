@@ -18,6 +18,7 @@ node test/validate-player-map.js
 - Removed PC has no canonical location
 - Legacy token-only state migrates to `partyPositions`
 - Player map API uses `findCanonicalPcLocation`
-- Player map API exposes visible combat tokens via `buildPlayerMapTokens`
+- Player map tokens include visible pcs/npcs/monsters with grid span via `buildPlayerMapTokens`
+- Static NPC map pins from `js/campaigns/*/maps.js` appear on player map
 - Normalize is idempotent (reload-safe)
 - Player Map tab + fog wiring + docs

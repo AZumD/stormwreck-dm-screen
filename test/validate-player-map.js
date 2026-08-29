@@ -184,38 +184,74 @@ if (!mapPanelSrc.includes('getElementById("map-fog-btn")')) {
   fail("map-panel should block pan while fog paint is active");
 } else pass("map-panel blocks pan during fog paint");
 
-/* player map tokens — visible combat tokens on same map */
-try {
-  const mapMeta = {
-    calibrated: true,
-    widthPx: 1000,
-    heightPx: 700,
-    grid: { pixelsPerGrid: 256, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
-  };
-  const mapState = {
-    partyPositions: {
-      "pc:pc-a": { mapId: "map-a", x: 10, y: 20 },
-      "pc:pc-b": { mapId: "map-a", x: 40, y: 50 }
-    },
-    tokens: {
-      "map-a": [
-        { id: "t-mon", kind: "monster", label: "Goblin", x: 5, y: 5, visible: true, gridCells: 1 },
-        { id: "t-pc", kind: "pc", catalogueId: "pc-a", label: "Hero", x: 3, y: 4, visible: true, gridCells: 1 },
-        { id: "t-npc", kind: "npc", label: "Vendor", x: 7, y: 8, visible: true, gridCells: 1 },
-        { id: "t-hidden", kind: "monster", label: "Hidden", x: 1, y: 1, visible: false, gridCells: 1 }
-      ]
-    }
-  };
-  const pcLookup = new Map([["pc-b", { name: "Ally", portrait_url: null }]]);
-  const tokens = playerMap.buildPlayerMapTokens(mapState, "map-a", "pc-a", mapMeta, pcLookup);
-  assert.strictEqual(tokens.filter((t) => t.kind === "monster").length, 1);
-  assert.ok(tokens.some((t) => t.kind === "npc" && t.label === "Vendor"));
-  assert.ok(tokens.some((t) => t.isSelf && t.label === "Hero"));
-  assert.ok(tokens.some((t) => t.kind === "pc" && t.label === "Ally"));
-  assert.ok(!tokens.some((t) => t.label === "Hidden"));
-  pass("player map tokens include visible pcs/npcs/monsters");
-} catch (err) {
-  fail(`player map tokens: ${err.message}`);
+/* async player map token checks */
+async function runAsyncPlayerMapTests() {
+  try {
+    const mapMeta = {
+      calibrated: true,
+      widthPx: 1000,
+      heightPx: 700,
+      grid: { pixelsPerGrid: 256, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
+    };
+    const mapState = {
+      partyPositions: {
+        "pc:pc-a": { mapId: "map-a", x: 10, y: 20 },
+        "pc:pc-b": { mapId: "map-a", x: 40, y: 50 }
+      },
+      tokens: {
+        "map-a": [
+          { id: "t-mon", kind: "monster", label: "Goblin", x: 5, y: 5, visible: true, gridCells: 1 },
+          { id: "t-pc", kind: "pc", catalogueId: "pc-a", label: "Hero", x: 3, y: 4, visible: true, gridCells: 1 },
+          { id: "t-npc", kind: "npc", label: "Vendor", x: 7, y: 8, visible: true, gridCells: 1 },
+          { id: "t-hidden", kind: "monster", label: "Hidden", x: 1, y: 1, visible: false, gridCells: 1 }
+        ]
+      }
+    };
+    const pcLookup = new Map([["pc-b", { name: "Ally", portrait_url: null }]]);
+    const tokens = await playerMap.buildPlayerMapTokens(mapState, "map-a", "pc-a", mapMeta, pcLookup);
+    assert.strictEqual(tokens.filter((t) => t.kind === "monster").length, 1);
+    assert.ok(tokens.some((t) => t.kind === "npc" && t.label === "Vendor"));
+    assert.ok(tokens.some((t) => t.isSelf && t.label === "Hero"));
+    assert.ok(tokens.some((t) => t.kind === "pc" && t.label === "Ally"));
+    assert.ok(!tokens.some((t) => t.label === "Hidden"));
+    assert.ok(tokens.every((t) => t.spanW > 0 && t.spanH > 0));
+    pass("player map tokens include visible pcs/npcs/monsters with grid span");
+  } catch (err) {
+    fail(`player map tokens: ${err.message}`);
+  }
+
+  try {
+    const mapMeta = {
+      calibrated: true,
+      widthPx: 1000,
+      heightPx: 700,
+      grid: { pixelsPerGrid: 100, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
+    };
+    const mapState = {
+      partyPositions: { "pc:pc-a": { mapId: "dragons-rest", x: 10, y: 20 } },
+      pinPositions: {
+        "dragons-rest": {
+          "p-tarak": { x: 30, y: 56 }
+        }
+      },
+      tokens: {}
+    };
+    const tokens = await playerMap.buildPlayerMapTokens(
+      mapState,
+      "dragons-rest",
+      "pc-a",
+      mapMeta,
+      new Map(),
+      { campaignId: "stormwreck-isle", linkId: "dragons-rest" }
+    );
+    const tarak = tokens.find((t) => t.id === "p-tarak");
+    assert.ok(tarak, "expected p-tarak pin");
+    assert.strictEqual(tarak.kind, "npc");
+    assert.strictEqual(tarak.percent.x, 30);
+    pass("static NPC map pins appear on player map");
+  } catch (err) {
+    fail(`static NPC pins: ${err.message}`);
+  }
 }
 
 const playerMapViewSrc = fs.readFileSync(path.join(root, "js/core/player-map-view.js"), "utf8");
@@ -223,12 +259,23 @@ if (!playerMapViewSrc.includes("player-map-zoom-in") || !playerMapViewSrc.includ
   fail("player-map-view missing zoom chrome or token layer");
 } else pass("player map view has zoom + token layer");
 
+if (!playerMapViewSrc.includes("tokenSpan") || !playerMapViewSrc.includes("player-map-token--round")) {
+  fail("player-map-view missing DM-aligned grid token sizing");
+} else pass("player map view uses grid-aligned token sizing");
+
+const playerCss = fs.readFileSync(path.join(root, "css/player.css"), "utf8");
+if (!playerCss.includes("player-map-token--has-img") || !playerCss.includes("object-fit: contain")) {
+  fail("player.css missing frameless token art styling");
+} else pass("player map tokens render frameless when art is present");
+
 if (!spatialSrc.includes("onFogKeydown") || !spatialSrc.includes("undoFogStroke")) {
   fail("map-spatial missing fog ctrl+z undo");
 } else pass("map-spatial binds fog ctrl+z undo");
 
-if (failed) {
-  console.error(`\n${failed} failure(s)`);
-  process.exit(1);
-}
-console.log("\nAll player map checks passed.");
+runAsyncPlayerMapTests().then(() => {
+  if (failed) {
+    console.error(`\n${failed} failure(s)`);
+    process.exit(1);
+  }
+  console.log("\nAll player map checks passed.");
+});
