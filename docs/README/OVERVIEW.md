@@ -10,7 +10,7 @@ Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / Music / **Source**
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
-- Player companion (`/player/`) — mobile-first sheet / party / people / library / notes; Source Catalogue browseable (Rulebooks/Others only — Adventures + locations hidden); item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `SOURCE.md`)
+- Player companion (`/player/`) — mobile-first sheet / party / map / library / notes; Source Catalogue browseable (Rulebooks/Others only — Adventures + locations hidden); item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `SOURCE.md`)
 - Terminal DM client (`tui/`) — Go + Bubble Tea **scene-first** tracker over the same HTTPS API (Home → Library/Campaigns → Scene|Notes|Party|Map|Music; see `tui/README.md`, `docs/CLIENT-ARCHITECTURE.md`)
 
 ## Persistence (authoritative)

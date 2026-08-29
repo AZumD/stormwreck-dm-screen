@@ -184,6 +184,49 @@ if (!mapPanelSrc.includes('getElementById("map-fog-btn")')) {
   fail("map-panel should block pan while fog paint is active");
 } else pass("map-panel blocks pan during fog paint");
 
+/* player map tokens — visible combat tokens on same map */
+try {
+  const mapMeta = {
+    calibrated: true,
+    widthPx: 1000,
+    heightPx: 700,
+    grid: { pixelsPerGrid: 256, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
+  };
+  const mapState = {
+    partyPositions: {
+      "pc:pc-a": { mapId: "map-a", x: 10, y: 20 },
+      "pc:pc-b": { mapId: "map-a", x: 40, y: 50 }
+    },
+    tokens: {
+      "map-a": [
+        { id: "t-mon", kind: "monster", label: "Goblin", x: 5, y: 5, visible: true, gridCells: 1 },
+        { id: "t-pc", kind: "pc", catalogueId: "pc-a", label: "Hero", x: 3, y: 4, visible: true, gridCells: 1 },
+        { id: "t-npc", kind: "npc", label: "Vendor", x: 7, y: 8, visible: true, gridCells: 1 },
+        { id: "t-hidden", kind: "monster", label: "Hidden", x: 1, y: 1, visible: false, gridCells: 1 }
+      ]
+    }
+  };
+  const pcLookup = new Map([["pc-b", { name: "Ally", portrait_url: null }]]);
+  const tokens = playerMap.buildPlayerMapTokens(mapState, "map-a", "pc-a", mapMeta, pcLookup);
+  assert.strictEqual(tokens.filter((t) => t.kind === "monster").length, 1);
+  assert.ok(tokens.some((t) => t.kind === "npc" && t.label === "Vendor"));
+  assert.ok(tokens.some((t) => t.isSelf && t.label === "Hero"));
+  assert.ok(tokens.some((t) => t.kind === "pc" && t.label === "Ally"));
+  assert.ok(!tokens.some((t) => t.label === "Hidden"));
+  pass("player map tokens include visible pcs/npcs/monsters");
+} catch (err) {
+  fail(`player map tokens: ${err.message}`);
+}
+
+const playerMapViewSrc = fs.readFileSync(path.join(root, "js/core/player-map-view.js"), "utf8");
+if (!playerMapViewSrc.includes("player-map-zoom-in") || !playerMapViewSrc.includes("player-map-tokens")) {
+  fail("player-map-view missing zoom chrome or token layer");
+} else pass("player map view has zoom + token layer");
+
+if (!spatialSrc.includes("onFogKeydown") || !spatialSrc.includes("undoFogStroke")) {
+  fail("map-spatial missing fog ctrl+z undo");
+} else pass("map-spatial binds fog ctrl+z undo");
+
 if (failed) {
   console.error(`\n${failed} failure(s)`);
   process.exit(1);

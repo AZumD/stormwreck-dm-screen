@@ -1,7 +1,7 @@
 # PLAYER-MAP
 
 ## Purpose
-Player-facing map tab — shows the map containing the player's PC token only.
+Player-facing map tab — shows the map containing the player's PC, fog, and visible combat tokens on that map.
 
 ## Flow
 ```
@@ -15,7 +15,7 @@ No manual map picker. If the PC has no `partyPositions` entry → **No map avail
 ## Client
 | File | Role |
 |------|------|
-| `js/core/player-map-view.js` | Full-bleed map, pan/zoom, fog, token; polls every ~1.5s |
+| `js/core/player-map-view.js` | Full-bleed map, pan/zoom (+/−/Fit, wheel, pinch), fog, all visible tokens; polls every ~1.5s |
 | `js/player-app.js` | Map tab |
 | `player/index.html` | Tab + scripts |
 
@@ -28,9 +28,9 @@ No manual map picker. If the PC has no `partyPositions` entry → **No map avail
 Implemented in `server/lib/player-map.js`.
 
 ## Player-safe payload
-Only: `mapId`, map name, image URL, grid/size when calibrated, **own** token position/art, fog revision/strokes.
+`mapId`, map name, image URL, grid/size when calibrated, fog revision/strokes, and **visible combat tokens** on that map (`pc` / `npc` / `monster` — label, art, position, grid footprint). Own token is flagged with `isSelf: true`.
 
-Does **not** include DM pins, other tokens, initiative, or full `map-state`.
+Does **not** include DM pins, initiative, HP/AC, or hidden (`visible: false`) tokens.
 
 ## Future
 Location catalogue may add `playerMapImage` (player-safe art separate from DM `mapImage`).

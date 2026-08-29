@@ -34,7 +34,7 @@ Coordinates are **0–1 normalized** to map image space (pan/zoom independent).
 1. Check **Fog enabled** (or click **Reveal** / **Hide** — both turn fog on and enter paint mode).
 2. The map cursor becomes a crosshair when paint mode is active (also toggled via the **Fog** button in the primary toolbar).
 3. **Click and drag** on the map to paint reveal (erase fog) or hide (add fog back) strokes.
-4. **Undo**, **Hide all** (reset to fully hidden), **Reveal all** (clear fog overlay).
+4. **Undo**, **Hide all** (reset to fully hidden), **Reveal all** (clear fog overlay). **Ctrl+Z** / **Cmd+Z** undoes the last stroke when fog is enabled.
 
 Layer `#map-fog-layer` inside `#map-world` (semi-transparent fog on DM view).
 

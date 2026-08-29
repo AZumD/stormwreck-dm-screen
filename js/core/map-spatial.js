@@ -804,10 +804,7 @@ window.MapSpatial = (function () {
     });
 
     els.fogUndo?.addEventListener("click", () => {
-      const map = activeMap();
-      if (!map || !window.MapFog) return;
-      MapFog.undoLastStroke(campaignId, map.id);
-      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      undoFogStroke();
     });
 
     els.fogClear?.addEventListener("click", () => {
@@ -825,6 +822,25 @@ window.MapSpatial = (function () {
       MapFog.revealAll(campaignId, map.id);
       MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
     });
+
+    function undoFogStroke() {
+      const map = activeMap();
+      if (!map || !window.MapFog) return false;
+      if (!MapFog.undoLastStroke(campaignId, map.id)) return false;
+      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      return true;
+    }
+
+    function onFogKeydown(e) {
+      const key = e.key?.toLowerCase();
+      if (key !== "z" || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+      if (e.target.closest?.("input, textarea, select, [contenteditable=true]")) return;
+      if (!els.fogEnabled?.checked && !fogging) return;
+      if (!undoFogStroke()) return;
+      e.preventDefault();
+    }
+
+    document.addEventListener("keydown", onFogKeydown);
 
     if (window.MapFog) {
       MapFog.bindDm({

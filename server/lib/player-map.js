@@ -12,8 +12,10 @@ const authorize = require("./authorize");
 const { assertSafeId } = require("./ids");
 const {
   findCanonicalPcLocation,
-  partyIdFromCatalogueId
+  partyIdFromCatalogueId,
+  catalogueIdFromPartyId
 } = require("./map-pc-placement");
+const { percentToWorld, worldToPercent } = require("./map-distance");
 
 function locationLinkId(entry) {
   if (!entry) return null;
@@ -62,11 +64,99 @@ function playerFogDto(fogRaw) {
   };
 }
 
-function buildRevision(mapId, fog, location) {
+function buildRevision(mapId, fog, tokens) {
   const fogRev = fog?.revision || 0;
-  const tx = location?.percent?.x ?? location?.token?.x ?? "";
-  const ty = location?.percent?.y ?? location?.token?.y ?? "";
-  return `${mapId}:${fogRev}:${tx},${ty}`;
+  const tokenSig = (tokens || [])
+    .map((t) => `${t.id}:${t.percent?.x ?? ""},${t.percent?.y ?? ""}:${t.kind ?? ""}`)
+    .join("|");
+  return `${mapId}:${fogRev}:${tokenSig}`;
+}
+
+function mapMetaFromView(calibrated, uvtt, entry) {
+  return {
+    calibrated,
+    widthPx: uvtt?.widthPx || entry.mapCalibration?.widthPx || null,
+    heightPx: uvtt?.heightPx || entry.mapCalibration?.heightPx || null,
+    grid: calibrated ? uvtt?.grid || entry.mapCalibration?.grid || null : null
+  };
+}
+
+function tokenToPlayerDto(token, mapMeta, viewerCatalogueId) {
+  if (!token || token.visible === false) return null;
+  if (!["pc", "npc", "monster"].includes(token.kind)) return null;
+
+  let percent = null;
+  if (token.x != null && token.y != null && mapMeta.calibrated) {
+    percent = worldToPercent(token.x, token.y, mapMeta);
+  }
+  if (!percent && token.percent?.x != null && token.percent?.y != null) {
+    percent = { x: token.percent.x, y: token.percent.y };
+  }
+
+  const catalogueId = token.catalogueId || null;
+  return {
+    id: token.id,
+    kind: token.kind,
+    label: token.label || token.id,
+    imageUrl: token.imageUrl || null,
+    percent,
+    gridCells: Number(token.gridCells) > 0 ? Number(token.gridCells) : 1,
+    isSelf: token.kind === "pc" && Boolean(viewerCatalogueId && catalogueId === viewerCatalogueId)
+  };
+}
+
+async function loadCampaignPcLookup(campaignId) {
+  if (!db.isDbConfigured()) return new Map();
+  const result = await db.query(
+    `SELECT catalogue_pc_id, name, portrait_url
+     FROM characters
+     WHERE campaign_id = $1 AND catalogue_pc_id IS NOT NULL`,
+    [campaignId]
+  );
+  const byCatalogue = new Map();
+  for (const row of result.rows) {
+    if (row.catalogue_pc_id) byCatalogue.set(row.catalogue_pc_id, row);
+  }
+  return byCatalogue;
+}
+
+function buildPlayerMapTokens(mapState, mapId, viewerCatalogueId, mapMeta, pcLookup) {
+  const tokens = [];
+  const seenPc = new Set();
+
+  const list = mapState.tokens?.[mapId];
+  if (Array.isArray(list)) {
+    for (const raw of list) {
+      const dto = tokenToPlayerDto(raw, mapMeta, viewerCatalogueId);
+      if (!dto || !dto.percent) continue;
+      if (dto.kind === "pc" && raw.catalogueId) {
+        seenPc.add(raw.catalogueId);
+        const meta = pcLookup.get(raw.catalogueId);
+        if (meta?.name) dto.label = meta.name;
+        if (!dto.imageUrl && meta?.portrait_url) dto.imageUrl = meta.portrait_url;
+      }
+      tokens.push(dto);
+    }
+  }
+
+  for (const [partyId, pos] of Object.entries(mapState.partyPositions || {})) {
+    if (pos.mapId !== mapId || pos.x == null || pos.y == null) continue;
+    const catalogueId = catalogueIdFromPartyId(partyId);
+    if (!catalogueId || seenPc.has(catalogueId)) continue;
+    seenPc.add(catalogueId);
+    const meta = pcLookup.get(catalogueId);
+    tokens.push({
+      id: `party-${partyId}`,
+      kind: "pc",
+      label: meta?.name || "Party member",
+      imageUrl: meta?.portrait_url || null,
+      percent: { x: pos.x, y: pos.y },
+      gridCells: 1,
+      isSelf: catalogueId === viewerCatalogueId
+    });
+  }
+
+  return tokens;
 }
 
 async function assertCharacterControl(req, campaignId, characterId) {
@@ -132,21 +222,39 @@ async function getPlayerMapView(req, campaignId, characterId) {
   }
 
   const fog = playerFogDto(mapState.fog?.[mapId]);
+  const mapMeta = mapMetaFromView(calibrated, uvtt, entry);
+  const pcLookup = await loadCampaignPcLookup(campaignId);
+  const tokens = buildPlayerMapTokens(mapState, mapId, catalogueId, mapMeta, pcLookup);
+  const selfToken =
+    tokens.find((t) => t.isSelf) ||
+    tokens.find((t) => t.id === tokenDto.id) ||
+    (tokenDto.percent
+      ? {
+          id: "self",
+          kind: "pc",
+          label: tokenDto.label,
+          imageUrl: tokenDto.imageUrl,
+          percent: tokenDto.percent,
+          gridCells: tokenDto.gridCells || 1,
+          isSelf: true
+        }
+      : null);
 
   return {
     available: true,
-    revision: buildRevision(mapId, fog, loc),
+    revision: buildRevision(mapId, fog, tokens),
     characterId: character.id,
     cataloguePcId: catalogueId,
     mapId,
     mapName: entry.name || entry.title || mapId,
     imageUrl,
     calibrated,
-    widthPx: uvtt?.widthPx || entry.mapCalibration?.widthPx || null,
-    heightPx: uvtt?.heightPx || entry.mapCalibration?.heightPx || null,
-    grid: calibrated ? uvtt?.grid || entry.mapCalibration?.grid || null : null,
+    widthPx: mapMeta.widthPx,
+    heightPx: mapMeta.heightPx,
+    grid: mapMeta.grid,
     scale: uvtt?.scale || entry.mapCalibration?.scale || null,
-    token: tokenDto,
+    token: selfToken || tokenDto,
+    tokens,
     fog
   };
 }
@@ -187,5 +295,7 @@ module.exports = {
   findCanonicalPcLocation,
   getPlayerMapView,
   streamPlayerMapImage,
-  partyIdFromCatalogueId
+  partyIdFromCatalogueId,
+  buildPlayerMapTokens,
+  tokenToPlayerDto
 };

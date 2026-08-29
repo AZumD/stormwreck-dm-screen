@@ -18,5 +18,6 @@ node test/validate-player-map.js
 - Removed PC has no canonical location
 - Legacy token-only state migrates to `partyPositions`
 - Player map API uses `findCanonicalPcLocation`
+- Player map API exposes visible combat tokens via `buildPlayerMapTokens`
 - Normalize is idempotent (reload-safe)
 - Player Map tab + fog wiring + docs

@@ -1,7 +1,7 @@
 # PLAYER.md
 
 ## Purpose
-Authenticated, mobile-first player companion: character sheet, party cards, private notes, catalogue library, and revealed People. Phase 5A–5D complete (see `PHASE5-PLAYER-SHEET.md`).
+Authenticated, mobile-first player companion: character sheet, map, party cards, private notes, and catalogue library. Phase 5A–5D complete (see `PHASE5-PLAYER-SHEET.md`).
 
 ## Surfaces
 | Path | Role |
@@ -47,7 +47,7 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - Inline **+** opens add modal with catalogue search (skills/features/spells/items); custom text still available; conditions use a short text modal
 - Inspiration toggle; death saves; spell slots; **class resources** (rage/ki/channel…)
 - Inventory: equip checkbox + quantity via `PATCH` inventory
-- Soft refresh of sheet/party/people when the tab regains focus
+- Soft refresh of sheet/party when the tab regains focus
 - Layered forest wallpaper (`assets/player/fairy-forest-bg.jpg`); no horizontal overflow; ≥44px taps
 - **Notes** tab cards and note editor use stained-paper texture; campaign **read-aloud** blocks use the same asset
 
@@ -62,10 +62,9 @@ Authenticated, mobile-first player companion: character sheet, party cards, priv
 - Custom freeform sheet lines still work via Edit sheet / inline add
 - NPC, PC, music, monster, location catalogues blocked for browse; DM `/api/catalogues/*` still unavailable to players
 
-## People UI (Phase 5D)
-- Tab lists NPCs the DM has revealed for the campaign (portrait + optional DM note)
-- Detail dialog shows portrait, role, player-facing note, summary / description
-- Unrevealed NPCs are never listed (catalogue `/npc` remains blocked)
+## Revealed NPCs (Phase 5D — DM API only)
+- DM can reveal NPCs via `/api/campaigns/:id/revealed-npcs`; player **People** tab removed — use the **Map** tab for visible NPC/monster tokens instead
+- Unrevealed NPC catalogue entries remain blocked for players
 
 ## Party UI
 - Cards show name, race/class (pretty-printed), level, and shared vitals (`hpCurrent` / `hpMax` / `conditions`) for fellow player PCs

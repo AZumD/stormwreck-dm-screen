@@ -1117,9 +1117,34 @@ textarea { min-height: 6.5rem; resize: vertical; }
   flex-direction: column;
 }
 
+.player-map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem 0.35rem;
+}
+
+.player-map-toolbar__actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.player-map-toolbar__actions button {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  background: rgba(12, 18, 14, 0.75);
+  color: var(--text, #e8e0d0);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+}
+
 .player-map-title {
   margin: 0;
-  padding: 0.35rem 0.75rem;
+  padding: 0;
   font-size: 0.85rem;
   color: var(--muted);
 }
@@ -1130,20 +1155,25 @@ textarea { min-height: 6.5rem; resize: vertical; }
   overflow: hidden;
   touch-action: none;
   background: #0a0e0c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .player-map-world {
   position: relative;
-  width: 100%;
-  height: 100%;
   transform-origin: 0 0;
+  width: min(100%, calc(100% * var(--map-aspect, 1.333333)));
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: var(--map-aspect, 4 / 3);
 }
 
 .player-map-image {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
+  aspect-ratio: var(--map-aspect, 4 / 3);
   user-select: none;
   pointer-events: none;
 }
@@ -1160,11 +1190,29 @@ textarea { min-height: 6.5rem; resize: vertical; }
   display: none;
 }
 
+.player-map-tokens {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .player-map-token {
   position: absolute;
-  transform: translate(-50%, -50%);
   z-index: 2;
   pointer-events: none;
+}
+
+.player-map-token--self .player-map-token__inner {
+  border-color: rgba(232, 200, 106, 1);
+  box-shadow: 0 0 0 2px rgba(232, 200, 106, 0.35);
+}
+
+.player-map-token--monster .player-map-token__inner {
+  border-color: rgba(196, 84, 84, 0.9);
+}
+
+.player-map-token--npc .player-map-token__inner {
+  border-color: rgba(120, 168, 220, 0.9);
 }
 
 .player-map-token__inner {
@@ -1179,6 +1227,12 @@ textarea { min-height: 6.5rem; resize: vertical; }
   overflow: hidden;
   font-weight: 600;
   font-size: 0.75rem;
+}
+
+.player-map-token:not(.player-map-token--self) .player-map-token__inner {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-width: 1.5px;
 }
 
 .player-map-token__inner img {

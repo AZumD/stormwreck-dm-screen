@@ -149,9 +149,9 @@ if (!clientSrc.includes("patchSheet") || !clientSrc.includes("addInventory") || 
 if (!playerHtml.includes('data-tab="library"') || !appSrc.includes("loadLibrary")) {
   fail("player library tab UI missing");
 } else pass("player library tab UI");
-if (!playerHtml.includes('data-tab="people"') || !appSrc.includes("loadPeople") || !appSrc.includes("openRevealedNpc")) {
-  fail("player People / revealed NPC UI missing");
-} else pass("player People tab UI");
+if (playerHtml.includes('data-tab="people"')) {
+  fail("player People tab should be removed");
+} else pass("player People tab removed");
 if (!clientSrc.includes("revealedNpcs") || !clientSrc.includes("revealedNpc")) {
   fail("player-api-client missing revealed NPC helpers");
 } else pass("player-api-client revealed NPC helpers");

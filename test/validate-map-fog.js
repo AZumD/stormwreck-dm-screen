@@ -29,6 +29,10 @@ if (!fogJs.includes("stopPropagation")) {
   fail("map-fog should stop propagation when painting");
 } else pass("map-fog stops propagation while painting");
 
+if (!spatialJs.includes("onFogKeydown") || !spatialJs.includes("undoFogStroke")) {
+  fail("map-spatial should bind ctrl+z fog undo");
+} else pass("map-spatial binds ctrl+z fog undo");
+
 if (spatialJs.includes("if (fogging) e.stopPropagation()")) {
   fail("map-spatial must not stopPropagation on all fog pointerdowns");
 } else pass("map-spatial no longer blocks fog pointer events");

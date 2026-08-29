@@ -91,8 +91,6 @@
     libraryTotal: 0,
     libraryBusy: false,
     librarySearchTimer: null,
-    people: [],
-    peopleBusy: false,
     addKind: null,
     addSearchTimer: null,
     addResults: []
@@ -291,7 +289,6 @@
         characters: "Character sheet",
         map: "Map",
         party: "Party",
-        people: "People",
         library: "Library",
         notes: "Notes"
       }[state.tab] || "Companion";
@@ -778,70 +775,6 @@
     return bits.join(" · ");
   }
 
-  function renderPeople() {
-    if (state.peopleBusy) {
-      els.main.innerHTML = `<p class="empty">Loading people…</p>`;
-      return;
-    }
-    const list = state.people.length
-      ? `<ul class="list people-list">${state.people
-          .map((n) => {
-            const role = n.role ? `<p class="meta">${esc(n.role)}</p>` : "";
-            const note = n.note ? `<p class="meta people-note">${esc(n.note)}</p>` : "";
-            const summary = String(n.summary || "").slice(0, 140);
-            const portrait = n.portraitUrl
-              ? `<img class="people-portrait" src="${esc(n.portraitUrl)}" alt="" onerror="this.remove()">`
-              : "";
-            return `<li>
-            <button type="button" class="card card-btn people-card" data-revealed-npc="${esc(n.id)}">
-              ${portrait}
-              <div class="people-card__text">
-                <h3>${esc(n.name || n.id)}</h3>
-                ${role}
-                ${note}
-                ${summary ? `<p class="meta">${esc(summary)}${String(n.summary || "").length > 140 ? "…" : ""}</p>` : ""}
-              </div>
-            </button>
-          </li>`;
-          })
-          .join("")}</ul>`
-      : `<p class="empty">No people revealed yet. Your DM reveals NPCs as you meet them.</p>`;
-    els.main.innerHTML = `
-      <p class="lede people-lede">Contacts your DM has revealed for this campaign.</p>
-      ${list}`;
-  }
-
-  async function loadPeople() {
-    if (!state.campaignId) return;
-    state.peopleBusy = true;
-    if (state.tab === "people") renderPeople();
-    const data = await safe(() => api.revealedNpcs(state.campaignId));
-    state.peopleBusy = false;
-    state.people = data?.npcs || [];
-    if (state.tab === "people") renderPeople();
-  }
-
-  async function openRevealedNpc(npcId) {
-    const data = await safe(() => api.revealedNpc(state.campaignId, npcId));
-    if (!data) return;
-    const npc = data.npc || {};
-    els.dialog.classList.remove("dialog-source");
-    els.detailTitle.textContent = npc.name || npcId;
-    const bits = [npc.role].filter(Boolean);
-    const portrait = npc.portraitUrl
-      ? `<img class="detail-portrait" src="${esc(npc.portraitUrl)}" alt="" onerror="this.remove()">`
-      : "";
-    els.detailBody.innerHTML = `
-      ${portrait}
-      ${bits.length ? `<p class="meta">${esc(bits.join(" · "))}</p>` : ""}
-      ${npc.note ? `<p class="meta people-note">${esc(npc.note)}</p>` : ""}
-      ${npc.summary ? `<p class="detail-block">${esc(npc.summary)}</p>` : ""}
-      ${npc.description ? `<div class="detail-block">${esc(npc.description).replace(/\n/g, "<br>")}</div>` : ""}
-      ${!npc.summary && !npc.description && !npc.note ? `<p class="empty">No description.</p>` : ""}
-    `;
-    els.dialog.showModal();
-  }
-
   function renderLibrary() {
     const types = LIBRARY_TYPES.map((t) => {
       const on = t === state.libraryType ? " is-active" : "";
@@ -1014,10 +947,6 @@
       if (!data) return;
       state.party = data.party || [];
       renderParty();
-      return;
-    }
-    if (state.tab === "people") {
-      await loadPeople();
       return;
     }
     if (state.tab === "library") {
@@ -1357,7 +1286,6 @@
           renderParty();
         }
       }
-      if (state.tab === "people") await loadPeople();
     } catch (err) {
       if (expired(err)) return;
       /* soft refresh stays silent on transient errors */
@@ -1416,6 +1344,7 @@
     const btn = e.target.closest("[data-tab]");
     if (!btn) return;
     state.tab = btn.getAttribute("data-tab");
+    if (state.tab === "people") state.tab = "characters";
     setTabs();
     await render();
   });
@@ -1477,11 +1406,6 @@
     if (libType) {
       state.libraryType = libType.getAttribute("data-library-type");
       await loadLibrary();
-      return;
-    }
-    const revealed = e.target.closest("[data-revealed-npc]");
-    if (revealed) {
-      await openRevealedNpc(revealed.getAttribute("data-revealed-npc"));
       return;
     }
     const toggle = e.target.closest("[data-toggle-section]");

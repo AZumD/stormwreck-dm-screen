@@ -102,11 +102,20 @@ function percentToWorld(pctX, pctY, map) {
   return pixelToWorld((Number(pctX) / 100) * w, (Number(pctY) / 100) * h, map.grid);
 }
 
+function worldToPercent(wx, wy, map) {
+  const w = Number(map?.widthPx) || 0;
+  const h = Number(map?.heightPx) || 0;
+  if (w <= 0 || h <= 0 || !map?.grid) return null;
+  const pix = worldToPixel(wx, wy, map.grid);
+  return { x: (pix.x / w) * 100, y: (pix.y / h) * 100 };
+}
+
 module.exports = {
   distanceBetween,
   formatDistance,
   pixelToWorld,
   worldToPixel,
   percentToWorld,
+  worldToPercent,
   snapWorldToCellCenter
 };

@@ -1,10 +1,14 @@
 /**
- * Player Map tab — full-bleed map from PC token location, fog, pan/zoom. Polls player-safe API.
+ * Player Map tab — full-bleed map from PC token location, fog, tokens, pan/zoom. Polls player-safe API.
  */
 window.PlayerMapView = (function () {
   "use strict";
 
   const POLL_MS = 1500;
+  const ZOOM_MIN = 1;
+  const ZOOM_MAX = 4;
+  const ZOOM_STEP = 1.12;
+
   let root = null;
   let pollTimer = null;
   let lastRevision = null;
@@ -15,6 +19,11 @@ window.PlayerMapView = (function () {
   let panY = 0;
   let dragging = false;
   let dragStart = null;
+  let pinchStart = null;
+
+  function clamp(n, lo, hi) {
+    return Math.min(hi, Math.max(lo, n));
+  }
 
   function worldToPercent(wx, wy, view) {
     if (!view?.grid || !view.widthPx || !view.heightPx) return null;
@@ -26,37 +35,155 @@ window.PlayerMapView = (function () {
     return { x: (px / view.widthPx) * 100, y: (py / view.heightPx) * 100 };
   }
 
-  function tokenPosition(view) {
-    const t = view.token;
-    if (!t) return null;
-    if (t.percent) return t.percent;
-    if (t.world) return worldToPercent(t.world.x, t.world.y, view);
+  function tokenPosition(token, view) {
+    if (!token) return null;
+    if (token.percent) return token.percent;
+    if (token.world) return worldToPercent(token.world.x, token.world.y, view);
     return null;
+  }
+
+  function collectTokens(view) {
+    if (Array.isArray(view.tokens) && view.tokens.length) return view.tokens;
+    if (view.token) {
+      return [
+        {
+          ...view.token,
+          id: view.token.id || "self",
+          kind: view.token.kind || "pc",
+          isSelf: true
+        }
+      ];
+    }
+    return [];
+  }
+
+  function tokenStyle(token, view) {
+    const pos = tokenPosition(token, view);
+    if (!pos) return null;
+    const cells = Math.max(1, Number(token.gridCells) || 1);
+    if (view.calibrated && view.grid && cells > 1) {
+      const sx = Number(view.grid.sizeX) || 1;
+      const sy = Number(view.grid.sizeY) || 1;
+      const w = (cells / sx) * 100;
+      const h = (cells / sy) * 100;
+      return {
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        width: `${w}%`,
+        height: `${h}%`,
+        transform: "translate(-50%, -50%)"
+      };
+    }
+    return {
+      left: `${pos.x}%`,
+      top: `${pos.y}%`,
+      transform: "translate(-50%, -50%)"
+    };
   }
 
   function applyTransform() {
     const world = root?.querySelector(".player-map-world");
     if (!world) return;
     world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    world.classList.toggle("is-zoomed", zoom > 1.01);
+  }
+
+  function resetView() {
+    zoom = 1;
+    panX = 0;
+    panY = 0;
+    applyTransform();
+  }
+
+  function zoomAt(nextZoom, clientX, clientY) {
+    const viewport = root?.querySelector(".player-map-viewport");
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const mx = clientX != null ? clientX - rect.left : rect.width / 2;
+    const my = clientY != null ? clientY - rect.top : rect.height / 2;
+    const wx = (mx - panX) / zoom;
+    const wy = (my - panY) / zoom;
+    zoom = clamp(nextZoom, ZOOM_MIN, ZOOM_MAX);
+    if (zoom <= ZOOM_MIN + 0.001) {
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+    } else {
+      panX = mx - wx * zoom;
+      panY = my - wy * zoom;
+    }
+    applyTransform();
+  }
+
+  function syncMapAspect(img) {
+    const world = root?.querySelector(".player-map-world");
+    if (!world || !img) return;
+    const w = img.naturalWidth || 0;
+    const h = img.naturalHeight || 0;
+    if (w > 0 && h > 0) {
+      world.style.setProperty("--map-aspect", String(w / h));
+    } else {
+      world.style.removeProperty("--map-aspect");
+    }
   }
 
   function bindPanZoom() {
     const viewport = root?.querySelector(".player-map-viewport");
-    const world = root?.querySelector(".player-map-world");
-    if (!viewport || !world) return;
+    if (!viewport) return;
+
+    const activePointers = new Map();
 
     viewport.addEventListener(
       "wheel",
       (e) => {
         e.preventDefault();
+        const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+        zoomAt(zoom * factor, e.clientX, e.clientY);
+      },
+      { passive: false }
+    );
+
+    viewport.addEventListener("pointerdown", (e) => {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointers.size === 2) {
+        const pts = [...activePointers.values()];
+        pinchStart = {
+          distance: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y),
+          zoom,
+          panX,
+          panY,
+          midX: (pts[0].x + pts[1].x) / 2,
+          midY: (pts[0].y + pts[1].y) / 2
+        };
+        dragging = false;
+        dragStart = null;
+        return;
+      }
+
+      if (zoom <= 1.01 || e.button !== 0) return;
+      dragging = true;
+      dragStart = { x: e.clientX - panX, y: e.clientY - panY };
+      viewport.setPointerCapture(e.pointerId);
+    });
+
+    viewport.addEventListener("pointermove", (e) => {
+      if (activePointers.has(e.pointerId)) {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      if (pinchStart && activePointers.size >= 2) {
+        const pts = [...activePointers.values()];
+        if (pts.length < 2) return;
+        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        if (!dist || !pinchStart.distance) return;
         const rect = viewport.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        const wx = (mx - panX) / zoom;
-        const wy = (my - panY) / zoom;
-        const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-        zoom = Math.min(4, Math.max(1, zoom * factor));
-        if (zoom <= 1.01) {
+        const mx = pinchStart.midX - rect.left;
+        const my = pinchStart.midY - rect.top;
+        const wx = (mx - pinchStart.panX) / pinchStart.zoom;
+        const wy = (my - pinchStart.panY) / pinchStart.zoom;
+        zoom = clamp(pinchStart.zoom * (dist / pinchStart.distance), ZOOM_MIN, ZOOM_MAX);
+        if (zoom <= ZOOM_MIN + 0.001) {
           zoom = 1;
           panX = 0;
           panY = 0;
@@ -65,30 +192,38 @@ window.PlayerMapView = (function () {
           panY = my - wy * zoom;
         }
         applyTransform();
-      },
-      { passive: false }
-    );
+        return;
+      }
 
-    viewport.addEventListener("pointerdown", (e) => {
-      if (zoom <= 1.01) return;
-      dragging = true;
-      dragStart = { x: e.clientX - panX, y: e.clientY - panY };
-      viewport.setPointerCapture(e.pointerId);
-    });
-    viewport.addEventListener("pointermove", (e) => {
       if (!dragging || !dragStart) return;
       panX = e.clientX - dragStart.x;
       panY = e.clientY - dragStart.y;
       applyTransform();
     });
-    viewport.addEventListener("pointerup", () => {
+
+    function endPointer(e) {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) pinchStart = null;
       dragging = false;
       dragStart = null;
+    }
+
+    viewport.addEventListener("pointerup", endPointer);
+    viewport.addEventListener("pointercancel", endPointer);
+  }
+
+  function bindZoomChrome() {
+    root?.querySelector(".player-map-zoom-out")?.addEventListener("click", () => {
+      const viewport = root?.querySelector(".player-map-viewport");
+      const rect = viewport?.getBoundingClientRect();
+      zoomAt(zoom / ZOOM_STEP, rect ? rect.left + rect.width / 2 : null, rect ? rect.top + rect.height / 2 : null);
     });
-    viewport.addEventListener("pointercancel", () => {
-      dragging = false;
-      dragStart = null;
+    root?.querySelector(".player-map-zoom-in")?.addEventListener("click", () => {
+      const viewport = root?.querySelector(".player-map-viewport");
+      const rect = viewport?.getBoundingClientRect();
+      zoomAt(zoom * ZOOM_STEP, rect ? rect.left + rect.width / 2 : null, rect ? rect.top + rect.height / 2 : null);
     });
+    root?.querySelector(".player-map-fit-btn")?.addEventListener("click", resetView);
   }
 
   function renderFog(canvas, fog) {
@@ -102,6 +237,39 @@ window.PlayerMapView = (function () {
       if (s?.id) fake.strokes[s.id] = s;
     });
     MapFog.render(canvas, fake, { dm: false });
+  }
+
+  function renderTokens(view) {
+    const layer = root?.querySelector(".player-map-tokens");
+    if (!layer) return;
+    const tokens = collectTokens(view);
+    layer.innerHTML = tokens
+      .map((token) => {
+        const style = tokenStyle(token, view);
+        if (!style) return "";
+        const kind = token.kind || "pc";
+        const selfClass = token.isSelf ? " player-map-token--self" : "";
+        const styleStr = Object.entries(style)
+          .map(([k, v]) => `${k}:${v}`)
+          .join(";");
+        const label = token.label || "?";
+        const inner = token.imageUrl
+          ? `<img src="${escapeAttr(token.imageUrl)}" alt="" draggable="false">`
+          : escapeHtml(label.slice(0, 2));
+        return `<div class="player-map-token player-map-token--${kind}${selfClass}" style="${styleStr}" title="${escapeAttr(label)}"><span class="player-map-token__inner">${inner}</span></div>`;
+      })
+      .join("");
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/"/g, "&quot;");
   }
 
   function renderView(view) {
@@ -121,32 +289,20 @@ window.PlayerMapView = (function () {
 
     const img = root.querySelector(".player-map-image");
     const world = root.querySelector(".player-map-world");
-    const token = root.querySelector(".player-map-token");
     const fogCanvas = root.querySelector(".player-map-fog");
     const title = root.querySelector(".player-map-title");
 
     if (title) title.textContent = view.mapName || view.mapId || "Map";
-    if (img && view.imageUrl && img.getAttribute("src") !== view.imageUrl) {
-      img.src = view.imageUrl;
+    if (img && view.imageUrl) {
+      if (img.getAttribute("src") !== view.imageUrl) {
+        img.onload = () => syncMapAspect(img);
+        img.src = view.imageUrl;
+      } else if (img.complete) {
+        syncMapAspect(img);
+      }
     }
 
-    const pos = tokenPosition(view);
-    if (token && pos) {
-      token.hidden = false;
-      token.style.left = `${pos.x}%`;
-      token.style.top = `${pos.y}%`;
-      const inner = token.querySelector(".player-map-token__inner");
-      if (inner) {
-        if (view.token?.imageUrl) {
-          inner.innerHTML = `<img src="${view.token.imageUrl}" alt="" draggable="false">`;
-        } else {
-          inner.textContent = (view.token?.label || "?").slice(0, 2);
-        }
-      }
-      token.title = view.token?.label || "";
-    } else if (token) {
-      token.hidden = true;
-    }
+    renderTokens(view);
 
     if (fogCanvas && world) {
       const w = world.clientWidth || 1;
@@ -163,12 +319,10 @@ window.PlayerMapView = (function () {
     }
 
     if (view.mapId !== lastMapId) {
-      zoom = 1;
-      panX = 0;
-      panY = 0;
+      resetView();
       lastMapId = view.mapId;
-      applyTransform();
     }
+    applyTransform();
   }
 
   async function refresh() {
@@ -202,6 +356,7 @@ window.PlayerMapView = (function () {
     unmount();
     ctx = options || {};
     lastRevision = null;
+    lastMapId = null;
     zoom = 1;
     panX = 0;
     panY = 0;
@@ -209,20 +364,26 @@ window.PlayerMapView = (function () {
       <div class="player-map-root">
         <p class="player-map-empty">Loading map…</p>
         <div class="player-map-stage" hidden>
-          <p class="player-map-title"></p>
+          <div class="player-map-toolbar">
+            <p class="player-map-title"></p>
+            <div class="player-map-toolbar__actions">
+              <button type="button" class="player-map-fit-btn" title="Reset view">Fit</button>
+              <button type="button" class="player-map-zoom-out" title="Zoom out">−</button>
+              <button type="button" class="player-map-zoom-in" title="Zoom in">+</button>
+            </div>
+          </div>
           <div class="player-map-viewport">
             <div class="player-map-world">
               <img class="player-map-image" alt="" draggable="false">
               <canvas class="player-map-fog" aria-hidden="true"></canvas>
-              <div class="player-map-token" hidden>
-                <span class="player-map-token__inner"></span>
-              </div>
+              <div class="player-map-tokens"></div>
             </div>
           </div>
         </div>
       </div>`;
     root = container.querySelector(".player-map-root");
     bindPanZoom();
+    bindZoomChrome();
     startPoll();
   }
 
@@ -231,6 +392,7 @@ window.PlayerMapView = (function () {
     root = null;
     ctx = null;
     lastRevision = null;
+    lastMapId = null;
   }
 
   return { mount, unmount, refresh };
