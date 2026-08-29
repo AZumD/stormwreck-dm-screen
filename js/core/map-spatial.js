@@ -838,14 +838,6 @@ window.MapSpatial = (function () {
       });
     }
 
-    mapViewport?.addEventListener(
-      "pointerdown",
-      (e) => {
-        if (fogging) e.stopPropagation();
-      },
-      true
-    );
-
     els.addToken?.addEventListener("click", () => {
       const map = activeMap();
       if (!isCalibrated(map)) return;

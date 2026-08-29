@@ -213,36 +213,46 @@ window.MapFog = (function () {
       return true;
     }
 
-    mapViewport?.addEventListener("pointerdown", (e) => {
-      if (!canPaint(e)) return;
-      const mapId = activeMapId();
-      if (!mapId) return;
-      e.preventDefault();
-      const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
-      if (!norm) return;
-      painting = true;
-      lastNorm = norm;
-      currentStroke = {
-        id: newStrokeId(),
-        mode: getFogMode?.() === "hide" ? "hide" : "reveal",
-        radius: getBrushRadius?.() || BRUSH_PRESETS[1],
-        points: [[norm.x, norm.y]]
-      };
-      mapViewport.setPointerCapture(e.pointerId);
-      refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
-    });
+    mapViewport?.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (!canPaint(e)) return;
+        const mapId = activeMapId();
+        if (!mapId) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
+        if (!norm) return;
+        painting = true;
+        lastNorm = norm;
+        currentStroke = {
+          id: newStrokeId(),
+          mode: getFogMode?.() === "hide" ? "hide" : "reveal",
+          radius: getBrushRadius?.() || BRUSH_PRESETS[1],
+          points: [[norm.x, norm.y]]
+        };
+        mapViewport.setPointerCapture(e.pointerId);
+        refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+      },
+      true
+    );
 
-    mapViewport?.addEventListener("pointermove", (e) => {
-      if (!painting || !currentStroke) return;
-      const mapId = activeMapId();
-      if (!mapId) return;
-      const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
-      if (!norm) return;
-      if (lastNorm && Math.hypot(norm.x - lastNorm.x, norm.y - lastNorm.y) < 0.002) return;
-      lastNorm = norm;
-      currentStroke.points.push([norm.x, norm.y]);
-      refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
-    });
+    mapViewport?.addEventListener(
+      "pointermove",
+      (e) => {
+        if (!painting || !currentStroke) return;
+        const mapId = activeMapId();
+        if (!mapId) return;
+        e.preventDefault();
+        const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
+        if (!norm) return;
+        if (lastNorm && Math.hypot(norm.x - lastNorm.x, norm.y - lastNorm.y) < 0.002) return;
+        lastNorm = norm;
+        currentStroke.points.push([norm.x, norm.y]);
+        refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+      },
+      true
+    );
 
     function endPaint(e) {
       if (!painting || !currentStroke) return;
@@ -261,8 +271,8 @@ window.MapFog = (function () {
       if (mapId) refresh(campaignId, mapId, mapWorld, { dm: true });
     }
 
-    mapViewport?.addEventListener("pointerup", endPaint);
-    mapViewport?.addEventListener("pointercancel", endPaint);
+    mapViewport?.addEventListener("pointerup", endPaint, true);
+    mapViewport?.addEventListener("pointercancel", endPaint, true);
   }
 
   return {
