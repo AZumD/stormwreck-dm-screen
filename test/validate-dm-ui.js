@@ -39,6 +39,10 @@ for (const [label, html] of [
     fail(`${label} missing primary map actions`);
   } else pass(`${label} has primary map actions`);
 
+  if (!html.includes("map-fullscreen-btn") || !html.includes("map-fullscreen.js")) {
+    fail(`${label} missing fullscreen map control`);
+  } else pass(`${label} has fullscreen map control`);
+
   if (!html.includes("map-layers-popover") || !html.includes('id="map-filters"')) {
     fail(`${label} missing Layers popover / filters`);
   } else pass(`${label} has Layers popover`);

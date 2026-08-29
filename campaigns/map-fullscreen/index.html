@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fullscreen map — DM Screen</title>
+  <link rel="stylesheet" href="../../css/style.css?v=20260825m4">
+</head>
+<body class="map-fullscreen-page is-booting">
+  <div id="map-panel" class="map-panel map-panel--fullscreen" data-map-mode="fullscreen" data-active-tab="map" aria-label="Fullscreen map">
+    <div class="map-fullscreen-stage">
+      <div class="map-stage map-stage--loading" id="map-stage">
+        <div class="map-viewport" id="map-viewport">
+          <div class="map-world" id="map-world">
+            <img id="map-image" class="map-image" alt="" draggable="false">
+            <div id="map-pins" class="map-pins"></div>
+          </div>
+        </div>
+      </div>
+      <ol id="map-initiative" class="map-initiative map-initiative--overlay" hidden aria-label="Initiative order"></ol>
+    </div>
+
+    <aside class="map-fullscreen-drawer" id="map-fullscreen-drawer" data-collapsed="false" aria-label="Map tools">
+      <button type="button" class="map-fullscreen-drawer__toggle" id="map-fullscreen-drawer-toggle" aria-expanded="true" aria-controls="map-fullscreen-drawer-panel">Hide tools</button>
+      <div class="map-fullscreen-drawer__panel" id="map-fullscreen-drawer-panel">
+        <a class="map-fullscreen-back" id="map-fullscreen-back" href="/dm/">← Back to campaign</a>
+
+        <label class="map-select-label" for="map-select">Map</label>
+        <select id="map-select" class="map-select"></select>
+
+        <div id="map-primary-actions" class="map-primary-actions map-primary-actions--drawer">
+          <button type="button" class="map-tool-btn" id="map-measure-btn" aria-pressed="false" hidden>Measure</button>
+          <button type="button" class="map-tool-btn" id="map-add-token-btn" hidden>+ Token</button>
+          <div class="map-layers-wrap">
+            <button type="button" class="map-tool-btn" id="map-layers-btn" aria-haspopup="true" aria-expanded="false" aria-controls="map-layers-popover">Layers</button>
+            <div id="map-layers-popover" class="map-layers-popover" hidden>
+              <div id="map-filters" class="map-filters map-filters--popover" role="group" aria-label="Pin layers"></div>
+            </div>
+          </div>
+          <button type="button" id="map-add-pin" class="map-tool-btn map-add-pin" aria-haspopup="dialog" aria-controls="map-pin-dialog" title="Add pin to this map">+</button>
+          <button type="button" class="map-tool-btn" id="map-reset-view-btn" title="Reset map view">Fit</button>
+          <button type="button" class="map-tool-btn" id="map-settings-toggle" aria-expanded="false" aria-controls="map-settings">Map settings</button>
+        </div>
+
+        <p id="map-measure-readout" class="map-measure-readout" hidden></p>
+        <p id="map-token-distance" class="map-token-distance" hidden></p>
+
+        <details id="map-settings" class="map-settings">
+          <summary class="map-settings__summary">Map settings</summary>
+          <div id="map-settings-body" class="map-settings__body">
+            <div id="map-spatial-chrome" class="map-spatial-chrome">
+              <div class="map-spatial-row">
+                <a class="map-uvtt-import btn-like" id="map-uvtt-catalogue-link" href="/location-katalog/index.html">
+                  Manage UVTT in Location catalogue
+                </a>
+                <span id="map-kind-badge" class="map-kind-badge" hidden></span>
+              </div>
+              <p id="map-spatial-meta" class="map-spatial-meta" hidden></p>
+              <div id="map-calibrated-tools" class="map-calibrated-tools" hidden>
+                <label class="map-tool-check"><input type="checkbox" id="map-show-grid"> Grid</label>
+                <label class="map-tool-check"><input type="checkbox" id="map-snap-measure"> Snap measure</label>
+                <label class="map-scale-label">ft/grid
+                  <input type="number" id="map-scale-input" min="0.1" step="0.5" value="5">
+                </label>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </aside>
+  </div>
+
+  <dialog id="map-pin-dialog" class="map-pin-dialog">
+    <div class="modal-header">
+      <h2 id="map-pin-dialog-title">Add to map</h2>
+      <button type="button" class="modal-close" id="map-pin-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="map-pin-dialog-body"></div>
+  </dialog>
+
+  <div id="entity-tooltip" class="entity-tooltip hidden" role="tooltip"></div>
+
+  <dialog id="entity-modal" class="entity-modal">
+    <div class="modal-header">
+      <h2 id="modal-title"></h2>
+      <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </dialog>
+
+  <script src="../../js/i18n/en.js"></script>
+  <script src="../../js/core/save-status.js"></script>
+  <script src="../../js/core/local-api-client.js"></script>
+  <script src="../../js/core/catalogue/types.js"></script>
+  <script src="../../js/core/parser.js"></script>
+  <script src="../../js/core/catalogue/store.js"></script>
+  <script src="../../js/core/catalogue/images.js"></script>
+  <script src="../../js/core/catalogue/configs.js"></script>
+  <script src="../../js/core/entity-registry.js"></script>
+  <script src="../../js/core/entity-ui.js"></script>
+  <script src="../../js/core/campaign-map-state.js"></script>
+  <script src="../../js/core/campaign-locations.js"></script>
+  <script src="../../js/core/party.js"></script>
+  <script src="../../js/core/combat-sheet-modal.js"></script>
+  <script src="../../js/core/map-distance.js"></script>
+  <script src="../../js/core/map-pc-placement.js"></script>
+  <script src="../../js/core/map-fog.js"></script>
+  <script src="../../js/core/map-token-size.js"></script>
+  <script src="../../js/core/map-spatial.js"></script>
+  <script src="../../js/core/map-panel.js"></script>
+  <script src="../../js/core/map-fullscreen.js"></script>
+  <script src="../../js/map-fullscreen-app.js"></script>
+</body>
+</html>

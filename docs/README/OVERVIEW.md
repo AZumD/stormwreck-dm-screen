@@ -66,6 +66,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Drag pins to save custom positions in `map-state.json`
 - **Grid token sizes** on calibrated maps follow D&D Size (Tiny/S/M = 1 cell, Large = 2×2, etc.); NPC race resolves via monster catalogue name match
 - Mouse-wheel zoom / pan when zoomed (default cursor until dragging; measure shows a live tape line)
+- **Expand** widens the map inside the campaign page; **Fullscreen** opens the map in a new tab (`docs/README/MAP-FULLSCREEN.md`)
 - **+** under the map adds NPC / PC / monster **combat tokens** on calibrated maps (item / non-calibrated still use pins); NPC/PC **Map token** overrides race-bound monster art
 - Party cards and PC/NPC map pins open the shared **combat sheet** (`CombatSheetModal`) — PCs via Postgres, NPCs via catalogue, monsters via map tokens only
 - **Initiative** is temporary shared table state in `map-state.initiativeTracker` (not PC extras / NPC catalogue / token fields)

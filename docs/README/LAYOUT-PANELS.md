@@ -13,6 +13,8 @@ Nav sidebar + map rail collapse, and map display modes (sidebar / expanded / fut
 | `expanded` | Map fills ~90–100% of the content area; main column collapsed; same MapPanel DOM/state |
 | `combat` | Reserved — same shell as expanded for now; Combat Mode builds on this later |
 
+**Fullscreen (new tab)** is separate — see `docs/README/MAP-FULLSCREEN.md` (`#map-fullscreen-btn` → `campaigns/map-fullscreen/`).
+
 Persisted: nav collapsed + map rail collapsed (localStorage). Expanded/combat are session UI only.
 
 ## API

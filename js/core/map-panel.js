@@ -243,6 +243,15 @@ window.MapPanel = (function () {
     let activeMapId = resolveActiveMapId(campaignId, maps);
     if (!maps[activeMapId]) activeMapId = Object.keys(maps)[0] || null;
 
+    const isFullscreenPage = document.body.classList.contains("map-fullscreen-page");
+    if (isFullscreenPage) {
+      const urlMap = new URLSearchParams(window.location.search).get("map");
+      if (urlMap && maps[urlMap]) {
+        activeMapId = urlMap;
+        if (mapSelect) mapSelect.value = urlMap;
+      }
+    }
+
     let spatialApi = null;
     let zoom = 1;
     let panX = 0;
@@ -325,7 +334,9 @@ window.MapPanel = (function () {
     }
 
     function showLocationOnMap(locationId) {
-      if (window.LayoutPanels?.setMapCollapsed) LayoutPanels.setMapCollapsed(false);
+      if (!isFullscreenPage && window.LayoutPanels?.setMapCollapsed) {
+        LayoutPanels.setMapCollapsed(false);
+      }
       setActiveTab("map");
       return selectMapByLocationId(locationId);
     }
@@ -1238,7 +1249,8 @@ window.MapPanel = (function () {
       setActiveTab,
       selectMapByLocationId,
       showLocationOnMap,
-      resetZoom
+      resetZoom,
+      getActiveMapId: () => activeMapId
     };
     renderInitiativeList();
   }
@@ -1317,6 +1329,7 @@ window.MapPanel = (function () {
     showLocationOnMap: (id) => activeInstance?.showLocationOnMap?.(id),
     resetZoom: () => activeInstance?.resetZoom?.(),
     refreshPins: () => activeInstance?.refreshPins?.(),
+    getActiveMapId: () => activeInstance?.getActiveMapId?.() || null,
     refreshTokens: () => activeInstance?.refreshTokens?.()
   };
 })();

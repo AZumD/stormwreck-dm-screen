@@ -8,11 +8,12 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 
 ## UI structure
 - Tabs: **Map** | **Party** | **Music**
-- Map tab: selector → compact primary actions (Measure, + Token, Layers, +, Expand, Map settings) → map stage → collapsible **Map settings** (UVTT import/meta, grid, snap, ft/grid)
+- Map tab: selector → compact primary actions (Measure, + Token, Layers, +, Expand, **Fullscreen**, Map settings) → map stage → collapsible **Map settings** (UVTT import/meta, grid, snap, ft/grid)
 - Party tab: catalogue roster (see `docs/README/PARTY.md`)
 - Music tab: campaign mixer over Music catalogue tracks (see `docs/README/MUSIC-MIXER-UI.md`)
 - **Layers** popover replaces the permanent pin checkbox list (same filter persistence)
 - Expand uses `LayoutPanels.setMapMode("expanded")` — same MapPanel instance (zoom/pan/tokens preserved)
+- **Fullscreen** opens `campaigns/map-fullscreen/` in a new tab (corner tools drawer); see `docs/README/MAP-FULLSCREEN.md`
 
 ## Image resolution
 1. Map must be a **campaign location** (see `docs/README/CAMPAIGN-LOCATIONS.md`)
