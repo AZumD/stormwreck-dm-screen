@@ -6,8 +6,8 @@ window.MapFog = (function () {
   "use strict";
 
   const BRUSH_PRESETS = [0.012, 0.025, 0.05, 0.09];
-  /** DM preview: light overlay so the map stays readable (20% opaque). */
-  const DM_FOG_ALPHA = 0.2;
+  /** DM preview: visible fog indicator while map detail stays readable (~40% opaque). */
+  const DM_FOG_ALPHA = 0.4;
   /** Player view: fully opaque black fog. */
   const PLAYER_FOG_ALPHA = 1;
   let painting = false;
