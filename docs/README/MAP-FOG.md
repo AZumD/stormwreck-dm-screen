@@ -20,6 +20,13 @@ Manual fog of war — normalized brush strokes persisted in `map-state.fog[mapId
         "mode": "reveal",
         "radius": 0.025,
         "points": [[0.31, 0.44], [0.32, 0.45]]
+      },
+      "fog-rect": {
+        "id": "fog-rect",
+        "seq": 2,
+        "mode": "reveal",
+        "shape": "rect",
+        "rect": [0.2, 0.3, 0.45, 0.55]
       }
     }
   }
@@ -33,8 +40,16 @@ Coordinates are **0–1 normalized** to map image space (pan/zoom independent).
 ## DM UI
 1. Check **Fog enabled** (or click **Reveal** / **Hide** — both turn fog on and enter paint mode).
 2. The map cursor becomes a crosshair when paint mode is active (also toggled via the **Fog** button in the primary toolbar).
-3. **Click and drag** on the map to paint reveal (erase fog) or hide (add fog back) strokes.
-4. **Undo**, **Hide all** (reset to fully hidden), **Reveal all** (clear fog overlay). **Ctrl+Z** / **Cmd+Z** undoes the last stroke when fog is enabled.
+3. **Brush** — click and drag on the map to paint reveal (erase fog) or hide (add fog back) strokes.
+4. **Select** — drag a rectangle to reveal/hide a whole area at once. On calibrated maps with **Grid** shown, the rectangle snaps to whole grid cells.
+5. **Undo**, **Hide all** (reset to fully hidden), **Reveal all** (clear fog overlay).
+
+### Hotkeys
+| Key | Action |
+|-----|--------|
+| **F** | Toggle fog edit (paint) mode on/off |
+| **X** | Switch Reveal ↔ Hide mode |
+| **Ctrl+Z** / **Cmd+Z** | Undo last stroke (when fog is enabled) |
 
 Layer `#map-fog-layer` inside `#map-world` (40% fog overlay on DM view — obvious at a glance, map still readable underneath).
 

@@ -53,6 +53,10 @@ window.MapSpatial = (function () {
             <button type="button" class="map-tool-btn map-fog-mode is-active" data-fog-mode="reveal">Reveal</button>
             <button type="button" class="map-tool-btn map-fog-mode" data-fog-mode="hide">Hide</button>
           </span>
+          <span class="map-fog-instruments" id="map-fog-instruments">
+            <button type="button" class="map-tool-btn map-fog-tool is-active" data-fog-tool="brush" title="Brush (freehand)">Brush</button>
+            <button type="button" class="map-tool-btn map-fog-tool" data-fog-tool="select" title="Select (drag a rectangle)">Select</button>
+          </span>
           <span class="map-fog-brushes" id="map-fog-brushes"></span>
           <button type="button" class="map-tool-btn" id="map-fog-undo">Undo</button>
           <button type="button" class="map-tool-btn" id="map-fog-clear">Hide all</button>
@@ -122,6 +126,17 @@ window.MapSpatial = (function () {
       );
     }
 
+    const fogTools = document.getElementById("map-fog-tools");
+    if (fogTools && !document.getElementById("map-fog-instruments")) {
+      const brushes = document.getElementById("map-fog-brushes");
+      const instrumentsHtml = `<span class="map-fog-instruments" id="map-fog-instruments">
+            <button type="button" class="map-tool-btn map-fog-tool is-active" data-fog-tool="brush" title="Brush (freehand)">Brush</button>
+            <button type="button" class="map-tool-btn map-fog-tool" data-fog-tool="select" title="Select (drag a rectangle)">Select</button>
+          </span>`;
+      if (brushes) brushes.insertAdjacentHTML("beforebegin", instrumentsHtml);
+      else fogTools.insertAdjacentHTML("beforeend", instrumentsHtml);
+    }
+
     if (!document.getElementById("map-measure-readout") && host) {
       host.insertAdjacentHTML(
         "beforeend",
@@ -180,6 +195,7 @@ window.MapSpatial = (function () {
     let measuring = false;
     let fogging = false;
     let fogMode = "reveal";
+    let fogTool = "brush";
     let fogBrush = window.MapFog?.BRUSH_PRESETS?.[1] || 0.025;
     let measureStart = null;
     let selectedTokenIds = [];
@@ -197,6 +213,7 @@ window.MapSpatial = (function () {
       fogTools: document.getElementById("map-fog-tools"),
       fogEnabled: document.getElementById("map-fog-enabled"),
       fogBrushes: document.getElementById("map-fog-brushes"),
+      fogInstruments: document.getElementById("map-fog-instruments"),
       fogUndo: document.getElementById("map-fog-undo"),
       fogClear: document.getElementById("map-fog-clear"),
       fogRevealAll: document.getElementById("map-fog-reveal-all"),
@@ -757,12 +774,56 @@ window.MapSpatial = (function () {
       const hint = document.getElementById("map-fog-hint");
       if (!hint) return;
       const enabled = Boolean(els.fogEnabled?.checked);
+      const modeLabel = fogMode === "hide" ? "Hide" : "Reveal";
+      const toolLabel = fogTool === "select" ? "drag a rectangle" : "drag to paint";
       if (!enabled) {
-        hint.textContent = "Check Fog enabled, then click and drag on the map to paint.";
+        hint.textContent =
+          "Check Fog enabled, then click and drag on the map to paint. Hotkeys: F toggle edit, X switch Reveal/Hide.";
       } else if (fogging) {
-        hint.textContent = `Paint mode on — drag on the map (${fogMode === "hide" ? "Hide" : "Reveal"}).`;
+        hint.textContent = `Paint mode on — ${toolLabel} (${modeLabel}). F toggles edit · X switches mode · Ctrl+Z undo.`;
       } else {
-        hint.textContent = "Click Fog in the toolbar or pick Reveal/Hide to start painting.";
+        hint.textContent =
+          "Click Fog in the toolbar or pick Reveal/Hide to start painting. F toggles edit · X switches mode.";
+      }
+    }
+
+    function syncFogModeButtons() {
+      document.querySelectorAll(".map-fog-mode").forEach((b) => {
+        b.classList.toggle("is-active", b.getAttribute("data-fog-mode") === fogMode);
+      });
+    }
+
+    function setFogMode(nextMode) {
+      fogMode = nextMode === "hide" ? "hide" : "reveal";
+      syncFogModeButtons();
+      updateFogHint();
+    }
+
+    function toggleFogMode() {
+      setFogMode(fogMode === "hide" ? "reveal" : "hide");
+    }
+
+    function syncFogToolButtons() {
+      const root = els.fogInstruments || document.getElementById("map-fog-instruments");
+      root?.querySelectorAll(".map-fog-tool").forEach((b) => {
+        b.classList.toggle("is-active", b.getAttribute("data-fog-tool") === fogTool);
+      });
+      if (els.fogBrushes) els.fogBrushes.hidden = fogTool === "select";
+    }
+
+    function setFogTool(nextTool) {
+      fogTool = nextTool === "select" ? "select" : "brush";
+      syncFogToolButtons();
+      updateFogHint();
+    }
+
+    function ensureFogEnabledForEdit() {
+      const map = activeMap();
+      if (!map || !window.MapFog) return;
+      if (!els.fogEnabled?.checked) {
+        els.fogEnabled.checked = true;
+        MapFog.setEnabled(campaignId, map.id, true);
+        MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
       }
     }
 
@@ -784,17 +845,18 @@ window.MapSpatial = (function () {
 
     document.querySelectorAll(".map-fog-mode").forEach((btn) => {
       btn.addEventListener("click", () => {
-        fogMode = btn.getAttribute("data-fog-mode") === "hide" ? "hide" : "reveal";
-        document.querySelectorAll(".map-fog-mode").forEach((b) => b.classList.toggle("is-active", b === btn));
-        const map = activeMap();
-        if (els.fogEnabled && !els.fogEnabled.checked && map && window.MapFog) {
-          els.fogEnabled.checked = true;
-          MapFog.setEnabled(campaignId, map.id, true);
-          MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
-        }
+        setFogMode(btn.getAttribute("data-fog-mode") === "hide" ? "hide" : "reveal");
+        ensureFogEnabledForEdit();
         setFogPaintActive(true);
       });
     });
+
+    (els.fogInstruments || document.getElementById("map-fog-instruments"))?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-fog-tool]");
+      if (!btn) return;
+      setFogTool(btn.getAttribute("data-fog-tool") === "select" ? "select" : "brush");
+    });
+    syncFogToolButtons();
 
     els.fogBrushes?.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-fog-brush]");
@@ -841,9 +903,23 @@ window.MapSpatial = (function () {
     }
 
     function onFogKeydown(e) {
-      const key = e.key?.toLowerCase();
-      if (key !== "z" || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
       if (e.target.closest?.("input, textarea, select, [contenteditable=true]")) return;
+      const key = e.key?.toLowerCase();
+      if (key === "f" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        ensureFogEnabledForEdit();
+        setFogPaintActive(!fogging);
+        e.preventDefault();
+        return;
+      }
+      if (key === "x" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (!els.fogEnabled?.checked && !fogging) return;
+        toggleFogMode();
+        ensureFogEnabledForEdit();
+        setFogPaintActive(true);
+        e.preventDefault();
+        return;
+      }
+      if (key !== "z" || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
       if (!els.fogEnabled?.checked && !fogging) return;
       if (!undoFogStroke()) return;
       e.preventDefault();
@@ -857,9 +933,12 @@ window.MapSpatial = (function () {
         mapWorld,
         mapViewport,
         getActiveMapId,
+        getActiveMap: activeMap,
         isFogToolActive: () => fogging && Boolean(els.fogEnabled?.checked),
         getFogMode: () => fogMode,
-        getBrushRadius: () => fogBrush
+        getFogTool: () => fogTool,
+        getBrushRadius: () => fogBrush,
+        shouldSnapSelectToGrid: () => Boolean(isCalibrated(activeMap()) && els.showGrid?.checked)
       });
     }
 

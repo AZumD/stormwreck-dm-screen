@@ -3378,13 +3378,18 @@ body[data-map-collapsed="true"] .map-panel {
   line-height: 1.35;
 }
 .map-fog-modes,
+.map-fog-instruments,
 .map-fog-brushes {
   display: inline-flex;
   gap: 0.25rem;
 }
 .map-fog-brush.is-active,
-.map-fog-mode.is-active {
+.map-fog-mode.is-active,
+.map-fog-tool.is-active {
   outline: 1px solid var(--accent, #c4a035);
+}
+.map-fog-brushes[hidden] {
+  display: none;
 }
 .map-pins { z-index: 2; }
 .map-measure-layer {

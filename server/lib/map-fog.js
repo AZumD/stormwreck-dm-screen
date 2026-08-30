@@ -10,7 +10,18 @@ function strokeList(fog) {
   return list.sort((a, b) => (a.seq || 0) - (b.seq || 0));
 }
 
+function pointInRect(rect, x, y) {
+  if (!Array.isArray(rect) || rect.length < 4) return false;
+  const x0 = Number(rect[0]);
+  const y0 = Number(rect[1]);
+  const x1 = Number(rect[2]);
+  const y1 = Number(rect[3]);
+  if (![x0, y0, x1, y1, x, y].every(Number.isFinite)) return false;
+  return x >= Math.min(x0, x1) && x <= Math.max(x0, x1) && y >= Math.min(y0, y1) && y <= Math.max(y0, y1);
+}
+
 function pointInStroke(stroke, x, y) {
+  if (stroke?.shape === "rect") return pointInRect(stroke.rect, x, y);
   const r = Number(stroke.radius) || 0.025;
   return (stroke.points || []).some((pt) => {
     if (!Array.isArray(pt) || pt.length < 2) return false;
@@ -42,6 +53,7 @@ function filterVisibleTokens(tokens, fog) {
 
 module.exports = {
   strokeList,
+  pointInRect,
   pointInStroke,
   isPointHidden,
   isPercentHidden,

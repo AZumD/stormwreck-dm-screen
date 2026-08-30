@@ -15,3 +15,5 @@ node test/validate-map-fog.js
 - `MapFog.bindDm` registers pointer handlers in capture phase
 - Painting calls `stopPropagation` so pan/measure do not steal the gesture
 - `map-spatial.js` does not blanket `stopPropagation` when fog mode is on
+- Brush/select fog instruments and **F** / **X** hotkeys are wired
+- Rectangle (`shape: "rect"`) strokes resolve visibility on the server helper

@@ -11,6 +11,7 @@ window.MapFog = (function () {
   /** Player view: fully opaque black fog. */
   const PLAYER_FOG_ALPHA = 1;
   let painting = false;
+  let rectDrag = null;
   let currentStroke = null;
   let lastNorm = null;
 
@@ -44,12 +45,71 @@ window.MapFog = (function () {
     CampaignMapState.patch(campaignId, { fog: { [mapId]: partial } });
   }
 
+  function pointInRect(rect, x, y) {
+    if (!Array.isArray(rect) || rect.length < 4) return false;
+    const x0 = Number(rect[0]);
+    const y0 = Number(rect[1]);
+    const x1 = Number(rect[2]);
+    const y1 = Number(rect[3]);
+    if (![x0, y0, x1, y1, x, y].every(Number.isFinite)) return false;
+    return x >= Math.min(x0, x1) && x <= Math.max(x0, x1) && y >= Math.min(y0, y1) && y <= Math.max(y0, y1);
+  }
+
   function pointInStroke(stroke, x, y) {
+    if (stroke?.shape === "rect") return pointInRect(stroke.rect, x, y);
     const r = Number(stroke.radius) || 0.025;
     return (stroke.points || []).some((pt) => {
       if (!Array.isArray(pt) || pt.length < 2) return false;
       return Math.hypot(Number(x) - pt[0], Number(y) - pt[1]) <= r;
     });
+  }
+
+  /** Normalized 0–1 drag box; snaps to grid cells on calibrated maps when snapGrid is true. */
+  function normRectFromDrag(startNorm, endNorm, map, snapGrid) {
+    if (!startNorm || !endNorm) return null;
+    if (
+      snapGrid &&
+      map?.grid &&
+      map?.widthPx &&
+      map?.heightPx &&
+      window.MapDistance?.percentToWorld &&
+      window.MapDistance?.worldToPercent
+    ) {
+      const ox = Number(map.grid.origin?.x) || 0;
+      const oy = Number(map.grid.origin?.y) || 0;
+      const toCell = (norm) => {
+        const w = MapDistance.percentToWorld(norm.x * 100, norm.y * 100, map);
+        if (!w) return null;
+        return { cx: Math.floor(w.x - ox), cy: Math.floor(w.y - oy) };
+      };
+      const a = toCell(startNorm);
+      const b = toCell(endNorm);
+      if (!a || !b) return null;
+      const minCx = Math.min(a.cx, b.cx);
+      const maxCx = Math.max(a.cx, b.cx) + 1;
+      const minCy = Math.min(a.cy, b.cy);
+      const maxCy = Math.max(a.cy, b.cy) + 1;
+      const cornerToNorm = (cx, cy) => {
+        const pct = MapDistance.worldToPercent(ox + cx, oy + cy, map);
+        if (!pct) return null;
+        return { x: pct.x / 100, y: pct.y / 100 };
+      };
+      const tl = cornerToNorm(minCx, minCy);
+      const br = cornerToNorm(maxCx, maxCy);
+      if (!tl || !br) return null;
+      return [
+        Math.min(tl.x, br.x),
+        Math.min(tl.y, br.y),
+        Math.max(tl.x, br.x),
+        Math.max(tl.y, br.y)
+      ];
+    }
+    return [
+      Math.min(startNorm.x, endNorm.x),
+      Math.min(startNorm.y, endNorm.y),
+      Math.max(startNorm.x, endNorm.x),
+      Math.max(startNorm.y, endNorm.y)
+    ];
   }
 
   /** Normalized 0–1 map coords. True when fog covers the point. */
@@ -138,22 +198,28 @@ window.MapFog = (function () {
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, w, h);
 
-    function paintStrokes(strokes) {
-      (strokes || []).forEach((stroke) => {
-        const r = (Number(stroke.radius) || 0.025) * Math.min(w, h);
-        const hide = stroke.mode === "hide";
-        (stroke.points || []).forEach((pt) => {
-          if (!Array.isArray(pt) || pt.length < 2) return;
-          drawDisk(
-            ctx,
-            pt[0] * w,
-            pt[1] * h,
-            r,
-            "rgba(0, 0, 0, 1)",
-            hide ? "source-over" : "destination-out"
-          );
-        });
+    function paintOneStroke(stroke) {
+      const hide = stroke.mode === "hide";
+      const composite = hide ? "source-over" : "destination-out";
+      if (stroke.shape === "rect" && Array.isArray(stroke.rect) && stroke.rect.length >= 4) {
+        const [x0, y0, x1, y1] = stroke.rect.map(Number);
+        if (![x0, y0, x1, y1].every(Number.isFinite)) return;
+        ctx.save();
+        ctx.globalCompositeOperation = composite;
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        ctx.fillRect(x0 * w, y0 * h, (x1 - x0) * w, (y1 - y0) * h);
+        ctx.restore();
+        return;
+      }
+      const r = (Number(stroke.radius) || 0.025) * Math.min(w, h);
+      (stroke.points || []).forEach((pt) => {
+        if (!Array.isArray(pt) || pt.length < 2) return;
+        drawDisk(ctx, pt[0] * w, pt[1] * h, r, "rgba(0, 0, 0, 1)", composite);
       });
+    }
+
+    function paintStrokes(strokes) {
+      (strokes || []).forEach((stroke) => paintOneStroke(stroke));
     }
 
     paintStrokes(strokeList(fog));
@@ -187,19 +253,24 @@ window.MapFog = (function () {
   function commitStroke(campaignId, mapId, stroke) {
     const fog = getFogState(campaignId, mapId);
     const id = stroke.id || newStrokeId();
+    const base = {
+      id,
+      seq: stroke.seq || nextSeq(fog),
+      mode: stroke.mode === "hide" ? "hide" : "reveal"
+    };
+    const entry =
+      stroke.shape === "rect" && Array.isArray(stroke.rect) && stroke.rect.length >= 4
+        ? { ...base, shape: "rect", rect: stroke.rect.map(Number) }
+        : {
+            ...base,
+            radius: Number(stroke.radius) || 0.025,
+            points: stroke.points || []
+          };
     const next = {
       enabled: true,
       revealedAll: false,
       revision: (fog.revision || 0) + 1,
-      strokes: {
-        [id]: {
-          id,
-          seq: stroke.seq || nextSeq(fog),
-          mode: stroke.mode === "hide" ? "hide" : "reveal",
-          radius: Number(stroke.radius) || 0.025,
-          points: stroke.points || []
-        }
-      }
+      strokes: { [id]: entry }
     };
     patchFog(campaignId, mapId, next);
     return id;
@@ -243,17 +314,52 @@ window.MapFog = (function () {
   }
 
   function bindDm(ctx) {
-    const { campaignId, mapWorld, mapViewport, getActiveMapId, isFogToolActive, getFogMode, getBrushRadius } =
-      ctx;
+    const {
+      campaignId,
+      mapWorld,
+      mapViewport,
+      getActiveMapId,
+      getActiveMap,
+      isFogToolActive,
+      getFogMode,
+      getFogTool,
+      getBrushRadius,
+      shouldSnapSelectToGrid
+    } = ctx;
 
     function activeMapId() {
       return getActiveMapId?.() || null;
+    }
+
+    function strokeMode() {
+      return getFogMode?.() === "hide" ? "hide" : "reveal";
+    }
+
+    function isSelectTool() {
+      return getFogTool?.() === "select";
     }
 
     function canPaint(e) {
       if (!isFogToolActive?.()) return false;
       if (e.target.closest?.(".map-pin, .map-grid-token, .map-token, .map-tool-btn")) return false;
       return true;
+    }
+
+    function previewRectStroke(startNorm, endNorm) {
+      const map = getActiveMap?.() || null;
+      const rect = normRectFromDrag(startNorm, endNorm, map, Boolean(shouldSnapSelectToGrid?.()));
+      if (!rect) return null;
+      return {
+        id: newStrokeId(),
+        shape: "rect",
+        mode: strokeMode(),
+        rect
+      };
+    }
+
+    function rectLargeEnough(rect) {
+      if (!Array.isArray(rect) || rect.length < 4) return false;
+      return Math.abs(rect[2] - rect[0]) >= 0.003 && Math.abs(rect[3] - rect[1]) >= 0.003;
     }
 
     mapViewport?.addEventListener(
@@ -266,15 +372,21 @@ window.MapFog = (function () {
         e.stopPropagation();
         const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
         if (!norm) return;
+        mapViewport.setPointerCapture(e.pointerId);
+        if (isSelectTool()) {
+          rectDrag = { startNorm: norm };
+          currentStroke = previewRectStroke(norm, norm);
+          refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+          return;
+        }
         painting = true;
         lastNorm = norm;
         currentStroke = {
           id: newStrokeId(),
-          mode: getFogMode?.() === "hide" ? "hide" : "reveal",
+          mode: strokeMode(),
           radius: getBrushRadius?.() || BRUSH_PRESETS[1],
           points: [[norm.x, norm.y]]
         };
-        mapViewport.setPointerCapture(e.pointerId);
         refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
       },
       true
@@ -283,9 +395,17 @@ window.MapFog = (function () {
     mapViewport?.addEventListener(
       "pointermove",
       (e) => {
-        if (!painting || !currentStroke) return;
         const mapId = activeMapId();
         if (!mapId) return;
+        if (rectDrag) {
+          e.preventDefault();
+          const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
+          if (!norm) return;
+          currentStroke = previewRectStroke(rectDrag.startNorm, norm);
+          refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+          return;
+        }
+        if (!painting || !currentStroke) return;
         e.preventDefault();
         const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
         if (!norm) return;
@@ -298,6 +418,22 @@ window.MapFog = (function () {
     );
 
     function endPaint(e) {
+      const mapId = activeMapId();
+      if (rectDrag) {
+        rectDrag = null;
+        try {
+          mapViewport?.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+        const stroke = currentStroke;
+        currentStroke = null;
+        if (mapId && stroke?.shape === "rect" && rectLargeEnough(stroke.rect)) {
+          commitStroke(campaignId, mapId, stroke);
+        }
+        if (mapId) refresh(campaignId, mapId, mapWorld, { dm: true });
+        return;
+      }
       if (!painting || !currentStroke) return;
       painting = false;
       try {
@@ -305,7 +441,6 @@ window.MapFog = (function () {
       } catch {
         /* ignore */
       }
-      const mapId = activeMapId();
       if (mapId && currentStroke.points.length) {
         commitStroke(campaignId, mapId, currentStroke);
       }
@@ -338,6 +473,8 @@ window.MapFog = (function () {
     isPointHidden,
     isPercentHidden,
     filterVisibleTokens,
-    pointInStroke
+    pointInStroke,
+    pointInRect,
+    normRectFromDrag
   };
 })();
