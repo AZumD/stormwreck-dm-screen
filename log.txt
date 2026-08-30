@@ -123,3 +123,4 @@
 
 [2026-08-30] UX Phase 3: compact campaign-time popover + streamlined Run toolbar. See day-time-ui.js, DAY-TIME-UI.md
 [2026-08-30] UX Phase 4: Map as first-class campaign workspace (Run|Prep|Map). See layout-panels.js, MAP-PANEL.md
+[2026-08-30] UX Phase 5: Session as first-class campaign workspace (Run|Prep|Map|Session). See campaign-app.js, CAMPAIGN-APP.md

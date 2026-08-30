@@ -33,11 +33,14 @@
   const workspaceRunBtn = document.getElementById("workspace-run");
   const workspacePrepBtn = document.getElementById("workspace-prep");
   const workspaceMapBtn = document.getElementById("workspace-map");
+  const workspaceSessionBtn = document.getElementById("workspace-session");
+  const sessionView = document.getElementById("session-view");
+  let sessionTabsBound = false;
 
-  /** @type {"run"|"prep"|"map"} */
+  /** @type {"run"|"prep"|"map"|"session"} */
   let activeWorkspace = "run";
 
-  /** @type {{ type: "play"|"document"|"panel"|"map", id?: string, workspace?: "reference"|"session"|null }} */
+  /** @type {{ type: "play"|"document"|"panel"|"map"|"session", id?: string, workspace?: "reference"|null }} */
   let activeView = { type: "play" };
 
   const REFERENCE_TABS = [
@@ -70,13 +73,18 @@
   let catalogueSearchActive = -1;
 
   function normalizeWorkspaceId(workspace) {
-    if (workspace === "prep" || workspace === "map") return workspace;
+    if (workspace === "prep" || workspace === "map" || workspace === "session") return workspace;
     return "run";
   }
 
   function loadWorkspace() {
     const prefs = window.CampaignPrefs?.get(campaignId);
-    if (prefs?.workspace === "prep" || prefs?.workspace === "run" || prefs?.workspace === "map") {
+    if (
+      prefs?.workspace === "prep" ||
+      prefs?.workspace === "run" ||
+      prefs?.workspace === "map" ||
+      prefs?.workspace === "session"
+    ) {
       return prefs.workspace;
     }
     if (prefs?.viewMode === "document") return "prep";
@@ -127,6 +135,13 @@
     const id = focusSectionId || focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
     if (activeView.type === "panel") {
       renderPanel(activeView.id, activeView.workspace);
+      return;
+    }
+    if (activeWorkspace === "session" && activeView.type === "session") {
+      renderSessionWorkspace(activeView.id || loadSessionTab());
+      return;
+    }
+    if (activeWorkspace === "map") {
       return;
     }
     if (activeWorkspace === "prep" || activeView.type === "document") {
@@ -303,8 +318,10 @@
             }
           },
           refreshHistoryPanel: () => {
-            if (activeView.type === "panel" && activeView.id === "history") {
-              renderPanel(activeView.id, activeView.workspace || "session");
+            if (activeWorkspace === "session" && activeView.type === "session" && activeView.id === "history") {
+              renderSessionWorkspace("history");
+            } else if (activeView.type === "panel" && activeView.id === "history") {
+              renderPanel(activeView.id, activeView.workspace || "reference");
             }
           }
         }
@@ -322,8 +339,10 @@
             return section ? getSectionData(section).title : id;
           },
           refreshChroniclePanel: () => {
-            if (activeView.type === "panel" && activeView.id === "chronicle") {
-              renderPanel(activeView.id, activeView.workspace || "session");
+            if (activeWorkspace === "session" && activeView.type === "session" && activeView.id === "chronicle") {
+              renderSessionWorkspace("chronicle");
+            } else if (activeView.type === "panel" && activeView.id === "chronicle") {
+              renderPanel(activeView.id, activeView.workspace || "reference");
             }
           }
         }
@@ -382,6 +401,8 @@
       if (editingSectionId) return;
       if (activeView.type === "panel") {
         renderPanel(activeView.id, activeView.workspace);
+      } else if (activeWorkspace === "session" && activeView.type === "session") {
+        renderSessionWorkspace(activeView.id || loadSessionTab());
       } else if (activeView.type === "play") {
         renderPlayScene(focusedSceneId);
       } else {
@@ -941,6 +962,7 @@
       playView.classList.remove("hidden");
       scrollDocument.classList.add("hidden");
       panelView.classList.add("hidden");
+      if (sessionView) sessionView.classList.add("hidden");
       bindDocumentEditControls();
       return;
     }
@@ -981,6 +1003,7 @@
     playView.classList.remove("hidden");
     scrollDocument.classList.add("hidden");
     panelView.classList.add("hidden");
+    if (sessionView) sessionView.classList.add("hidden");
     if (scrollSpyObserver) scrollSpyObserver.disconnect();
 
     bindDocumentEditControls();
@@ -1283,8 +1306,13 @@
     document.body.classList.toggle("workspace-prep", activeWorkspace === "prep");
     document.body.classList.toggle("workspace-run", activeWorkspace === "run");
     document.body.classList.toggle("workspace-map", activeWorkspace === "map");
-    const panelOpen = activeWorkspace === "map" && activeView.type === "panel";
-    document.body.classList.toggle("workspace-map--panel", panelOpen);
+    document.body.classList.toggle("workspace-session", activeWorkspace === "session");
+    const panelOpen =
+      activeView.type === "panel" &&
+      activeView.workspace === "reference" &&
+      (activeWorkspace === "map" || activeWorkspace === "session");
+    document.body.classList.toggle("workspace-map--panel", activeWorkspace === "map" && panelOpen);
+    document.body.classList.toggle("workspace-session--reference", activeWorkspace === "session" && panelOpen);
     syncWorkspaceButtons();
     syncEditModeUI();
     if (window.LayoutPanels?.setCampaignWorkspace) {
@@ -1299,22 +1327,30 @@
     workspaceRunBtn?.classList.toggle("is-active", ws === "run");
     workspacePrepBtn?.classList.toggle("is-active", ws === "prep");
     workspaceMapBtn?.classList.toggle("is-active", ws === "map");
+    workspaceSessionBtn?.classList.toggle("is-active", ws === "session");
     workspaceRunBtn?.setAttribute("aria-pressed", ws === "run" ? "true" : "false");
     workspacePrepBtn?.setAttribute("aria-pressed", ws === "prep" ? "true" : "false");
     workspaceMapBtn?.setAttribute("aria-pressed", ws === "map" ? "true" : "false");
+    workspaceSessionBtn?.setAttribute("aria-pressed", ws === "session" ? "true" : "false");
+  }
+
+  function clearReferenceOverlay() {
+    document.body.classList.remove("workspace-map--panel", "workspace-session--reference");
+    if (panelView) panelView.classList.add("hidden");
   }
 
   /**
-   * Switch Run | Prep | Map.
-   * @param {"run"|"prep"|"map"} workspace
-   * @param {{ preservePanel?: boolean, focusSceneId?: string }} [opts]
+   * Switch Run | Prep | Map | Session.
+   * @param {"run"|"prep"|"map"|"session"} workspace
+   * @param {{ preservePanel?: boolean, focusSceneId?: string, sessionTab?: string }} [opts]
    */
   function setWorkspace(workspace, opts = {}) {
     const next = normalizeWorkspaceId(workspace);
-    const preservePanel =
-      opts.preservePanel !== false && activeView.type === "panel" && next !== "map";
-    const keepPanelOnMap =
-      opts.preservePanel !== false && activeView.type === "panel" && next === "map";
+    const referenceOpen = activeView.type === "panel" && activeView.workspace === "reference";
+    const preserveReference =
+      opts.preservePanel !== false && referenceOpen && next !== "map" && next !== "session";
+    const keepReferenceOnMap =
+      opts.preservePanel !== false && referenceOpen && next === "map";
 
     activeWorkspace = next;
     saveWorkspace(next);
@@ -1322,18 +1358,33 @@
     applyWorkspaceChrome();
     buildNav();
 
+    if (next === "session") {
+      clearReferenceOverlay();
+      if (playView) playView.classList.add("hidden");
+      scrollDocument.classList.add("hidden");
+      if (scrollSpyObserver) scrollSpyObserver.disconnect();
+      const tab = normalizeSessionTab(opts.sessionTab || loadSessionTab());
+      saveSessionTab(tab);
+      activeView = { type: "session", id: tab };
+      showSessionWorkspace(tab);
+      updateNavActive();
+      requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
+      return;
+    }
+
     if (next === "map") {
-      if (keepPanelOnMap) {
+      if (keepReferenceOnMap) {
+        showReferencePanel(activeView.id || loadReferenceTab());
         updateNavActive();
         requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
         return;
       }
+      clearReferenceOverlay();
       if (playView) playView.classList.add("hidden");
       scrollDocument.classList.add("hidden");
-      panelView.classList.add("hidden");
+      if (sessionView) sessionView.classList.add("hidden");
       if (scrollSpyObserver) scrollSpyObserver.disconnect();
       activeView = { type: "map" };
-      document.body.classList.remove("workspace-map--panel");
       if (window.LayoutPanels?.setCampaignWorkspace) {
         LayoutPanels.setCampaignWorkspace("map", { panelOpen: false });
       }
@@ -1342,9 +1393,11 @@
       return;
     }
 
-    document.body.classList.remove("workspace-map--panel");
+    if (sessionView) sessionView.classList.add("hidden");
+    clearReferenceOverlay();
 
-    if (preservePanel) {
+    if (preserveReference) {
+      showReferencePanel(activeView.id || loadReferenceTab());
       updateNavActive();
       requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
       return;
@@ -1372,6 +1425,13 @@
     workspaceRunBtn?.addEventListener("click", () => setWorkspace("run"));
     workspacePrepBtn?.addEventListener("click", () => setWorkspace("prep"));
     workspaceMapBtn?.addEventListener("click", () => setWorkspace("map", { preservePanel: false }));
+    workspaceSessionBtn?.addEventListener("click", () => {
+      if (activeWorkspace === "session" && activeView.type === "panel") {
+        setWorkspace("session", { sessionTab: loadSessionTab() });
+        return;
+      }
+      setWorkspace("session", { preservePanel: false });
+    });
     document.getElementById("map-select")?.addEventListener("change", () => {
       if (activeWorkspace === "map") buildMapBrowserNav();
     });
@@ -1381,7 +1441,7 @@
   function jumpToSection(id) {
     focusedSceneId = id;
     history.replaceState(null, "", `#${id}`);
-    if (activeWorkspace === "map") {
+    if (activeWorkspace === "map" || activeWorkspace === "session") {
       setWorkspace("run", { preservePanel: false, focusSceneId: id });
       return;
     }
@@ -1400,6 +1460,7 @@
     if (playView) playView.classList.add("hidden");
     scrollDocument.classList.remove("hidden");
     panelView.classList.add("hidden");
+    if (sessionView) sessionView.classList.add("hidden");
     renderScrollDocument();
     updateNavActive();
     setupScrollSpy();
@@ -1411,8 +1472,125 @@
     else renderPlayScene(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
   }
 
+  function showReferencePanel(tab) {
+    const resolvedTab = normalizeReferenceTab(tab);
+    activeView = { type: "panel", id: resolvedTab, workspace: "reference" };
+    saveReferenceTab(resolvedTab);
+    if (playView) playView.classList.add("hidden");
+    scrollDocument.classList.add("hidden");
+    if (sessionView) sessionView.classList.add("hidden");
+    panelView.classList.remove("hidden");
+    if (scrollSpyObserver) scrollSpyObserver.disconnect();
+    renderPanel(resolvedTab, "reference");
+    applyWorkspaceChrome();
+    updateNavActive();
+  }
+
+  function renderSessionWorkspaceShell(activeTab) {
+    const tab = normalizeSessionTab(activeTab);
+    return `
+      <div class="session-workspace" data-workspace="session">
+        <header class="session-workspace__header panel-workspace__header">
+          <div class="session-workspace__tabs panel-workspace__tabs" role="tablist" aria-label="Session sections">
+            ${SESSION_TABS.map(
+              (st) => `
+              <button
+                type="button"
+                class="panel-workspace__tab session-workspace__tab${st.id === tab ? " is-active" : ""}"
+                role="tab"
+                aria-selected="${st.id === tab ? "true" : "false"}"
+                data-session-tab="${st.id}"
+              >${st.label}</button>`
+            ).join("")}
+          </div>
+        </header>
+        <div class="session-workspace__content"></div>
+      </div>`;
+  }
+
+  function bindSessionTabsOnce() {
+    if (sessionTabsBound || !sessionView) return;
+    sessionTabsBound = true;
+    sessionView.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-session-tab]");
+      if (!btn) return;
+      const nextTab = btn.getAttribute("data-session-tab");
+      if (!nextTab || nextTab === activeView.id) return;
+      switchSessionTab(nextTab);
+    });
+  }
+
+  function switchSessionTab(tab) {
+    const next = normalizeSessionTab(tab);
+    saveSessionTab(next);
+    activeView = { type: "session", id: next };
+    renderSessionWorkspace(next);
+    updateNavActive();
+  }
+
+  function showSessionWorkspace(tab) {
+    if (!sessionView) return;
+    panelView.classList.add("hidden");
+    playView?.classList.add("hidden");
+    scrollDocument.classList.add("hidden");
+    sessionView.classList.remove("hidden");
+    bindSessionTabsOnce();
+    renderSessionWorkspace(tab);
+  }
+
+  function renderSessionTabContent(view, bodyHost) {
+    if (!bodyHost) return;
+    switch (view) {
+      case "notes":
+        bodyHost.innerHTML = renderNotesView();
+        bindNotesEvents();
+        break;
+      case "history":
+        bodyHost.innerHTML = window.CampaignStateUI
+          ? CampaignStateUI.renderHistoryPanel()
+          : `<h1>Log</h1><p class="empty-state">Campaign state unavailable.</p>`;
+        if (window.CampaignStateUI) CampaignStateUI.bindHistoryPanel(bodyHost);
+        break;
+      case "chronicle":
+        bodyHost.innerHTML = window.ChronicleUI
+          ? ChronicleUI.renderChroniclePanel()
+          : `<h1>Chronicle</h1><p class="empty-state">Chronicle unavailable.</p>`;
+        if (window.ChronicleUI) ChronicleUI.bindChroniclePanel(bodyHost);
+        break;
+      case "checklist":
+        bodyHost.innerHTML = renderChecklistView();
+        bindChecklistEvents();
+        break;
+      default:
+        bodyHost.innerHTML = `<p class="empty-state">Unknown session tab.</p>`;
+        break;
+    }
+  }
+
+  function renderSessionWorkspace(tab) {
+    if (!sessionView) return;
+    const activeTab = normalizeSessionTab(tab);
+    sessionView.innerHTML = renderSessionWorkspaceShell(activeTab);
+    const bodyHost = sessionView.querySelector(".session-workspace__content");
+    renderSessionTabContent(activeTab, bodyHost);
+  }
+
+  /**
+   * Compatibility shim: leaf panel ids and session:* deep links route into Session workspace.
+   */
   function showPanelView(view) {
     const resolved = resolvePanelRequest(view);
+    if (resolved.workspace === "session") {
+      setWorkspace("session", { sessionTab: resolved.tab, preservePanel: false });
+      return;
+    }
+    if (!resolved.workspace) return;
+
+    if (resolved.workspace === "reference" && (activeWorkspace === "session" || activeWorkspace === "map")) {
+      showReferencePanel(resolved.tab);
+      return;
+    }
+
     activeView = {
       type: "panel",
       id: resolved.tab,
@@ -1420,16 +1598,13 @@
     };
     if (playView) playView.classList.add("hidden");
     scrollDocument.classList.add("hidden");
+    if (sessionView) sessionView.classList.add("hidden");
     panelView.classList.remove("hidden");
     if (scrollSpyObserver) scrollSpyObserver.disconnect();
-    if (resolved.workspace === "reference") saveReferenceTab(resolved.tab);
-    if (resolved.workspace === "session") saveSessionTab(resolved.tab);
+    saveReferenceTab(resolved.tab);
     renderPanel(resolved.tab, resolved.workspace);
     if (activeWorkspace === "map") {
-      document.body.classList.add("workspace-map--panel");
-      if (window.LayoutPanels?.setCampaignWorkspace) {
-        LayoutPanels.setCampaignWorkspace("map", { panelOpen: true });
-      }
+      applyWorkspaceChrome();
     }
     updateNavActive();
   }
@@ -1488,8 +1663,8 @@
   }
 
   function renderWorkspaceTabs(workspace, activeTab) {
-    const tabs = workspace === "reference" ? REFERENCE_TABS : SESSION_TABS;
-    const title = workspace === "reference" ? "Reference" : "Session";
+    const tabs = REFERENCE_TABS;
+    const title = "Reference";
     return `
       <div class="panel-workspace" data-workspace="${workspace}">
         <header class="panel-workspace__header">
@@ -1525,8 +1700,12 @@
 
   function renderPanel(view, workspace) {
     const ws = workspace === undefined ? workspaceForPanel(view) : workspace;
+    if (ws === "session") {
+      setWorkspace("session", { sessionTab: normalizeSessionTab(view) });
+      return;
+    }
     const bodyHost = (() => {
-      if (!ws) {
+      if (!ws || ws !== "reference") {
         panelView.innerHTML = "";
         return panelView;
       }
@@ -1551,25 +1730,11 @@
         }
         break;
       case "notes":
-        bodyHost.innerHTML = renderNotesView();
-        bindNotesEvents();
-        break;
       case "history":
-        bodyHost.innerHTML = window.CampaignStateUI
-          ? CampaignStateUI.renderHistoryPanel()
-          : `<h1>History</h1><p class="empty-state">Campaign state unavailable.</p>`;
-        if (window.CampaignStateUI) CampaignStateUI.bindHistoryPanel(bodyHost);
-        break;
       case "chronicle":
-        bodyHost.innerHTML = window.ChronicleUI
-          ? ChronicleUI.renderChroniclePanel()
-          : `<h1>Chronicle</h1><p class="empty-state">Chronicle unavailable.</p>`;
-        if (window.ChronicleUI) ChronicleUI.bindChroniclePanel(bodyHost);
-        break;
       case "checklist":
-        bodyHost.innerHTML = renderChecklistView();
-        bindChecklistEvents();
-        break;
+        setWorkspace("session", { sessionTab: normalizeSessionTab(view) });
+        return;
       default:
         bodyHost.innerHTML = `<p class="empty-state">Unknown panel.</p>`;
         break;
@@ -1650,12 +1815,15 @@
       return;
     }
 
+    if (activeWorkspace === "session" && activeView.type !== "panel") {
+      return;
+    }
+
     if (activeView.type === "play" || activeView.type === "document") {
       const hash = focusedSceneId || location.hash.replace("#", "");
       if (hash) highlightNavSection(hash);
     } else if (activeView.type === "panel") {
-      const workspace = activeView.workspace || workspaceForPanel(activeView.id);
-      const navView = workspace === "reference" || workspace === "session" ? workspace : activeView.id;
+      const navView = activeView.workspace === "reference" ? "reference" : activeView.id;
       const btn = document.querySelector(`.nav-btn[data-view="${CSS.escape(String(navView || ""))}"]`);
       if (btn) btn.classList.add("active");
     }
@@ -1679,6 +1847,7 @@
     if (playView) bindEntityEvents(playView);
     bindEntityEvents(scrollDocument);
     bindEntityEvents(panelView);
+    if (sessionView) bindEntityEvents(sessionView);
 
     window.addEventListener("hashchange", () => {
       const id = location.hash.replace("#", "");
@@ -1842,6 +2011,11 @@
 
       if (activeWorkspace === "map") {
         setWorkspace("map", { preservePanel: false });
+        return;
+      }
+
+      if (activeWorkspace === "session") {
+        setWorkspace("session", { sessionTab: loadSessionTab() });
         return;
       }
 

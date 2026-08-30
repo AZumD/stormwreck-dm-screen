@@ -1934,6 +1934,66 @@ body[data-nav-collapsed="true"] .sidebar {
   font-weight: 600;
 }
 
+/* — Session workspace (Notes | Log | Chronicle | Progress) */
+.session-view {
+  padding: 0.5rem 1.25rem 2rem;
+}
+
+.session-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: min(100%, calc(100vh - 7rem));
+}
+
+.session-workspace__header {
+  margin-bottom: 0.75rem;
+}
+
+.session-workspace__tabs {
+  flex: 1 1 auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.session-workspace__tab {
+  flex-shrink: 0;
+}
+
+.session-workspace__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.session-workspace__content .notes-editor {
+  min-height: min(60vh, 32rem);
+  max-width: none;
+}
+
+.session-workspace__content .chronicle,
+.session-workspace__content .chronicle-page-head,
+.session-workspace__content .history-panel {
+  max-width: 72rem;
+}
+
+.session-workspace__content .chronicle-prose,
+.session-workspace__content .chronicle-editor {
+  max-width: 72ch;
+}
+
+body.workspace-session .main-scroll {
+  overflow: auto;
+}
+
+body.workspace-session--reference .session-view {
+  display: none;
+}
+
+body.workspace-session--reference .panel-view.hidden {
+  display: block;
+  visibility: visible;
+}
+
 .ref-grid {
   display: grid;
   gap: 0.75rem;

@@ -120,14 +120,15 @@ window.LayoutPanels = (function () {
   }
 
   /**
-   * Sync layout shell with campaign Run | Prep | Map workspace.
-   * @param {"run"|"prep"|"map"} workspace
+   * Sync layout shell with campaign Run | Prep | Map | Session workspace.
+   * @param {"run"|"prep"|"map"|"session"} workspace
    * @param {{ panelOpen?: boolean }} [opts]
    */
   function setCampaignWorkspace(workspace, opts = {}) {
     const body = document.body;
     const panelOpen = !!opts.panelOpen;
     body.classList.toggle("workspace-map--panel", workspace === "map" && panelOpen);
+    body.classList.toggle("workspace-session--reference", workspace === "session" && panelOpen);
 
     if (workspace === "map") {
       setMapCollapsed(false, false);

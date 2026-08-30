@@ -8,6 +8,6 @@ Campaign UI preferences + notes/checklist session chrome, persisted as campaign 
 
 Documents: `prefs.json`, also mirrors `notes.json` / `checklist.json` for readability.
 
-Also stores UI chrome: **workspace** (`run` \| `prep` \| `map`), legacy **viewMode** (`play` \| `document`, kept in sync; Map maps to `play`), sidebar/map collapse, chronicle session order, and last **Reference** / **Session** tabs (`referenceTab`, `sessionTab`).
+Also stores UI chrome: **workspace** (`run` \| `prep` \| `map` \| `session`), legacy **viewMode** (`play` \| `document`, kept in sync; Map/Session map to `play`), sidebar/map collapse, chronicle session order, and last **Reference** / **Session** tabs (`referenceTab`, `sessionTab`).
 
-Missing `workspace` migrates from `viewMode` (`document` → `prep`, else `run`). There is no legacy equivalent for Map.
+Missing `workspace` migrates from `viewMode` (`document` → `prep`, else `run`). There is no legacy equivalent for Map or Session.

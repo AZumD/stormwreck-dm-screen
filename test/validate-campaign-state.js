@@ -90,8 +90,8 @@ if (!app.includes("CampaignStateUI.init") || !app.includes("restoreInitialScene"
   pass("campaign-app wires CampaignStateUI + restore");
 }
 
-if (!app.includes('case "history"') || !app.includes("resolvePanelRequest") || !html.includes('data-view="session"')) {
-  fail("History panel not wired via Session workspace");
+if (!app.includes('case "history"') || !app.includes("resolvePanelRequest") || !app.includes('getElementById("session-view")')) {
+  fail("History/Log not wired via Session workspace");
 } else {
   pass("History nav/panel");
 }

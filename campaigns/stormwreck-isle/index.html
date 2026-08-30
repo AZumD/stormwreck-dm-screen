@@ -5,7 +5,7 @@
   <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dragons of Stormwreck Isle — DM Screen</title>
-  <link rel="stylesheet" href="../../css/style.css?v=20260830n4">
+  <link rel="stylesheet" href="../../css/style.css?v=20260830n5">
 </head>
 <body class="campaign-page" data-campaign-id="stormwreck-isle">
   <div class="campaign-atmosphere" aria-hidden="true"></div>
@@ -36,7 +36,6 @@
         <h2>Tools</h2>
         <ul class="nav-list">
           <li><button type="button" class="nav-btn" data-view="reference">Reference</button></li>
-          <li><button type="button" class="nav-btn" data-view="session">Session</button></li>
         </ul>
       </nav>
     </aside>
@@ -51,6 +50,7 @@
           <button type="button" id="workspace-run" class="toolbar-btn workspace-switch__btn is-active" aria-pressed="true">Run</button>
           <button type="button" id="workspace-prep" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Prep</button>
           <button type="button" id="workspace-map" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Map</button>
+          <button type="button" id="workspace-session" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Session</button>
         </div>
         <div class="catalogue-search" id="catalogue-search">
           <input type="search" id="search" class="search" placeholder="Search catalogues…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogue-search-results">
@@ -92,6 +92,7 @@
       <div class="main-scroll">
         <article class="content play-view" id="play-view" aria-label="Scene play view"></article>
         <article class="content scroll-document hidden" id="scroll-document" aria-label="Document reference view"></article>
+        <article class="content session-view hidden" id="session-view" aria-label="Session workspace"></article>
         <article class="content panel-view hidden" id="panel-view"></article>
       </div>
     </main>

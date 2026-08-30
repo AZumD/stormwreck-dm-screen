@@ -43,11 +43,11 @@ for (const [label, page] of [
   ["stormwreck", html],
   ["sandbox", sandboxHtml]
 ]) {
-  if (!page.includes('id="workspace-run"') || !page.includes('id="workspace-prep"') || !page.includes('id="workspace-map"')) {
-    fail(`${label} missing Run|Prep|Map workspace switcher`);
-  } else if (!/>Run</.test(page) || !/>Prep</.test(page) || !/>Map</.test(page)) {
+  if (!page.includes('id="workspace-run"') || !page.includes('id="workspace-prep"') || !page.includes('id="workspace-map"') || !page.includes('id="workspace-session"')) {
+    fail(`${label} missing Run|Prep|Map|Session workspace switcher`);
+  } else if (!/>Run</.test(page) || !/>Prep</.test(page) || !/>Map</.test(page) || !/>Session</.test(page)) {
     fail(`${label} workspace switcher must use text labels`);
-  } else pass(`${label} Run|Prep|Map workspace switcher`);
+  } else pass(`${label} Run|Prep|Map|Session workspace switcher`);
 
   if (page.includes('id="map-panel-toggle"')) {
     fail(`${label} still has map-panel-toggle (Map is a workspace)`);

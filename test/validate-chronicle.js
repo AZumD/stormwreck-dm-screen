@@ -44,7 +44,7 @@ else pass("Chronicle wiki links");
 if (!app.includes('case "chronicle"') || !app.includes("ChronicleUI.init")) fail("campaign-app chronicle wiring");
 else pass("campaign-app Chronicle panel");
 
-if (!html.includes('data-view="session"') || !html.includes("chronicle-store.js") || !html.includes("key-event-dialog")) {
+if (!html.includes('id="workspace-session"') || !html.includes("chronicle-store.js") || !html.includes("key-event-dialog")) {
   fail("campaign HTML chronicle wiring");
 } else pass("campaign HTML Chronicle");
 if (!histUi.includes("data-promote-history") || !histUi.includes("promoteHistoryEntry")) {

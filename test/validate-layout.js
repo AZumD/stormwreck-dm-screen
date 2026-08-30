@@ -47,17 +47,17 @@ if (!layoutJs.includes("setCampaignWorkspace"))
   fail("layout-panels.js missing setCampaignWorkspace");
 else pass("layout-panels setCampaignWorkspace");
 
-if (!appJs.includes('activeWorkspace = "run"') || !appJs.includes("workspace-map") || !appJs.includes("CampaignWorkspace"))
-  fail("campaign-app missing Map workspace wiring");
-else pass("campaign-app Map workspace");
+if (!appJs.includes('activeWorkspace = "run"') || !appJs.includes("workspace-map") || !appJs.includes("workspace-session") || !appJs.includes("CampaignWorkspace"))
+  fail("campaign-app missing Map/Session workspace wiring");
+else pass("campaign-app Map/Session workspace");
 
 if (!mapJs.includes("onWorkspaceChange"))
   fail("map-panel missing onWorkspaceChange");
 else pass("map-panel onWorkspaceChange");
 
-if (!html.includes('id="workspace-map"') || html.includes('id="map-panel-toggle"'))
-  fail("campaign should use Map workspace switcher (no map-panel-toggle)");
-else pass("Map workspace switcher replaces map-panel-toggle");
+if (!html.includes('id="workspace-map"') || !html.includes('id="workspace-session"') || html.includes('id="map-panel-toggle"'))
+  fail("campaign should use Map/Session workspace switchers (no map-panel-toggle)");
+else pass("Map/Session workspace switchers");
 
 if (!css.includes("map-mode-workspace"))
   fail("CSS missing map-mode-workspace");

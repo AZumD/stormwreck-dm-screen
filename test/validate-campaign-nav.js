@@ -1,5 +1,5 @@
 /**
- * Campaign sidebar Tools / Reference+Session workspaces, Document scrollspy, Run|Prep.
+ * Campaign sidebar Tools / Reference workspace, Session workspace switcher, Document scrollspy, Run|Prep|Map|Session.
  * Run: node test/validate-campaign-nav.js
  */
 "use strict";
@@ -39,9 +39,12 @@ if (!app.includes("syncFocus") || !app.includes("highlightNavSection")) {
   "REFERENCE_TABS",
   "SESSION_TABS",
   "renderWorkspaceTabs",
+  "renderSessionWorkspace",
+  "showSessionWorkspace",
+  "session-view",
   "reference:npcs",
   "session:history",
-  "panel-workspace__tab",
+  "session-workspace__tab",
   'case "history"',
   'case "npcs"',
   "setWorkspace",
@@ -56,9 +59,11 @@ for (const [label, html] of [
   ["stormwreck", stormHtml],
   ["sandbox", sandboxHtml]
 ]) {
-  if (!html.includes('data-view="reference"') || !html.includes('data-view="session"')) {
-    fail(`${label} missing Reference/Session tools nav`);
-  } else pass(`${label} Tools nav has Reference + Session`);
+  if (!html.includes('data-view="reference"')) {
+    fail(`${label} missing Reference tools nav`);
+  } else if (html.includes('data-view="session"')) {
+    fail(`${label} sidebar still lists Session (Session is a workspace)`);
+  } else pass(`${label} Tools nav has Reference only`);
 
   if (html.includes('data-view="npcs"') || html.includes('data-view="history"')) {
     fail(`${label} still lists leaf panels in sidebar`);
@@ -67,9 +72,13 @@ for (const [label, html] of [
   if (!html.includes(">Tools<")) fail(`${label} missing Tools section heading`);
   else pass(`${label} Tools section heading`);
 
+  if (!html.includes('id="workspace-session"') || !html.includes('id="session-view"')) {
+    fail(`${label} missing Session workspace host`);
+  } else pass(`${label} Session workspace switcher + host`);
+
   if (!html.includes('id="workspace-run"') || !html.includes('id="workspace-prep"') || !html.includes('id="workspace-map"')) {
     fail(`${label} missing Run|Prep|Map switcher`);
-  } else pass(`${label} Run|Prep|Map switcher`);
+  } else pass(`${label} Run|Prep|Map|Session switcher`);
 
   if (html.includes('id="edit-mode-toggle"') || html.includes('id="view-mode-play"') || html.includes('id="map-panel-toggle"')) {
     fail(`${label} still has Edit / Play-Document / Map toggle primary controls`);
@@ -84,11 +93,13 @@ if (!prefs.includes('workspace: "run"') || !prefs.includes("normalizeWorkspace")
   fail("CampaignPrefs missing Run/Prep workspace");
 } else if (!prefs.includes('value === "map"') && !prefs.includes('"map"')) {
   fail("CampaignPrefs missing Map workspace");
-} else pass("CampaignPrefs remembers Run/Prep/Map workspace");
+} else if (!prefs.includes('"session"')) {
+  fail("CampaignPrefs missing Session workspace");
+} else pass("CampaignPrefs remembers Run/Prep/Map/Session workspace");
 
-if (!css.includes(".panel-workspace__tab") || !css.includes("position: sticky")) {
-  fail("style.css missing sticky panel workspace tabs");
-} else pass("panel workspace tab styles");
+if (!css.includes(".session-workspace__tab") || !css.includes(".panel-workspace__tab")) {
+  fail("style.css missing session/panel workspace tabs");
+} else pass("session workspace tab styles");
 
 if (!css.includes(".workspace-switch")) {
   fail("style.css missing workspace-switch");

@@ -47,7 +47,8 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - Default **Run** workspace focuses one Play scene (content, notes, At this scene, connections)
 - **Prep** workspace shows the continuous Document scroll (authoring)
 - **Map** workspace promotes the existing MapPanel to a full canvas (Party \| Music remain on the utility rail in Run/Prep)
-- Toolbar **Run | Prep | Map**; Reference/Session panels keep the active workspace
+- **Session** workspace hosts Notes \| Log \| Chronicle \| Progress (tab state in `sessionTab`)
+- Toolbar **Run | Prep | Map | Session**; Reference opens as an overlay without leaving the active workspace
 - Scene cast + connections editable in Prep; stored in `scene-meta.json`
 
 ## Campaign editing

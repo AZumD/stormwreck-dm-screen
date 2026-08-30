@@ -27,7 +27,7 @@ window.CampaignPrefs = (function () {
   }
 
   function normalizeWorkspace(value, viewMode) {
-    if (value === "prep" || value === "run" || value === "map") return value;
+    if (value === "prep" || value === "run" || value === "map" || value === "session") return value;
     /* Migrate legacy Play/Document preference into Run/Prep */
     return viewMode === "document" ? "prep" : "run";
   }
