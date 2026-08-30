@@ -24,9 +24,13 @@
   const cancelBtn = document.getElementById("create-campaign-cancel");
   const importBtn = document.getElementById("import-browser-data");
   const importReport = document.getElementById("import-browser-report");
+  const scheduleSection = document.getElementById("library-schedule");
+  const scheduleCollapseBtn = document.getElementById("library-schedule-collapse");
 
   let authMode = "unknown"; /* session | open | login */
   let libraryBound = false;
+  let scheduleExpanded = false;
+  let scheduleToggleBound = false;
 
   function escapeHtml(str) {
     return window.LibrarySummary?.escapeHtml
@@ -80,16 +84,20 @@
       sceneBlock = `<p class="library-continue-card__scene-empty meta">No current scene set</p>`;
     }
     return `
-      <article class="card library-continue-card">
-        <div class="library-continue-card__body">
-          <h3 class="library-continue-card__title">${escapeHtml(summary.title)}</h3>
-          ${sessionLine}
-          ${sceneBlock}
-        </div>
-        <div class="library-continue-card__actions">
-          <a class="landing-tool-btn landing-tool-btn--primary" href="${escapeHtml(continueHref)}" data-campaign-id="${escapeHtml(summary.id)}">Continue</a>
-          <a class="landing-tool-btn" href="${escapeHtml(runHref)}" data-campaign-id="${escapeHtml(summary.id)}">Run</a>
-          <a class="landing-tool-btn" href="${escapeHtml(prepHref)}" data-campaign-id="${escapeHtml(summary.id)}">Prep</a>
+      <article class="library-continue-card">
+        <div class="library-continue-card__main">
+          <div class="library-continue-card__info">
+            <h3 class="library-continue-card__title">${escapeHtml(summary.title)}</h3>
+            ${sessionLine}
+            ${sceneBlock}
+          </div>
+          <div class="library-continue-card__actions">
+            <a class="landing-tool-btn landing-tool-btn--primary" href="${escapeHtml(continueHref)}" data-campaign-id="${escapeHtml(summary.id)}">Continue</a>
+            <div class="library-continue-card__alt">
+              <a class="landing-tool-btn landing-tool-btn--secondary" href="${escapeHtml(runHref)}" data-campaign-id="${escapeHtml(summary.id)}">Run</a>
+              <a class="landing-tool-btn landing-tool-btn--secondary" href="${escapeHtml(prepHref)}" data-campaign-id="${escapeHtml(summary.id)}">Prep</a>
+            </div>
+          </div>
         </div>
       </article>`;
   }
@@ -101,16 +109,18 @@
     const sandboxBadge = def.sandbox ? `<span class="card-status card-status--sandbox">Sandbox</span>` : "";
     const featuredClass = def.featured && !def.sandbox ? " card-campaign--featured" : "";
     return `
-      <a class="card card-campaign${featuredClass}" href="${escapeHtml(href)}" data-campaign-id="${escapeHtml(def.id)}">
-        <div class="card-campaign__meta">
-          ${activeBadge}
-          ${sandboxBadge}
-          ${!activeBadge && !sandboxBadge && def.featured ? `<span class="card-status">Campaign</span>` : ""}
-          ${level}
+      <a class="card-campaign${featuredClass}" href="${escapeHtml(href)}" data-campaign-id="${escapeHtml(def.id)}">
+        <div class="card-campaign__surface">
+          <div class="card-campaign__meta">
+            ${activeBadge}
+            ${sandboxBadge}
+            ${!activeBadge && !sandboxBadge && def.featured ? `<span class="card-status">Campaign</span>` : ""}
+            ${level}
+          </div>
+          <h3 class="card-campaign__title">${escapeHtml(def.title)}</h3>
+          <p class="card-campaign__desc">${escapeHtml(def.description)}</p>
+          <span class="card-campaign__action" aria-hidden="true">Open</span>
         </div>
-        <h3 class="card-campaign__title">${escapeHtml(def.title)}</h3>
-        <p class="card-campaign__desc">${escapeHtml(def.description)}</p>
-        <span class="card-action">Open</span>
       </a>`;
   }
 
@@ -174,13 +184,58 @@
     return `${weekday} · ${time}`;
   }
 
+  function scheduleExpandLink(label) {
+    return `<button type="button" class="library-next-session__link" data-expand-schedule>${escapeHtml(label)}</button>`;
+  }
+
+  async function expandSchedule(opts = {}) {
+    const { scroll = true } = opts;
+    if (!scheduleSection) return;
+    scheduleSection.hidden = false;
+    scheduleSection.classList.remove("library-schedule-section--collapsed");
+    scheduleExpanded = true;
+    if (scroll) {
+      scheduleSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (location.hash !== "#library-schedule") {
+      history.replaceState(null, "", "#library-schedule");
+    }
+  }
+
+  function collapseSchedule() {
+    if (!scheduleSection) return;
+    scheduleSection.hidden = true;
+    scheduleSection.classList.add("library-schedule-section--collapsed");
+    scheduleExpanded = false;
+    if (location.hash === "#library-schedule") {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+  }
+
+  function bindScheduleToggle() {
+    if (scheduleToggleBound) return;
+    scheduleToggleBound = true;
+    scheduleCollapseBtn?.addEventListener("click", () => collapseSchedule());
+    document.addEventListener("click", (e) => {
+      const trigger = e.target.closest("[data-expand-schedule]");
+      if (!trigger) return;
+      e.preventDefault();
+      expandSchedule({ scroll: true });
+    });
+    window.addEventListener("hashchange", () => {
+      if (location.hash === "#library-schedule" && !scheduleExpanded) {
+        expandSchedule({ scroll: true });
+      }
+    });
+  }
+
   async function renderNextSessionSummary(user) {
     if (!nextSessionEl) return;
     if (!user || !window.PlayerApiClient) {
       nextSessionEl.innerHTML = `
         <h3 class="library-next-session__title">Next session</h3>
         <p class="meta library-next-session__body">Sign in to see upcoming sessions.</p>
-        <a class="library-next-session__link" href="#library-schedule">Open schedule</a>`;
+        ${scheduleExpandLink("Full schedule")}`;
       return;
     }
     nextSessionEl.innerHTML = `
@@ -198,7 +253,7 @@
         nextSessionEl.innerHTML = `
           <h3 class="library-next-session__title">Next session</h3>
           <p class="meta library-next-session__body">No session scheduled</p>
-          <a class="library-next-session__link" href="#library-schedule">Open schedule</a>`;
+          ${scheduleExpandLink("Full schedule")}`;
         return;
       }
       const title = next.title || next.campaignName || "Session";
@@ -208,12 +263,12 @@
         <p class="library-next-session__when">${escapeHtml(fmtEventWhen(next.startsAt))}</p>
         <p class="library-next-session__name">${escapeHtml(title)}</p>
         <p class="meta library-next-session__scope">${escapeHtml(scope)}</p>
-        <a class="library-next-session__link" href="#library-schedule">Full schedule</a>`;
+        ${scheduleExpandLink("Full schedule")}`;
     } catch {
       nextSessionEl.innerHTML = `
         <h3 class="library-next-session__title">Next session</h3>
         <p class="meta library-next-session__body">Could not load schedule</p>
-        <a class="library-next-session__link" href="#library-schedule">Open schedule</a>`;
+        ${scheduleExpandLink("Full schedule")}`;
     }
   }
 
@@ -444,11 +499,15 @@
 
   async function enterLibrary(user) {
     showLibrary(user || null);
+    bindScheduleToggle();
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (window.CampaignRegistry?.bootstrap) await CampaignRegistry.bootstrap();
     await renderLibraryHome();
     await renderNextSessionSummary(user || null);
     await renderDmSchedule(user || null);
+    if (location.hash === "#library-schedule") {
+      await expandSchedule({ scroll: false });
+    }
     if (!window.LocalApiClient?.isAvailable()) {
       if (importReport) {
         importReport.hidden = false;

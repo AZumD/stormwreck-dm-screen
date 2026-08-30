@@ -12,11 +12,12 @@ DM Library as the DM home base — Continue, campaigns, tools, schedule summary,
 | `css/landing.css` | Library home layout and cards |
 
 ## Hierarchy
-1. **Continue** — last opened campaign (or featured Stormwreck), with session/time + current scene
-2. **Campaigns** — all campaigns with Open; active badge on Continue target
-3. **Tools** — Compendium, Schedule anchor, Player App
-4. **Schedule** — full panel (subordinate); compact “Next session” in Tools column
-5. **Data & backup** — import/export in footer
+1. **Continue** — last opened campaign (or featured Stormwreck), with session/time + current scene; two-column card with primary Continue + secondary Run/Prep
+2. **Campaigns** — all campaigns on translucent card surfaces; **+ New campaign** in section header
+3. **Tools** — Compendium, Schedule (expands full calendar), Player App
+4. **Next session** — compact summary in Tools column; **Full schedule** expands the calendar inline
+5. **Schedule** — full panel collapsed by default; expand via Tools, Next session, or `#library-schedule`
+6. **Data & backup** — import/export in footer
 
 ## Continue selection
 `localStorage` key `dm-last-campaign-id`, updated when any campaign link is clicked from the Library. Falls back to Stormwreck Isle if unset.
