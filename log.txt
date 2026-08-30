@@ -121,3 +121,4 @@
 [2026-08-30] Campaign nav Phase 1: Tools → Reference/Session workspaces; fix Document scrollspy. See campaign-app.js, VALIDATE-CAMPAIGN-NAV.md
 [2026-08-30] UX Phase 2: Run|Prep campaign workspaces; authoring chrome in Prep only. See campaign-app.js, CAMPAIGN-APP.md
 
+[2026-08-30] UX Phase 3: compact campaign-time popover + streamlined Run toolbar. See day-time-ui.js, DAY-TIME-UI.md

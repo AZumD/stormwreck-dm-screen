@@ -5,7 +5,7 @@
   <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dragons of Stormwreck Isle — DM Screen</title>
-  <link rel="stylesheet" href="../../css/style.css?v=20260830n2">
+  <link rel="stylesheet" href="../../css/style.css?v=20260830n3">
 </head>
 <body class="campaign-page" data-campaign-id="stormwreck-isle">
   <div class="campaign-atmosphere" aria-hidden="true"></div>
@@ -47,34 +47,47 @@
         <button type="button" id="sidebar-toggle" class="toolbar-btn toolbar-btn--icon sidebar-toggle" aria-label="Show navigation" title="Navigation" aria-expanded="false" aria-controls="sidebar">
           <span class="sidebar-toggle__icon" aria-hidden="true"></span>
         </button>
+        <div class="workspace-switch" role="group" aria-label="Campaign workspace">
+          <button type="button" id="workspace-run" class="toolbar-btn workspace-switch__btn is-active" aria-pressed="true">Run</button>
+          <button type="button" id="workspace-prep" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Prep</button>
+        </div>
         <div class="catalogue-search" id="catalogue-search">
           <input type="search" id="search" class="search" placeholder="Search catalogues…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogue-search-results">
           <ul id="catalogue-search-results" class="catalogue-search__results hidden" role="listbox" hidden></ul>
         </div>
-        <div class="workspace-switch" role="group" aria-label="Campaign workspace">
-          <button type="button" id="workspace-run" class="toolbar-btn workspace-switch__btn is-active" aria-pressed="true">Run</button>
-          <button type="button" id="workspace-prep" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Prep</button>
+        <button type="button" id="current-scene-btn" class="toolbar-btn toolbar-btn--current-scene" title="Jump to current scene" aria-label="Jump to current scene">Current scene</button>
+        <div class="campaign-time" id="campaign-time">
+          <button type="button" id="campaign-time-trigger" class="toolbar-btn campaign-time__trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="campaign-time-popover" aria-label="Campaign time Day 1 · 08:00">
+            <span id="campaign-time-label">Day 1 · 08:00</span>
+            <span class="campaign-time__caret" aria-hidden="true">▾</span>
+          </button>
+          <div id="campaign-time-popover" class="campaign-time__popover" role="dialog" aria-label="Campaign time" hidden>
+            <p class="campaign-time__heading">Campaign Time</p>
+            <div class="campaign-time__group campaign-time__group--day">
+              <label class="campaign-time__label" for="day-time-day">Day <span id="day-time-day-label">1</span></label>
+              <input type="range" id="day-time-day" class="campaign-time__slider campaign-time__slider--day" min="1" max="10" step="1" value="1" list="day-time-day-ticks" aria-valuemin="1" aria-valuemax="10">
+              <datalist id="day-time-day-ticks">
+                <option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option>
+                <option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option><option value="10"></option>
+              </datalist>
+            </div>
+            <div class="campaign-time__group campaign-time__group--time">
+              <label class="campaign-time__label" for="day-time-minute">Time <span id="day-time-clock-label">08:00</span></label>
+              <input type="range" id="day-time-minute" class="campaign-time__slider campaign-time__slider--time" min="0" max="1439" step="1" value="480" aria-valuemin="0" aria-valuemax="1439" aria-label="Time of day">
+            </div>
+            <div class="campaign-time__presets" role="group" aria-label="Time presets">
+              <button type="button" class="campaign-time__preset" data-time-preset="morning" data-minute="480" aria-pressed="false">Morning</button>
+              <button type="button" class="campaign-time__preset" data-time-preset="noon" data-minute="720" aria-pressed="false">Noon</button>
+              <button type="button" class="campaign-time__preset" data-time-preset="evening" data-minute="1080" aria-pressed="false">Evening</button>
+              <button type="button" class="campaign-time__preset" data-time-preset="night" data-minute="1320" aria-pressed="false">Night</button>
+            </div>
+          </div>
         </div>
         <button type="button" id="map-panel-toggle" class="toolbar-btn map-panel-toggle" aria-label="Show map" aria-expanded="false" aria-controls="map-panel">
           <span class="map-panel-toggle__icon" aria-hidden="true"></span>
           <span class="map-panel-toggle__label">Map</span>
         </button>
-        <button type="button" id="current-scene-btn" class="toolbar-btn" title="Jump to current scene">Current scene</button>
         <span class="session-badge" id="session-badge">Session 1</span>
-      </div>
-      <div class="day-time-bar" id="day-time-bar" aria-label="Campaign day and time">
-        <div class="day-time-bar__group day-time-bar__group--day">
-          <label class="day-time-bar__label" for="day-time-day">Day <span id="day-time-day-label">1</span></label>
-          <input type="range" id="day-time-day" class="day-time-bar__slider day-time-bar__slider--day" min="1" max="10" step="1" value="1" list="day-time-day-ticks" aria-valuemin="1" aria-valuemax="10">
-          <datalist id="day-time-day-ticks">
-            <option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option>
-            <option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option><option value="10"></option>
-          </datalist>
-        </div>
-        <div class="day-time-bar__group day-time-bar__group--time">
-          <label class="day-time-bar__label" for="day-time-minute"><span id="day-time-clock-label">08:00</span></label>
-          <input type="range" id="day-time-minute" class="day-time-bar__slider day-time-bar__slider--time" min="0" max="1439" step="1" value="480" aria-valuemin="0" aria-valuemax="1439" aria-label="Time of day">
-        </div>
       </div>
       </div>
       <p id="format-help" class="format-help-bar hidden">@npc:id|Name · &lt;b&gt;bold&lt;/b&gt; · {{read-aloud}}…{{/read-aloud}} · {{dm-note}}…{{/dm-note}}</p>

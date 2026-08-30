@@ -34,8 +34,8 @@ On boot, `syncCampaignChrome` sets the sidebar title from `ADVENTURE.meta`. Work
 
 ## Campaign play state
 - Scene status/notes via `CampaignStateUI`
-- **Day / time** bar under the toolbar (`DayTimeUI`)
-- **Current scene** toolbar jumps to the saved current section
+- **Campaign time** compact toolbar control (`DayTimeUI`) — popover for tenday + time + presets; persists in `CampaignState.clock`
+- **Current scene** toolbar jumps to the saved current section (disabled when none is marked current)
 - Session → **Session** workspace; Chronicle remains separate
 - NPC modals gain campaign memory through `EntityUI.addModalEnricher`
 

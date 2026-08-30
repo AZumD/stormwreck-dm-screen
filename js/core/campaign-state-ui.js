@@ -44,13 +44,23 @@ window.CampaignStateUI = (function () {
     if (currentBtn) {
       currentBtn.addEventListener("click", () => {
         const id = CampaignState.getCurrentSceneId();
-        if (!id) {
-          alert(t().noCurrentScene || "No scene is marked current yet.");
-          return;
-        }
+        if (!id) return;
         if (typeof api.jumpToSection === "function") api.jumpToSection(id);
       });
+      syncCurrentSceneButton();
     }
+  }
+
+  function syncCurrentSceneButton() {
+    const currentBtn = document.getElementById("current-scene-btn");
+    if (!currentBtn || !window.CampaignState?.getCurrentSceneId) return;
+    const id = CampaignState.getCurrentSceneId();
+    const hasCurrent = !!id;
+    currentBtn.disabled = !hasCurrent;
+    currentBtn.title = hasCurrent
+      ? t().jumpToCurrentScene || "Jump to current scene"
+      : t().noCurrentScene || "No scene is marked current yet.";
+    currentBtn.setAttribute("aria-disabled", hasCurrent ? "false" : "true");
   }
 
   function sessionNumber() {
@@ -263,6 +273,7 @@ window.CampaignStateUI = (function () {
     }
     applySectionSceneClasses();
     applyNavSceneClasses();
+    syncCurrentSceneButton();
   }
 
   function refreshAllSceneChrome() {
@@ -275,6 +286,7 @@ window.CampaignStateUI = (function () {
     bindSceneChrome(root);
     applySectionSceneClasses();
     applyNavSceneClasses();
+    syncCurrentSceneButton();
   }
 
   function applyNavSceneClasses() {
@@ -717,6 +729,7 @@ window.CampaignStateUI = (function () {
     applySectionSceneClasses,
     refreshSceneChrome,
     refreshAllSceneChrome,
+    syncCurrentSceneButton,
     renderHistoryPanel,
     bindHistoryPanel,
     openLogInteraction,

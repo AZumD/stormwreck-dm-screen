@@ -94,7 +94,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/landing.js` | Create / list custom campaigns + import |
 | `js/core/campaign-state.js` | Scene / NPC memory / timeline / party / clock persistence |
 | `js/core/campaign-state-ui.js` | Scene chrome, memory modal, history panel |
-| `js/core/day-time-ui.js` | Tenday + time-of-day sliders in top chrome |
+| `js/core/day-time-ui.js` | Compact campaign-time trigger + popover (tenday / time / presets) |
 | `js/core/chronicle-store.js` | Story So Far, session prose, Key Events |
 | `js/core/chronicle-ui.js` | Chronicle panel + key-event dialog |
 | `js/core/scene-meta.js` | Scene cast + connections (design data) |

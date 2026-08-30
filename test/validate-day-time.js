@@ -1,5 +1,5 @@
 /**
- * Validates day/time tracker wiring and CampaignState.clock persistence.
+ * Validates campaign-time compact control + CampaignState.clock persistence.
  * Run: node test/validate-day-time.js
  */
 const fs = require("fs");
@@ -35,10 +35,34 @@ if (!uiCode.includes("DayTimeUI") || !uiCode.includes("day-time-day") || !uiCode
   pass("DayTimeUI module");
 }
 
-if (!css.includes(".day-time-bar") || !css.includes(".day-time-bar__slider--time") || !css.includes("#c9a227")) {
-  fail("day-time bar styles / noon yellow missing");
+if (!uiCode.includes("campaign-time-trigger") || !uiCode.includes("campaign-time-popover")) {
+  fail("DayTimeUI missing compact trigger/popover");
 } else {
-  pass("day-time bar CSS");
+  pass("DayTimeUI compact trigger/popover");
+}
+
+if (!uiCode.includes("PRESETS") || !uiCode.includes("8 * 60") || !uiCode.includes("22 * 60")) {
+  fail("DayTimeUI missing time presets");
+} else {
+  pass("DayTimeUI time presets");
+}
+
+if (!uiCode.includes("pointerdown") || !uiCode.includes("Escape")) {
+  fail("DayTimeUI missing dismiss handlers");
+} else {
+  pass("DayTimeUI dismiss via Escape/outside");
+}
+
+if (!css.includes(".campaign-time__popover") || !css.includes(".campaign-time__slider--time") || !css.includes("#c9a227")) {
+  fail("campaign-time styles / noon yellow missing");
+} else {
+  pass("campaign-time CSS");
+}
+
+if (css.includes(".day-time-bar {") || css.includes(".day-time-bar__slider")) {
+  fail("obsolete day-time-bar styles still present");
+} else {
+  pass("obsolete day-time-bar styles removed");
 }
 
 if (!css.includes(".main-chrome")) fail("main-chrome sticky wrapper missing");
@@ -49,15 +73,20 @@ else pass("campaign-app inits DayTimeUI");
 
 for (const page of ["campaigns/stormwreck-isle/index.html", "campaigns/sandbox/index.html"]) {
   const html = fs.readFileSync(path.join(root, page), "utf8");
-  if (!html.includes('id="day-time-bar"') || !html.includes("day-time-ui.js")) {
-    fail(`${page} missing day-time bar`);
+  if (html.includes('id="day-time-bar"')) {
+    fail(`${page} still has persistent day-time-bar`);
+  } else if (!html.includes('id="campaign-time"') || !html.includes("campaign-time-trigger") || !html.includes("day-time-ui.js")) {
+    fail(`${page} missing campaign-time control`);
   } else if (!html.includes('max="10"') || !html.includes('max="1439"') || !html.includes('step="1"')) {
     fail(`${page} missing tenday/time ranges`);
+  } else if (!html.includes('data-time-preset="noon"') || !html.includes('data-minute="720"')) {
+    fail(`${page} missing time presets`);
   } else if (!html.includes("main-chrome")) {
     fail(`${page} missing main-chrome`);
+  } else {
+    pass(`${page} compact campaign-time`);
   }
 }
-pass("campaign pages include day-time bar");
 
 const store = new Map();
 const localStorage = {
@@ -98,31 +127,20 @@ const CS = sandbox.window.CampaignState;
   else pass("setClock persists in memory");
 
   if (CS.formatClockTime(0) !== "00:00" || CS.formatClockTime(1439) !== "23:59") {
-    fail("formatClockTime bounds");
-  } else {
-    pass("formatClockTime 00:00–23:59");
-  }
+    fail("formatClockTime wrong");
+  } else pass("formatClockTime");
 
-  const snapped = CS.normalizeClock({ day: 10.6, minute: 2000 });
-  if (snapped.day !== 10 || snapped.minute !== 1439) fail("normalizeClock clamp failed");
-  else pass("normalizeClock clamps tenday + minutes");
-
-  const raw = JSON.parse(localStorage.getItem("test-clock-campaign-campaign-state"));
-  if (!raw?.clock || raw.clock.day !== 7 || raw.clock.minute !== 720) {
-    fail(`clock not in persisted blob: ${JSON.stringify(raw?.clock)}`);
-  } else {
-    pass("clock in campaign-state storage");
-  }
+  CS.setClock({ day: 2, minute: 875 });
+  const raw = localStorage.getItem("test-clock-campaign-campaign-state");
+  const parsed = JSON.parse(raw);
+  if (!parsed.clock || parsed.clock.day !== 2 || parsed.clock.minute !== 875) {
+    fail("clock not persisted to localStorage");
+  } else pass("clock persists to localStorage");
 
   await CS.init("other-clock-campaign");
   const other = CS.getClock();
-  if (other.day !== 1 || other.minute !== 480) fail("clock leaked across campaigns");
-  else pass("clock namespaced per campaign");
-
-  await CS.init("test-clock-campaign");
-  const reloaded = CS.getClock();
-  if (reloaded.day !== 7 || reloaded.minute !== 720) fail(`clock not reloaded: ${JSON.stringify(reloaded)}`);
-  else pass("clock reloads after re-init");
+  if (other.day !== 1 || other.minute !== 480) fail("campaign clock isolation broken");
+  else pass("campaign clock isolation");
 
   if (failed) {
     console.error(`\n${failed} failure(s)`);

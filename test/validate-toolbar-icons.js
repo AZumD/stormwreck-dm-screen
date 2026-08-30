@@ -48,6 +48,12 @@ for (const [label, page] of [
   } else if (!/>Run</.test(page) || !/>Prep</.test(page)) {
     fail(`${label} workspace switcher must use text labels`);
   } else pass(`${label} Run|Prep workspace switcher`);
+
+  if (page.includes('id="day-time-bar"')) {
+    fail(`${label} still has persistent day-time-bar`);
+  } else if (!page.includes('id="campaign-time"') || !page.includes("campaign-time-trigger")) {
+    fail(`${label} missing compact campaign-time control`);
+  } else pass(`${label} compact campaign-time control`);
 }
 
 if (!app.includes("setWorkspace") || !app.includes('activeWorkspace = "run"')) {
