@@ -11,6 +11,7 @@ async function probeSchema(db) {
     gameSystemIdColumn: false,
     campaignCharactersTable: false,
     schedulingTables: false,
+    platformTables: false,
     complete: false
   };
 
@@ -38,6 +39,12 @@ async function probeSchema(db) {
        WHERE table_schema = 'public' AND table_name IN ('user_availability', 'campaign_events', 'campaign_posts')`
     );
     schema.schedulingTables = Number(scheduling.rows[0]?.n || 0) === 3;
+
+    const platform = await db.query(
+      `SELECT COUNT(*)::int AS n FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name IN ('platform_events', 'platform_posts')`
+    );
+    schema.platformTables = Number(platform.rows[0]?.n || 0) === 2;
   } catch {
     return schema;
   }
@@ -46,7 +53,8 @@ async function probeSchema(db) {
     schema.sessionsTable &&
     schema.gameSystemIdColumn &&
     schema.campaignCharactersTable &&
-    schema.schedulingTables;
+    schema.schedulingTables &&
+    schema.platformTables;
   return schema;
 }
 

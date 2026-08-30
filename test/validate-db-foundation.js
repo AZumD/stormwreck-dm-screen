@@ -31,6 +31,7 @@ const required = [
   "db/migrations/0005_phase6_platform_cleanup.sql",
   "db/migrations/0006_drop_character_campaign_id.sql",
   "db/migrations/0007_scheduling.sql",
+  "db/migrations/0008_platform_global.sql",
   "server/lib/game-systems.js",
   "server/lib/dnd5e-character.js"
 ];

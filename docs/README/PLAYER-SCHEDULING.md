@@ -1,23 +1,24 @@
 # PLAYER-SCHEDULING.js
 
 ## Purpose
-Player companion UI for global availability, campaign schedule, events/RSVPs, and the campaign message board.
+Player companion UI for global availability, platform + campaign schedule, events, and boards.
 
 ## File
 `js/player-scheduling.js` (loaded by `/player/`)
 
 ## Home (global)
-- **Schedule** is the first home section (above My campaigns / My characters).
-- Renders the personal month calendar inline plus upcoming sessions across memberships.
-- Tap a day → availability day editor dialog (status / window / note).
-- Tap an upcoming session → opens that campaign’s Schedule section.
+- **Schedule** first: personal month calendar (availability + gold dots for global events), day dialog (availability editor + global events + create), combined Upcoming (GLOBAL vs campaign labels).
+- **Board**: platform message board (post / reply / edit own).
+- Then My campaigns / My characters.
 
 ## Campaign workspace
-- Sticky **Play | Schedule | Board** nav (not on character workspace).
-- Schedule: campaign month calendar with member availability aggregates, event list, DM create/edit.
-- Board: plain-text posts, replies, pin (DM).
+- Compact **hamburger** menu: Play / Schedule / Board / Home (no permanent segmented row).
+- Account **user name** next to Log out (not character “Playing as” banner).
+- Schedule / Board hide bottom Play tabs; Play shows equal-width Map \| Party \| Library \| Notes.
 
 ## Related
-- `docs/README/SCHEDULING.md` — server model + API
-- `docs/README/CAMPAIGN-BOARD.md` — board API
-- `docs/README/PLAYER.md` — player surfaces
+- `docs/README/PLATFORM-EVENTS.md`
+- `docs/README/PLATFORM-BOARD.md`
+- `docs/README/SCHEDULING.md`
+- `docs/README/CAMPAIGN-BOARD.md`
+- `docs/README/PLAYER.md`

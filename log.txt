@@ -112,3 +112,4 @@
 [2026-08-28] Map token image upload on PC/NPC/monster catalogues (tokenImage -> /data/assets/tokens). See js/core/catalogue/configs.js, map-token-size.js, map-panel.js
 [2026-08-28] Fix grid tokens: no zoom counter-scale; resolve catalogue token/portrait for map pins. See map-token-size.js, style.css
 [2026-08-30] Player home: Schedule first with inline availability calendar (tap day to edit). See js/player-scheduling.js, player/index.html, docs/README/PLAYER-SCHEDULING.md
+[2026-08-30] Global platform events/board + campaign hamburger nav, equal Play tabs, home day-detail UX. See server/lib/platform-events.js, platform-board.js, docs/README/PLATFORM-EVENTS.md

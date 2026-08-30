@@ -70,7 +70,10 @@ if (!apiClientSrc.includes("putAvailability") || !apiClientSrc.includes("campaig
 } else pass("player-api-client scheduling methods");
 
 if (!playerHtml.includes("campaign-section-nav") || !playerHtml.includes('data-campaign-section="schedule"')) {
-  fail("player HTML missing campaign section nav");
+  /* hamburger menu uses data-campaign-section */
+  if (!playerHtml.includes("campaign-menu") || !playerHtml.includes('data-campaign-section="schedule"')) {
+    fail("player HTML missing campaign section nav");
+  } else pass("campaign Play|Schedule|Board nav");
 } else pass("campaign Play|Schedule|Board nav");
 
 if (!playerHtml.includes("home-schedule-list")) fail("player home missing schedule section");
@@ -78,13 +81,16 @@ else pass("player global schedule section");
 
 {
   const scheduleIdx = playerHtml.indexOf(">Schedule<");
+  const boardIdx = playerHtml.indexOf('id="home-board-list"');
   const campaignsIdx = playerHtml.indexOf(">My campaigns<");
   const charactersIdx = playerHtml.indexOf(">My characters<");
   if (scheduleIdx < 0 || campaignsIdx < 0 || charactersIdx < 0) {
     fail("player home missing Schedule / My campaigns / My characters headings");
-  } else if (!(scheduleIdx < campaignsIdx && campaignsIdx < charactersIdx)) {
+  } else if (boardIdx > 0 && !(scheduleIdx < boardIdx && boardIdx < campaignsIdx && campaignsIdx < charactersIdx)) {
+    fail("player home order must be Schedule → Board → My campaigns → My characters");
+  } else if (boardIdx < 0 && !(scheduleIdx < campaignsIdx && campaignsIdx < charactersIdx)) {
     fail("player home order must be Schedule → My campaigns → My characters");
-  } else pass("player home order Schedule → campaigns → characters");
+  } else pass("player home order Schedule → Board → campaigns → characters");
 }
 
 if (playerHtml.includes('data-open-availability')) {

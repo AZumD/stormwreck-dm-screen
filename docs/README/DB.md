@@ -13,6 +13,7 @@ Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset
 | `db/migrations/0005_phase6_platform_cleanup.sql` | Drop legacy D&D character columns |
 | `db/migrations/0006_drop_character_campaign_id.sql` | Drop `characters.campaign_id`; participation in `campaign_characters` only |
 | `db/migrations/0007_scheduling.sql` | User availability, campaign events, RSVPs, message board |
+| `db/migrations/0008_platform_global.sql` | Global `platform_events` + `platform_posts` |
 | `db/migrate.mjs` | Apply SQL migrations |
 | `db/seed-items.mjs` | Import `{DM_DATA_ROOT}/catalogues/item/*.json` → `items` |
 | `db/seed-characters.mjs` | Import campaign PC catalogue → `characters` + state + inventory (**one-shot**) |

@@ -18,7 +18,11 @@
     characterList: document.getElementById("character-list"),
     shellCampaign: document.getElementById("shell-campaign"),
     shellTitle: document.getElementById("shell-title"),
-    playingAs: document.getElementById("playing-as"),
+    shellUserName: document.getElementById("shell-user-name"),
+    homeUserName: document.getElementById("home-user-name"),
+    characterUserName: document.getElementById("character-user-name"),
+    campaignMenuBtn: document.getElementById("campaign-menu-btn"),
+    campaignMenu: document.getElementById("campaign-menu"),
     characterShellTitle: document.getElementById("character-shell-title"),
     characterShellEyebrow: document.getElementById("character-shell-eyebrow"),
     characterCampaigns: document.getElementById("character-campaigns"),
@@ -31,7 +35,6 @@
     logoutHome: document.getElementById("logout-home"),
     logoutShell: document.getElementById("logout-shell"),
     logoutCharacter: document.getElementById("logout-character"),
-    backFromCampaign: document.getElementById("back-from-campaign"),
     backFromCharacter: document.getElementById("back-from-character"),
     createCharacterHome: document.getElementById("create-character-home"),
     noteDialog: document.getElementById("note-dialog"),
@@ -67,6 +70,7 @@
     attachCampaignEmpty: document.getElementById("attach-campaign-empty"),
     attachCampaignCancel: document.getElementById("attach-campaign-cancel"),
     homeScheduleList: document.getElementById("home-schedule-list"),
+    homeBoardList: document.getElementById("home-board-list"),
     availabilityDialog: document.getElementById("availability-dialog"),
     availabilityForm: document.getElementById("availability-form"),
     availabilityDialogTitle: document.getElementById("availability-dialog-title"),
@@ -1078,6 +1082,7 @@
     state.characters = data.characters || [];
     state.characterId = state.characters[0] ? state.characters[0].id : null;
     state.tab = state.characterId ? "map" : "party";
+    setUserChrome();
     renderPlayingAs();
     show("shell");
     if (window.PlayerSchedulingUI) PlayerSchedulingUI.setCampaignSectionNav();
@@ -1094,6 +1099,7 @@
     state.characters = [data.character];
     els.characterShellTitle.textContent = data.character.name || "Character";
     els.characterShellEyebrow.textContent = data.character.gameSystemId || "Character";
+    setUserChrome();
     renderCharacterCampaigns(data.character.campaigns || []);
     show("character");
     renderCharacter();
@@ -1178,19 +1184,27 @@
     }
   }
 
+  function setUserChrome() {
+    const name = state.bootstrap?.user?.name || "";
+    [els.homeUserName, els.shellUserName, els.characterUserName].forEach((el) => {
+      if (!el) return;
+      el.textContent = name;
+      el.hidden = !name;
+      el.title = name;
+    });
+  }
+
   function renderPlayingAs() {
-    if (!els.playingAs) return;
-    const c = currentCharacter();
-    if (!c) {
-      els.playingAs.hidden = true;
-      els.playingAs.innerHTML = "";
-      return;
-    }
-    els.playingAs.hidden = false;
-    els.playingAs.innerHTML = `Playing as <button type="button" class="linkish" data-open-character-id="${esc(c.id)}">${esc(c.name)}</button>`;
+    /* Banner removed — account name lives in the campaign header. */
+  }
+
+  function goHome() {
+    renderHome();
+    show("home");
   }
 
   async function renderHome() {
+    setUserChrome();
     const campaigns = state.bootstrap?.campaigns || [];
     if (!campaigns.length) {
       els.campaignList.innerHTML = `<li class="empty">No campaign memberships yet.</li>`;
@@ -1221,8 +1235,9 @@
         )
         .join("");
     }
-    if (els.homeScheduleList && window.PlayerSchedulingUI) {
-      await PlayerSchedulingUI.renderHomeSchedule(els.homeScheduleList);
+    if (window.PlayerSchedulingUI) {
+      if (els.homeScheduleList) await PlayerSchedulingUI.renderHomeSchedule(els.homeScheduleList);
+      if (els.homeBoardList) await PlayerSchedulingUI.renderHomeBoard(els.homeBoardList);
     }
   }
 
@@ -1575,13 +1590,8 @@
   els.logoutHome?.addEventListener("click", logout);
   els.logoutShell?.addEventListener("click", logout);
   els.logoutCharacter?.addEventListener("click", logout);
-  els.backFromCampaign?.addEventListener("click", () => {
-    renderHome();
-    show("home");
-  });
   els.backFromCharacter?.addEventListener("click", () => {
-    renderHome();
-    show("home");
+    goHome();
   });
 
   els.createCharacterHome?.addEventListener("click", () => {
@@ -1604,12 +1614,7 @@
     if (campaign) await openCampaign(campaign);
   });
 
-  els.playingAs?.addEventListener("click", async (e) => {
-    const btn = e.target.closest("[data-open-character-id]");
-    if (!btn) return;
-    await openCharacter(btn.getAttribute("data-open-character-id"));
-  });
-
+  /* character open from compact switcher only */
   els.campaignList.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-campaign-id]");
     if (!btn) return;
@@ -2002,6 +2007,7 @@
       openCampaign,
       setTabs,
       stopMapTab,
+      goHome,
       root: document
     });
   }

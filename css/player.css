@@ -200,6 +200,31 @@ textarea { min-height: 6.5rem; resize: vertical; }
   margin-bottom: var(--space-lg);
 }
 
+.topbar-start {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.shell-user-name {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  max-width: 7.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .panel, .card {
   background:
     linear-gradient(180deg, var(--parchment), transparent 42%),
@@ -566,7 +591,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   position: fixed;
   left: 0; right: 0; bottom: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.15rem;
   padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
   background: rgba(10, 16, 12, 0.92);
@@ -575,6 +600,12 @@ textarea { min-height: 6.5rem; resize: vertical; }
   -webkit-backdrop-filter: blur(12px);
 }
 .tab {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   background: transparent;
   color: var(--muted);
@@ -582,8 +613,10 @@ textarea { min-height: 6.5rem; resize: vertical; }
   font-size: 0.68rem;
   font-weight: 600;
   min-height: 48px;
+  padding: 0.35rem 0.15rem;
   border-radius: 10px;
   cursor: pointer;
+  text-align: center;
 }
 .tab.is-active {
   color: var(--accent);

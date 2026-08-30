@@ -77,7 +77,7 @@ window.PlayerSchedulingUI = (function () {
     return campaignRole() === "dm";
   }
 
-  function calendarGrid(year, month, entriesByDate, aggregateByDate) {
+  function calendarGrid(year, month, entriesByDate, aggregateByDate, eventDates) {
     const first = new Date(year, month - 1, 1);
     const startDow = (first.getDay() + 6) % 7;
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -90,6 +90,7 @@ window.PlayerSchedulingUI = (function () {
       const dateStr = toDateStr(year, month, day);
       const entry = entriesByDate?.[dateStr];
       const agg = aggregateByDate?.[dateStr];
+      const hasEvents = Boolean(eventDates?.[dateStr]);
       let badge = "";
       if (agg && agg.totalMembers) {
         const parts = [];
@@ -99,7 +100,10 @@ window.PlayerSchedulingUI = (function () {
       } else if (entry) {
         badge = `<span class="sched-cal-glyph sched-cal-glyph--${esc(entry.status)}">${availabilityGlyph(entry.status)}</span>`;
       }
-      html += `<button type="button" class="sched-cal-cell" data-sched-date="${esc(dateStr)}">
+      if (hasEvents && !agg) {
+        badge += `<span class="sched-cal-dot" aria-hidden="true"></span>`;
+      }
+      html += `<button type="button" class="sched-cal-cell${hasEvents ? " has-events" : ""}" data-sched-date="${esc(dateStr)}">
         <span class="sched-cal-day">${day}</span>${badge}
       </button>`;
     }
@@ -124,25 +128,46 @@ window.PlayerSchedulingUI = (function () {
     if (!ctx.state.personalCal?.year) {
       ctx.state.personalCal = { year: now.getFullYear(), month: now.getMonth() + 1 };
     }
-    await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
-    const data = await ctx.safe(() => ctx.api.upcomingEvents({ limit: 8 }));
-    const events = data?.events || [];
+    const { year, month } = ctx.state.personalCal;
+    await loadPersonalMonth(year, month);
+    const from = monthStart(year, month);
+    const to = monthEnd(year, month);
+    const [upcomingData, monthEventsData] = await Promise.all([
+      ctx.safe(() => ctx.api.upcomingEvents({ limit: 12 })),
+      ctx.safe(() => ctx.api.platformEvents({ from, to, limit: 100 }))
+    ]);
+    const monthEvents = monthEventsData?.events || [];
+    ctx.state.platformEventsMonth = monthEvents;
+    const eventDates = {};
+    monthEvents.forEach((e) => {
+      if (e.status && e.status !== "scheduled") return;
+      const d = new Date(e.startsAt);
+      const key = toDateStr(d.getFullYear(), d.getMonth() + 1, d.getDate());
+      eventDates[key] = true;
+    });
+    ctx.state.platformEventDates = eventDates;
+    const events = upcomingData?.events || [];
     const list =
       events.length > 0
         ? events
-            .map(
-              (e) => `<li>
-              <button type="button" class="card card-btn sched-event-card" data-home-event="${esc(e.id)}" data-home-campaign="${esc(e.campaignId)}">
+            .map((e) => {
+              const isGlobal = e.kind === "platform";
+              const scope = isGlobal ? "GLOBAL" : e.scopeLabel || e.campaignName || "Campaign";
+              const scopeClass = isGlobal ? "sched-event-scope--global" : "";
+              const attrs = isGlobal
+                ? `data-home-platform-event="${esc(e.id)}"`
+                : `data-home-event="${esc(e.id)}" data-home-campaign="${esc(e.campaignId)}"`;
+              return `<li>
+              <button type="button" class="card card-btn sched-event-card" ${attrs}>
+                <p class="sched-event-scope ${scopeClass}">${esc(scope)}</p>
                 <p class="meta">${esc(fmtEventWhen(e.startsAt))}</p>
-                <h2>${esc(e.campaignName || e.campaignId)}</h2>
-                <p>${esc(e.title || "Session")}</p>
-                <p class="meta sched-rsvp-badge">${esc(e.myRsvpLabel || "No RSVP")}</p>
+                <h2>${esc(e.title || (isGlobal ? "Event" : "Session"))}</h2>
+                ${!isGlobal ? `<p class="meta sched-rsvp-badge">${esc(e.myRsvpLabel || "No RSVP")}</p>` : ""}
               </button>
-            </li>`
-            )
+            </li>`;
+            })
             .join("")
         : `<li class="empty">No upcoming sessions.</li>`;
-    const { year, month } = ctx.state.personalCal;
     const title = new Date(year, month - 1, 1).toLocaleDateString(undefined, {
       month: "long",
       year: "numeric"
@@ -154,12 +179,90 @@ window.PlayerSchedulingUI = (function () {
           <h3 class="sched-cal-title">${esc(title)}</h3>
           <button type="button" class="btn btn-ghost btn-sm" data-personal-cal-next aria-label="Next month">›</button>
         </div>
-        <p class="meta">Tap a day to set availability. Blank = no response.</p>
-        ${calendarGrid(year, month, ctx.state.personalAvailability || {})}
+        <p class="meta">Tap a day for availability and global events. Gold dot = event.</p>
+        ${calendarGrid(year, month, ctx.state.personalAvailability || {}, null, eventDates)}
         <p class="sched-legend"><span>✓ Available</span><span>? Maybe</span><span>× Unavailable</span><span>— No response</span></p>
         <h3 class="sched-section-title">Upcoming</h3>
         <ul class="list">${list}</ul>
       </div>`;
+  }
+
+  async function renderHomeBoard(container) {
+    if (!container) return;
+    const data = await ctx.safe(() => ctx.api.platformPosts());
+    if (!data) return;
+    ctx.state.platformPosts = data.posts || [];
+    const me = ctx.state.bootstrap?.user?.id;
+    const renderPost = (p) => {
+      const authorActions =
+        p.authorUserId === me
+          ? `<button type="button" class="btn btn-ghost btn-sm" data-edit-platform-post="${esc(p.id)}">Edit</button>
+             <button type="button" class="btn btn-ghost btn-sm" data-delete-platform-post="${esc(p.id)}">Delete</button>`
+          : "";
+      return `<article class="card board-post" data-platform-post-id="${esc(p.id)}">
+        <header class="board-post-head">
+          <strong>${esc(p.authorName)}</strong>
+          <span class="meta">${esc(new Date(p.createdAt).toLocaleString())}</span>
+        </header>
+        <div class="board-post-body">${esc(p.body).replace(/\n/g, "<br>")}</div>
+        <div class="row board-post-actions">
+          <button type="button" class="btn btn-ghost btn-sm" data-reply-platform-post="${esc(p.id)}">Reply${p.replyCount ? ` (${p.replyCount})` : ""}</button>
+          ${authorActions}
+        </div>
+        <div class="board-replies" id="platform-replies-${esc(p.id)}" hidden></div>
+      </article>`;
+    };
+    container.innerHTML = ctx.state.platformPosts.length
+      ? ctx.state.platformPosts.map(renderPost).join("")
+      : `<p class="empty">No posts yet. Start a conversation.</p>`;
+  }
+
+  async function openHomeDayDetail(dateStr) {
+    const dlg = ctx.els.availabilityDialog;
+    const form = ctx.els.availabilityForm;
+    if (!dlg || !form) return;
+    ctx.state.selectedHomeDate = dateStr;
+    const existing = ctx.state.personalAvailability?.[dateStr];
+    form.date.value = dateStr;
+    ctx.els.availabilityDialogTitle.textContent = fmtDayLong(dateStr);
+    form.status.value = existing?.status || "";
+    form.availableFrom.value = existing?.availableFrom || "";
+    form.availableUntil.value = existing?.availableUntil || "";
+    form.note.value = existing?.note || "";
+    const dayEvents = (ctx.state.platformEventsMonth || []).filter((e) => {
+      if (e.status && e.status !== "scheduled") return false;
+      const d = new Date(e.startsAt);
+      return toDateStr(d.getFullYear(), d.getMonth() + 1, d.getDate()) === dateStr;
+    });
+    const box = document.getElementById("home-day-events");
+    const me = ctx.state.bootstrap?.user?.id;
+    if (box) {
+      box.innerHTML = dayEvents.length
+        ? `<ul class="list">${dayEvents
+            .map((e) => {
+              const mine = e.createdByUserId === me;
+              return `<li class="card">
+                <p class="meta">${esc(fmtEventWhen(e.startsAt))}</p>
+                <strong>${esc(e.title || "Event")}</strong>
+                ${e.location ? `<p class="meta">${esc(e.location)}</p>` : ""}
+                ${
+                  mine
+                    ? `<div class="row">
+                        <button type="button" class="btn btn-ghost btn-sm" data-edit-platform-event="${esc(e.id)}">Edit</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-delete-platform-event="${esc(e.id)}">Delete</button>
+                      </div>`
+                    : ""
+                }
+              </li>`;
+            })
+            .join("")}</ul>`
+        : `<p class="empty">No events today.</p>`;
+    }
+    dlg.showModal();
+  }
+
+  function openAvailabilityEditor(dateStr) {
+    openHomeDayDetail(dateStr);
   }
 
   async function renderCampaignSchedule(main) {
@@ -285,31 +388,30 @@ window.PlayerSchedulingUI = (function () {
       </div>`;
   }
 
-  function openAvailabilityEditor(dateStr, existing) {
-    const dlg = ctx.els.availabilityDialog;
-    const form = ctx.els.availabilityForm;
-    if (!dlg || !form) return;
-    form.date.value = dateStr;
-    ctx.els.availabilityDialogTitle.textContent = fmtDayLong(dateStr);
-    form.status.value = existing?.status || "";
-    form.availableFrom.value = existing?.availableFrom || "";
-    form.availableUntil.value = existing?.availableUntil || "";
-    form.note.value = existing?.note || "";
-    dlg.showModal();
-  }
-
-  function openEventDialog(prefillDate) {
+  function openEventDialog(prefillDate, mode = "campaign") {
     const dlg = ctx.els.eventDialog;
     const form = ctx.els.eventForm;
     if (!dlg || !form) return;
+    ctx.state.eventDialogMode = mode;
     form.reset();
-    ctx.els.eventDialogTitle.textContent = ctx.state.editingEventId ? "Edit session" : "Schedule session";
+    const isPlatform = mode === "platform";
+    const editing = isPlatform ? ctx.state.editingPlatformEventId : ctx.state.editingEventId;
+    const editingEvent = isPlatform ? ctx.state.editingPlatformEvent : ctx.state.editingEvent;
+    ctx.els.eventDialogTitle.textContent = isPlatform
+      ? editing
+        ? "Edit event"
+        : "Create event"
+      : editing
+        ? "Edit session"
+        : "Schedule session";
+    const submitBtn = document.getElementById("event-submit-btn");
+    if (submitBtn) submitBtn.textContent = isPlatform ? "Save event" : "Save session";
     if (prefillDate) {
       form.date.value = prefillDate;
       form.startTime.value = "18:00";
     }
-    if (ctx.state.editingEventId && ctx.state.editingEvent) {
-      const e = ctx.state.editingEvent;
+    if (editing && editingEvent) {
+      const e = editingEvent;
       form.title.value = e.title || "";
       form.location.value = e.location || "";
       form.notes.value = e.notes || "";
@@ -334,14 +436,13 @@ window.PlayerSchedulingUI = (function () {
     const data = await ctx.safe(() => ctx.api.campaignEvent(ctx.state.campaignId, eventId));
     if (!data) return;
     ctx.state.viewingEventId = eventId;
+    ctx.state.viewingPlatformEventId = null;
     const e = data.event;
     const dlg = ctx.els.eventDetailDialog;
     if (!dlg) return;
     ctx.els.eventDetailTitle.textContent = e.title || "Session";
     const rsvpRows = (data.rsvps || [])
-      .map(
-        (r) => `<li><strong>${esc(r.userName)}</strong> — ${esc(r.label)}</li>`
-      )
+      .map((r) => `<li><strong>${esc(r.userName)}</strong> — ${esc(r.label)}</li>`)
       .join("");
     const counts = data.counts || {};
     const myBtns = `<div class="row sched-rsvp-btns">
@@ -366,10 +467,39 @@ window.PlayerSchedulingUI = (function () {
     dlg.showModal();
   }
 
+  async function openPlatformEventDetail(eventId) {
+    const data = await ctx.safe(() => ctx.api.platformEvent(eventId));
+    if (!data?.event) return;
+    const e = data.event;
+    const dlg = ctx.els.eventDetailDialog;
+    if (!dlg) return;
+    ctx.state.viewingPlatformEventId = eventId;
+    ctx.state.viewingEventId = null;
+    ctx.els.eventDetailTitle.textContent = e.title || "Event";
+    const me = ctx.state.bootstrap?.user?.id;
+    const mine = e.createdByUserId === me;
+    ctx.els.eventDetailBody.innerHTML = `
+      <p class="sched-event-scope sched-event-scope--global">GLOBAL</p>
+      <p class="meta">${esc(fmtEventWhen(e.startsAt))}${e.endsAt ? ` – ${esc(fmtEventWhen(e.endsAt))}` : ""}</p>
+      ${e.createdByName ? `<p class="meta">Created by ${esc(e.createdByName)}</p>` : ""}
+      ${e.location ? `<p><strong>Location:</strong> ${esc(e.location)}</p>` : ""}
+      ${e.notes ? `<div class="note-body">${esc(e.notes).replace(/\n/g, "<br>")}</div>` : ""}
+      ${
+        mine
+          ? `<div class="row">
+              <button type="button" class="btn btn-ghost btn-sm" data-edit-platform-event="${esc(e.id)}">Edit</button>
+              <button type="button" class="btn btn-danger btn-sm" data-delete-platform-event="${esc(e.id)}">Delete</button>
+            </div>`
+          : ""
+      }`;
+    dlg.showModal();
+  }
+
   function openPostDialog(opts = {}) {
     const dlg = ctx.els.postDialog;
     const form = ctx.els.postForm;
     if (!dlg || !form) return;
+    ctx.state.postDialogMode = opts.mode || "campaign";
     form.reset();
     form.parentPostId.value = opts.parentPostId || "";
     ctx.els.postDialogTitle.textContent = opts.parentPostId ? "Reply" : "New post";
@@ -378,9 +508,19 @@ window.PlayerSchedulingUI = (function () {
     dlg.showModal();
   }
 
+  function closeCampaignMenu() {
+    const menu = ctx.els.campaignMenu;
+    const btn = ctx.els.campaignMenuBtn;
+    if (menu) menu.hidden = true;
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  }
+
   function setCampaignSectionNav() {
-    document.querySelectorAll("[data-campaign-section]").forEach((btn) => {
-      btn.classList.toggle("is-active", btn.getAttribute("data-campaign-section") === ctx.state.campaignSection);
+    document.querySelectorAll("#campaign-menu [data-campaign-section]").forEach((btn) => {
+      btn.classList.toggle(
+        "is-active",
+        btn.getAttribute("data-campaign-section") === ctx.state.campaignSection
+      );
     });
     const playTabs = document.querySelector("#view-shell .tabs");
     if (playTabs) playTabs.hidden = ctx.state.campaignSection !== "play";
@@ -393,6 +533,7 @@ window.PlayerSchedulingUI = (function () {
     } else if (ctx.state.campaignSection === "play") {
       ctx.setTabs?.();
     }
+    closeCampaignMenu();
   }
 
   async function renderCampaignSection(main) {
@@ -411,15 +552,43 @@ window.PlayerSchedulingUI = (function () {
 
   function bind(root) {
     root.addEventListener("click", async (e) => {
+      if (e.target.closest("#campaign-menu-btn")) {
+        const menu = ctx.els.campaignMenu;
+        const btn = ctx.els.campaignMenuBtn;
+        if (!menu || !btn) return;
+        const open = menu.hidden;
+        menu.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        return;
+      }
+      if (e.target.closest("[data-campaign-nav-home]")) {
+        closeCampaignMenu();
+        ctx.goHome?.();
+        return;
+      }
+      const sectionBtn = e.target.closest("#campaign-menu [data-campaign-section]");
+      if (sectionBtn) {
+        ctx.state.campaignSection = sectionBtn.getAttribute("data-campaign-section");
+        setCampaignSectionNav();
+        await ctx.render?.();
+        return;
+      }
+      if (
+        ctx.els.campaignMenu &&
+        !ctx.els.campaignMenu.hidden &&
+        !e.target.closest("#campaign-menu") &&
+        !e.target.closest("#campaign-menu-btn")
+      ) {
+        closeCampaignMenu();
+      }
+
       const personalDate = e.target.closest("[data-sched-date]");
       if (personalDate && personalDate.closest("#home-schedule-list")) {
-        const dateStr = personalDate.getAttribute("data-sched-date");
-        openAvailabilityEditor(dateStr, ctx.state.personalAvailability?.[dateStr]);
+        await openHomeDayDetail(personalDate.getAttribute("data-sched-date"));
         return;
       }
       if (personalDate && ctx.state.campaignSection === "schedule") {
-        const dateStr = personalDate.getAttribute("data-sched-date");
-        await showCampaignDayDetail(dateStr);
+        await showCampaignDayDetail(personalDate.getAttribute("data-sched-date"));
         return;
       }
       const homeEvent = e.target.closest("[data-home-event]");
@@ -432,6 +601,11 @@ window.PlayerSchedulingUI = (function () {
           await ctx.openCampaign?.(camp);
           await openEventDetail(homeEvent.getAttribute("data-home-event"));
         }
+        return;
+      }
+      const homePlatform = e.target.closest("[data-home-platform-event]");
+      if (homePlatform) {
+        await openPlatformEventDetail(homePlatform.getAttribute("data-home-platform-event"));
         return;
       }
       const campEvent = e.target.closest("[data-campaign-event]");
@@ -459,15 +633,45 @@ window.PlayerSchedulingUI = (function () {
         await renderCampaignSchedule(ctx.els.main);
         return;
       }
+      if (e.target.closest("[data-create-platform-event]")) {
+        ctx.state.editingPlatformEventId = null;
+        ctx.state.editingPlatformEvent = null;
+        const dateStr = ctx.state.selectedHomeDate || ctx.els.availabilityForm?.date?.value;
+        ctx.els.availabilityDialog?.close();
+        openEventDialog(dateStr || null, "platform");
+        return;
+      }
+      const editPlat = e.target.closest("[data-edit-platform-event]");
+      if (editPlat) {
+        const id = editPlat.getAttribute("data-edit-platform-event");
+        const detail = await ctx.safe(() => ctx.api.platformEvent(id));
+        if (!detail?.event) return;
+        ctx.state.editingPlatformEventId = id;
+        ctx.state.editingPlatformEvent = detail.event;
+        ctx.els.eventDetailDialog?.close();
+        ctx.els.availabilityDialog?.close();
+        openEventDialog(null, "platform");
+        return;
+      }
+      const delPlat = e.target.closest("[data-delete-platform-event]");
+      if (delPlat) {
+        const id = delPlat.getAttribute("data-delete-platform-event");
+        await ctx.safe(() => ctx.api.deletePlatformEvent(id));
+        ctx.els.eventDetailDialog?.close();
+        ctx.els.availabilityDialog?.close();
+        await renderHomeSchedule(ctx.els.homeScheduleList);
+        return;
+      }
       const fromDay = e.target.closest("[data-schedule-from-day]");
       if (fromDay) {
         ctx.state.editingEventId = null;
-        openEventDialog(fromDay.getAttribute("data-schedule-from-day"));
+        ctx.state.eventDialogMode = "campaign";
+        openEventDialog(fromDay.getAttribute("data-schedule-from-day"), "campaign");
         return;
       }
       if (e.target.closest("[data-schedule-new-event]")) {
         ctx.state.editingEventId = null;
-        openEventDialog(ctx.state.selectedScheduleDate || null);
+        openEventDialog(ctx.state.selectedScheduleDate || null, "campaign");
         return;
       }
       const rsvpBtn = e.target.closest("[data-rsvp]");
@@ -493,7 +697,7 @@ window.PlayerSchedulingUI = (function () {
         ctx.state.editingEventId = id;
         ctx.state.editingEvent = detail.event;
         ctx.els.eventDetailDialog?.close();
-        openEventDialog();
+        openEventDialog(null, "campaign");
         return;
       }
       const cancelEvent = e.target.closest("[data-cancel-event]");
@@ -507,7 +711,11 @@ window.PlayerSchedulingUI = (function () {
         return;
       }
       if (e.target.closest("[data-board-new-post]")) {
-        openPostDialog({});
+        openPostDialog({ mode: "campaign" });
+        return;
+      }
+      if (e.target.closest("[data-platform-board-new]")) {
+        openPostDialog({ mode: "platform" });
         return;
       }
       const replyPost = e.target.closest("[data-reply-post]");
@@ -526,14 +734,47 @@ window.PlayerSchedulingUI = (function () {
           box.innerHTML = replies || `<p class="empty">No replies yet.</p>`;
           box.hidden = false;
         }
-        openPostDialog({ parentPostId: postId });
+        openPostDialog({ mode: "campaign", parentPostId: postId });
+        return;
+      }
+      const replyPlat = e.target.closest("[data-reply-platform-post]");
+      if (replyPlat) {
+        const postId = replyPlat.getAttribute("data-reply-platform-post");
+        const box = document.getElementById(`platform-replies-${postId}`);
+        if (box && box.hidden) {
+          const data = await ctx.safe(() => ctx.api.platformPostReplies(postId));
+          const replies = (data?.replies || [])
+            .map(
+              (r) => `<div class="board-reply"><strong>${esc(r.authorName)}</strong>
+                <span class="meta">${esc(new Date(r.createdAt).toLocaleString())}</span>
+                <div>${esc(r.body).replace(/\n/g, "<br>")}</div></div>`
+            )
+            .join("");
+          box.innerHTML = replies || `<p class="empty">No replies yet.</p>`;
+          box.hidden = false;
+        }
+        openPostDialog({ mode: "platform", parentPostId: postId });
         return;
       }
       const editPost = e.target.closest("[data-edit-post]");
       if (editPost) {
         const postId = editPost.getAttribute("data-edit-post");
         const post = (ctx.state.campaignPosts || []).find((p) => p.id === postId);
-        openPostDialog({ postId, body: post?.body || "" });
+        openPostDialog({ mode: "campaign", postId, body: post?.body || "" });
+        return;
+      }
+      const editPlatPost = e.target.closest("[data-edit-platform-post]");
+      if (editPlatPost) {
+        const postId = editPlatPost.getAttribute("data-edit-platform-post");
+        const post = (ctx.state.platformPosts || []).find((p) => p.id === postId);
+        openPostDialog({ mode: "platform", postId, body: post?.body || "" });
+        return;
+      }
+      const delPlatPost = e.target.closest("[data-delete-platform-post]");
+      if (delPlatPost) {
+        const postId = delPlatPost.getAttribute("data-delete-platform-post");
+        await ctx.safe(() => ctx.api.deletePlatformPost(postId));
+        await renderHomeBoard(ctx.els.homeBoardList);
         return;
       }
       const pinPost = e.target.closest("[data-pin-post]");
@@ -545,12 +786,6 @@ window.PlayerSchedulingUI = (function () {
         );
         await renderCampaignBoard(ctx.els.main);
         return;
-      }
-      const sectionBtn = e.target.closest("[data-campaign-section]");
-      if (sectionBtn && !sectionBtn.closest("#view-home")) {
-        ctx.state.campaignSection = sectionBtn.getAttribute("data-campaign-section");
-        setCampaignSectionNav();
-        await ctx.render?.();
       }
     });
 
@@ -573,19 +808,33 @@ window.PlayerSchedulingUI = (function () {
       }
       await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
       await renderHomeSchedule(ctx.els.homeScheduleList);
-      f.closest("dialog")?.close();
+      if (ctx.state.selectedHomeDate) await openHomeDayDetail(ctx.state.selectedHomeDate);
     });
 
     ctx.els.eventForm?.addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const f = ctx.els.eventForm;
       const payload = {
-        title: f.title.value.trim() || "Session",
+        title: f.title.value.trim() || "Event",
         startsAt: isoFromLocalDateTime(f.date.value, f.startTime.value),
         endsAt: f.endTime.value ? isoFromLocalDateTime(f.date.value, f.endTime.value) : null,
         location: f.location.value.trim(),
         notes: f.notes.value.trim()
       };
+      if (ctx.state.eventDialogMode === "platform") {
+        if (ctx.state.editingPlatformEventId) {
+          await ctx.safe(() =>
+            ctx.api.updatePlatformEvent(ctx.state.editingPlatformEventId, payload)
+          );
+        } else {
+          await ctx.safe(() => ctx.api.createPlatformEvent(payload));
+        }
+        ctx.state.editingPlatformEventId = null;
+        ctx.state.editingPlatformEvent = null;
+        f.closest("dialog")?.close();
+        await renderHomeSchedule(ctx.els.homeScheduleList);
+        return;
+      }
       if (ctx.state.editingEventId) {
         await ctx.safe(() =>
           ctx.api.updateCampaignEvent(ctx.state.campaignId, ctx.state.editingEventId, payload)
@@ -604,6 +853,22 @@ window.PlayerSchedulingUI = (function () {
       const f = ctx.els.postForm;
       const body = f.body.value.trim();
       if (!body) return;
+      if (ctx.state.postDialogMode === "platform") {
+        if (ctx.state.editingPostId) {
+          await ctx.safe(() => ctx.api.updatePlatformPost(ctx.state.editingPostId, { body }));
+        } else {
+          await ctx.safe(() =>
+            ctx.api.createPlatformPost({
+              body,
+              parentPostId: f.parentPostId.value || null
+            })
+          );
+        }
+        ctx.state.editingPostId = null;
+        f.closest("dialog")?.close();
+        await renderHomeBoard(ctx.els.homeBoardList);
+        return;
+      }
       if (ctx.state.editingPostId) {
         await ctx.safe(() =>
           ctx.api.updateCampaignPost(ctx.state.campaignId, ctx.state.editingPostId, { body })
@@ -628,12 +893,15 @@ window.PlayerSchedulingUI = (function () {
     ctx.state.personalCal = ctx.state.personalCal || { year: now.getFullYear(), month: now.getMonth() + 1 };
     ctx.state.campaignCal = ctx.state.campaignCal || { year: now.getFullYear(), month: now.getMonth() + 1 };
     ctx.state.campaignSection = ctx.state.campaignSection || "play";
+    ctx.state.eventDialogMode = "campaign";
+    ctx.state.postDialogMode = "campaign";
     bind(options.root || document);
   }
 
   return {
     init,
     renderHomeSchedule,
+    renderHomeBoard,
     renderCampaignSection,
     setCampaignSectionNav,
     openAvailabilityEditor,

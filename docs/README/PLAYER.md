@@ -6,9 +6,9 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 ## Surfaces
 | Path | Role |
 |------|------|
-| `/player/` | Neutral login + **Player home** (**Schedule** first with inline availability calendar, then My campaigns / My characters) + campaign workspace (Play \| Schedule \| Board) + character sheet |
+| `/player/` | Neutral login + **Player home** (Schedule → Board → My campaigns → My characters) + campaign workspace (hamburger: Play \| Schedule \| Board \| Home) + character sheet |
 | `js/player-app.js` | Player shell logic |
-| `js/player-scheduling.js` | Home calendar + campaign schedule/board UI (see `PLAYER-SCHEDULING.md`) |
+| `js/player-scheduling.js` | Home calendar/board + campaign schedule/board UI (see `PLAYER-SCHEDULING.md`) |
 | `js/core/player-api-client.js` | Cookie-authenticated fetch helper |
 | `css/player.css` | Mobile-first fairy-forest styles |
 | `assets/player/fairy-forest-bg.jpg` | Static theme wallpaper (deploys with app) |
@@ -62,7 +62,7 @@ DM event CRUD: `POST/PATCH/DELETE /api/campaigns/:id/events`. See `SCHEDULING.md
 | GET | `/api/player/campaigns/:id/portraits/catalogues/:type/:entryId` |
 
 ## Campaign workspace UI
-Sticky segmented nav under the campaign header: **Play** | **Schedule** | **Board**. Play mode keeps bottom tabs (Map, Party, Library, Notes). Schedule and Board use the full workspace (bottom play tabs hidden). Scheduling is not shown in the character sheet workspace.
+Compact hamburger under the campaign header: **Play** | **Schedule** | **Board** | **Home**. Play mode keeps bottom tabs (Map, Party, Library, Notes) in four equal-width cells. Schedule and Board hide those tabs. Account user name appears beside Log out (no permanent “Playing as” banner). Scheduling is not shown in the character sheet workspace.
 
 ## Sheet UI (Phase 5A–5B)
 - Empty campaign: **Create character** opens an in-app dialog (no `prompt`)

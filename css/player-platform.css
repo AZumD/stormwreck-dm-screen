@@ -47,36 +47,64 @@
 }
 
 .campaign-section-nav {
-  position: sticky;
-  top: 0;
-  z-index: 6;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.35rem;
-  margin: 0 0 0.85rem;
-  padding: 0.35rem;
-  border-radius: 0.65rem;
-  background: rgba(8, 12, 10, 0.72);
-  border: 1px solid rgba(201, 169, 98, 0.22);
-  backdrop-filter: blur(10px);
+  display: none;
 }
 
-.campaign-section-btn {
+.campaign-menu-btn {
+  font-size: 1.35rem;
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.25rem 0.4rem;
+  margin: 0;
+}
+
+.campaign-menu {
+  position: absolute;
+  z-index: 20;
+  left: 0.75rem;
+  right: auto;
+  margin-top: -0.5rem;
+  min-width: 11rem;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 0.65rem;
+  background: rgba(8, 12, 10, 0.96);
+  border: 1px solid rgba(201, 169, 98, 0.28);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.view-shell {
+  position: relative;
+}
+
+.campaign-menu[hidden] {
+  display: none !important;
+}
+
+.campaign-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
   border: 0;
-  border-radius: 0.5rem;
-  min-height: 40px;
+  border-radius: 0.45rem;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: #b8c4bc;
+  color: #e8dcc8;
   background: transparent;
   cursor: pointer;
 }
 
-.campaign-section-btn.is-active {
-  color: #f3e6c8;
+.campaign-menu-item:hover,
+.campaign-menu-item:focus-visible,
+.campaign-menu-item.is-active {
   background: rgba(201, 169, 98, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(201, 169, 98, 0.35);
+  color: #f3e6c8;
+  outline: none;
 }
 
 .view-shell.view-shell--schedule {
@@ -98,6 +126,49 @@
 
 .home-sched-panel .sched-section-title {
   margin-top: 0.35rem;
+}
+
+.home-day-section {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.home-day-section:last-child {
+  margin-bottom: 0;
+}
+
+.sched-event-scope {
+  display: inline-block;
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9aa89e;
+}
+
+.sched-event-scope--global {
+  color: #c9a962;
+}
+
+.sched-cal-cell.has-events .sched-cal-day::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 5px;
+  margin: 0.15rem auto 0;
+  border-radius: 50%;
+  background: #c9a962;
+}
+
+.sched-cal-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  margin: 0.1rem auto 0;
+  border-radius: 50%;
+  background: #c9a962;
 }
 
 .sched-section-title {

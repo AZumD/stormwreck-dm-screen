@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/player.css?v=20260830m3">
-  <link rel="stylesheet" href="/css/player-platform.css?v=20260830s1">
+  <link rel="stylesheet" href="/css/player.css?v=20260830m4">
+  <link rel="stylesheet" href="/css/player-platform.css?v=20260830s2">
 </head>
 <body class="player-body">
   <div id="app">
@@ -32,13 +32,23 @@
           <p class="eyebrow">Signed in</p>
           <h1>Player home</h1>
         </div>
-        <button type="button" class="btn btn-ghost" id="logout-home">Log out</button>
+        <div class="topbar-end">
+          <span id="home-user-name" class="shell-user-name"></span>
+          <button type="button" class="btn btn-ghost" id="logout-home">Log out</button>
+        </div>
       </header>
       <section class="home-section">
         <div class="home-section-head">
           <h2>Schedule</h2>
         </div>
         <div id="home-schedule-list"></div>
+      </section>
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>Board</h2>
+          <button type="button" class="btn btn-primary btn-sm" data-platform-board-new>New post</button>
+        </div>
+        <div id="home-board-list"></div>
       </section>
       <section class="home-section">
         <div class="home-section-head">
@@ -62,30 +72,52 @@
           <p id="character-shell-eyebrow" class="eyebrow">Character</p>
           <h1 id="character-shell-title">Sheet</h1>
         </div>
-        <button type="button" class="btn btn-ghost" id="logout-character">Log out</button>
+        <div class="topbar-end">
+          <span id="character-user-name" class="shell-user-name"></span>
+          <button type="button" class="btn btn-ghost" id="logout-character">Log out</button>
+        </div>
       </header>
       <div id="character-campaigns" class="meta-banner" hidden></div>
       <main id="character-main"></main>
     </section>
 
     <section id="view-shell" class="view view-shell" hidden>
-      <header class="topbar">
-        <div>
-          <button type="button" class="btn btn-ghost btn-back" id="back-from-campaign">← Home</button>
-          <p id="shell-campaign" class="eyebrow"></p>
-          <h1 id="shell-title">Campaign</h1>
+      <header class="topbar topbar-campaign">
+        <div class="topbar-start">
+          <button
+            type="button"
+            class="btn btn-ghost campaign-menu-btn"
+            id="campaign-menu-btn"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="campaign-menu"
+            aria-label="Campaign menu"
+          >☰</button>
+          <div>
+            <p id="shell-campaign" class="eyebrow"></p>
+            <h1 id="shell-title">Campaign</h1>
+          </div>
         </div>
-        <button type="button" class="btn btn-ghost" id="logout-shell">Log out</button>
+        <div class="topbar-end">
+          <span id="shell-user-name" class="shell-user-name"></span>
+          <button type="button" class="btn btn-ghost" id="logout-shell">Log out</button>
+        </div>
       </header>
-      <div id="playing-as" class="meta-banner" hidden></div>
-      <nav class="campaign-section-nav" aria-label="Campaign sections">
-        <button type="button" class="campaign-section-btn is-active" data-campaign-section="play">Play</button>
-        <button type="button" class="campaign-section-btn" data-campaign-section="schedule">Schedule</button>
-        <button type="button" class="campaign-section-btn" data-campaign-section="board">Board</button>
-      </nav>
+      <div
+        id="campaign-menu"
+        class="campaign-menu"
+        role="menu"
+        aria-labelledby="campaign-menu-btn"
+        hidden
+      >
+        <button type="button" role="menuitem" class="campaign-menu-item" data-campaign-section="play">Play</button>
+        <button type="button" role="menuitem" class="campaign-menu-item" data-campaign-section="schedule">Schedule</button>
+        <button type="button" role="menuitem" class="campaign-menu-item" data-campaign-section="board">Board</button>
+        <button type="button" role="menuitem" class="campaign-menu-item" data-campaign-nav-home>Home</button>
+      </div>
       <div id="char-switcher" class="switcher" hidden></div>
       <main id="main"></main>
-      <nav class="tabs" aria-label="Sections">
+      <nav class="tabs" aria-label="Play sections">
         <button type="button" class="tab is-active" data-tab="map">Map</button>
         <button type="button" class="tab" data-tab="party">Party</button>
         <button type="button" class="tab" data-tab="library">Library</button>
@@ -268,28 +300,36 @@
 
   </dialog>
 
-  <dialog id="availability-dialog" class="dialog dialog-note">
+  <dialog id="availability-dialog" class="dialog dialog-note dialog-home-day">
     <form id="availability-form" class="dialog-inner stack-form">
       <header>
-        <h2 id="availability-dialog-title">Set availability</h2>
+        <h2 id="availability-dialog-title">Day</h2>
         <button type="button" class="btn btn-ghost" id="availability-cancel">Close</button>
       </header>
       <div class="dialog-body">
         <input type="hidden" name="date">
-        <label>Status
-          <select name="status">
-            <option value="">Clear response</option>
-            <option value="available">Available</option>
-            <option value="maybe">Maybe</option>
-            <option value="unavailable">Unavailable</option>
-          </select>
-        </label>
-        <div class="form-grid">
-          <label>Available from<input name="availableFrom" type="time"></label>
-          <label>Available until<input name="availableUntil" type="time"></label>
-        </div>
-        <label>Note<textarea name="note" rows="2" maxlength="500"></textarea></label>
-        <button type="submit" class="btn btn-primary">Save day</button>
+        <section class="home-day-section">
+          <h3 class="sched-section-title">My availability</h3>
+          <label>Status
+            <select name="status">
+              <option value="">Clear response</option>
+              <option value="available">Available</option>
+              <option value="maybe">Maybe</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </label>
+          <div class="form-grid">
+            <label>Available from<input name="availableFrom" type="time"></label>
+            <label>Available until<input name="availableUntil" type="time"></label>
+          </div>
+          <label>Note<textarea name="note" rows="2" maxlength="500"></textarea></label>
+          <button type="submit" class="btn btn-primary">Save availability</button>
+        </section>
+        <section class="home-day-section">
+          <h3 class="sched-section-title">Global events</h3>
+          <div id="home-day-events"></div>
+          <button type="button" class="btn btn-primary btn-sm" data-create-platform-event>+ Create event</button>
+        </section>
       </div>
     </form>
   </dialog>
@@ -309,7 +349,7 @@
         </div>
         <label>Location<input name="location" maxlength="200"></label>
         <label>Notes<textarea name="notes" rows="3" maxlength="2000"></textarea></label>
-        <button type="submit" class="btn btn-primary">Save session</button>
+        <button type="submit" class="btn btn-primary" id="event-submit-btn">Save session</button>
       </div>
     </form>
   </dialog>

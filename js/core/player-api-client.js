@@ -219,6 +219,31 @@ window.PlayerApiClient = (function () {
     pinCampaignPost: (campaignId, postId, pinned) =>
       request("PUT", `/api/player/campaigns/${enc(campaignId)}/posts/${enc(postId)}/pin`, {
         pinned
-      })
+      }),
+
+    platformEvents: (opts = {}) => {
+      const params = new URLSearchParams();
+      if (opts.from) params.set("from", opts.from);
+      if (opts.to) params.set("to", opts.to);
+      if (opts.after) params.set("after", opts.after);
+      if (opts.limit) params.set("limit", String(opts.limit));
+      const qs = params.toString();
+      return request("GET", `/api/player/platform-events${qs ? `?${qs}` : ""}`);
+    },
+    platformEvent: (eventId) => request("GET", `/api/player/platform-events/${enc(eventId)}`),
+    createPlatformEvent: (payload) => request("POST", "/api/player/platform-events", payload),
+    updatePlatformEvent: (eventId, payload) =>
+      request("PATCH", `/api/player/platform-events/${enc(eventId)}`, payload),
+    deletePlatformEvent: (eventId) =>
+      request("DELETE", `/api/player/platform-events/${enc(eventId)}`, {}),
+
+    platformPosts: () => request("GET", "/api/player/platform-posts"),
+    createPlatformPost: (payload) => request("POST", "/api/player/platform-posts", payload),
+    platformPostReplies: (postId) =>
+      request("GET", `/api/player/platform-posts/${enc(postId)}/replies`),
+    updatePlatformPost: (postId, payload) =>
+      request("PATCH", `/api/player/platform-posts/${enc(postId)}`, payload),
+    deletePlatformPost: (postId) =>
+      request("DELETE", `/api/player/platform-posts/${enc(postId)}`, {})
   };
 })();

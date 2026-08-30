@@ -31,6 +31,8 @@ const audioStorage = require("../lib/audio-storage");
 const campaignMaps = require("../lib/campaign-maps");
 const scheduling = require("../lib/scheduling");
 const campaignBoard = require("../lib/campaign-board");
+const platformEvents = require("../lib/platform-events");
+const platformBoard = require("../lib/platform-board");
 const { probeSchema, MIGRATE_HINT } = require("../lib/schema-probe");
 
 function route(method, pattern, keys, handler) {
@@ -95,6 +97,8 @@ function createApiRoutes() {
           payload.hint = `${MIGRATE_HINT} (phase 6 platform migrations pending)`;
         } else if (!schema.schedulingTables) {
           payload.hint = `${MIGRATE_HINT} (scheduling migrations pending)`;
+        } else if (!schema.platformTables) {
+          payload.hint = `${MIGRATE_HINT} (platform events/board migrations pending)`;
         } else {
           payload.hint = MIGRATE_HINT;
         }
@@ -622,11 +626,127 @@ function createApiRoutes() {
         return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
       }
       const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
-      const events = await scheduling.listUpcomingEventsForUser(req, {
-        limit: url.searchParams.get("limit"),
-        after: url.searchParams.get("after")
+      const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 20, 1), 50);
+      const after = url.searchParams.get("after");
+      const [campaignEvents, globalEvents] = await Promise.all([
+        scheduling.listUpcomingEventsForUser(req, { limit, after }),
+        platformEvents.listPlatformEvents(req, {
+          after: after || new Date().toISOString(),
+          limit
+        })
+      ]);
+      const events = [
+        ...campaignEvents.map((e) => ({
+          ...e,
+          kind: "campaign",
+          scopeLabel: e.campaignName || e.campaignId || "Campaign"
+        })),
+        ...globalEvents
+      ]
+        .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt))
+        .slice(0, limit);
+      sendJson(res, 200, { ok: true, events });
+    }),
+
+    route("GET", /^\/api\/player\/platform-events$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      const events = await platformEvents.listPlatformEvents(req, {
+        from: url.searchParams.get("from") || undefined,
+        to: url.searchParams.get("to") || undefined,
+        after: url.searchParams.get("after") || undefined,
+        limit: url.searchParams.get("limit")
       });
       sendJson(res, 200, { ok: true, events });
+    }),
+
+    route("POST", /^\/api\/player\/platform-events$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const event = await platformEvents.createPlatformEvent(req, body || {});
+      sendJson(res, 201, { ok: true, event });
+    }),
+
+    route("GET", /^\/api\/player\/platform-events\/([^/]+)$/, ["eventId"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const event = await platformEvents.getPlatformEvent(req, p.eventId);
+      sendJson(res, 200, { ok: true, event });
+    }),
+
+    route("PATCH", /^\/api\/player\/platform-events\/([^/]+)$/, ["eventId"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const event = await platformEvents.updatePlatformEvent(req, p.eventId, body || {});
+      sendJson(res, 200, { ok: true, event });
+    }),
+
+    route("DELETE", /^\/api\/player\/platform-events\/([^/]+)$/, ["eventId"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const result = await platformEvents.deletePlatformEvent(req, p.eventId);
+      sendJson(res, 200, { ok: true, ...result });
+    }),
+
+    route("GET", /^\/api\/player\/platform-posts$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const posts = await platformBoard.listPlatformPosts(req);
+      sendJson(res, 200, { ok: true, posts });
+    }),
+
+    route("POST", /^\/api\/player\/platform-posts$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const post = await platformBoard.createPlatformPost(req, body || {});
+      sendJson(res, 201, { ok: true, post });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/player\/platform-posts\/([^/]+)\/replies$/,
+      ["postId"],
+      async (req, res, p) => {
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const replies = await platformBoard.listPlatformPostReplies(req, p.postId);
+        sendJson(res, 200, { ok: true, postId: p.postId, replies });
+      }
+    ),
+
+    route("PATCH", /^\/api\/player\/platform-posts\/([^/]+)$/, ["postId"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const post = await platformBoard.updatePlatformPost(req, p.postId, body || {});
+      sendJson(res, 200, { ok: true, post });
+    }),
+
+    route("DELETE", /^\/api\/player\/platform-posts\/([^/]+)$/, ["postId"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const result = await platformBoard.deletePlatformPost(req, p.postId);
+      sendJson(res, 200, { ok: true, ...result });
     }),
 
     route("GET", /^\/api\/player\/campaigns\/([^/]+)\/events$/, ["id"], async (req, res, p) => {
