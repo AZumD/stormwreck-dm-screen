@@ -227,11 +227,74 @@
     importBtn?.addEventListener("click", () => runImport());
   }
 
+  const scheduleList = document.getElementById("dm-schedule-list");
+  let scheduleState = {
+    bootstrap: null,
+    personalCal: null,
+    personalAvailability: {},
+    platformEventsMonth: [],
+    eventDialogMode: "platform",
+    postDialogMode: "platform"
+  };
+  let scheduleBound = false;
+
+  async function safeSchedule(fn) {
+    try {
+      return await fn();
+    } catch (err) {
+      console.warn(err);
+      return null;
+    }
+  }
+
+  function ensureScheduleUi(user) {
+    if (!window.PlayerSchedulingUI || !window.PlayerApiClient || !scheduleList) return;
+    const els = {
+      homeScheduleList: scheduleList,
+      availabilityDialog: document.getElementById("availability-dialog"),
+      availabilityForm: document.getElementById("availability-form"),
+      availabilityDialogTitle: document.getElementById("availability-dialog-title"),
+      availabilityCancel: document.getElementById("availability-cancel"),
+      eventDialog: document.getElementById("event-dialog"),
+      eventForm: document.getElementById("event-form"),
+      eventDialogTitle: document.getElementById("event-dialog-title"),
+      eventCancel: document.getElementById("event-cancel"),
+      eventDetailDialog: document.getElementById("event-detail-dialog"),
+      eventDetailTitle: document.getElementById("event-detail-title"),
+      eventDetailBody: document.getElementById("event-detail-body")
+    };
+    if (!scheduleBound) {
+      PlayerSchedulingUI.init({
+        state: scheduleState,
+        els,
+        api: PlayerApiClient,
+        safe: safeSchedule,
+        root: document
+      });
+      scheduleBound = true;
+      els.availabilityCancel?.addEventListener("click", () => els.availabilityDialog?.close());
+      els.eventCancel?.addEventListener("click", () => els.eventDialog?.close());
+    }
+    scheduleState.bootstrap = user ? { user } : null;
+  }
+
+  async function renderDmSchedule(user) {
+    ensureScheduleUi(user);
+    if (!scheduleList) return;
+    if (!user || !window.PlayerSchedulingUI) {
+      scheduleList.innerHTML =
+        `<p class="landing-schedule-fallback meta">Sign in to manage availability and events.</p>`;
+      return;
+    }
+    await PlayerSchedulingUI.renderHomeSchedule(scheduleList);
+  }
+
   async function enterLibrary(user) {
     showLibrary(user || null);
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (window.CampaignRegistry?.bootstrap) await CampaignRegistry.bootstrap();
     renderUserCampaigns();
+    await renderDmSchedule(user || null);
     if (!window.LocalApiClient?.isAvailable()) {
       if (importReport) {
         importReport.hidden = false;

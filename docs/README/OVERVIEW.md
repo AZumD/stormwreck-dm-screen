@@ -4,13 +4,13 @@ Personal local DM Library with **campaign content** (e.g. Dragons of Stormwreck 
 
 ## Surfaces
 - Root gate (`index.html`) — DM login / Player login entry links (see `docs/README/HOME.md`); favicon at `/favicon.png`
-- DM Library (`/dm/`) — built-in campaigns + **Create new campaign** + **Import browser data**
+- DM Library (`/dm/`) — wallpaper desk; catalogues + campaigns + schedule; **Player app** switcher when signed in
 - Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime (campaign content, not platform branding)
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / Music / **Source**
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
-- Player companion (`/player/`) — neutral home; **Schedule** (availability + global events) / **Board** / **My campaigns** / **My characters**; campaign workspace uses a compact hamburger for Play \| Schedule \| Board; see `docs/README/PLAYER.md`, `PLAYER-SCHEDULING.md`, `PLATFORM-EVENTS.md`, `PLATFORM-BOARD.md`, `SCHEDULING.md`, `GAME-SYSTEMS.md`
+- Player companion (`/player/`) — responsive home (mobile stacked / desktop grid); **DM Library** switcher when user is a campaign DM; see `docs/README/PLAYER.md`, `PLAYER-SCHEDULING.md`, `PLATFORM-EVENTS.md`, `PLATFORM-BOARD.md`, `SCHEDULING.md`, `GAME-SYSTEMS.md`
 - Terminal DM client (`tui/`) — Go + Bubble Tea **scene-first** tracker over the same HTTPS API (Home → Library/Campaigns → Scene|Notes|Party|Map|Music; see `tui/README.md`, `docs/CLIENT-ARCHITECTURE.md`)
 
 ## Persistence (authoritative)

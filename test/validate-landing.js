@@ -45,6 +45,38 @@ if (!html.includes("landing-sidebar") || !html.includes("landing-nav")) {
   pass("catalogue sidebar markup");
 }
 
+if (!html.includes("dm-schedule-list") || !html.includes("landing-section--schedule")) {
+  fail("DM landing missing schedule panel");
+} else pass("DM landing schedule panel");
+
+if (!html.includes('href="/player/"') || !html.includes("dm-to-player")) {
+  fail("DM landing missing Player app switcher");
+} else pass("DM → Player switcher");
+
+if (!css.includes("dmwallpaper.jpg") || !css.includes("landing-main-grid")) {
+  fail("landing.css missing wallpaper or desktop calendar grid");
+} else pass("DM wallpaper + desktop calendar layout");
+
+if (!fs.existsSync(path.join(root, "assets/dm/dmwallpaper.jpg"))) {
+  fail("missing assets/dm/dmwallpaper.jpg");
+} else pass("DM wallpaper asset present");
+
+const landingJs = fs.readFileSync(path.join(root, "js/landing.js"), "utf8");
+if (!landingJs.includes("renderDmSchedule") || !landingJs.includes("PlayerSchedulingUI")) {
+  fail("landing.js missing schedule wiring");
+} else pass("landing.js DM schedule wiring");
+
+const playerHtml = fs.readFileSync(path.join(root, "player/index.html"), "utf8");
+const playerCss = fs.readFileSync(path.join(root, "css/player.css"), "utf8");
+const playerApp = fs.readFileSync(path.join(root, "js/player-app.js"), "utf8");
+if (!playerHtml.includes("player-to-dm") || !playerApp.includes("playerToDm")) {
+  fail("player missing DM Library switcher");
+} else pass("Player → DM switcher");
+if (!playerCss.includes("view-home") || !playerCss.includes("minmax(0, 1.1fr)")) {
+  fail("player.css missing desktop home grid");
+} else pass("player desktop home grid");
+
+
 if (html.includes("catalogue-grid") || html.includes("landing-section--reference")) {
   fail("old bottom catalogue grid still present");
 } else {
@@ -74,7 +106,6 @@ if (!html.includes('id="view-login"') || !html.includes('id="dm-login-form"')) {
   pass("DM landing login gate");
 }
 
-const landingJs = fs.readFileSync(path.join(root, "js/landing.js"), "utf8");
 if (!landingJs.includes("/api/auth/login") || !landingJs.includes("hasDmRole")) {
   fail("landing.js missing DM auth flow");
 } else {

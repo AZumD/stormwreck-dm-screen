@@ -5,7 +5,8 @@
   <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DM Library</title>
-  <link rel="stylesheet" href="../css/landing.css">
+  <link rel="stylesheet" href="../css/landing.css?v=20260830d1">
+  <link rel="stylesheet" href="../css/player-platform.css?v=20260830s3">
 </head>
 <body class="landing-page">
   <div class="landing-atmosphere" aria-hidden="true"></div>
@@ -27,22 +28,23 @@
 
   <div id="view-library" class="landing" hidden>
     <header class="landing-header">
-      <div class="header-mark" aria-hidden="true">
-        <span class="header-mark__ring"></span>
-        <span class="header-mark__core"></span>
+    <div class="header-mark" aria-hidden="true">
+      <span class="header-mark__ring"></span>
+      <span class="header-mark__core"></span>
+    </div>
+    <div class="landing-header__row">
+      <div>
+        <p class="eyebrow">Personal tool</p>
+        <h1>DM Library</h1>
+        <p class="lead">Your private desk for campaigns, characters, and sessions.</p>
       </div>
-      <div class="landing-header__row">
-        <div>
-          <p class="eyebrow">Personal tool</p>
-          <h1>DM Library</h1>
-          <p class="lead">Your private desk for campaigns, characters, and sessions. Everything runs locally in the browser.</p>
-        </div>
-        <div class="landing-session" id="landing-session" hidden>
-          <p id="dm-session-label" class="landing-session__label"></p>
-          <button type="button" class="landing-tool-btn" id="dm-logout">Log out</button>
-        </div>
+      <div class="landing-session" id="landing-session" hidden>
+        <p id="dm-session-label" class="landing-session__label"></p>
+        <a class="landing-tool-btn landing-tool-btn--link" id="dm-to-player" href="/player/">Player app</a>
+        <button type="button" class="landing-tool-btn" id="dm-logout">Log out</button>
       </div>
-      <div class="header-rule" aria-hidden="true"></div>
+    </div>
+    <div class="header-rule" aria-hidden="true"></div>
     </header>
 
     <div class="landing-body">
@@ -81,33 +83,42 @@
       </aside>
 
       <main class="landing-main">
-        <section class="landing-section landing-section--campaigns" aria-labelledby="campaigns-heading">
-          <h2 id="campaigns-heading" class="section-label">Campaigns</h2>
+        <div class="landing-main-grid">
+          <section class="landing-section landing-section--campaigns" aria-labelledby="campaigns-heading">
+            <h2 id="campaigns-heading" class="section-label">Campaigns</h2>
 
-          <a class="card card-featured" href="../campaigns/stormwreck-isle/index.html">
-            <div class="card-featured__glow" aria-hidden="true"></div>
-            <div class="card-featured__map" aria-hidden="true"></div>
-            <div class="card-featured__body">
-              <div class="card-featured__meta">
-                <span class="card-status">Active campaign</span>
-                <span class="card-tag">Level 1–3</span>
+            <a class="card card-featured" href="../campaigns/stormwreck-isle/index.html">
+              <div class="card-featured__glow" aria-hidden="true"></div>
+              <div class="card-featured__map" aria-hidden="true"></div>
+              <div class="card-featured__body">
+                <div class="card-featured__meta">
+                  <span class="card-status">Active campaign</span>
+                  <span class="card-tag">Level 1–3</span>
+                </div>
+                <h3 class="card-featured__title">Dragons of Stormwreck Isle</h3>
+                <p class="card-featured__desc">Starter Set adventure — cloister, caves, cursed ship, and a blue wyrmling.</p>
+                <span class="card-action">Open campaign</span>
               </div>
-              <h3 class="card-featured__title">Dragons of Stormwreck Isle</h3>
-              <p class="card-featured__desc">Starter Set adventure — cloister, caves, cursed ship, and a blue wyrmling.</p>
-              <span class="card-action">Open campaign</span>
+            </a>
+
+            <div class="landing-secondary">
+              <div id="user-campaign-list" class="user-campaign-list" hidden></div>
+
+              <button type="button" id="create-campaign-btn" class="card card-create">
+                <span class="card-tag">New</span>
+                <h3>Create new campaign</h3>
+                <p>Blank sandbox with Play, Document, maps, and session tools.</p>
+              </button>
             </div>
-          </a>
+          </section>
 
-          <div class="landing-secondary">
-            <div id="user-campaign-list" class="user-campaign-list" hidden></div>
-
-            <button type="button" id="create-campaign-btn" class="card card-create">
-              <span class="card-tag">New</span>
-              <h3>Create new campaign</h3>
-              <p>Blank sandbox with Play, Document, maps, and session tools.</p>
-            </button>
-          </div>
-        </section>
+          <section class="landing-section landing-section--schedule" aria-labelledby="schedule-heading">
+            <h2 id="schedule-heading" class="section-label">Schedule</h2>
+            <div id="dm-schedule-list" class="dm-schedule-panel">
+              <p class="landing-schedule-fallback meta">Sign in to manage availability and events.</p>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
 
@@ -143,6 +154,70 @@
     </form>
   </dialog>
 
+  <dialog id="availability-dialog" class="dialog dialog-note dialog-home-day">
+    <form id="availability-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="availability-dialog-title">Day</h2>
+        <button type="button" class="btn btn-ghost" id="availability-cancel">Close</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" name="date">
+        <section class="home-day-section">
+          <h3 class="sched-section-title">My availability</h3>
+          <label>Status
+            <select name="status">
+              <option value="">Clear response</option>
+              <option value="available">Available</option>
+              <option value="maybe">Maybe</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </label>
+          <div class="form-grid">
+            <label>Available from<input name="availableFrom" type="time"></label>
+            <label>Available until<input name="availableUntil" type="time"></label>
+          </div>
+          <label>Note<textarea name="note" rows="2" maxlength="500"></textarea></label>
+          <button type="submit" class="btn btn-primary">Save availability</button>
+        </section>
+        <section class="home-day-section">
+          <h3 class="sched-section-title">Global events</h3>
+          <div id="home-day-events"></div>
+          <button type="button" class="btn btn-primary btn-sm" data-create-platform-event>+ Create event</button>
+        </section>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="event-dialog" class="dialog dialog-note">
+    <form id="event-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="event-dialog-title">Create event</h2>
+        <button type="button" class="btn btn-ghost" id="event-cancel">Cancel</button>
+      </header>
+      <div class="dialog-body">
+        <label>Title<input name="title" maxlength="200" required placeholder="Board game night"></label>
+        <div class="form-grid">
+          <label>Date<input name="date" type="date" required></label>
+          <label>Start<input name="startTime" type="time" required></label>
+          <label>End<input name="endTime" type="time"></label>
+        </div>
+        <label>Location<input name="location" maxlength="200"></label>
+        <label>Notes<textarea name="notes" rows="3" maxlength="2000"></textarea></label>
+        <button type="submit" class="btn btn-primary" id="event-submit-btn">Save event</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="event-detail-dialog" class="dialog">
+    <form method="dialog" class="dialog-inner">
+      <header>
+        <h2 id="event-detail-title">Event</h2>
+        <button value="close" class="btn btn-ghost">Close</button>
+      </header>
+      <div id="event-detail-body" class="dialog-body"></div>
+    </form>
+  </dialog>
+
   <script src="../js/core/save-status.js"></script>
   <script src="../js/core/local-api-client.js"></script>
   <script src="../js/core/catalogue/types.js"></script>
@@ -150,6 +225,8 @@
   <script src="../js/core/catalogue/images.js"></script>
   <script src="../js/core/campaign-registry.js"></script>
   <script src="../js/core/browser-import.js"></script>
+  <script src="../js/core/player-api-client.js"></script>
+  <script src="../js/player-scheduling.js"></script>
   <script src="../js/landing.js"></script>
 </body>
 </html>

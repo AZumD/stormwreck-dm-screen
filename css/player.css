@@ -59,6 +59,46 @@ html, body {
   margin: 0 auto;
   width: 100%;
 }
+
+@media (min-width: 960px) {
+  .view-home {
+    max-width: 1120px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 1.15rem 1.5rem;
+    align-items: start;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+  .view-home > .topbar {
+    grid-column: 1 / -1;
+  }
+  .view-home > .home-section--schedule {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .view-home > .home-section--board {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .view-home > .home-section--campaigns {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .view-home > .home-section--characters {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  .view-shell {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .view-home {
+    max-width: 1240px;
+  }
+}
 .view-shell {
   padding-bottom: calc(var(--tab-bar-height) + 1.5rem);
 }

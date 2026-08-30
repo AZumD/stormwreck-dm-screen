@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/player.css?v=20260830m4">
-  <link rel="stylesheet" href="/css/player-platform.css?v=20260830s2">
+  <link rel="stylesheet" href="/css/player.css?v=20260830m5">
+  <link rel="stylesheet" href="/css/player-platform.css?v=20260830s3">
 </head>
 <body class="player-body">
   <div id="app">
@@ -26,37 +26,38 @@
       </form>
     </section>
 
-    <section id="view-home" class="view" hidden>
+    <section id="view-home" class="view view-home" hidden>
       <header class="topbar">
         <div>
           <p class="eyebrow">Signed in</p>
           <h1>Player home</h1>
         </div>
         <div class="topbar-end">
+          <a class="btn btn-ghost btn-sm" id="player-to-dm" href="/dm/" hidden>DM Library</a>
           <span id="home-user-name" class="shell-user-name"></span>
           <button type="button" class="btn btn-ghost" id="logout-home">Log out</button>
         </div>
       </header>
-      <section class="home-section">
+      <section class="home-section home-section--schedule">
         <div class="home-section-head">
           <h2>Schedule</h2>
         </div>
         <div id="home-schedule-list"></div>
       </section>
-      <section class="home-section">
+      <section class="home-section home-section--board">
         <div class="home-section-head">
           <h2>Board</h2>
           <button type="button" class="btn btn-primary btn-sm" data-platform-board-new>New post</button>
         </div>
         <div id="home-board-list"></div>
       </section>
-      <section class="home-section">
+      <section class="home-section home-section--campaigns">
         <div class="home-section-head">
           <h2>My campaigns</h2>
         </div>
         <ul id="campaign-list" class="list"></ul>
       </section>
-      <section class="home-section">
+      <section class="home-section home-section--characters">
         <div class="home-section-head">
           <h2>My characters</h2>
           <button type="button" class="btn btn-primary btn-sm" id="create-character-home">New character</button>

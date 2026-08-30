@@ -6,8 +6,8 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 ## Surfaces
 | Path | Role |
 |------|------|
-| `/player/` | Neutral login + **Player home** (Schedule → Board → My campaigns → My characters) + campaign workspace (hamburger: Play \| Schedule \| Board \| Home) + character sheet |
-| `js/player-app.js` | Player shell logic |
+| `/player/` | Neutral login + **Player home** (desktop 2-col: Schedule\|Board + Campaigns\|Characters; mobile stacked) + campaign workspace + character sheet |
+| `js/player-app.js` | Player shell logic; **DM Library** link when user has any DM membership |
 | `js/player-scheduling.js` | Home calendar/board + campaign schedule/board UI (see `PLAYER-SCHEDULING.md`) |
 | `js/core/player-api-client.js` | Cookie-authenticated fetch helper |
 | `css/player.css` | Mobile-first fairy-forest styles |

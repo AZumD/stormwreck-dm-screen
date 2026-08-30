@@ -21,6 +21,7 @@
     shellUserName: document.getElementById("shell-user-name"),
     homeUserName: document.getElementById("home-user-name"),
     characterUserName: document.getElementById("character-user-name"),
+    playerToDm: document.getElementById("player-to-dm"),
     campaignMenuBtn: document.getElementById("campaign-menu-btn"),
     campaignMenu: document.getElementById("campaign-menu"),
     characterShellTitle: document.getElementById("character-shell-title"),
@@ -1192,6 +1193,10 @@
       el.hidden = !name;
       el.title = name;
     });
+    const isDm = (state.bootstrap?.campaigns || []).some(
+      (c) => String(c.role || "").toLowerCase() === "dm"
+    );
+    if (els.playerToDm) els.playerToDm.hidden = !isDm;
   }
 
   function renderPlayingAs() {
