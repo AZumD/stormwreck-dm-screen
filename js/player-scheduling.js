@@ -119,6 +119,12 @@ window.PlayerSchedulingUI = (function () {
   }
 
   async function renderHomeSchedule(container) {
+    if (!container) return;
+    const now = new Date();
+    if (!ctx.state.personalCal?.year) {
+      ctx.state.personalCal = { year: now.getFullYear(), month: now.getMonth() + 1 };
+    }
+    await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
     const data = await ctx.safe(() => ctx.api.upcomingEvents({ limit: 8 }));
     const events = data?.events || [];
     const list =
@@ -136,25 +142,23 @@ window.PlayerSchedulingUI = (function () {
             )
             .join("")
         : `<li class="empty">No upcoming sessions.</li>`;
-    container.innerHTML = `<ul class="list">${list}</ul>`;
-  }
-
-  function renderPersonalCalendar(main) {
     const { year, month } = ctx.state.personalCal;
     const title = new Date(year, month - 1, 1).toLocaleDateString(undefined, {
       month: "long",
       year: "numeric"
     });
-    main.innerHTML = `
-      <div class="sched-panel">
+    container.innerHTML = `
+      <div class="sched-panel home-sched-panel">
         <div class="sched-cal-toolbar">
           <button type="button" class="btn btn-ghost btn-sm" data-personal-cal-prev aria-label="Previous month">‹</button>
-          <h2 class="sched-cal-title">${esc(title)}</h2>
+          <h3 class="sched-cal-title">${esc(title)}</h3>
           <button type="button" class="btn btn-ghost btn-sm" data-personal-cal-next aria-label="Next month">›</button>
         </div>
         <p class="meta">Tap a day to set availability. Blank = no response.</p>
         ${calendarGrid(year, month, ctx.state.personalAvailability || {})}
         <p class="sched-legend"><span>✓ Available</span><span>? Maybe</span><span>× Unavailable</span><span>— No response</span></p>
+        <h3 class="sched-section-title">Upcoming</h3>
+        <ul class="list">${list}</ul>
       </div>`;
   }
 
@@ -408,7 +412,7 @@ window.PlayerSchedulingUI = (function () {
   function bind(root) {
     root.addEventListener("click", async (e) => {
       const personalDate = e.target.closest("[data-sched-date]");
-      if (personalDate && ctx.els.availabilityDialog?.open) {
+      if (personalDate && personalDate.closest("#home-schedule-list")) {
         const dateStr = personalDate.getAttribute("data-sched-date");
         openAvailabilityEditor(dateStr, ctx.state.personalAvailability?.[dateStr]);
         return;
@@ -435,24 +439,14 @@ window.PlayerSchedulingUI = (function () {
         await openEventDetail(campEvent.getAttribute("data-campaign-event"));
         return;
       }
-      if (e.target.closest("[data-open-availability]")) {
-        const now = new Date();
-        ctx.state.personalCal = { year: now.getFullYear(), month: now.getMonth() + 1 };
-        await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
-        renderPersonalCalendar(ctx.els.availabilityMain);
-        ctx.els.availabilityDialog?.showModal();
-        return;
-      }
       if (e.target.closest("[data-personal-cal-prev]")) {
         ctx.state.personalCal = addMonths(ctx.state.personalCal.year, ctx.state.personalCal.month, -1);
-        await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
-        renderPersonalCalendar(ctx.els.availabilityMain);
+        await renderHomeSchedule(ctx.els.homeScheduleList);
         return;
       }
       if (e.target.closest("[data-personal-cal-next]")) {
         ctx.state.personalCal = addMonths(ctx.state.personalCal.year, ctx.state.personalCal.month, 1);
-        await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
-        renderPersonalCalendar(ctx.els.availabilityMain);
+        await renderHomeSchedule(ctx.els.homeScheduleList);
         return;
       }
       if (e.target.closest("[data-campaign-cal-prev]")) {
@@ -578,7 +572,7 @@ window.PlayerSchedulingUI = (function () {
         );
       }
       await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
-      renderPersonalCalendar(ctx.els.availabilityMain);
+      await renderHomeSchedule(ctx.els.homeScheduleList);
       f.closest("dialog")?.close();
     });
 

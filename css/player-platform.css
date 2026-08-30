@@ -92,6 +92,14 @@
   gap: 1.25rem;
 }
 
+.home-sched-panel {
+  gap: 0.85rem;
+}
+
+.home-sched-panel .sched-section-title {
+  margin-top: 0.35rem;
+}
+
 .sched-section-title {
   margin: 0 0 0.65rem;
   font-size: 1rem;

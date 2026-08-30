@@ -42,7 +42,7 @@ npm start                    # never auto-runs migrate/seed/init
 ### Warning: `db:seed:characters`
 Re-running reconciles from catalogue / `campaign-state` and **UPSERTS `character_state` (HP, conditions, resources)**. That can overwrite live play. Never attach it to deploy/start hooks. See `docs/README/DEPLOY.md`.
 
-`GET /api/health` includes a `database` object and `authRequired` (503 in production if DB down). `GET /api/db/health` is a dedicated probe.
+`GET /api/health` includes a `database` object, `schema` probes (sessions, phase-6 columns, scheduling tables), and `authRequired` (503 in production if DB down or schema incomplete). `GET /api/db/health` is a dedicated probe.
 
 See `docs/README/AUTH.md` for authentication details and `docs/README/DEPLOY.md` for Railway.
 

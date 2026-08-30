@@ -81,7 +81,15 @@ function sendJson(res, status, data) {
 }
 
 function sendError(res, err) {
-  sendJson(res, err.status || 500, { ok: false, error: err.message || "Server error" });
+  let message = err.message || "Server error";
+  try {
+    const { schemaDriftMessage } = require("./schema-probe");
+    const drift = schemaDriftMessage(err);
+    if (drift) message = drift;
+  } catch {
+    /* schema-probe optional at load time */
+  }
+  sendJson(res, err.status || 500, { ok: false, error: message });
 }
 
 function matchRoute(method, pathname, routes) {

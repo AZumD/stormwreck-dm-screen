@@ -70,7 +70,6 @@
     availabilityDialog: document.getElementById("availability-dialog"),
     availabilityForm: document.getElementById("availability-form"),
     availabilityDialogTitle: document.getElementById("availability-dialog-title"),
-    availabilityMain: document.getElementById("availability-main"),
     availabilityCancel: document.getElementById("availability-cancel"),
     eventDialog: document.getElementById("event-dialog"),
     eventForm: document.getElementById("event-form"),

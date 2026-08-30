@@ -109,9 +109,9 @@ if (!healthSrc.includes("healthy ? 200 : 503") && !healthSrc.includes("503")) {
 if (!healthSrc.includes("ensurePostgresCampaignAndDm")) {
   fail("POST /api/campaigns missing Postgres sync");
 } else pass("campaign create syncs Postgres when auth+db");
-if (!healthSrc.includes("volume.writable") || !healthSrc.includes("sessionsTable")) {
-  fail("health missing volume writability / sessions schema probe");
-} else pass("health probes volume + sessions schema");
+if (!healthSrc.includes("volume.writable") || !healthSrc.includes("schema.complete")) {
+  fail("health missing volume writability / schema probe");
+} else pass("health probes volume + schema completeness");
 if (!healthSrc.includes("db:migrate")) {
   fail("health missing migrate hint");
 } else pass("health migrate hint when schema incomplete");

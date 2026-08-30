@@ -16,4 +16,6 @@ node test/validate-scheduling.js
 - No `campaign_characters` / D&D dependency in scheduling libs
 - API routes + player client methods
 - Campaign section nav (Play | Schedule | Board)
+- Player home order: Schedule → My campaigns → My characters
+- Home renders inline availability calendar (no gate button)
 - Live: availability CRUD, overlap, events, RSVP, board, auth boundaries, Stormwreck intact

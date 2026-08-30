@@ -51,6 +51,11 @@ Production **refuses to start** without `DATABASE_URL`, `SESSION_SECRET`, and `D
    - DM login; write a campaign doc; confirm it persists after restart
    - Player login; character HP/notes from Postgres
 
+## After deploys that add SQL migrations
+Whenever you pull or deploy code that includes new files under `db/migrations/`, run **`npm run db:migrate`** against production Postgres **before** expecting player login or new API routes to work. Migrations are **not** run automatically on `npm start`.
+
+From Railway: open the web service shell (or a one-off job with `DATABASE_URL` set) and run `npm run db:migrate`. If login fails with a schema error, this step was skipped.
+
 ## Hard warnings
 - **Never** re-run `data:init` over a live volume (it refuses when `.initialized` or data exists — do not force)
 - **Never** put `db:seed:characters` (or any seed / `data:init`) in automatic deploy or `npm start`

@@ -36,6 +36,12 @@
       </header>
       <section class="home-section">
         <div class="home-section-head">
+          <h2>Schedule</h2>
+        </div>
+        <div id="home-schedule-list"></div>
+      </section>
+      <section class="home-section">
+        <div class="home-section-head">
           <h2>My campaigns</h2>
         </div>
         <ul id="campaign-list" class="list"></ul>
@@ -46,13 +52,6 @@
           <button type="button" class="btn btn-primary btn-sm" id="create-character-home">New character</button>
         </div>
         <ul id="character-list" class="list"></ul>
-      </section>
-      <section class="home-section">
-        <div class="home-section-head">
-          <h2>Schedule</h2>
-          <button type="button" class="btn btn-ghost btn-sm" data-open-availability>My availability</button>
-        </div>
-        <div id="home-schedule-list"></div>
       </section>
     </section>
 
@@ -272,11 +271,10 @@
   <dialog id="availability-dialog" class="dialog dialog-note">
     <form id="availability-form" class="dialog-inner stack-form">
       <header>
-        <h2 id="availability-dialog-title">My availability</h2>
+        <h2 id="availability-dialog-title">Set availability</h2>
         <button type="button" class="btn btn-ghost" id="availability-cancel">Close</button>
       </header>
       <div class="dialog-body">
-        <div id="availability-main"></div>
         <input type="hidden" name="date">
         <label>Status
           <select name="status">

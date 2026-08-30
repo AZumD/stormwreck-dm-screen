@@ -31,6 +31,7 @@ const audioStorage = require("../lib/audio-storage");
 const campaignMaps = require("../lib/campaign-maps");
 const scheduling = require("../lib/scheduling");
 const campaignBoard = require("../lib/campaign-board");
+const { probeSchema, MIGRATE_HINT } = require("../lib/schema-probe");
 
 function route(method, pattern, keys, handler) {
   return { method, pattern, keys, handler };
@@ -60,21 +61,13 @@ function createApiRoutes() {
 
       let schema = null;
       if (database.configured && database.ok) {
-        try {
-          const q = await db.query(
-            `SELECT COUNT(*)::int AS n FROM information_schema.tables
-             WHERE table_schema = 'public' AND table_name = 'sessions'`
-          );
-          schema = { sessionsTable: Number(q.rows[0]?.n || 0) > 0 };
-        } catch {
-          schema = { sessionsTable: false };
-        }
+        schema = await probeSchema(db);
       }
 
       /* Production / auth-required: Postgres must be reachable (Railway healthcheck). */
       let healthy = !authRequired || (database.configured && database.ok);
       if (authRequired && volume.pathSet && volume.writable === false) healthy = false;
-      if (authRequired && schema && schema.sessionsTable === false) healthy = false;
+      if (authRequired && schema && schema.complete === false) healthy = false;
 
       const safeDatabase = {
         configured: database.configured,
@@ -95,8 +88,16 @@ function createApiRoutes() {
         schema,
         authRequired
       };
-      if (schema && schema.sessionsTable === false) {
-        payload.hint = "Run npm run db:migrate (sessions table missing)";
+      if (schema && schema.complete === false) {
+        if (!schema.sessionsTable) {
+          payload.hint = "Run npm run db:migrate (sessions table missing)";
+        } else if (!schema.gameSystemIdColumn || !schema.campaignCharactersTable) {
+          payload.hint = `${MIGRATE_HINT} (phase 6 platform migrations pending)`;
+        } else if (!schema.schedulingTables) {
+          payload.hint = `${MIGRATE_HINT} (scheduling migrations pending)`;
+        } else {
+          payload.hint = MIGRATE_HINT;
+        }
       }
       sendJson(res, healthy ? 200 : 503, payload);
     }),

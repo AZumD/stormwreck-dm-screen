@@ -40,3 +40,6 @@ Overlap queries join **`campaign_memberships` only** — not `campaign_character
 - Events: stored as `timestamptz` (ISO from client).
 - Availability dates: PostgreSQL `date` (YYYY-MM-DD, no UTC day-shift).
 - Optional windows: PostgreSQL `time` (local intent, browser entry).
+
+## Player UI
+See `docs/README/PLAYER-SCHEDULING.md`. Home shows the personal calendar inline (no separate “open calendar” step).

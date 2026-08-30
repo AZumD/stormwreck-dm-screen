@@ -76,6 +76,29 @@ if (!playerHtml.includes("campaign-section-nav") || !playerHtml.includes('data-c
 if (!playerHtml.includes("home-schedule-list")) fail("player home missing schedule section");
 else pass("player global schedule section");
 
+{
+  const scheduleIdx = playerHtml.indexOf(">Schedule<");
+  const campaignsIdx = playerHtml.indexOf(">My campaigns<");
+  const charactersIdx = playerHtml.indexOf(">My characters<");
+  if (scheduleIdx < 0 || campaignsIdx < 0 || charactersIdx < 0) {
+    fail("player home missing Schedule / My campaigns / My characters headings");
+  } else if (!(scheduleIdx < campaignsIdx && campaignsIdx < charactersIdx)) {
+    fail("player home order must be Schedule → My campaigns → My characters");
+  } else pass("player home order Schedule → campaigns → characters");
+}
+
+if (playerHtml.includes('data-open-availability')) {
+  fail("home must show calendar inline (no My availability gate button)");
+} else pass("home availability calendar is inline (no gate button)");
+
+if (!schedUiSrc.includes("home-sched-panel") || !schedUiSrc.includes("calendarGrid")) {
+  fail("renderHomeSchedule must render inline calendar");
+} else pass("home schedule renders inline calendar");
+
+if (playerAppSrc.includes("availabilityMain")) {
+  fail("player-app should not reference removed availability-main");
+} else pass("player-app uses day editor dialog only");
+
 if (playerAppSrc.includes('campaignSection === "schedule"') && playerAppSrc.includes("PlayerSchedulingUI")) {
   pass("player-app integrates scheduling UI");
 } else fail("player-app scheduling integration");
