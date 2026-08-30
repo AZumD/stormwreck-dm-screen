@@ -32,7 +32,8 @@ Stable key: catalogue PC id (`pc-mswdvrcy-u6nnt`). Party id format: `pc:{catalog
 ## Normalization
 - Removes PC tokens on maps ≠ `partyPositions.mapId`
 - Dedupes multiple PC tokens on the canonical map (newest `tok-pc-*` id wins)
-- Syncs the remaining canonical-map PC token `x`/`y` to match `partyPositions` (client bootstrap also converts to world coords on calibrated maps)
+- **Coordinate sync is separate:** `syncPcTokenWorldCoords()` converts canonical **percent** → token **world** coords on calibrated maps via `percentToWorld()`; skipped when map calibration is unavailable (never writes percent into world fields)
+- Runs at bootstrap (topology only if maps unavailable) and again from `MapPanel.init()` once map definitions exist
 - Legacy: token-only state (no `partyPositions`) promotes newest token → `partyPositions`
 
 ## Used by

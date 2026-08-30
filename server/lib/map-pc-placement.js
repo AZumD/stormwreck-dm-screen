@@ -4,6 +4,8 @@
  */
 "use strict";
 
+const mapDistance = require("./map-distance");
+
 function partyIdFromCatalogueId(catalogueId) {
   return catalogueId ? `pc:${catalogueId}` : null;
 }
@@ -28,10 +30,21 @@ function tokenTimestamp(token) {
   return 0;
 }
 
-function syncTokenToCanonicalCoords(token, canonical) {
-  if (!token || !canonical || canonical.x == null || canonical.y == null) return token;
-  if (token.x === canonical.x && token.y === canonical.y) return token;
-  return { ...token, x: canonical.x, y: canonical.y };
+const COORD_EPS = 0.05;
+
+function isCalibratedMapDef(mapDef) {
+  return Boolean(mapDef?.grid && mapDef?.widthPx && mapDef?.heightPx);
+}
+
+/** True when token world position matches canonical partyPositions percent on a calibrated map. */
+function tokenMatchesCanonicalPercent(token, canonical, mapDef) {
+  if (!token || !canonical || !isCalibratedMapDef(mapDef)) return null;
+  if (token.x == null || token.y == null || canonical.x == null || canonical.y == null) return null;
+  const pct = mapDistance.worldToPercent(token.x, token.y, mapDef);
+  if (!pct) return null;
+  return (
+    Math.abs(pct.x - canonical.x) <= COORD_EPS && Math.abs(pct.y - canonical.y) <= COORD_EPS
+  );
 }
 
 /**
@@ -63,8 +76,8 @@ function findCanonicalPcLocation(mapState, catalogueId) {
  * Repair tokens to agree with canonical partyPositions.
  * - Removes PC tokens on non-canonical maps
  * - Dedupes multiple PC tokens on the canonical map (newest wins)
- * - Syncs remaining canonical-map PC token x/y to partyPositions
  * - Legacy: if tokens exist but no partyPositions, promotes newest token to partyPositions
+ * Coordinate sync (percent ↔ world) is handled separately by syncPcTokenWorldCoords().
  */
 function normalizePcMapState(mapState) {
   const state = {
@@ -125,18 +138,39 @@ function normalizePcMapState(mapState) {
         (t) => !matchesPcToken(t, catalogueId, partyId) || t.id === keep.id
       );
     }
+  });
 
-    const token = (state.tokens[canonicalMapId] || []).find((t) =>
-      matchesPcToken(t, catalogueId, partyId)
-    );
-    if (token && canonical.x != null && canonical.y != null) {
-      const synced = syncTokenToCanonicalCoords(token, canonical);
-      if (synced !== token) {
-        state.tokens[canonicalMapId] = state.tokens[canonicalMapId].map((t) =>
-          t.id === token.id ? synced : t
-        );
-      }
-    }
+  return state;
+}
+
+/**
+ * Sync calibrated PC token world coords to match canonical partyPositions percent.
+ * Skips when map calibration is unavailable — never writes percent into world fields.
+ */
+function syncPcTokenWorldCoords(state, options = {}) {
+  const resolveMap = typeof options.resolveMap === "function" ? options.resolveMap : () => null;
+  if (!state?.partyPositions || !state?.tokens) return state;
+
+  Object.entries(state.partyPositions).forEach(([partyId, canonical]) => {
+    if (!canonical?.mapId || canonical.x == null || canonical.y == null) return;
+    const catalogueId = catalogueIdFromPartyId(partyId);
+    if (!catalogueId) return;
+
+    const mapDef = resolveMap(canonical.mapId);
+    if (!isCalibratedMapDef(mapDef)) return;
+
+    const list = state.tokens[canonical.mapId];
+    if (!Array.isArray(list)) return;
+    const idx = list.findIndex((t) => matchesPcToken(t, catalogueId, partyId));
+    if (idx < 0) return;
+
+    const token = list[idx];
+    const matches = tokenMatchesCanonicalPercent(token, canonical, mapDef);
+    if (matches !== false) return;
+
+    const world = mapDistance.percentToWorld(canonical.x, canonical.y, mapDef);
+    if (!world) return;
+    list[idx] = { ...token, x: world.x, y: world.y };
   });
 
   return state;
@@ -172,6 +206,8 @@ module.exports = {
   matchesPcToken,
   findCanonicalPcLocation,
   normalizePcMapState,
+  syncPcTokenWorldCoords,
+  tokenMatchesCanonicalPercent,
   tokensPatchFromNormalize,
   partyPositionsPatchFromNormalize
 };

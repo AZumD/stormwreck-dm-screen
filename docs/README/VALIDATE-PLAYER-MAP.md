@@ -14,7 +14,7 @@ node test/validate-player-map.js
 ## What it checks
 - `partyPositions` is canonical; stale token on map B ignored when canonical is map A
 - Player token assembly uses canonical PC x/y even when a stale combat token exists on the same map
-- `normalizePcMapState` removes non-canonical tokens and syncs stale PC token coords on the canonical map
+- `normalizePcMapState` removes non-canonical tokens; `syncPcTokenWorldCoords` repairs stale world coords on calibrated maps (percent ↔ world)
 - PC A move does not affect PC B
 - Removed PC has no canonical location
 - Legacy token-only state migrates to `partyPositions`

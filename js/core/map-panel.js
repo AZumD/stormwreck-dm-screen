@@ -1242,6 +1242,11 @@ window.MapPanel = (function () {
       });
     }
 
+    if (window.MapPcPlacement?.normalizeDuplicates) {
+      MapPcPlacement.normalizeDuplicates(campaignId);
+      renderMap();
+    }
+
     function renderInitiativeList() {
       const el = document.getElementById("map-initiative");
       if (!el) return;

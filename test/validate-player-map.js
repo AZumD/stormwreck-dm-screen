@@ -20,7 +20,19 @@ function fail(msg) {
 }
 
 const placement = require(path.join(root, "server/lib/map-pc-placement.js"));
+const mapDistance = require(path.join(root, "server/lib/map-distance.js"));
 const playerMap = require(path.join(root, "server/lib/player-map.js"));
+
+const calibratedMap = {
+  id: "map-a",
+  widthPx: 1000,
+  heightPx: 700,
+  grid: { pixelsPerGrid: 100, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
+};
+
+function resolveCalibratedMap(mapId) {
+  return mapId === "map-a" || mapId === calibratedMap.id ? calibratedMap : null;
+}
 
 /* partyPositions canonical — stale token on wrong map ignored */
 try {
@@ -130,7 +142,7 @@ try {
   fail(`player resolution: ${err.message}`);
 }
 
-/* reload invariant — normalize idempotent after token coord sync */
+/* reload invariant — topology normalize is idempotent; coords handled separately */
 try {
   const state = {
     partyPositions: { "pc:pc-a": { mapId: "map-a", x: 1, y: 2 } },
@@ -139,38 +151,128 @@ try {
     }
   };
   const once = placement.normalizePcMapState(state);
-  assert.strictEqual(once.tokens["map-a"][0].x, 1);
-  assert.strictEqual(once.tokens["map-a"][0].y, 2);
+  assert.strictEqual(once.tokens["map-a"][0].x, 3);
+  assert.strictEqual(once.tokens["map-a"][0].y, 4);
   const twice = placement.normalizePcMapState(once);
   assert.deepStrictEqual(once.partyPositions, twice.partyPositions);
   assert.deepStrictEqual(once.tokens, twice.tokens);
-  pass("normalize syncs stale PC token coords and is idempotent");
+  pass("normalize topology is idempotent without map calibration");
 } catch (err) {
-  fail(`idempotent: ${err.message}`);
+  fail(`idempotent topology: ${err.message}`);
 }
 
-/* canonical partyPositions wins over stale token on same map */
+/* calibrated: matching world token is not overwritten with party percent values */
 try {
+  const canonical = { mapId: "map-a", x: 40, y: 60 };
+  const world = mapDistance.percentToWorld(canonical.x, canonical.y, calibratedMap);
+  assert.ok(world, "expected world coords from percent");
+  const state = {
+    partyPositions: { "pc:pc-a": canonical },
+    tokens: {
+      "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: world.x, y: world.y }]
+    }
+  };
+  const topo = placement.normalizePcMapState(state);
+  const synced = placement.syncPcTokenWorldCoords(topo, { resolveMap: resolveCalibratedMap });
+  assert.strictEqual(synced.tokens["map-a"][0].x, world.x);
+  assert.strictEqual(synced.tokens["map-a"][0].y, world.y);
+  const again = placement.syncPcTokenWorldCoords(
+    placement.normalizePcMapState(synced),
+    { resolveMap: resolveCalibratedMap }
+  );
+  assert.deepStrictEqual(synced.tokens, again.tokens);
+  pass("calibrated PC token keeps world coords when already canonical");
+} catch (err) {
+  fail(`calibrated preserve world: ${err.message}`);
+}
+
+/* calibrated: stale world token repairs to percentToWorld(canonical) */
+try {
+  const canonical = { mapId: "map-a", x: 40, y: 60 };
+  const expected = mapDistance.percentToWorld(canonical.x, canonical.y, calibratedMap);
   const before = {
-    partyPositions: { "pc:pc-a": { mapId: "map-a", x: 10, y: 20 } },
+    partyPositions: { "pc:pc-a": canonical },
     tokens: {
       "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: 99, y: 99 }]
     }
   };
-  const once = placement.normalizePcMapState(before);
-  assert.strictEqual(once.tokens["map-a"][0].x, 10);
-  assert.strictEqual(once.tokens["map-a"][0].y, 20);
-  const twice = placement.normalizePcMapState(once);
-  assert.deepStrictEqual(once.tokens, twice.tokens);
-  pass("normalize repairs stale PC token on canonical map");
+  const synced = placement.syncPcTokenWorldCoords(placement.normalizePcMapState(before), {
+    resolveMap: resolveCalibratedMap
+  });
+  assert.strictEqual(synced.tokens["map-a"][0].x, expected.x);
+  assert.strictEqual(synced.tokens["map-a"][0].y, expected.y);
+  pass("calibrated stale world token syncs from canonical percent");
 } catch (err) {
-  fail(`stale same-map token sync: ${err.message}`);
+  fail(`calibrated stale world sync: ${err.message}`);
+}
+
+/* bootstrap without map defs must not write percent into token world fields */
+try {
+  const canonical = { mapId: "map-a", x: 40, y: 60 };
+  const world = mapDistance.percentToWorld(canonical.x, canonical.y, calibratedMap);
+  const before = {
+    partyPositions: { "pc:pc-a": canonical },
+    tokens: {
+      "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: world.x, y: world.y }]
+    }
+  };
+  const topo = placement.normalizePcMapState(before);
+  const noMaps = placement.syncPcTokenWorldCoords(topo, { resolveMap: () => null });
+  assert.strictEqual(noMaps.tokens["map-a"][0].x, world.x);
+  assert.strictEqual(noMaps.tokens["map-a"][0].y, world.y);
+  pass("coord sync skipped safely when map calibration unavailable");
+} catch (err) {
+  fail(`bootstrap without maps: ${err.message}`);
+}
+
+/* drag round-trip: world -> percent canonical -> reload normalize -> same world */
+try {
+  const movedWorld = { x: 8, y: 12 };
+  const percent = mapDistance.worldToPercent(movedWorld.x, movedWorld.y, calibratedMap);
+  assert.ok(percent, "expected percent from moved world");
+  const before = {
+    partyPositions: { "pc:pc-a": { mapId: "map-a", x: percent.x, y: percent.y } },
+    tokens: {
+      "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: movedWorld.x, y: movedWorld.y }]
+    }
+  };
+  const reloaded = placement.syncPcTokenWorldCoords(placement.normalizePcMapState(before), {
+    resolveMap: resolveCalibratedMap
+  });
+  assert.strictEqual(reloaded.tokens["map-a"][0].x, movedWorld.x);
+  assert.strictEqual(reloaded.tokens["map-a"][0].y, movedWorld.y);
+  pass("drag round-trip survives normalize + coord sync");
+} catch (err) {
+  fail(`drag round-trip: ${err.message}`);
+}
+
+/* repeated coord sync must not churn tokens (no repeated PATCH payload) */
+try {
+  const canonical = { mapId: "map-a", x: 40, y: 60 };
+  const world = mapDistance.percentToWorld(canonical.x, canonical.y, calibratedMap);
+  const state = {
+    partyPositions: { "pc:pc-a": canonical },
+    tokens: {
+      "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: world.x, y: world.y }]
+    }
+  };
+  const opts = { resolveMap: resolveCalibratedMap };
+  const once = placement.syncPcTokenWorldCoords(placement.normalizePcMapState(state), opts);
+  const twice = placement.syncPcTokenWorldCoords(placement.normalizePcMapState(once), opts);
+  assert.strictEqual(Object.keys(placement.tokensPatchFromNormalize(once.tokens, twice.tokens)).length, 0);
+  assert.deepStrictEqual(once.tokens, twice.tokens);
+  pass("repeated coord sync is idempotent (no token PATCH churn)");
+} catch (err) {
+  fail(`coord sync idempotent: ${err.message}`);
 }
 
 const placementSrc = fs.readFileSync(path.join(root, "js/core/map-pc-placement.js"), "utf8");
 if (placementSrc.includes("Token on a map wins")) {
   fail("client still uses token-first lookup");
 } else pass("client uses partyPositions-first lookup");
+if (!placementSrc.includes("syncPcTokenWorldCoords") || placementSrc.includes("syncTokenToCanonicalCoords")) {
+  fail("client must use coordinate-space-aware syncPcTokenWorldCoords");
+} else pass("client coordinate-space-aware token sync");
 if (!placementSrc.includes("findPcLocation") || !placementSrc.includes("normalizePcMapState")) {
   fail("client missing canonical helpers");
 } else pass("client canonical helpers");
@@ -200,6 +302,9 @@ if (!spatialSrc.includes("setFogPaintActive") || !spatialSrc.includes("map-fog-h
 } else pass("map-spatial auto-activates fog paint mode");
 
 const mapPanelSrc = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
+if (!mapPanelSrc.includes("MapPcPlacement?.normalizeDuplicates")) {
+  fail("map-panel should re-normalize PC coords after maps are available");
+} else pass("map-panel deferred PC coord sync");
 if (!mapPanelSrc.includes('getElementById("map-fog-btn")')) {
   fail("map-panel should block pan while fog paint is active");
 } else pass("map-panel blocks pan during fog paint");
