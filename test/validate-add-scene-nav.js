@@ -1,5 +1,5 @@
 /**
- * Validates always-visible sidebar Add scene + edit-mode enable on add.
+ * Validates Prep-workspace sidebar Add scene + ensureEditMode wiring.
  * Run: node test/validate-add-scene-nav.js
  */
 const fs = require("fs");
@@ -32,28 +32,22 @@ if (!buildNavMatch) {
     pass("buildNav has nav-add-scene button");
   }
 
-  // Add scene must not be nested only inside the editMode block that also owns New group.
-  // Heuristic: after the editMode DnD/group block closes, add-scene still appears.
   const editModeBlock = body.match(/if\s*\(\s*editMode\s*\)\s*\{[\s\S]*?\n    \}/);
   if (!editModeBlock) {
     fail("buildNav missing editMode block");
+  } else if (!editModeBlock[0].includes("nav-add-scene")) {
+    fail("nav-add-scene must live inside Prep/editMode authoring block");
   } else {
-    const afterEdit = body.slice(body.indexOf(editModeBlock[0]) + editModeBlock[0].length);
-    if (!afterEdit.includes("nav-add-scene")) {
-      fail("nav-add-scene is not outside editMode-only block (should always show)");
-    } else {
-      pass("nav-add-scene is outside editMode-only block");
-    }
-    if (editModeBlock[0].includes("nav-add-group") && !editModeBlock[0].includes("nav-add-scene")) {
-      pass("New group stays edit-mode-only");
-    } else if (!editModeBlock[0].includes("nav-add-group")) {
-      fail("editMode block should still add New group");
-    } else {
-      fail("nav-add-scene should not live only inside editMode with New group");
-    }
+    pass("nav-add-scene is Prep/editMode-only");
   }
 
-  if (!body.includes('t.addScene') && !body.includes("t.addScene ||")) {
+  if (editModeBlock && editModeBlock[0].includes("nav-add-group")) {
+    pass("New group stays edit-mode-only");
+  } else {
+    fail("editMode block should still add New group");
+  }
+
+  if (!body.includes("t.addScene") && !body.includes("t.addScene ||")) {
     fail("buildNav should use t.addScene label");
   } else {
     pass("buildNav uses addScene label");
@@ -62,8 +56,10 @@ if (!buildNavMatch) {
 
 if (!app.includes("function ensureEditMode")) {
   fail("missing ensureEditMode()");
+} else if (!app.includes('setWorkspace("prep"')) {
+  fail("ensureEditMode should switch to Prep when needed");
 } else {
-  pass("ensureEditMode present");
+  pass("ensureEditMode switches to Prep");
 }
 
 const addPassageMatch = app.match(/function addPassage\(afterId\)\s*\{[\s\S]*?\n  \}/);
@@ -72,7 +68,7 @@ if (!addPassageMatch) {
 } else if (!addPassageMatch[0].includes("ensureEditMode()")) {
   fail("addPassage must call ensureEditMode()");
 } else {
-  pass("addPassage enables edit mode");
+  pass("addPassage enables Prep/edit mode");
 }
 
 ["addScene", "addSceneHint"].forEach((key) => {

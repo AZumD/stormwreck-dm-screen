@@ -1028,6 +1028,30 @@ body[data-nav-collapsed="true"] .sidebar {
   color: var(--accent);
 }
 
+.workspace-switch {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.workspace-switch__btn {
+  min-width: 3.25rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspace-switch__btn.is-active {
+  background: var(--accent-soft);
+  border-color: rgba(196, 160, 53, 0.35);
+  color: var(--accent);
+}
+
 /* ?? Scene tray + connections ??????????????????????????? */
 .scene-tray {
   margin: 1.25rem 0 0;

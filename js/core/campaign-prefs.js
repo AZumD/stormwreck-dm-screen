@@ -14,6 +14,7 @@ window.CampaignPrefs = (function () {
     return {
       session: "1",
       viewMode: "play",
+      workspace: "run",
       notes: "",
       checklist: {},
       sidebarCollapsed: false,
@@ -25,11 +26,20 @@ window.CampaignPrefs = (function () {
     };
   }
 
+  function normalizeWorkspace(value, viewMode) {
+    if (value === "prep" || value === "run") return value;
+    /* Migrate legacy Play/Document preference into Run/Prep */
+    return viewMode === "document" ? "prep" : "run";
+  }
+
   function loadLocal(campaignId) {
     const data = empty();
     try {
       data.session = localStorage.getItem(`${campaignId}-session`) || "1";
       data.viewMode = localStorage.getItem(`${campaignId}-view-mode`) || "play";
+      const rawWorkspace = localStorage.getItem(`${campaignId}-workspace`);
+      data.workspace = normalizeWorkspace(rawWorkspace, data.viewMode);
+      data.viewMode = data.workspace === "prep" ? "document" : "play";
       data.notes = localStorage.getItem(`${campaignId}-notes`) || "";
       data.checklist = JSON.parse(localStorage.getItem(`${campaignId}-checklist`) || "{}") || {};
       data.sidebarCollapsed = localStorage.getItem(`${campaignId}-sidebar-collapsed`) === "1";
@@ -49,8 +59,12 @@ window.CampaignPrefs = (function () {
 
   function saveLocal(campaignId, data) {
     try {
+      const workspace = normalizeWorkspace(data.workspace, data.viewMode);
+      data.workspace = workspace;
+      data.viewMode = workspace === "prep" ? "document" : "play";
       localStorage.setItem(`${campaignId}-session`, String(data.session || "1"));
-      localStorage.setItem(`${campaignId}-view-mode`, data.viewMode === "document" ? "document" : "play");
+      localStorage.setItem(`${campaignId}-workspace`, workspace);
+      localStorage.setItem(`${campaignId}-view-mode`, data.viewMode);
       localStorage.setItem(`${campaignId}-notes`, data.notes || "");
       localStorage.setItem(`${campaignId}-checklist`, JSON.stringify(data.checklist || {}));
       localStorage.setItem(`${campaignId}-sidebar-collapsed`, data.sidebarCollapsed ? "1" : "0");
@@ -94,6 +108,8 @@ window.CampaignPrefs = (function () {
         const notes = await LocalApiClient.getCampaignDocument(campaignId, "notes");
         const checklist = await LocalApiClient.getCampaignDocument(campaignId, "checklist");
         const data = { ...empty(), ...(prefs && typeof prefs === "object" ? prefs : {}) };
+        data.workspace = normalizeWorkspace(data.workspace, data.viewMode);
+        data.viewMode = data.workspace === "prep" ? "document" : "play";
         if (notes && typeof notes === "object" && typeof notes.text === "string") data.notes = notes.text;
         else if (typeof notes === "string") data.notes = notes;
         if (checklist && typeof checklist === "object") data.checklist = checklist;
@@ -109,6 +125,14 @@ window.CampaignPrefs = (function () {
 
   function patch(campaignId, partial) {
     const next = { ...get(campaignId), ...(partial || {}) };
+    if (partial && Object.prototype.hasOwnProperty.call(partial, "workspace")) {
+      next.workspace = normalizeWorkspace(partial.workspace, next.viewMode);
+    } else if (partial && Object.prototype.hasOwnProperty.call(partial, "viewMode")) {
+      next.workspace = partial.viewMode === "document" ? "prep" : "run";
+    } else {
+      next.workspace = normalizeWorkspace(next.workspace, next.viewMode);
+    }
+    next.viewMode = next.workspace === "prep" ? "document" : "play";
     mem.set(campaignId, next);
     persist(campaignId);
     return next;

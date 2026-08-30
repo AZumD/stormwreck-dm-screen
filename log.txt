@@ -119,3 +119,5 @@
 [2026-08-30] Player Map zoom: former max (3.2) is now min/default; max raised to 7. See player-map-camera.js
 [2026-08-30] Fix player fog: playerFogDto now keeps rectangle select strokes (shape/rect). See server/lib/player-map.js
 [2026-08-30] Campaign nav Phase 1: Tools → Reference/Session workspaces; fix Document scrollspy. See campaign-app.js, VALIDATE-CAMPAIGN-NAV.md
+[2026-08-30] UX Phase 2: Run|Prep campaign workspaces; authoring chrome in Prep only. See campaign-app.js, CAMPAIGN-APP.md
+

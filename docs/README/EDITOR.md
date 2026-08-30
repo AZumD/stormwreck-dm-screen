@@ -46,8 +46,9 @@ Booklet `ADVENTURE.sections` is **reference only**. On first bootstrap with a le
 | `isEditMode` / `setEditMode` | Edit mode flag |
 
 ## UI (campaign-app)
-- Sidebar **+ Add scene** is always visible (not gated on Edit mode); clicking it enables Edit mode, prompts for a title, appends via `addSection`, and opens the passage editor
-- In **Edit mode**:
+- **Prep** workspace turns edit mode on; **Run** turns it off (no global Edit toggle on the Run toolbar)
+- Sidebar **+ Add scene** / **New group** appear in Prep only; `ensureEditMode` switches to Prep when authoring is triggered
+- In **Prep** (edit mode):
   - **Edit** / **Link scene** / **Delete** on each passage
   - **+ New group** in sidebar (plus drag reorder/regroup)
   - **Drag** scenes onto groups / other scenes to reorder and regroup

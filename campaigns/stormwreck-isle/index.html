@@ -5,7 +5,7 @@
   <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dragons of Stormwreck Isle — DM Screen</title>
-  <link rel="stylesheet" href="../../css/style.css?v=20260830n1">
+  <link rel="stylesheet" href="../../css/style.css?v=20260830n2">
 </head>
 <body class="campaign-page" data-campaign-id="stormwreck-isle">
   <div class="campaign-atmosphere" aria-hidden="true"></div>
@@ -51,16 +51,9 @@
           <input type="search" id="search" class="search" placeholder="Search catalogues…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogue-search-results">
           <ul id="catalogue-search-results" class="catalogue-search__results hidden" role="listbox" hidden></ul>
         </div>
-        <button type="button" id="edit-mode-toggle" class="toolbar-btn toolbar-btn--icon" aria-label="Edit mode" title="Edit mode" aria-pressed="false">
-          <span class="toolbar-icon toolbar-icon--edit" aria-hidden="true"></span>
-        </button>
-        <div class="view-mode-toggle" role="group" aria-label="Campaign view">
-          <button type="button" id="view-mode-play" class="toolbar-btn toolbar-btn--icon view-mode-btn is-active" aria-label="Play view" title="Play" aria-pressed="true">
-            <span class="toolbar-icon toolbar-icon--play" aria-hidden="true"></span>
-          </button>
-          <button type="button" id="view-mode-document" class="toolbar-btn toolbar-btn--icon view-mode-btn" aria-label="Document view" title="Document" aria-pressed="false">
-            <span class="toolbar-icon toolbar-icon--document" aria-hidden="true"></span>
-          </button>
+        <div class="workspace-switch" role="group" aria-label="Campaign workspace">
+          <button type="button" id="workspace-run" class="toolbar-btn workspace-switch__btn is-active" aria-pressed="true">Run</button>
+          <button type="button" id="workspace-prep" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Prep</button>
         </div>
         <button type="button" id="map-panel-toggle" class="toolbar-btn map-panel-toggle" aria-label="Show map" aria-expanded="false" aria-controls="map-panel">
           <span class="map-panel-toggle__icon" aria-hidden="true"></span>

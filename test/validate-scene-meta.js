@@ -72,13 +72,13 @@ if (!ui.includes("Persist id + optional quantity/note only") && !ui.includes("ty
   fail("SceneUI should not persist entity type");
 } else pass("SceneUI addEntity without type");
 
-if (!app.includes("renderPlayScene") || !app.includes("view-mode-play")) {
-  fail("campaign-app missing play view");
+if (!app.includes("renderPlayScene") || !app.includes("workspace-run")) {
+  fail("campaign-app missing play/Run workspace");
 } else pass("campaign-app play view");
 
-if (!app.includes('loadViewMode() === "document"') || !app.includes("renderPlayScene(focusedSceneId")) {
-  fail("Play must be default view");
-} else pass("Play is default runtime");
+if (!app.includes('activeWorkspace === "prep"') || !app.includes("renderPlayScene(focusedSceneId")) {
+  fail("Run must be default workspace with play scene restore");
+} else pass("Run is default runtime");
 
 if (!app.includes("SceneUI.init")) fail("campaign-app missing SceneUI.init");
 else pass("campaign-app inits SceneUI");
@@ -108,9 +108,9 @@ if (!adventure.includes("undead-fortitude") || !features.includes("feature-undea
   fail("Undead Fortitude feature missing");
 } else pass("Undead Fortitude available");
 
-if (!app.includes("renderPlayScene") || !app.includes('saveViewMode("document")')) {
-  fail("view mode types missing");
-} else pass("play/document view modes");
+if (!app.includes("renderPlayScene") || !app.includes('setWorkspace("prep"')) {
+  fail("Run/Prep workspace wiring missing");
+} else pass("Run/Prep workspace modes");
 
 if (failed) {
   console.error(`\n${failed} check(s) failed`);

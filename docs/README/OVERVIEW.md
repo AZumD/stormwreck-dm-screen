@@ -44,14 +44,15 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **Dual-store backup** — optional `npm run backup:dual` for Postgres + volume (`docs/README/BACKUP-DUAL-STORE.md`)
 
 ## Scene runtime
-- Default **Play** view focuses one scene (content, notes, At this scene, connections)
-- **Document** view keeps a continuous scroll of the ordered scene list
-- Scene cast + connections editable in UI; stored in `scene-meta.json`
+- Default **Run** workspace focuses one Play scene (content, notes, At this scene, connections)
+- **Prep** workspace shows the continuous Document scroll of the ordered scene list (authoring)
+- Toolbar **Run | Prep** switcher; Reference/Session panels keep the active workspace
+- Scene cast + connections editable in Prep; stored in `scene-meta.json`
 
 ## Campaign editing
-- **Edit mode** edits passage title/body; **drag** sidebar scenes to reorder or into groups
-- **+ Add scene** in the left sidebar is always available (turns Edit mode on); Document view also has **Add passage** rows while editing
-- **New group** — one-level sidebar folders (edit mode)
+- **Prep** enables edit mode (no Edit toggle on the Run toolbar); **drag** sidebar scenes to reorder or into groups
+- **+ Add scene** / **New group** appear in Prep; Document view also has **Add passage** rows while editing
+- **New group** — one-level sidebar folders (Prep)
 - **Delete** removes a scene from the list (same for every scene); deleting a group only ungroups
 - Booklet `adventure.js` is reference only — not merged as live seed content after migrate
 - **YouTube** chips via `{{youtube:url|Label}}` layer in the sticky media bar (multi-track)

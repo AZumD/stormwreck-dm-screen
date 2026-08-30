@@ -1,7 +1,7 @@
 # VALIDATE-ADD-SCENE-NAV.js
 
 ## Purpose
-Static checks that the campaign sidebar always exposes **Add scene** (not edit-mode-only), and that adding a scene enables edit mode.
+Static checks that **Add scene** lives in the Prep/edit-mode authoring block, and that adding a scene enables Prep/edit mode.
 
 ## File
 `test/validate-add-scene-nav.js`
@@ -12,8 +12,8 @@ node test/validate-add-scene-nav.js
 ```
 
 ## Checks
-- `buildNav` always appends `nav-add-scene` / `nav-add-scene-btn`
-- Add-scene block is outside the `if (editMode)` group-only branch
-- `ensureEditMode` + `addPassage` wiring
+- `buildNav` appends `nav-add-scene` inside the `if (editMode)` authoring block (with New group)
+- `ensureEditMode` switches to Prep when needed
+- `addPassage` calls `ensureEditMode`
 - i18n `addScene` / `addSceneHint`
 - CSS still styles `.nav-add-scene-btn`

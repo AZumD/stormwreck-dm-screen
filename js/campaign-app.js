@@ -29,10 +29,12 @@
   const searchModal = document.getElementById("search-modal");
   const searchResults = document.getElementById("search-results");
   const sessionBadge = document.getElementById("session-badge");
-  const editModeToggle = document.getElementById("edit-mode-toggle");
   const formatHelp = document.getElementById("format-help");
-  const viewModePlayBtn = document.getElementById("view-mode-play");
-  const viewModeDocumentBtn = document.getElementById("view-mode-document");
+  const workspaceRunBtn = document.getElementById("workspace-run");
+  const workspacePrepBtn = document.getElementById("workspace-prep");
+
+  /** @type {"run"|"prep"} */
+  let activeWorkspace = "run";
 
   /** @type {{ type: "play"|"document"|"panel", id?: string, workspace?: "reference"|"session"|null }} */
   let activeView = { type: "play" };
@@ -66,14 +68,25 @@
   let catalogueSearchHits = [];
   let catalogueSearchActive = -1;
 
+  function loadWorkspace() {
+    const prefs = window.CampaignPrefs?.get(campaignId);
+    if (prefs?.workspace === "prep" || prefs?.workspace === "run") return prefs.workspace;
+    if (prefs?.viewMode === "document") return "prep";
+    return "run";
+  }
+
+  function saveWorkspace(workspace) {
+    if (!window.CampaignPrefs) return;
+    CampaignPrefs.patch(campaignId, { workspace: workspace === "prep" ? "prep" : "run" });
+  }
+
+  /** Compatibility shim: Play ↔ Run, Document ↔ Prep */
   function loadViewMode() {
-    const saved = window.CampaignPrefs?.get(campaignId)?.viewMode;
-    if (saved === "document" || saved === "play") return saved;
-    return "play";
+    return activeWorkspace === "prep" ? "document" : "play";
   }
 
   function saveViewMode(mode) {
-    if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { viewMode: mode });
+    saveWorkspace(mode === "document" ? "prep" : "run");
   }
 
   function getSections() {
@@ -108,7 +121,7 @@
       renderPanel(activeView.id, activeView.workspace);
       return;
     }
-    if (loadViewMode() === "document" || activeView.type === "document") {
+    if (activeWorkspace === "prep" || activeView.type === "document") {
       renderScrollDocument({ preserveDraft: draft });
       setupScrollSpy();
       if (id) {
@@ -177,6 +190,10 @@
       await SectionEditor.bootstrap(campaignId, ADVENTURE.sections || []);
     }
     if (window.SceneMeta?.bootstrap) await SceneMeta.bootstrap(campaignId);
+
+    activeWorkspace = loadWorkspace();
+    SectionEditor.setEditMode(activeWorkspace === "prep");
+    saveWorkspace(activeWorkspace);
 
     if (window.CatalogueImages) {
       try {
@@ -307,9 +324,9 @@
 
     buildNav();
     bindEvents();
-    bindViewModeControls();
+    bindWorkspaceControls();
     loadSessionBadge();
-    syncEditModeUI();
+    applyWorkspaceChrome();
     MapPanel.init(campaignId);
     restoreInitialScene();
     document.body.classList.remove("is-booting");
@@ -602,18 +619,18 @@
       addGroupBtn.addEventListener("click", () => addNavGroup());
       addGroupLi.appendChild(addGroupBtn);
       sectionNav.appendChild(addGroupLi);
-    }
 
-    const addLi = document.createElement("li");
-    addLi.className = "nav-add-scene";
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "nav-btn nav-add-scene-btn";
-    addBtn.textContent = `+ ${t.addScene || t.addPassage || "Add scene"}`;
-    addBtn.title = t.addSceneHint || t.addScene || "Add a new scene";
-    addBtn.addEventListener("click", () => addPassage(null));
-    addLi.appendChild(addBtn);
-    sectionNav.appendChild(addLi);
+      const addLi = document.createElement("li");
+      addLi.className = "nav-add-scene";
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "nav-btn nav-add-scene-btn";
+      addBtn.textContent = `+ ${t.addScene || t.addPassage || "Add scene"}`;
+      addBtn.title = t.addSceneHint || t.addScene || "Add a new scene";
+      addBtn.addEventListener("click", () => addPassage(null));
+      addLi.appendChild(addBtn);
+      sectionNav.appendChild(addLi);
+    }
   }
 
   function clearNavDropTargets() {
@@ -949,9 +966,14 @@
   }
 
   function ensureEditMode() {
+    if (activeWorkspace !== "prep") {
+      setWorkspace("prep", { preservePanel: false });
+      return;
+    }
     if (SectionEditor.isEditMode()) return;
     SectionEditor.setEditMode(true);
     syncEditModeUI();
+    buildNav();
   }
 
   function addPassage(afterId) {
@@ -1190,10 +1212,6 @@
 
   function syncEditModeUI() {
     const on = SectionEditor.isEditMode();
-    if (editModeToggle) {
-      editModeToggle.classList.toggle("active", on);
-      editModeToggle.setAttribute("aria-pressed", on ? "true" : "false");
-    }
     if (formatHelp) {
       formatHelp.classList.toggle("hidden", !on);
       formatHelp.textContent = on ? `${t.formatHelp} · ${t.editModeHint}` : t.formatHelp;
@@ -1201,46 +1219,74 @@
     document.body.classList.toggle("edit-mode", on);
   }
 
-  function toggleEditMode() {
-    SectionEditor.setEditMode(!SectionEditor.isEditMode());
+  function applyWorkspaceChrome() {
+    document.body.dataset.workspace = activeWorkspace;
+    document.body.classList.toggle("workspace-prep", activeWorkspace === "prep");
+    document.body.classList.toggle("workspace-run", activeWorkspace === "run");
+    syncWorkspaceButtons();
     syncEditModeUI();
-    refreshDocument(location.hash.replace("#", "") || undefined);
+  }
+
+  function syncWorkspaceButtons() {
+    const isPrep = activeWorkspace === "prep";
+    workspaceRunBtn?.classList.toggle("is-active", !isPrep);
+    workspacePrepBtn?.classList.toggle("is-active", isPrep);
+    workspaceRunBtn?.setAttribute("aria-pressed", isPrep ? "false" : "true");
+    workspacePrepBtn?.setAttribute("aria-pressed", isPrep ? "true" : "false");
+  }
+
+  /**
+   * Switch Run | Prep. Panel views (Reference/Session) keep their content unless preservePanel is false.
+   * @param {"run"|"prep"} workspace
+   * @param {{ preservePanel?: boolean }} [opts]
+   */
+  function setWorkspace(workspace, opts = {}) {
+    const next = workspace === "prep" ? "prep" : "run";
+    const preservePanel = opts.preservePanel !== false && activeView.type === "panel";
+    activeWorkspace = next;
+    saveWorkspace(next);
+    SectionEditor.setEditMode(next === "prep");
+    applyWorkspaceChrome();
+    buildNav();
+
+    if (preservePanel) {
+      updateNavActive();
+      return;
+    }
+
+    const sceneId = focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
+    if (next === "prep") {
+      showDocumentView();
+      if (sceneId) {
+        focusedSceneId = sceneId;
+        history.replaceState(null, "", `#${sceneId}`);
+        const el = document.getElementById(`section-${sceneId}`);
+        if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+    } else {
+      if (scrollSpyObserver) scrollSpyObserver.disconnect();
+      renderPlayScene(sceneId);
+    }
+    updateNavActive();
+  }
+
+  function bindWorkspaceControls() {
+    workspaceRunBtn?.addEventListener("click", () => setWorkspace("run"));
+    workspacePrepBtn?.addEventListener("click", () => setWorkspace("prep"));
+    applyWorkspaceChrome();
   }
 
   function jumpToSection(id) {
     focusedSceneId = id;
     history.replaceState(null, "", `#${id}`);
-    const mode = loadViewMode();
-    if (mode === "document") {
-      showDocumentView();
+    if (activeWorkspace === "prep") {
+      if (activeView.type !== "document") showDocumentView();
       const el = document.getElementById(`section-${id}`);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
       renderPlayScene(id);
     }
     updateNavActive();
-  }
-
-  function syncViewModeButtons() {
-    const mode = loadViewMode();
-    viewModePlayBtn?.classList.toggle("is-active", mode === "play");
-    viewModeDocumentBtn?.classList.toggle("is-active", mode === "document");
-    viewModePlayBtn?.setAttribute("aria-pressed", mode === "play" ? "true" : "false");
-    viewModeDocumentBtn?.setAttribute("aria-pressed", mode === "document" ? "true" : "false");
-  }
-
-  function bindViewModeControls() {
-    viewModePlayBtn?.addEventListener("click", () => {
-      saveViewMode("play");
-      syncViewModeButtons();
-      jumpToSection(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
-    });
-    viewModeDocumentBtn?.addEventListener("click", () => {
-      saveViewMode("document");
-      syncViewModeButtons();
-      jumpToSection(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
-    });
-    syncViewModeButtons();
   }
 
   function showDocumentView() {
@@ -1254,8 +1300,8 @@
   }
 
   function showScrollView() {
-    /* Back-compat alias: return to the saved view mode */
-    if (loadViewMode() === "document") showDocumentView();
+    /* Back-compat alias: return to the active workspace content */
+    if (activeWorkspace === "prep") showDocumentView();
     else renderPlayScene(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
   }
 
@@ -1499,8 +1545,6 @@
     document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => showPanelView(btn.dataset.view));
     });
-
-    if (editModeToggle) editModeToggle.addEventListener("click", toggleEditMode);
 
     document.getElementById("modal-close")?.addEventListener("click", () => entityModal.close());
     document.getElementById("search-close")?.addEventListener("click", () => searchModal?.close());
