@@ -77,13 +77,21 @@ function playerFogDto(fogRaw) {
   const strokes = Object.values(strokesObj)
     .filter(Boolean)
     .sort((a, b) => (a.seq || 0) - (b.seq || 0))
-    .map((s) => ({
-      id: s.id,
-      seq: s.seq,
-      mode: s.mode === "hide" ? "hide" : "reveal",
-      radius: Number(s.radius) || 0.025,
-      points: Array.isArray(s.points) ? s.points : []
-    }));
+    .map((s) => {
+      const base = {
+        id: s.id,
+        seq: s.seq,
+        mode: s.mode === "hide" ? "hide" : "reveal"
+      };
+      if (s.shape === "rect" && Array.isArray(s.rect) && s.rect.length >= 4) {
+        return { ...base, shape: "rect", rect: s.rect.map(Number) };
+      }
+      return {
+        ...base,
+        radius: Number(s.radius) || 0.025,
+        points: Array.isArray(s.points) ? s.points : []
+      };
+    });
   return {
     enabled: Boolean(fogRaw.enabled),
     revision: Number(fogRaw.revision) || 0,
@@ -512,5 +520,6 @@ module.exports = {
   buildPlayerMapTokens,
   tokenToPlayerDto,
   enrichPlayerToken,
-  collectMapPins
+  collectMapPins,
+  playerFogDto
 };

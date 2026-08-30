@@ -117,3 +117,4 @@
 [2026-08-30] Player Map: PC-centered tactical camera (no free pan, limited zoom, session zoom only). See js/core/player-map-camera.js, player-map-view.js, docs/README/PLAYER-MAP.md
 [2026-08-30] Fix player Map blank viewport: keep world in-flow + map-tab 100dvh flex shell. See css/player.css, player-map-view.js
 [2026-08-30] Player Map zoom: former max (3.2) is now min/default; max raised to 7. See player-map-camera.js
+[2026-08-30] Fix player fog: playerFogDto now keeps rectangle select strokes (shape/rect). See server/lib/player-map.js

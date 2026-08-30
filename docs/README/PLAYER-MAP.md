@@ -62,7 +62,7 @@ Each token includes label, fresh catalogue-resolved art (`imageUrl` + optional `
 
 Token art is resolved server-side like the DM client (`tokenImage` → race-bound monster art → portrait → `/api/assets/…`), not stale stored `imageUrl` alone.
 
-Does **not** include POI/item pins, initiative, HP/AC, hidden (`visible: false`) tokens, or tokens whose center is under unrevealed fog (own PC always included).
+Does **not** include POI/item pins, initiative, HP/AC, hidden (`visible: false`) tokens, or tokens whose center is under unrevealed fog (own PC always included). Fog strokes include brush points and rectangle (`shape: "rect"`) selects via `playerFogDto`.
 
 ## Token sizing (player)
 On calibrated maps, tokens use the same grid footprint rules as DM `MapTokenSize.gridTokenStyle` — 1-cell tokens are round; Large+ are square multi-cell footprints sized as % of the map. Tokens **with art** render frameless (transparent PNG over the map, `object-fit: contain`); label-only placeholders keep the colored type ring.

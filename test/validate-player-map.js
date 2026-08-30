@@ -567,6 +567,53 @@ async function runAsyncPlayerMapTests() {
   } catch (err) {
     fail(`fog token visibility: ${err.message}`);
   }
+
+  try {
+    const mapFog = require(path.join(root, "server/lib/map-fog.js"));
+    const raw = {
+      enabled: true,
+      revision: 4,
+      revealedAll: false,
+      strokes: {
+        "fog-brush": {
+          id: "fog-brush",
+          seq: 1,
+          mode: "reveal",
+          radius: 0.05,
+          points: [[0.1, 0.1]]
+        },
+        "fog-rect": {
+          id: "fog-rect",
+          seq: 2,
+          mode: "reveal",
+          shape: "rect",
+          rect: [0.4, 0.4, 0.7, 0.7]
+        }
+      }
+    };
+    const dto = playerMap.playerFogDto(raw);
+    const brush = dto.strokes.find((s) => s.id === "fog-brush");
+    const rect = dto.strokes.find((s) => s.id === "fog-rect");
+    assert.ok(brush && Array.isArray(brush.points) && brush.points.length === 1, "brush points kept");
+    assert.ok(rect && rect.shape === "rect", "rect shape kept for player DTO");
+    assert.deepStrictEqual(rect.rect, [0.4, 0.4, 0.7, 0.7]);
+    assert.strictEqual(mapFog.isPointHidden(dto, 0.5, 0.5), false, "rect reveal opens fog on player DTO");
+    assert.strictEqual(mapFog.isPointHidden(dto, 0.9, 0.9), true);
+    const visible = mapFog.filterVisibleTokens(
+      [
+        { id: "self", isSelf: true, percent: { x: 90, y: 90 } },
+        { id: "in-rect", percent: { x: 50, y: 50 } },
+        { id: "fogged", percent: { x: 90, y: 90 } }
+      ],
+      dto
+    );
+    assert.ok(visible.some((t) => t.id === "self"));
+    assert.ok(visible.some((t) => t.id === "in-rect"));
+    assert.ok(!visible.some((t) => t.id === "fogged"));
+    pass("playerFogDto keeps rect strokes for render + token visibility");
+  } catch (err) {
+    fail(`playerFogDto rect strokes: ${err.message}`);
+  }
 }
 
 runAsyncPlayerMapTests().then(() => {

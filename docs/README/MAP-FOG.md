@@ -66,7 +66,7 @@ Strokes are rendered to an opaque mask first, then DM view applies a single `DM_
 Hidden tokens are omitted from the player API when their center lies under fog (`server/lib/map-fog.js` → `filterVisibleTokens`), except the viewer's own PC.
 
 ## Player
-Same stroke data rendered **opaque** on the player Map tab via `PlayerMapView` + `MapFog.render`.
+Same stroke data (brush **and** rectangle select) is sent via `playerFogDto` and rendered opaque on the player Map tab (`PlayerMapView` + `MapFog.render`). Rectangle strokes keep `shape: "rect"` + `rect: [x0,y0,x1,y1]`.
 
 ## Non-goals
 No LOS, walls, lighting, or vision radius — paint only.

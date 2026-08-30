@@ -27,4 +27,4 @@ node test/validate-player-map.js
 - Zoom clamped via `PLAYER_MAP_MIN_ZOOM` (3.2) / `PLAYER_MAP_MAX_ZOOM` (7) / default at min
 - Session zoom preserved; pan offsets not persisted
 - Map tab shell fills `100dvh` and `.player-map-world` stays in-flow (absolute positioning collapses the viewport)
-- Stale poll indicator
+- Fog hides unrevealed tokens but keeps own PC; **`playerFogDto` preserves rectangle select strokes** for player render + visibility
