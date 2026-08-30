@@ -12,7 +12,7 @@ Player-facing map tab — a **passive tactical aid**: show where the PC is and w
 | Zoom center | Always the PC (wheel, pinch, +/−) |
 | Persistence | Session zoom only; no stored x/y viewport offsets |
 | Follow | Poll (~1.5s) recenters when the DM moves the PC or switches maps |
-| Layout | Map world is top-left anchored in the viewport; camera pan/zoom alone place the PC on screen |
+| Layout | Map world stays in-flow (top-left); map tab shell uses `100dvh` flex so the viewport keeps height |
 
 Fog still controls what map information is visible. Camera restriction does not replace fog.
 

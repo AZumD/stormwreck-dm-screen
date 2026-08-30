@@ -115,3 +115,4 @@
 [2026-08-30] Global platform events/board + campaign hamburger nav, equal Play tabs, home day-detail UX. See server/lib/platform-events.js, platform-board.js, docs/README/PLATFORM-EVENTS.md
 [2026-08-30] DM Library wallpaper + schedule calendar, desktop/mobile layouts, DM↔Player switchers. See dm/index.html, css/landing.css, assets/dm/dmwallpaper.jpg
 [2026-08-30] Player Map: PC-centered tactical camera (no free pan, limited zoom, session zoom only). See js/core/player-map-camera.js, player-map-view.js, docs/README/PLAYER-MAP.md
+[2026-08-30] Fix player Map blank viewport: keep world in-flow + map-tab 100dvh flex shell. See css/player.css, player-map-view.js

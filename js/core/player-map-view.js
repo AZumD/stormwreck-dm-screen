@@ -356,7 +356,7 @@ window.PlayerMapView = (function () {
     zoom = clampZoom(sessionZoom);
     lastView = view;
     lastSelfKey = selfPositionKey(view);
-    centerOnSelf(view);
+    if (!centerOnSelf(view)) applyTransform();
   }
 
   async function refresh() {

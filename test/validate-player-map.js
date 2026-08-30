@@ -385,6 +385,14 @@ if (!playerCss.includes("cursor: default") || playerCss.includes("cursor: grab")
   fail("player map viewport should use default cursor (not grab)");
 } else pass("player map viewport uses default cursor");
 
+if (playerCss.includes(".player-map-world") && /player-map-world\s*\{[^}]*position:\s*absolute/s.test(playerCss)) {
+  fail("player-map-world must stay in-flow (absolute collapses viewport height)");
+} else pass("player map world stays in-flow for viewport sizing");
+
+if (!playerCss.includes('data-active-tab="map"]') || !playerCss.includes("height: 100dvh")) {
+  fail("map tab shell should fill viewport height for flex map layout");
+} else pass("map tab shell fills viewport height");
+
 const playerHtml = fs.readFileSync(path.join(root, "player/index.html"), "utf8");
 if (!playerHtml.includes("player-map-camera.js") || !playerHtml.includes("player-map-view.js")) {
   fail("player/index.html must load camera module before map view");

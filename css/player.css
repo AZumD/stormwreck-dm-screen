@@ -1156,6 +1156,15 @@ textarea { min-height: 6.5rem; resize: vertical; }
   color: var(--text);
 }
 
+.view-shell[data-active-tab="map"] {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 .view-shell[data-active-tab="map"] #main {
   padding: 0;
   flex: 1;
@@ -1166,6 +1175,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
 
 .view-shell[data-active-tab="map"] .topbar {
   padding-bottom: 0.35rem;
+  flex-shrink: 0;
 }
 
 .player-map-host,
@@ -1191,6 +1201,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   color: #c9a227;
   background: rgba(201, 162, 39, 0.12);
   border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+  flex-shrink: 0;
 }
 
 .player-map-stage {
@@ -1206,6 +1217,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.25rem 0.75rem 0.35rem;
+  flex-shrink: 0;
 }
 
 .player-map-toolbar__actions {
@@ -1248,7 +1260,7 @@ textarea { min-height: 6.5rem; resize: vertical; }
 
 .player-map-viewport {
   flex: 1;
-  min-height: 0;
+  min-height: 12rem;
   overflow: hidden;
   touch-action: none;
   cursor: default;
@@ -1257,10 +1269,9 @@ textarea { min-height: 6.5rem; resize: vertical; }
   user-select: none;
 }
 
+/* In-flow (not absolute) so the viewport keeps intrinsic height in the player shell. */
 .player-map-world {
-  position: absolute;
-  left: 0;
-  top: 0;
+  position: relative;
   transform-origin: 0 0;
   width: min(100%, calc(100% * var(--map-aspect, 1.333333)));
   max-width: 100%;
