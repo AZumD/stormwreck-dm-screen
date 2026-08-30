@@ -39,23 +39,29 @@ if (!fs.existsSync(path.join(root, "assets/medieval-fantasy-krvphc5yb1whovd1.jpg
   pass("gate background asset present");
 }
 
-if (!html.includes("landing-sidebar") || !html.includes("landing-nav")) {
-  fail("landing missing catalogue sidebar markup");
+if (!html.includes("library-continue") || !html.includes("library-tools") || !html.includes("library-campaign-list")) {
+  fail("landing missing library home layout");
 } else {
-  pass("catalogue sidebar markup");
+  pass("library home layout markup");
+}
+
+if (!html.includes("compendium/") || !html.includes("Compendium")) {
+  fail("landing missing Compendium link");
+} else {
+  pass("link compendium");
 }
 
 if (!html.includes("dm-schedule-list") || !html.includes("landing-section--schedule")) {
   fail("DM landing missing schedule panel");
 } else pass("DM landing schedule panel");
 
-if (!html.includes('href="/player/"') || !html.includes("dm-to-player")) {
-  fail("DM landing missing Player app switcher");
-} else pass("DM → Player switcher");
+if (!html.includes('href="/player/"') || !html.includes("Player App")) {
+  fail("DM landing missing Player app in Tools");
+} else pass("DM Player app in Tools");
 
-if (!css.includes("dmwallpaper.jpg") || !css.includes("landing-main-grid")) {
-  fail("landing.css missing wallpaper or desktop calendar grid");
-} else pass("DM wallpaper + desktop calendar layout");
+if (!css.includes("dmwallpaper.jpg") || !css.includes("library-home-grid")) {
+  fail("landing.css missing wallpaper or library home grid");
+} else pass("DM wallpaper + library home layout");
 
 if (!css.includes("sched-event-card") || !css.includes("width: 100%")) {
   fail("landing.css missing full-width schedule event cards");
@@ -66,9 +72,11 @@ if (!fs.existsSync(path.join(root, "assets/dm/dmwallpaper.jpg"))) {
 } else pass("DM wallpaper asset present");
 
 const landingJs = fs.readFileSync(path.join(root, "js/landing.js"), "utf8");
-if (!landingJs.includes("renderDmSchedule") || !landingJs.includes("PlayerSchedulingUI")) {
-  fail("landing.js missing schedule wiring");
-} else pass("landing.js DM schedule wiring");
+if (!landingJs.includes("renderLibraryHome") || !landingJs.includes("renderNextSessionSummary")) {
+  fail("landing.js missing library home wiring");
+} else {
+  pass("landing.js library home wiring");
+}
 
 const playerHtml = fs.readFileSync(path.join(root, "player/index.html"), "utf8");
 const playerCss = fs.readFileSync(path.join(root, "css/player.css"), "utf8");
@@ -93,13 +101,13 @@ if (!html.includes("compendium/") || !html.includes("Compendium")) {
   pass("link compendium");
 }
 
-if (!css.includes(".landing-sidebar") || !css.includes(".landing-body")) {
-  fail("landing.css missing sidebar layout");
+if (!css.includes(".library-home-grid") || !css.includes(".library-tools")) {
+  fail("landing.css missing library home layout");
 } else {
-  pass("landing sidebar styles");
+  pass("library home styles");
 }
 
-if (!html.includes("create-campaign-btn") || !html.includes("user-campaign-list")) {
+if (!html.includes("create-campaign-btn") || !html.includes("library-campaigns")) {
   fail("landing missing create/list campaign hooks");
 } else {
   pass("create campaign hooks");

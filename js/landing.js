@@ -1,5 +1,5 @@
 /**
- * DM Library landing: auth gate + list user campaigns + create + import browser data.
+ * DM Library landing: auth gate, Continue home, campaigns, tools, schedule, import.
  */
 (function () {
   "use strict";
@@ -12,7 +12,10 @@
   const sessionBox = document.getElementById("landing-session");
   const sessionLabel = document.getElementById("dm-session-label");
 
-  const listEl = document.getElementById("user-campaign-list");
+  const continueSection = document.getElementById("library-continue");
+  const continueBody = document.getElementById("library-continue-body");
+  const campaignsEl = document.getElementById("library-campaigns");
+  const nextSessionEl = document.getElementById("library-next-session");
   const createBtn = document.getElementById("create-campaign-btn");
   const dialog = document.getElementById("create-campaign-dialog");
   const form = document.getElementById("create-campaign-form");
@@ -23,13 +26,195 @@
   const importReport = document.getElementById("import-browser-report");
 
   let authMode = "unknown"; /* session | open | login */
+  let libraryBound = false;
 
   function escapeHtml(str) {
-    return String(str ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+    return window.LibrarySummary?.escapeHtml
+      ? LibrarySummary.escapeHtml(str)
+      : String(str ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+  }
+
+  function launchUrl(baseUrl, workspace) {
+    return window.LibrarySummary?.campaignLaunchUrl(baseUrl, workspace) || baseUrl;
+  }
+
+  function markCampaignOpened(campaignId) {
+    if (window.LibrarySummary) LibrarySummary.setLastOpened(campaignId);
+    if (window.CampaignRegistry && campaignId) CampaignRegistry.update(campaignId, {});
+  }
+
+  function bindCampaignNavigation(root) {
+    if (!root) return;
+    root.querySelectorAll("[data-campaign-id]").forEach((el) => {
+      el.addEventListener("click", () => {
+        markCampaignOpened(el.getAttribute("data-campaign-id"));
+      });
+    });
+  }
+
+  function renderContinueCard(summary) {
+    const continueHref = launchUrl(summary.url, null);
+    const runHref = launchUrl(summary.url, "run");
+    const prepHref = launchUrl(summary.url, "prep");
+    const sessionLine = summary.sessionLine
+      ? `<p class="library-continue-card__state">${escapeHtml(summary.sessionLine)}</p>`
+      : "";
+    let sceneBlock = "";
+    if (summary.currentSceneTitle) {
+      sceneBlock = `
+        <dl class="library-continue-card__scene">
+          <dt>Current Scene</dt>
+          <dd>${escapeHtml(summary.currentSceneTitle)}</dd>
+        </dl>`;
+    } else if (summary.currentSceneId) {
+      sceneBlock = `
+        <dl class="library-continue-card__scene">
+          <dt>Current Scene</dt>
+          <dd>${escapeHtml(summary.currentSceneId)}</dd>
+        </dl>`;
+    } else {
+      sceneBlock = `<p class="library-continue-card__scene-empty meta">No current scene set</p>`;
+    }
+    return `
+      <article class="card library-continue-card">
+        <div class="library-continue-card__body">
+          <h3 class="library-continue-card__title">${escapeHtml(summary.title)}</h3>
+          ${sessionLine}
+          ${sceneBlock}
+        </div>
+        <div class="library-continue-card__actions">
+          <a class="landing-tool-btn landing-tool-btn--primary" href="${escapeHtml(continueHref)}" data-campaign-id="${escapeHtml(summary.id)}">Continue</a>
+          <a class="landing-tool-btn" href="${escapeHtml(runHref)}" data-campaign-id="${escapeHtml(summary.id)}">Run</a>
+          <a class="landing-tool-btn" href="${escapeHtml(prepHref)}" data-campaign-id="${escapeHtml(summary.id)}">Prep</a>
+        </div>
+      </article>`;
+  }
+
+  function renderCampaignCard(def, isActive) {
+    const href = launchUrl(def.url, null);
+    const level = def.level ? `<span class="card-tag">${escapeHtml(def.level)}</span>` : "";
+    const activeBadge = isActive ? `<span class="card-status card-status--active">Active</span>` : "";
+    const sandboxBadge = def.sandbox ? `<span class="card-status card-status--sandbox">Sandbox</span>` : "";
+    const featuredClass = def.featured && !def.sandbox ? " card-campaign--featured" : "";
+    return `
+      <a class="card card-campaign${featuredClass}" href="${escapeHtml(href)}" data-campaign-id="${escapeHtml(def.id)}">
+        <div class="card-campaign__meta">
+          ${activeBadge}
+          ${sandboxBadge}
+          ${!activeBadge && !sandboxBadge && def.featured ? `<span class="card-status">Campaign</span>` : ""}
+          ${level}
+        </div>
+        <h3 class="card-campaign__title">${escapeHtml(def.title)}</h3>
+        <p class="card-campaign__desc">${escapeHtml(def.description)}</p>
+        <span class="card-action">Open</span>
+      </a>`;
+  }
+
+  async function renderLibraryHome() {
+    if (!window.LibrarySummary || !campaignsEl) return;
+
+    const continueDef = LibrarySummary.pickContinueDef();
+    const allDefs = LibrarySummary.listCampaignDefs();
+
+    if (continueDef && continueSection && continueBody) {
+      continueSection.hidden = false;
+      continueBody.innerHTML = `<p class="library-loading meta">Loading campaign…</p>`;
+      try {
+        const summary = await LibrarySummary.summarize(continueDef);
+        continueBody.innerHTML = renderContinueCard(summary);
+        bindCampaignNavigation(continueBody);
+      } catch {
+        continueBody.innerHTML = renderContinueCard({
+          ...continueDef,
+          workspace: "run",
+          sessionLine: null,
+          currentSceneId: null,
+          currentSceneTitle: null
+        });
+        bindCampaignNavigation(continueBody);
+      }
+    } else if (continueSection) {
+      continueSection.hidden = true;
+    }
+
+    if (!allDefs.length) {
+      campaignsEl.innerHTML = `
+        <p class="library-empty meta">No campaigns yet.</p>
+        <button type="button" class="card card-create library-empty-create" data-create-campaign>
+          <span class="card-tag">New</span>
+          <h3>Create your first campaign</h3>
+          <p>Start a sandbox with Run, Prep, maps, and session tools — or open the Compendium to build your world.</p>
+        </button>`;
+      campaignsEl.querySelector("[data-create-campaign]")?.addEventListener("click", () => openCreateDialog());
+      return;
+    }
+
+    campaignsEl.innerHTML = allDefs
+      .map((def) => renderCampaignCard(def, continueDef && def.id === continueDef.id))
+      .join("");
+    bindCampaignNavigation(campaignsEl);
+  }
+
+  function fmtEventWhen(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "Upcoming";
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    if (+day === +today) return `Today · ${time}`;
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (+day === +tomorrow) return `Tomorrow · ${time}`;
+    const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+    return `${weekday} · ${time}`;
+  }
+
+  async function renderNextSessionSummary(user) {
+    if (!nextSessionEl) return;
+    if (!user || !window.PlayerApiClient) {
+      nextSessionEl.innerHTML = `
+        <h3 class="library-next-session__title">Next session</h3>
+        <p class="meta library-next-session__body">Sign in to see upcoming sessions.</p>
+        <a class="library-next-session__link" href="#library-schedule">Open schedule</a>`;
+      return;
+    }
+    nextSessionEl.innerHTML = `
+      <h3 class="library-next-session__title">Next session</h3>
+      <p class="meta library-next-session__body">Loading…</p>`;
+    try {
+      const data = await PlayerApiClient.upcomingEvents({ limit: 8 });
+      const now = Date.now();
+      const events = (data?.events || []).filter((e) => {
+        const t = new Date(e.startsAt).getTime();
+        return Number.isFinite(t) && t >= now - 60000;
+      });
+      const next = events[0];
+      if (!next) {
+        nextSessionEl.innerHTML = `
+          <h3 class="library-next-session__title">Next session</h3>
+          <p class="meta library-next-session__body">No session scheduled</p>
+          <a class="library-next-session__link" href="#library-schedule">Open schedule</a>`;
+        return;
+      }
+      const title = next.title || next.campaignName || "Session";
+      const scope = next.kind === "platform" ? "Global event" : next.campaignName || "Campaign session";
+      nextSessionEl.innerHTML = `
+        <h3 class="library-next-session__title">Next session</h3>
+        <p class="library-next-session__when">${escapeHtml(fmtEventWhen(next.startsAt))}</p>
+        <p class="library-next-session__name">${escapeHtml(title)}</p>
+        <p class="meta library-next-session__scope">${escapeHtml(scope)}</p>
+        <a class="library-next-session__link" href="#library-schedule">Full schedule</a>`;
+    } catch {
+      nextSessionEl.innerHTML = `
+        <h3 class="library-next-session__title">Next session</h3>
+        <p class="meta library-next-session__body">Could not load schedule</p>
+        <a class="library-next-session__link" href="#library-schedule">Open schedule</a>`;
+    }
   }
 
   async function authJson(method, path, body, { timeoutMs = 12000 } = {}) {
@@ -110,34 +295,6 @@
     }
   }
 
-  function renderUserCampaigns() {
-    if (!listEl || !window.CampaignRegistry) return;
-    const campaigns = CampaignRegistry.list();
-    if (!campaigns.length) {
-      listEl.innerHTML = "";
-      listEl.hidden = true;
-      return;
-    }
-    listEl.hidden = false;
-    listEl.innerHTML = campaigns
-      .map((c) => {
-        const href = CampaignRegistry.sandboxUrl(c.id);
-        const desc = c.description || "Custom sandbox campaign";
-        const level = c.level ? `<span class="card-tag">${escapeHtml(c.level)}</span>` : "";
-        return `
-          <a class="card card-user-campaign" href="${escapeHtml(href)}" data-campaign-id="${escapeHtml(c.id)}">
-            <div class="card-user-campaign__meta">
-              <span class="card-status">Your campaign</span>
-              ${level}
-            </div>
-            <h3>${escapeHtml(c.title)}</h3>
-            <p>${escapeHtml(desc)}</p>
-            <span class="card-action">Open campaign</span>
-          </a>`;
-      })
-      .join("");
-  }
-
   function openCreateDialog() {
     if (!dialog || typeof dialog.showModal !== "function") {
       const title = window.prompt("Campaign title");
@@ -154,7 +311,8 @@
     if (!window.CampaignRegistry) return;
     const entry = await CampaignRegistry.create({ title, description });
     if (!entry) return;
-    window.location.href = CampaignRegistry.sandboxUrl(entry.id);
+    markCampaignOpened(entry.id);
+    window.location.href = launchUrl(CampaignRegistry.sandboxUrl(entry.id), "run");
   }
 
   async function runImport() {
@@ -195,7 +353,7 @@
       }
       if (importReport) importReport.textContent = lines.join("\n");
       await CampaignRegistry.bootstrap();
-      renderUserCampaigns();
+      await renderLibraryHome();
     } catch (err) {
       if (importReport) importReport.textContent = `Import failed: ${err.message || err}`;
     } finally {
@@ -204,6 +362,8 @@
   }
 
   function bindLibrary() {
+    if (libraryBound) return;
+    libraryBound = true;
     createBtn?.addEventListener("click", () => openCreateDialog());
     cancelBtn?.addEventListener("click", () => dialog?.close());
     form?.addEventListener("submit", (e) => {
@@ -217,13 +377,6 @@
       dialog?.close();
       createAndOpen(title, description);
     });
-
-    listEl?.addEventListener("click", (e) => {
-      const link = e.target.closest?.("a[data-campaign-id]");
-      if (!link || !window.CampaignRegistry) return;
-      CampaignRegistry.update(link.getAttribute("data-campaign-id"), {});
-    });
-
     importBtn?.addEventListener("click", () => runImport());
   }
 
@@ -293,7 +446,8 @@
     showLibrary(user || null);
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (window.CampaignRegistry?.bootstrap) await CampaignRegistry.bootstrap();
-    renderUserCampaigns();
+    await renderLibraryHome();
+    await renderNextSessionSummary(user || null);
     await renderDmSchedule(user || null);
     if (!window.LocalApiClient?.isAvailable()) {
       if (importReport) {
@@ -309,7 +463,6 @@
       const data = await authJson("GET", "/api/health", undefined, { timeoutMs: 8000 });
       return Boolean(data?.authRequired);
     } catch {
-      /* Offline / health failed — treat as local open mode */
       return false;
     }
   }
@@ -317,7 +470,6 @@
   async function resolveSession() {
     const authRequired = await readAuthRequired();
 
-    /* Local default: file DM APIs are open — skip login wall entirely. */
     if (!authRequired) {
       try {
         const data = await authJson("GET", "/api/auth/me", undefined, { timeoutMs: 4000 });
@@ -326,7 +478,7 @@
           return;
         }
       } catch {
-        /* 401/503/timeout — open without session */
+        /* open without session */
       }
       await enterLibrary(null);
       return;
@@ -402,8 +554,7 @@
   async function start() {
     document.body.classList.add("is-booting");
     bindLibrary();
-    /* Keep both views hidden under the boot overlay — showing login here made
-       the form look clickable while the overlay swallowed every click. */
+    /* Keep both views hidden during boot overlay until auth resolves */
     if (viewLogin) viewLogin.hidden = true;
     if (viewLibrary) viewLibrary.hidden = true;
     try {

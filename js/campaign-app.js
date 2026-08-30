@@ -177,6 +177,28 @@
     openSectionEditor(draft.sectionId, draft);
   }
 
+  function readLaunchWorkspace() {
+    try {
+      const ws = new URLSearchParams(window.location.search).get("workspace");
+      if (ws === "run" || ws === "prep" || ws === "map" || ws === "session") return ws;
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function clearLaunchWorkspaceParam() {
+    try {
+      if (!window.history?.replaceState) return;
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("workspace")) return;
+      url.searchParams.delete("workspace");
+      history.replaceState(null, "", url.pathname + url.search + url.hash);
+    } catch {
+      /* ignore */
+    }
+  }
+
   function init() {
     bootstrap();
   }
@@ -212,9 +234,11 @@
     }
     if (window.SceneMeta?.bootstrap) await SceneMeta.bootstrap(campaignId);
 
-    activeWorkspace = loadWorkspace();
+    const launchWorkspace = readLaunchWorkspace();
+    activeWorkspace = launchWorkspace || loadWorkspace();
     SectionEditor.setEditMode(activeWorkspace === "prep");
     saveWorkspace(activeWorkspace);
+    clearLaunchWorkspaceParam();
 
     if (window.CatalogueImages) {
       try {
