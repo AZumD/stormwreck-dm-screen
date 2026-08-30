@@ -6,7 +6,7 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 ## Surfaces
 | Path | Role |
 |------|------|
-| `/player/` | Neutral login + **Player home** (desktop 2-col: Schedule\|Board + Campaigns\|Characters; mobile stacked) + campaign workspace + character sheet |
+| `/player/` | Neutral login + **Player home** (Next session + My character(s) + Board + Campaigns; full calendar in `?view=schedule`) + campaign workspace + character sheet |
 | `js/player-app.js` | Player shell logic; **DM Library** link when user has any DM membership |
 | `js/player-scheduling.js` | Home calendar/board + campaign schedule/board UI (see `PLAYER-SCHEDULING.md`) |
 | `js/core/player-api-client.js` | Cookie-authenticated fetch helper |
@@ -16,6 +16,14 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 | `server/lib/player.js` | Player DTOs + authorization-scoped queries |
 | `server/lib/pc-catalogue-mirror.js` | Bidirectional PC catalogue ↔ campaign character sync |
 | `server/lib/revealed-npcs.js` | Phase 5D revealed NPC queries |
+
+| `test/validate-player-home.js` | Player Home composition + schedule subview checks |
+
+## Player Home (visual polish)
+- **Home** shows compact next-session summary, promoted character card(s), full-width board, then campaigns.
+- **Schedule subview** (`?view=schedule`, `#player-schedule`): full month calendar + Upcoming; **← Player home** back link.
+- Fixed `.player-atmosphere` layer — artwork covers the viewport once, fades into `--bg-deep` on long pages.
+- Header eyebrow shows signed-in display name (not generic “Signed in”).
 
 ## Player API (session required)
 | Method | Path |

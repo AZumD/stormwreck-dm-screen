@@ -1,17 +1,137 @@
 
 .home-section {
-  margin: 1.25rem 0 2rem;
+  margin: 0;
+}
+
+.home-surface {
+  padding: 1rem 1.05rem 1.15rem;
+  border: 1px solid rgba(201, 169, 98, 0.16);
+  border-radius: 0.75rem;
+  background: rgba(10, 14, 12, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.home-surface-label {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.home-next-session {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.home-next-campaign {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.home-next-when {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.home-next-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.home-rsvp {
+  display: inline-block;
+  margin-top: 0.15rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.home-rsvp--going { color: #a8d4a0; }
+.home-rsvp--maybe { color: var(--accent); }
+.home-rsvp--cant { color: var(--danger); }
+
+.home-schedule-link {
+  justify-self: start;
+  margin-top: 0.35rem;
+}
+
+.home-character-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 0.95rem;
+  background: rgba(16, 22, 18, 0.55);
+  border: 1px solid var(--border-soft);
+}
+
+.home-character-name {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.home-character-meta,
+.home-character-campaign {
+  margin: 0;
+}
+
+.home-character-list .home-character-card-btn {
+  text-align: left;
+  width: 100%;
+}
+
+.home-board-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.home-board-list .board-empty {
+  margin: 0;
+  padding: 0.35rem 0;
+}
+
+.home-campaign-list .home-campaign-card {
+  text-align: left;
+  width: 100%;
+}
+
+.home-campaign-name {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.home-section--campaigns {
+  opacity: 0.96;
+}
+
+.player-schedule-view__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1rem;
+  padding: 0.15rem 0 0.35rem;
+}
+
+.player-schedule-view__title {
+  margin: 0;
+}
+
+.player-view--schedule .home-section-head h2,
+.player-view--schedule .sched-section-title {
+  font-size: 1rem;
 }
 
 @media (min-width: 960px) {
   .view-home .home-section {
     margin: 0;
-    padding: 1rem 1.05rem 1.15rem;
-    border: 1px solid rgba(201, 169, 98, 0.16);
-    border-radius: 0.75rem;
-    background: rgba(10, 14, 12, 0.42);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
   }
 }
 

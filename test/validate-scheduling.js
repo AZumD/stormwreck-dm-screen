@@ -76,30 +76,39 @@ if (!playerHtml.includes("campaign-section-nav") || !playerHtml.includes('data-c
   } else pass("campaign Play|Schedule|Board nav");
 } else pass("campaign Play|Schedule|Board nav");
 
-if (!playerHtml.includes("home-schedule-list")) fail("player home missing schedule section");
-else pass("player global schedule section");
+if (!playerHtml.includes("player-schedule-list")) fail("player home missing schedule subview host");
+else pass("player schedule subview host");
+
+if (!playerHtml.includes("home-next-session")) fail("player home missing next session summary");
+else pass("player home next session summary");
 
 {
-  const scheduleIdx = playerHtml.indexOf(">Schedule<");
-  const boardIdx = playerHtml.indexOf('id="home-board-list"');
-  const campaignsIdx = playerHtml.indexOf(">My campaigns<");
-  const charactersIdx = playerHtml.indexOf(">My characters<");
-  if (scheduleIdx < 0 || campaignsIdx < 0 || charactersIdx < 0) {
-    fail("player home missing Schedule / My campaigns / My characters headings");
-  } else if (boardIdx > 0 && !(scheduleIdx < boardIdx && boardIdx < campaignsIdx && campaignsIdx < charactersIdx)) {
-    fail("player home order must be Schedule → Board → My campaigns → My characters");
-  } else if (boardIdx < 0 && !(scheduleIdx < campaignsIdx && campaignsIdx < charactersIdx)) {
-    fail("player home order must be Schedule → My campaigns → My characters");
-  } else pass("player home order Schedule → Board → campaigns → characters");
+  const nextIdx = playerHtml.indexOf("home-next-session");
+  const charIdx = playerHtml.indexOf("home-character");
+  const boardIdx = playerHtml.indexOf("home-board-list");
+  const campaignsIdx = playerHtml.indexOf("campaign-list");
+  if (nextIdx < 0 || charIdx < 0 || boardIdx < 0 || campaignsIdx < 0) {
+    fail("player home missing Next session / Character / Board / Campaigns sections");
+  } else if (!(nextIdx < charIdx && charIdx < boardIdx && boardIdx < campaignsIdx)) {
+    fail("player home order must be Next session → Character → Board → Campaigns");
+  } else pass("player home order next → character → board → campaigns");
 }
+
+if (playerHtml.includes("home-schedule-list")) {
+  fail("full calendar must not remain embedded in player home");
+} else pass("no inline home calendar on player home");
 
 if (playerHtml.includes('data-open-availability')) {
   fail("home must show calendar inline (no My availability gate button)");
 } else pass("home availability calendar is inline (no gate button)");
 
+if (!schedUiSrc.includes("renderNextSessionSummary")) {
+  fail("player-scheduling must render compact next session on home");
+} else pass("home next session summary renderer");
+
 if (!schedUiSrc.includes("home-sched-panel") || !schedUiSrc.includes("calendarGrid")) {
-  fail("renderHomeSchedule must render inline calendar");
-} else pass("home schedule renders inline calendar");
+  fail("renderHomeSchedule must render full calendar in schedule subview");
+} else pass("schedule subview renders full calendar");
 
 if (playerAppSrc.includes("availabilityMain")) {
   fail("player-app should not reference removed availability-main");

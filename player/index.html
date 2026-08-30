@@ -8,10 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/player.css?v=20260830m8">
-  <link rel="stylesheet" href="/css/player-platform.css?v=20260830s3">
+  <link rel="stylesheet" href="/css/player.css?v=20260831p1">
+  <link rel="stylesheet" href="/css/player-platform.css?v=20260831p1">
 </head>
 <body class="player-body">
+  <div class="player-atmosphere" aria-hidden="true"></div>
   <div id="app">
     <section id="view-login" class="view view-login" hidden>
       <header class="hero">
@@ -29,41 +30,51 @@
     <section id="view-home" class="view view-home" hidden>
       <header class="topbar">
         <div>
-          <p class="eyebrow">Signed in</p>
+          <p class="eyebrow" id="home-user-eyebrow"></p>
           <h1>Player home</h1>
         </div>
         <div class="topbar-end">
           <a class="btn btn-ghost btn-sm" id="player-to-dm" href="/dm/" hidden>DM Library</a>
-          <span id="home-user-name" class="shell-user-name"></span>
           <button type="button" class="btn btn-ghost" id="logout-home">Log out</button>
         </div>
       </header>
-      <section class="home-section home-section--schedule">
-        <div class="home-section-head">
-          <h2>Schedule</h2>
+
+      <div id="player-view-home" class="player-view player-view--home">
+        <div class="player-home-primary">
+          <section class="home-section home-section--next home-surface">
+            <div id="home-next-session" class="home-next-session"></div>
+          </section>
+          <section class="home-section home-section--character home-surface">
+            <div class="home-section-head">
+              <h2 id="home-character-heading">My character</h2>
+              <button type="button" class="btn btn-primary btn-sm" id="create-character-home">New character</button>
+            </div>
+            <div id="home-character-spotlight"></div>
+            <ul id="character-list" class="list home-character-list" hidden></ul>
+          </section>
         </div>
-        <div id="home-schedule-list"></div>
-      </section>
-      <section class="home-section home-section--board">
-        <div class="home-section-head">
-          <h2>Board</h2>
-          <button type="button" class="btn btn-primary btn-sm" data-platform-board-new>New post</button>
-        </div>
-        <div id="home-board-list"></div>
-      </section>
-      <section class="home-section home-section--campaigns">
-        <div class="home-section-head">
-          <h2>My campaigns</h2>
-        </div>
-        <ul id="campaign-list" class="list"></ul>
-      </section>
-      <section class="home-section home-section--characters">
-        <div class="home-section-head">
-          <h2>My characters</h2>
-          <button type="button" class="btn btn-primary btn-sm" id="create-character-home">New character</button>
-        </div>
-        <ul id="character-list" class="list"></ul>
-      </section>
+        <section class="home-section home-section--board home-surface">
+          <div class="home-section-head">
+            <h2>Board</h2>
+            <button type="button" class="btn btn-primary btn-sm" data-platform-board-new>New post</button>
+          </div>
+          <div id="home-board-list" class="home-board-list"></div>
+        </section>
+        <section class="home-section home-section--campaigns home-surface">
+          <div class="home-section-head">
+            <h2>My campaigns</h2>
+          </div>
+          <ul id="campaign-list" class="list home-campaign-list"></ul>
+        </section>
+      </div>
+
+      <div id="player-view-schedule" class="player-view player-view--schedule" hidden>
+        <header class="player-schedule-view__head">
+          <button type="button" id="player-schedule-back" class="btn btn-ghost btn-back" data-player-view="home">← Player home</button>
+          <h2 class="home-surface-label player-schedule-view__title">Schedule</h2>
+        </header>
+        <div id="player-schedule-list"></div>
+      </div>
     </section>
 
     <section id="view-character-shell" class="view view-shell" hidden>
@@ -386,7 +397,7 @@
   <script src="/js/core/player-map-camera.js?v=20260830m2"></script>
   <script src="/js/core/player-map-view.js?v=20260830m6"></script>
   <script src="/js/core/player-api-client.js?v=20260830s1"></script>
-  <script src="/js/player-scheduling.js?v=20260830s1"></script>
-  <script src="/js/player-app.js?v=20260830s1"></script>
+  <script src="/js/player-scheduling.js?v=20260831p1"></script>
+  <script src="/js/player-app.js?v=20260831p1"></script>
 </body>
 </html>

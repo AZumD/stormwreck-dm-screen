@@ -122,6 +122,78 @@ window.PlayerSchedulingUI = (function () {
     ctx.state.personalAvailability = map;
   }
 
+  function rsvpCompactHtml(status) {
+    if (status === "going") return `<span class="home-rsvp home-rsvp--going">✓ Going</span>`;
+    if (status === "maybe") return `<span class="home-rsvp home-rsvp--maybe">? Maybe</span>`;
+    if (status === "cant") return `<span class="home-rsvp home-rsvp--cant">× Can't make it</span>`;
+    return `<button type="button" class="linkish" data-player-view="schedule">Respond</button>`;
+  }
+
+  function scheduleViewLink(label) {
+    return `<button type="button" class="linkish home-schedule-link" data-player-view="schedule">${esc(label)}</button>`;
+  }
+
+  function personalScheduleContainer() {
+    return ctx.els.playerScheduleList || ctx.els.homeScheduleList;
+  }
+
+  async function refreshPersonalScheduleViews() {
+    const scheduleEl = personalScheduleContainer();
+    if (scheduleEl && ctx.state.playerHomeView === "schedule") {
+      await renderHomeSchedule(scheduleEl);
+    }
+    if (ctx.els.homeNextSession) {
+      await renderNextSessionSummary(ctx.els.homeNextSession);
+    }
+  }
+
+  function pickNextSessionEvent(events) {
+    const now = Date.now();
+    const upcoming = (events || []).filter((e) => {
+      const t = new Date(e.startsAt).getTime();
+      return Number.isFinite(t) && t >= now - 60000;
+    });
+    return upcoming.find((e) => e.kind === "campaign") || upcoming[0] || null;
+  }
+
+  async function renderNextSessionSummary(container) {
+    if (!container) return;
+    container.innerHTML = `
+      <h3 class="home-surface-label">Next session</h3>
+      <p class="meta home-next-loading">Loading…</p>`;
+    const data = await ctx.safe(() => ctx.api.upcomingEvents({ limit: 12 }));
+    if (!data) {
+      container.innerHTML = `
+        <h3 class="home-surface-label">Next session</h3>
+        <p class="empty">Could not load schedule</p>
+        ${scheduleViewLink("View schedule")}`;
+      return;
+    }
+    const next = pickNextSessionEvent(data.events || []);
+    if (!next) {
+      container.innerHTML = `
+        <h3 class="home-surface-label">Next session</h3>
+        <p class="empty home-next-empty">No upcoming session scheduled</p>
+        ${scheduleViewLink("View schedule")}`;
+      return;
+    }
+    const isCampaign = next.kind === "campaign";
+    const label = isCampaign ? "Next session" : "Next event";
+    const campaignLine = isCampaign
+      ? next.campaignName || next.scopeLabel || "Campaign session"
+      : next.scopeLabel || "Global event";
+    const title = next.title || (isCampaign ? "Session" : "Event");
+    const when = fmtEventWhen(next.startsAt);
+    const rsvp = isCampaign ? rsvpCompactHtml(next.myRsvpStatus) : "";
+    container.innerHTML = `
+      <h3 class="home-surface-label">${esc(label)}</h3>
+      <p class="home-next-campaign">${esc(campaignLine)}</p>
+      <p class="home-next-when">${esc(when)}</p>
+      <p class="home-next-title">${esc(title)}</p>
+      ${rsvp}
+      ${scheduleViewLink("View schedule")}`;
+  }
+
   async function renderHomeSchedule(container) {
     if (!container) return;
     const now = new Date();
@@ -214,7 +286,7 @@ window.PlayerSchedulingUI = (function () {
     };
     container.innerHTML = ctx.state.platformPosts.length
       ? ctx.state.platformPosts.map(renderPost).join("")
-      : `<p class="empty">No posts yet. Start a conversation.</p>`;
+      : `<p class="empty board-empty">No posts yet.<br>Start the first conversation.</p>`;
   }
 
   async function openHomeDayDetail(dateStr) {
@@ -583,7 +655,7 @@ window.PlayerSchedulingUI = (function () {
       }
 
       const personalDate = e.target.closest("[data-sched-date]");
-      if (personalDate && personalDate.closest("#home-schedule-list")) {
+      if (personalDate && personalDate.closest("#player-schedule-list, #home-schedule-list")) {
         await openHomeDayDetail(personalDate.getAttribute("data-sched-date"));
         return;
       }
@@ -615,12 +687,12 @@ window.PlayerSchedulingUI = (function () {
       }
       if (e.target.closest("[data-personal-cal-prev]")) {
         ctx.state.personalCal = addMonths(ctx.state.personalCal.year, ctx.state.personalCal.month, -1);
-        await renderHomeSchedule(ctx.els.homeScheduleList);
+        await renderHomeSchedule(personalScheduleContainer());
         return;
       }
       if (e.target.closest("[data-personal-cal-next]")) {
         ctx.state.personalCal = addMonths(ctx.state.personalCal.year, ctx.state.personalCal.month, 1);
-        await renderHomeSchedule(ctx.els.homeScheduleList);
+        await renderHomeSchedule(personalScheduleContainer());
         return;
       }
       if (e.target.closest("[data-campaign-cal-prev]")) {
@@ -659,7 +731,7 @@ window.PlayerSchedulingUI = (function () {
         await ctx.safe(() => ctx.api.deletePlatformEvent(id));
         ctx.els.eventDetailDialog?.close();
         ctx.els.availabilityDialog?.close();
-        await renderHomeSchedule(ctx.els.homeScheduleList);
+        await renderHomeSchedule(personalScheduleContainer());
         return;
       }
       const fromDay = e.target.closest("[data-schedule-from-day]");
@@ -807,7 +879,7 @@ window.PlayerSchedulingUI = (function () {
         );
       }
       await loadPersonalMonth(ctx.state.personalCal.year, ctx.state.personalCal.month);
-      await renderHomeSchedule(ctx.els.homeScheduleList);
+      await refreshPersonalScheduleViews();
       if (ctx.state.selectedHomeDate) await openHomeDayDetail(ctx.state.selectedHomeDate);
     });
 
@@ -832,7 +904,7 @@ window.PlayerSchedulingUI = (function () {
         ctx.state.editingPlatformEventId = null;
         ctx.state.editingPlatformEvent = null;
         f.closest("dialog")?.close();
-        await renderHomeSchedule(ctx.els.homeScheduleList);
+        await renderHomeSchedule(personalScheduleContainer());
         return;
       }
       if (ctx.state.editingEventId) {
@@ -900,6 +972,7 @@ window.PlayerSchedulingUI = (function () {
 
   return {
     init,
+    renderNextSessionSummary,
     renderHomeSchedule,
     renderHomeBoard,
     renderCampaignSection,

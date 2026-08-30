@@ -19,7 +19,7 @@
     shellCampaign: document.getElementById("shell-campaign"),
     shellTitle: document.getElementById("shell-title"),
     shellUserName: document.getElementById("shell-user-name"),
-    homeUserName: document.getElementById("home-user-name"),
+    homeUserEyebrow: document.getElementById("home-user-eyebrow"),
     characterUserName: document.getElementById("character-user-name"),
     playerToDm: document.getElementById("player-to-dm"),
     campaignMenuBtn: document.getElementById("campaign-menu-btn"),
@@ -70,7 +70,13 @@
     attachCampaignSelect: document.getElementById("attach-campaign-select"),
     attachCampaignEmpty: document.getElementById("attach-campaign-empty"),
     attachCampaignCancel: document.getElementById("attach-campaign-cancel"),
-    homeScheduleList: document.getElementById("home-schedule-list"),
+    homeNextSession: document.getElementById("home-next-session"),
+    homeCharacterHeading: document.getElementById("home-character-heading"),
+    homeCharacterSpotlight: document.getElementById("home-character-spotlight"),
+    playerViewHome: document.getElementById("player-view-home"),
+    playerViewSchedule: document.getElementById("player-view-schedule"),
+    playerScheduleList: document.getElementById("player-schedule-list"),
+    playerScheduleBack: document.getElementById("player-schedule-back"),
     homeBoardList: document.getElementById("home-board-list"),
     availabilityDialog: document.getElementById("availability-dialog"),
     availabilityForm: document.getElementById("availability-form"),
@@ -135,6 +141,7 @@
     addSearchTimer: null,
     addResults: [],
     campaignSection: "play",
+    playerHomeView: "home",
     personalCal: null,
     campaignCal: null,
     personalAvailability: {},
@@ -194,6 +201,165 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  let playerHomeScrollY = 0;
+  let playerHomeViewBound = false;
+
+  function normalizePlayerHomeView(raw) {
+    return raw === "schedule" ? "schedule" : "home";
+  }
+
+  function readPlayerHomeViewFromUrl() {
+    try {
+      const view = new URLSearchParams(location.search).get("view");
+      if (view === "schedule") return "schedule";
+      if (location.hash === "#player-schedule" || location.hash === "#schedule") return "schedule";
+    } catch {
+      /* ignore */
+    }
+    return "home";
+  }
+
+  function buildPlayerHomeViewUrl(view) {
+    const url = new URL(location.href);
+    if (view === "schedule") url.searchParams.set("view", "schedule");
+    else url.searchParams.delete("view");
+    url.hash = "";
+    return url.pathname + url.search;
+  }
+
+  async function renderPlayerScheduleView() {
+    if (els.playerScheduleList && window.PlayerSchedulingUI) {
+      await PlayerSchedulingUI.renderHomeSchedule(els.playerScheduleList);
+    }
+  }
+
+  function setPlayerHomeView(view, opts = {}) {
+    const next = normalizePlayerHomeView(view);
+    const prev = state.playerHomeView;
+    const { push = false, replace = false, restoreHomeScroll = false } = opts;
+
+    if (next === "schedule" && prev === "home") playerHomeScrollY = window.scrollY;
+
+    state.playerHomeView = next;
+
+    if (els.playerViewHome) els.playerViewHome.hidden = next !== "home";
+    if (els.playerViewSchedule) els.playerViewSchedule.hidden = next !== "schedule";
+
+    document.body.classList.toggle("player-view--schedule", next === "schedule");
+    document.body.classList.toggle("player-view--home", next === "home");
+
+    const url = buildPlayerHomeViewUrl(next);
+    if (push) history.pushState({ playerHomeView: next }, "", url);
+    else if (replace) history.replaceState({ playerHomeView: next }, "", url);
+
+    if (next === "schedule") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      void renderPlayerScheduleView();
+      requestAnimationFrame(() => els.playerScheduleBack?.focus());
+    } else {
+      window.scrollTo({ top: restoreHomeScroll ? playerHomeScrollY : 0, behavior: "auto" });
+    }
+  }
+
+  function openPlayerScheduleView(opts = {}) {
+    setPlayerHomeView("schedule", { push: opts.push !== false });
+  }
+
+  function openPlayerHomeView(opts = {}) {
+    setPlayerHomeView("home", { push: opts.push !== false, restoreHomeScroll: true });
+  }
+
+  function bindPlayerHomeViewNavigation() {
+    if (playerHomeViewBound) return;
+    playerHomeViewBound = true;
+
+    els.playerScheduleBack?.addEventListener("click", () => openPlayerHomeView({ push: true }));
+
+    document.addEventListener("click", (e) => {
+      const trigger = e.target.closest("[data-player-view]");
+      if (!trigger || state.viewMode !== "home") return;
+      const target = trigger.getAttribute("data-player-view");
+      if (target === "schedule") {
+        e.preventDefault();
+        openPlayerScheduleView({ push: true });
+      } else if (target === "home") {
+        e.preventDefault();
+        openPlayerHomeView({ push: true });
+      }
+    });
+
+    window.addEventListener("popstate", () => {
+      if (state.viewMode !== "home") return;
+      setPlayerHomeView(readPlayerHomeViewFromUrl(), {
+        replace: true,
+        restoreHomeScroll: true
+      });
+    });
+
+    window.addEventListener("hashchange", () => {
+      if (state.viewMode !== "home") return;
+      if (location.hash !== "#player-schedule" && location.hash !== "#schedule") return;
+      history.replaceState({ playerHomeView: "schedule" }, "", buildPlayerHomeViewUrl("schedule"));
+      setPlayerHomeView("schedule", { replace: true });
+    });
+  }
+
+  function gameSystemLabel(id) {
+    const systems = state.bootstrap?.gameSystems || [];
+    const match = systems.find((s) => s.id === id);
+    return match?.name || id || "D&D 5e";
+  }
+
+  function renderCharacterHomeSection() {
+    const chars = state.myCharacters;
+    if (els.homeCharacterHeading) {
+      els.homeCharacterHeading.textContent = chars.length === 1 ? "My character" : "My characters";
+    }
+    if (!chars.length) {
+      if (els.homeCharacterSpotlight) {
+        els.homeCharacterSpotlight.innerHTML = `<p class="empty">No characters yet.</p>`;
+      }
+      if (els.characterList) {
+        els.characterList.innerHTML = "";
+        els.characterList.hidden = true;
+      }
+      return;
+    }
+    if (chars.length === 1) {
+      const c = chars[0];
+      const camp = (c.campaigns || [])[0];
+      const campName = camp?.name || "";
+      if (els.homeCharacterSpotlight) {
+        els.homeCharacterSpotlight.innerHTML = `
+          <article class="home-character-card card">
+            <h3 class="home-character-name">${esc(c.name)}</h3>
+            <p class="meta home-character-meta">Level ${esc(String(c.level || 1))} · ${esc(gameSystemLabel(c.gameSystemId))}</p>
+            ${campName ? `<p class="meta home-character-campaign">${esc(campName)}</p>` : ""}
+            <button type="button" class="btn btn-primary btn-sm" data-character-id="${esc(c.id)}">Open character</button>
+          </article>`;
+      }
+      if (els.characterList) {
+        els.characterList.innerHTML = "";
+        els.characterList.hidden = true;
+      }
+      return;
+    }
+    if (els.homeCharacterSpotlight) els.homeCharacterSpotlight.innerHTML = "";
+    if (els.characterList) {
+      els.characterList.hidden = false;
+      els.characterList.innerHTML = chars
+        .map(
+          (c) => `<li>
+          <button type="button" class="card card-btn home-character-card-btn" data-character-id="${esc(c.id)}">
+            <h3 class="home-character-name">${esc(c.name)}</h3>
+            <p class="meta">Level ${esc(String(c.level || 1))} · ${esc(gameSystemLabel(c.gameSystemId))}${(c.campaigns || []).length ? ` · ${c.campaigns.length} campaign(s)` : ""}</p>
+          </button>
+        </li>`
+        )
+        .join("");
+    }
   }
 
   function displayRefLabel(raw) {
@@ -1187,7 +1353,12 @@
 
   function setUserChrome() {
     const name = state.bootstrap?.user?.name || "";
-    [els.homeUserName, els.shellUserName, els.characterUserName].forEach((el) => {
+    if (els.homeUserEyebrow) {
+      els.homeUserEyebrow.textContent = name;
+      els.homeUserEyebrow.hidden = !name;
+      els.homeUserEyebrow.title = name;
+    }
+    [els.shellUserName, els.characterUserName].forEach((el) => {
       if (!el) return;
       el.textContent = name;
       el.hidden = !name;
@@ -1204,6 +1375,7 @@
   }
 
   function goHome() {
+    setPlayerHomeView("home", { replace: true });
     renderHome();
     show("home");
   }
@@ -1212,44 +1384,44 @@
     setUserChrome();
     const campaigns = state.bootstrap?.campaigns || [];
     if (!campaigns.length) {
-      els.campaignList.innerHTML = `<li class="empty">No campaign memberships yet.</li>`;
+      els.campaignList.innerHTML = `<li class="empty">Campaigns you join will appear here.</li>`;
     } else {
       els.campaignList.innerHTML = campaigns
-        .map(
-          (c) => `<li>
-          <button type="button" class="card card-btn" data-campaign-id="${esc(c.id)}">
-            <h2>${esc(c.name)}</h2>
-            <p class="meta">${esc(c.role)} · ${(c.participatingCharacters || c.controlledCharacters || []).length} character(s)</p>
+        .map((c) => {
+          const chars = c.participatingCharacters || c.controlledCharacters || [];
+          const charLine =
+            chars.length === 1
+              ? esc(chars[0].name)
+              : chars.length
+                ? `${chars.length} character(s)`
+                : "No linked character";
+          const roleLabel = String(c.role || "player").toLowerCase() === "dm" ? "DM" : "Player";
+          return `<li>
+          <button type="button" class="card card-btn home-campaign-card" data-campaign-id="${esc(c.id)}">
+            <h3 class="home-campaign-name">${esc(c.name)}</h3>
+            <p class="meta">${esc(roleLabel)} · ${charLine}</p>
           </button>
-        </li>`
-        )
+        </li>`;
+        })
         .join("");
     }
     state.myCharacters = state.bootstrap?.characters || [];
-    if (!state.myCharacters.length) {
-      els.characterList.innerHTML = `<li class="empty">No characters yet.</li>`;
-    } else {
-      els.characterList.innerHTML = state.myCharacters
-        .map(
-          (c) => `<li>
-          <button type="button" class="card card-btn" data-character-id="${esc(c.id)}">
-            <h2>${esc(c.name)}</h2>
-            <p class="meta">Level ${esc(String(c.level || 1))} · ${esc(c.gameSystemId || "dnd5e")}${(c.campaigns || []).length ? ` · ${c.campaigns.length} campaign(s)` : ""}</p>
-          </button>
-        </li>`
-        )
-        .join("");
-    }
+    renderCharacterHomeSection();
     if (window.PlayerSchedulingUI) {
-      if (els.homeScheduleList) await PlayerSchedulingUI.renderHomeSchedule(els.homeScheduleList);
+      if (els.homeNextSession) await PlayerSchedulingUI.renderNextSessionSummary(els.homeNextSession);
       if (els.homeBoardList) await PlayerSchedulingUI.renderHomeBoard(els.homeBoardList);
+    }
+    if (state.playerHomeView === "schedule") {
+      await renderPlayerScheduleView();
     }
   }
 
   async function afterLogin(bootstrap) {
     state.bootstrap = bootstrap;
+    bindPlayerHomeViewNavigation();
     renderHome();
     show("home");
+    setPlayerHomeView(readPlayerHomeViewFromUrl(), { replace: true });
   }
 
   async function openRef(type, id) {
@@ -1605,6 +1777,12 @@
   });
 
   els.characterList?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-character-id]");
+    if (!btn) return;
+    await openCharacter(btn.getAttribute("data-character-id"));
+  });
+
+  els.homeCharacterSpotlight?.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-character-id]");
     if (!btn) return;
     await openCharacter(btn.getAttribute("data-character-id"));

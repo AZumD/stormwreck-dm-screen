@@ -7,9 +7,11 @@ Player companion UI for global availability, platform + campaign schedule, event
 `js/player-scheduling.js` (loaded by `/player/`)
 
 ## Home (global)
-- **Schedule** first: personal month calendar (availability + gold dots for global events), day dialog (availability editor + global events + create), combined Upcoming (GLOBAL vs campaign labels).
-- **Board**: platform message board (post / reply / edit own).
-- Then My campaigns / My characters.
+- **Next session** compact summary (campaign, when, title, RSVP state, **View schedule**).
+- **My character(s)** promoted beside next session; single character gets spotlight card.
+- **Board** full width below primary row; compact empty state.
+- **My campaigns** secondary at bottom.
+- **Schedule subview** (`?view=schedule`): full month calendar, day dialog, Upcoming list; reuses `renderHomeSchedule`.
 
 ## Campaign workspace
 - Compact **hamburger** menu: Play / Schedule / Board / Home (no permanent segmented row).

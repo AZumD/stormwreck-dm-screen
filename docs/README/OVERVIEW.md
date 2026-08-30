@@ -143,5 +143,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-live-session`, `validate-compendium`, `validate-dm-ui`, `validate-layout`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-live-session`, `validate-compendium`, `validate-dm-ui`, `validate-layout`, `validate-player-home`, …); browser smoke HTML under `test/`.
 
