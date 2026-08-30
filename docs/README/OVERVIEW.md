@@ -37,7 +37,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **Scene state** — unseen / current / completed / skipped + per-scene notes (`campaign-state.json`)
 - **Day / time** — tenday (1–10) + time of day in the sticky top chrome; persists in `CampaignState.clock`
 - **NPC memory** — attitude, mood, last seen, notes, flags (separate from catalogue)
-- **History** — structured timeline entries; Session Notes remain freeform
+- **History** — structured timeline entries under Session → Log; Session Notes remain freeform
 - **Chronicle** — authored Story So Far, session prose, and curated Key Events (`chronicle.json`) — separate from History
 - **Party** — add/remove PCs and companion NPCs from catalogues (no hardcoded placeholders)
 - **Music mixer** — map-rail Music tab; campaign-persisted catalogue tracks with play/volume/loop/reorder (`docs/README/MUSIC-MIXER-UI.md`)

@@ -44,10 +44,9 @@ else pass("Chronicle wiki links");
 if (!app.includes('case "chronicle"') || !app.includes("ChronicleUI.init")) fail("campaign-app chronicle wiring");
 else pass("campaign-app Chronicle panel");
 
-if (!html.includes('data-view="chronicle"') || !html.includes("chronicle-store.js") || !html.includes("key-event-dialog")) {
+if (!html.includes('data-view="session"') || !html.includes("chronicle-store.js") || !html.includes("key-event-dialog")) {
   fail("campaign HTML chronicle wiring");
 } else pass("campaign HTML Chronicle");
-
 if (!histUi.includes("data-promote-history") || !histUi.includes("promoteHistoryEntry")) {
   fail("History promote missing");
 } else pass("History Make Key Event");

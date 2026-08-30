@@ -34,8 +34,31 @@
   const viewModePlayBtn = document.getElementById("view-mode-play");
   const viewModeDocumentBtn = document.getElementById("view-mode-document");
 
-  /** @type {{ type: "play"|"document"|"panel", id?: string }} */
+  /** @type {{ type: "play"|"document"|"panel", id?: string, workspace?: "reference"|"session"|null }} */
   let activeView = { type: "play" };
+
+  const REFERENCE_TABS = [
+    { id: "npcs", label: "NPCs" },
+    { id: "monsters", label: "Monsters" },
+    { id: "locations", label: "Locations" }
+  ];
+  const SESSION_TABS = [
+    { id: "notes", label: "Notes" },
+    { id: "history", label: "Log" },
+    { id: "chronicle", label: "Chronicle" },
+    { id: "checklist", label: "Progress" }
+  ];
+  const REFERENCE_TAB_IDS = new Set(REFERENCE_TABS.map((t) => t.id));
+  const SESSION_TAB_IDS = new Set(SESSION_TABS.map((t) => t.id));
+  const LEGACY_PANEL_TO_WORKSPACE = {
+    npcs: "reference",
+    monsters: "reference",
+    locations: "reference",
+    notes: "session",
+    history: "session",
+    chronicle: "session",
+    checklist: "session"
+  };
   let focusedSceneId = null;
   let scrollSpyObserver = null;
   let editingSectionId = null;
@@ -82,7 +105,7 @@
     buildNav();
     const id = focusSectionId || focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
     if (activeView.type === "panel") {
-      renderPanel(activeView.id);
+      renderPanel(activeView.id, activeView.workspace);
       return;
     }
     if (loadViewMode() === "document" || activeView.type === "document") {
@@ -255,7 +278,9 @@
             }
           },
           refreshHistoryPanel: () => {
-            if (activeView.type === "panel" && activeView.id === "history") renderPanel("history");
+            if (activeView.type === "panel" && activeView.id === "history") {
+              renderPanel(activeView.id, activeView.workspace || "session");
+            }
           }
         }
       });
@@ -272,7 +297,9 @@
             return section ? getSectionData(section).title : id;
           },
           refreshChroniclePanel: () => {
-            if (activeView.type === "panel" && activeView.id === "chronicle") renderPanel("chronicle");
+            if (activeView.type === "panel" && activeView.id === "chronicle") {
+              renderPanel(activeView.id, activeView.workspace || "session");
+            }
           }
         }
       });
@@ -323,7 +350,7 @@
       /* Native prompt() for @link tags blurs the window; do not wipe an open editor */
       if (editingSectionId) return;
       if (activeView.type === "panel") {
-        renderPanel(activeView.id);
+        renderPanel(activeView.id, activeView.workspace);
       } else if (activeView.type === "play") {
         renderPlayScene(focusedSceneId);
       } else {
@@ -1233,50 +1260,160 @@
   }
 
   function showPanelView(view) {
-    activeView = { type: "panel", id: view };
+    const resolved = resolvePanelRequest(view);
+    activeView = {
+      type: "panel",
+      id: resolved.tab,
+      workspace: resolved.workspace
+    };
     if (playView) playView.classList.add("hidden");
     scrollDocument.classList.add("hidden");
     panelView.classList.remove("hidden");
     if (scrollSpyObserver) scrollSpyObserver.disconnect();
-    renderPanel(view);
+    if (resolved.workspace === "reference") saveReferenceTab(resolved.tab);
+    if (resolved.workspace === "session") saveSessionTab(resolved.tab);
+    renderPanel(resolved.tab, resolved.workspace);
     updateNavActive();
   }
 
-  function renderPanel(view) {
+  function workspaceForPanel(panelId) {
+    return LEGACY_PANEL_TO_WORKSPACE[panelId] || null;
+  }
+
+  function normalizeReferenceTab(tab) {
+    return REFERENCE_TAB_IDS.has(tab) ? tab : "npcs";
+  }
+
+  function normalizeSessionTab(tab) {
+    return SESSION_TAB_IDS.has(tab) ? tab : "notes";
+  }
+
+  function loadReferenceTab() {
+    const saved = window.CampaignPrefs?.get(campaignId)?.referenceTab;
+    return normalizeReferenceTab(saved);
+  }
+
+  function loadSessionTab() {
+    const saved = window.CampaignPrefs?.get(campaignId)?.sessionTab;
+    return normalizeSessionTab(saved);
+  }
+
+  function saveReferenceTab(tab) {
+    if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { referenceTab: normalizeReferenceTab(tab) });
+  }
+
+  function saveSessionTab(tab) {
+    if (window.CampaignPrefs) CampaignPrefs.patch(campaignId, { sessionTab: normalizeSessionTab(tab) });
+  }
+
+  /**
+   * Resolve sidebar / deep-link panel ids into a workspace + leaf tab.
+   * Accepts: reference, session, npcs, history, reference:npcs, session:history, …
+   */
+  function resolvePanelRequest(view) {
+    const raw = String(view || "").trim();
+    if (!raw) return { workspace: "reference", tab: loadReferenceTab() };
+
+    if (raw === "reference" || raw.startsWith("reference:")) {
+      const tab = raw.includes(":") ? raw.split(":")[1] : loadReferenceTab();
+      return { workspace: "reference", tab: normalizeReferenceTab(tab || loadReferenceTab()) };
+    }
+    if (raw === "session" || raw.startsWith("session:")) {
+      const tab = raw.includes(":") ? raw.split(":")[1] : loadSessionTab();
+      return { workspace: "session", tab: normalizeSessionTab(tab || loadSessionTab()) };
+    }
+
+    const workspace = workspaceForPanel(raw);
+    if (workspace === "reference") return { workspace, tab: normalizeReferenceTab(raw) };
+    if (workspace === "session") return { workspace, tab: normalizeSessionTab(raw) };
+    return { workspace: null, tab: raw };
+  }
+
+  function renderWorkspaceTabs(workspace, activeTab) {
+    const tabs = workspace === "reference" ? REFERENCE_TABS : SESSION_TABS;
+    const title = workspace === "reference" ? "Reference" : "Session";
+    return `
+      <div class="panel-workspace" data-workspace="${workspace}">
+        <header class="panel-workspace__header">
+          <h1 class="panel-workspace__title">${title}</h1>
+          <div class="panel-workspace__tabs" role="tablist" aria-label="${title} sections">
+            ${tabs
+              .map(
+                (tab) => `
+              <button
+                type="button"
+                class="panel-workspace__tab${tab.id === activeTab ? " is-active" : ""}"
+                role="tab"
+                aria-selected="${tab.id === activeTab ? "true" : "false"}"
+                data-workspace-tab="${tab.id}"
+              >${tab.label}</button>`
+              )
+              .join("")}
+          </div>
+        </header>
+        <div class="panel-workspace__body"></div>
+      </div>`;
+  }
+
+  function bindWorkspaceTabs(workspace) {
+    panelView.querySelectorAll("[data-workspace-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-workspace-tab");
+        if (!tab || tab === activeView.id) return;
+        showPanelView(`${workspace}:${tab}`);
+      });
+    });
+  }
+
+  function renderPanel(view, workspace) {
+    const ws = workspace === undefined ? workspaceForPanel(view) : workspace;
+    const bodyHost = (() => {
+      if (!ws) {
+        panelView.innerHTML = "";
+        return panelView;
+      }
+      panelView.innerHTML = renderWorkspaceTabs(ws, view);
+      bindWorkspaceTabs(ws);
+      return panelView.querySelector(".panel-workspace__body") || panelView;
+    })();
+
     switch (view) {
       case "npcs":
-        panelView.innerHTML = `<h1>${t.headings.npcs}</h1>${renderEntityGrid("npc")}`;
+        bodyHost.innerHTML = `<h1 class="panel-workspace__section-title">${t.headings.npcs}</h1>${renderEntityGrid("npc")}`;
         break;
       case "monsters":
-        panelView.innerHTML = `<h1>${t.headings.monsters}</h1>${renderEntityGrid("monster")}`;
+        bodyHost.innerHTML = `<h1 class="panel-workspace__section-title">${t.headings.monsters}</h1>${renderEntityGrid("monster")}`;
         break;
       case "locations":
-        panelView.innerHTML = `<h1>${t.headings.locations}</h1><div id="campaign-locations-panel"></div>`;
+        bodyHost.innerHTML = `<h1 class="panel-workspace__section-title">${t.headings.locations}</h1><div id="campaign-locations-panel"></div>`;
         if (window.CampaignLocationsUI) {
           CampaignLocationsUI.mount(document.getElementById("campaign-locations-panel"), campaignId);
         } else {
-          panelView.innerHTML += renderEntityGrid("location");
+          bodyHost.innerHTML += renderEntityGrid("location");
         }
         break;
       case "notes":
-        panelView.innerHTML = renderNotesView();
+        bodyHost.innerHTML = renderNotesView();
         bindNotesEvents();
         break;
       case "history":
-        panelView.innerHTML = window.CampaignStateUI
+        bodyHost.innerHTML = window.CampaignStateUI
           ? CampaignStateUI.renderHistoryPanel()
           : `<h1>History</h1><p class="empty-state">Campaign state unavailable.</p>`;
-        if (window.CampaignStateUI) CampaignStateUI.bindHistoryPanel(panelView);
+        if (window.CampaignStateUI) CampaignStateUI.bindHistoryPanel(bodyHost);
         break;
       case "chronicle":
-        panelView.innerHTML = window.ChronicleUI
+        bodyHost.innerHTML = window.ChronicleUI
           ? ChronicleUI.renderChroniclePanel()
           : `<h1>Chronicle</h1><p class="empty-state">Chronicle unavailable.</p>`;
-        if (window.ChronicleUI) ChronicleUI.bindChroniclePanel(panelView);
+        if (window.ChronicleUI) ChronicleUI.bindChroniclePanel(bodyHost);
         break;
       case "checklist":
-        panelView.innerHTML = renderChecklistView();
+        bodyHost.innerHTML = renderChecklistView();
         bindChecklistEvents();
+        break;
+      default:
+        bodyHost.innerHTML = `<p class="empty-state">Unknown panel.</p>`;
         break;
     }
 
@@ -1312,11 +1449,13 @@
 
     scrollSpyObserver = new IntersectionObserver(
       (entries) => {
-        if (activeView.type !== "scroll") return;
+        if (activeView.type !== "document") return;
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) highlightNavSection(visible.target.dataset.section);
+        if (visible?.target?.dataset?.section) {
+          highlightNavSection(visible.target.dataset.section, { syncFocus: true });
+        }
       },
       { root: null, rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5] }
     );
@@ -1324,11 +1463,15 @@
     sections.forEach((s) => scrollSpyObserver.observe(s));
   }
 
-  function highlightNavSection(id) {
+  function highlightNavSection(id, opts = {}) {
     document.querySelectorAll(".nav-btn[data-section]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.section === id);
     });
     if (!id) return;
+    if (opts.syncFocus) {
+      focusedSceneId = id;
+      history.replaceState(null, "", `#${id}`);
+    }
     const activeBtn = document.querySelector(`.nav-btn[data-section="${CSS.escape(id)}"]`);
     const details = activeBtn?.closest("details.nav-scene-group__details");
     if (details && !details.open) {
@@ -1344,8 +1487,10 @@
     if (activeView.type === "play" || activeView.type === "document") {
       const hash = focusedSceneId || location.hash.replace("#", "");
       if (hash) highlightNavSection(hash);
-    } else {
-      const btn = document.querySelector(`.nav-btn[data-view="${activeView.id}"]`);
+    } else if (activeView.type === "panel") {
+      const workspace = activeView.workspace || workspaceForPanel(activeView.id);
+      const navView = workspace === "reference" || workspace === "session" ? workspace : activeView.id;
+      const btn = document.querySelector(`.nav-btn[data-view="${CSS.escape(String(navView || ""))}"]`);
       if (btn) btn.classList.add("active");
     }
   }

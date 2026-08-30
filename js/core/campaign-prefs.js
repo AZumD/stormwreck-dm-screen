@@ -19,7 +19,9 @@ window.CampaignPrefs = (function () {
       sidebarCollapsed: false,
       mapPanelCollapsed: false,
       sceneTrayCollapsed: false,
-      chronicleSessionOrder: "newest"
+      chronicleSessionOrder: "newest",
+      referenceTab: "npcs",
+      sessionTab: "notes"
     };
   }
 
@@ -35,6 +37,10 @@ window.CampaignPrefs = (function () {
       data.sceneTrayCollapsed = localStorage.getItem(`${campaignId}-scene-tray-collapsed`) === "1";
       const order = localStorage.getItem(`${campaignId}-chronicle-session-order`);
       if (order === "oldest" || order === "newest") data.chronicleSessionOrder = order;
+      const refTab = localStorage.getItem(`${campaignId}-reference-tab`);
+      if (refTab) data.referenceTab = refTab;
+      const sessTab = localStorage.getItem(`${campaignId}-session-tab`);
+      if (sessTab) data.sessionTab = sessTab;
     } catch {
       /* ignore */
     }
@@ -54,6 +60,8 @@ window.CampaignPrefs = (function () {
         `${campaignId}-chronicle-session-order`,
         data.chronicleSessionOrder === "oldest" ? "oldest" : "newest"
       );
+      if (data.referenceTab) localStorage.setItem(`${campaignId}-reference-tab`, String(data.referenceTab));
+      if (data.sessionTab) localStorage.setItem(`${campaignId}-session-tab`, String(data.sessionTab));
     } catch {
       /* ignore */
     }

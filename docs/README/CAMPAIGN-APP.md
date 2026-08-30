@@ -13,8 +13,10 @@ Main controller for a campaign DM screen: scene Play view, Document reference sc
 | Mode | Behavior |
 |------|----------|
 | **Play** (default) | One focused scene: content, status/notes, At this scene, connections |
-| **Document** | Continuous scene scroll (prep/reference) |
-| **Panels** | NPCs / monsters / locations / notes / history / **chronicle** / checklist |
+| **Document** | Continuous scene scroll (prep/reference); sidebar scrollspy tracks the visible scene |
+| **Panels** | Sidebar **Tools** → **Reference** (NPCs / Monsters / Locations tabs) and **Session** (Notes / Log / Chronicle / Progress tabs) |
+
+Deep links and internal calls may still use leaf ids (`npcs`, `history`, …) or workspace forms (`reference:npcs`, `session:history`). `showPanelView` / `resolvePanelRequest` map these into the unified workspaces. Last Reference/Session tab is remembered in campaign prefs (`referenceTab`, `sessionTab`).
 
 View mode persists in `{campaignId}-view-mode`.
 
@@ -29,7 +31,7 @@ On boot, `syncCampaignChrome` sets the sidebar title / subtitle / document title
 - **Day / time** bar under the toolbar (`DayTimeUI`) — tenday 1–10 + continuous time; persists in `CampaignState.clock`
 - **Current scene** toolbar jumps to the saved current section
 - On load: URL hash wins; otherwise restores current scene; else first scene
-- Session → **History** panel for timeline entries; **Chronicle** for authored story + key events
+- Session → **Session** workspace (Notes / Log / Chronicle / Progress); Log is the History timeline; Chronicle remains separate
 - NPC modals gain campaign memory through `EntityUI.addModalEnricher`
 
 ## Edit mode
