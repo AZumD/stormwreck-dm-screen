@@ -104,7 +104,11 @@ if (isDeniedStaticPath("/api/assets/portraits/npc/x")) {
   }
 
   const index = await get("/index.html");
-  if (index.status !== 200 || !index.body.includes("Stormwreck") || !index.body.includes("DM login")) {
+  if (
+    index.status !== 200 ||
+    !index.body.includes('href="/dm/"') ||
+    !index.body.includes('href="/player/"')
+  ) {
     fail("frontend index.html gate broken");
   } else pass("frontend index.html ok");
   const dm = await get("/dm/");

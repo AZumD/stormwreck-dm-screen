@@ -9,14 +9,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/player.css?v=20260830m3">
+  <link rel="stylesheet" href="/css/player-platform.css?v=20260830s1">
 </head>
 <body class="player-body">
   <div id="app">
     <section id="view-login" class="view view-login" hidden>
       <header class="hero">
-        <p class="brand">Stormwreck</p>
-        <h1>Player companion</h1>
-        <p class="lede">Your character sheet for play at the table.</p>
+        <h1>Player sign in</h1>
+        <p class="lede">Access your campaigns and characters.</p>
       </header>
       <form id="login-form" class="stack-form login-card panel">
         <label>Email<input type="email" name="email" autocomplete="username" required></label>
@@ -26,30 +26,68 @@
       </form>
     </section>
 
-    <section id="view-campaigns" class="view" hidden>
+    <section id="view-home" class="view" hidden>
       <header class="topbar">
         <div>
           <p class="eyebrow">Signed in</p>
-          <h1>Campaigns</h1>
+          <h1>Player home</h1>
         </div>
-        <button type="button" class="btn btn-ghost" id="logout-campaigns">Log out</button>
+        <button type="button" class="btn btn-ghost" id="logout-home">Log out</button>
       </header>
-      <ul id="campaign-list" class="list"></ul>
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>My campaigns</h2>
+        </div>
+        <ul id="campaign-list" class="list"></ul>
+      </section>
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>My characters</h2>
+          <button type="button" class="btn btn-primary btn-sm" id="create-character-home">New character</button>
+        </div>
+        <ul id="character-list" class="list"></ul>
+      </section>
+      <section class="home-section">
+        <div class="home-section-head">
+          <h2>Schedule</h2>
+          <button type="button" class="btn btn-ghost btn-sm" data-open-availability>My availability</button>
+        </div>
+        <div id="home-schedule-list"></div>
+      </section>
+    </section>
+
+    <section id="view-character-shell" class="view view-shell" hidden>
+      <header class="topbar">
+        <div>
+          <button type="button" class="btn btn-ghost btn-back" id="back-from-character">← Home</button>
+          <p id="character-shell-eyebrow" class="eyebrow">Character</p>
+          <h1 id="character-shell-title">Sheet</h1>
+        </div>
+        <button type="button" class="btn btn-ghost" id="logout-character">Log out</button>
+      </header>
+      <div id="character-campaigns" class="meta-banner" hidden></div>
+      <main id="character-main"></main>
     </section>
 
     <section id="view-shell" class="view view-shell" hidden>
       <header class="topbar">
         <div>
+          <button type="button" class="btn btn-ghost btn-back" id="back-from-campaign">← Home</button>
           <p id="shell-campaign" class="eyebrow"></p>
-          <h1 id="shell-title">Companion</h1>
+          <h1 id="shell-title">Campaign</h1>
         </div>
         <button type="button" class="btn btn-ghost" id="logout-shell">Log out</button>
       </header>
+      <div id="playing-as" class="meta-banner" hidden></div>
+      <nav class="campaign-section-nav" aria-label="Campaign sections">
+        <button type="button" class="campaign-section-btn is-active" data-campaign-section="play">Play</button>
+        <button type="button" class="campaign-section-btn" data-campaign-section="schedule">Schedule</button>
+        <button type="button" class="campaign-section-btn" data-campaign-section="board">Board</button>
+      </nav>
       <div id="char-switcher" class="switcher" hidden></div>
       <main id="main"></main>
       <nav class="tabs" aria-label="Sections">
-        <button type="button" class="tab is-active" data-tab="characters">Sheet</button>
-        <button type="button" class="tab" data-tab="map">Map</button>
+        <button type="button" class="tab is-active" data-tab="map">Map</button>
         <button type="button" class="tab" data-tab="party">Party</button>
         <button type="button" class="tab" data-tab="library">Library</button>
         <button type="button" class="tab" data-tab="notes">Notes</button>
@@ -210,12 +248,105 @@
     </form>
   </dialog>
 
+  <dialog id="attach-campaign-dialog" class="dialog dialog-note">
+    <form id="attach-campaign-form" class="dialog-inner stack-form">
+      <div class="dialog-head">
+        <h2>Add to campaign</h2>
+        <button type="button" class="btn btn-ghost" id="attach-campaign-cancel">Cancel</button>
+      </div>
+      <div class="dialog-body">
+        <label class="field">
+          <span>Campaign</span>
+          <select name="campaignId" id="attach-campaign-select" required></select>
+        </label>
+        <p id="attach-campaign-empty" class="empty" hidden>No compatible campaigns available.</p>
+        <div class="row">
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  </dialog>
+
+  <dialog id="availability-dialog" class="dialog dialog-note">
+    <form id="availability-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="availability-dialog-title">My availability</h2>
+        <button type="button" class="btn btn-ghost" id="availability-cancel">Close</button>
+      </header>
+      <div class="dialog-body">
+        <div id="availability-main"></div>
+        <input type="hidden" name="date">
+        <label>Status
+          <select name="status">
+            <option value="">Clear response</option>
+            <option value="available">Available</option>
+            <option value="maybe">Maybe</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </label>
+        <div class="form-grid">
+          <label>Available from<input name="availableFrom" type="time"></label>
+          <label>Available until<input name="availableUntil" type="time"></label>
+        </div>
+        <label>Note<textarea name="note" rows="2" maxlength="500"></textarea></label>
+        <button type="submit" class="btn btn-primary">Save day</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="event-dialog" class="dialog dialog-note">
+    <form id="event-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="event-dialog-title">Schedule session</h2>
+        <button type="button" class="btn btn-ghost" id="event-cancel">Cancel</button>
+      </header>
+      <div class="dialog-body">
+        <label>Title<input name="title" maxlength="200" required placeholder="Session 3"></label>
+        <div class="form-grid">
+          <label>Date<input name="date" type="date" required></label>
+          <label>Start<input name="startTime" type="time" required></label>
+          <label>End<input name="endTime" type="time"></label>
+        </div>
+        <label>Location<input name="location" maxlength="200"></label>
+        <label>Notes<textarea name="notes" rows="3" maxlength="2000"></textarea></label>
+        <button type="submit" class="btn btn-primary">Save session</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="event-detail-dialog" class="dialog dialog-note">
+    <form method="dialog" class="dialog-inner">
+      <header>
+        <h2 id="event-detail-title">Session</h2>
+        <button value="close" class="btn btn-ghost">Close</button>
+      </header>
+      <div id="event-detail-body" class="dialog-body"></div>
+    </form>
+  </dialog>
+
+  <dialog id="post-dialog" class="dialog dialog-note">
+    <form id="post-form" class="dialog-inner stack-form">
+      <header>
+        <h2 id="post-dialog-title">New post</h2>
+        <button type="button" class="btn btn-ghost" id="post-cancel">Cancel</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" name="parentPostId">
+        <label>Message<textarea name="body" rows="5" maxlength="4000" required></textarea></label>
+        <button type="submit" class="btn btn-primary">Post</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="/js/core/catalogue/types.js?v=20260826r1"></script>
   <script src="/js/core/parser.js?v=20260826r1"></script>
   <script src="/js/core/source-ui.js?v=20260826r1"></script>
   <script src="/js/core/map-fog.js?v=20260830m3"></script>
   <script src="/js/core/player-map-view.js?v=20260830m3"></script>
-  <script src="/js/core/player-api-client.js?v=20260826r1"></script>
-  <script src="/js/player-app.js?v=20260826r1"></script>
+  <script src="/js/core/player-api-client.js?v=20260830s1"></script>
+  <script src="/js/player-scheduling.js?v=20260830s1"></script>
+  <script src="/js/player-app.js?v=20260830s1"></script>
 </body>
 </html>

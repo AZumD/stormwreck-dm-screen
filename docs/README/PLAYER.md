@@ -6,7 +6,7 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 ## Surfaces
 | Path | Role |
 |------|------|
-| `/player/` | Login + companion UI |
+| `/player/` | Neutral login + **Player home** (My campaigns / My characters / Schedule) + campaign workspace (Play \| Schedule \| Board) + character sheet |
 | `js/player-app.js` | Player shell logic |
 | `js/core/player-api-client.js` | Cookie-authenticated fetch helper |
 | `css/player.css` | Mobile-first fairy-forest styles |
@@ -19,8 +19,30 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 ## Player API (session required)
 | Method | Path |
 |--------|------|
-| GET | `/api/player/bootstrap` |
-| GET | `/api/player/campaigns/:id/characters/mine` |
+| GET | `/api/player/bootstrap` | memberships + global characters + game systems |
+| GET | `/api/player/characters` | all controlled characters (no campaign context) |
+| POST | `/api/player/characters` | create standalone character (`gameSystemId`, default `dnd5e`) |
+| GET/PATCH | `/api/player/characters/:characterId` | character workspace |
+| PATCH | `/api/player/characters/:characterId/state` | play state |
+| POST/PATCH/DELETE | `/api/player/characters/:characterId/inventory[/:entryId]` |
+| PUT | `/api/player/portraits/characters/:characterId` |
+| GET | `/api/player/characters/:characterId/attachable-campaigns` | campaigns user may attach to |
+| POST/DELETE | `/api/player/characters/:characterId/campaigns/:campaignId` | attach/detach participation |
+
+## Scheduling (platform)
+| Method | Path |
+|--------|------|
+| GET | `/api/player/availability?from=&to=` |
+| PUT/DELETE | `/api/player/availability/:date` |
+| GET | `/api/player/upcoming-events` |
+| GET | `/api/player/campaigns/:id/events` |
+| GET | `/api/player/campaigns/:id/availability` |
+| PUT/DELETE | `/api/player/campaigns/:id/events/:eventId/rsvp` |
+| GET/POST | `/api/player/campaigns/:id/posts` |
+
+DM event CRUD: `POST/PATCH/DELETE /api/campaigns/:id/events`. See `SCHEDULING.md`, `CAMPAIGN-BOARD.md`.
+
+| GET | `/api/player/campaigns/:id/characters/mine` | controlled **and** attached in this campaign |
 | POST | `/api/player/campaigns/:id/characters` | create PC (mirrors into DM PC catalogue) |
 | GET | `/api/player/campaigns/:id/characters/:characterId` |
 | PATCH | `/api/player/campaigns/:id/characters/:characterId` | sheet / identity (5B) |
@@ -37,6 +59,9 @@ Authenticated, mobile-first player companion: character sheet, map, party cards,
 | PUT/DELETE | `/api/player/notes/:noteId` |
 | GET | `/api/player/campaigns/:id/portraits/characters/:characterId` |
 | GET | `/api/player/campaigns/:id/portraits/catalogues/:type/:entryId` |
+
+## Campaign workspace UI
+Sticky segmented nav under the campaign header: **Play** | **Schedule** | **Board**. Play mode keeps bottom tabs (Map, Party, Library, Notes). Schedule and Board use the full workspace (bottom play tabs hidden). Scheduling is not shown in the character sheet workspace.
 
 ## Sheet UI (Phase 5A–5B)
 - Empty campaign: **Create character** opens an in-app dialog (no `prompt`)

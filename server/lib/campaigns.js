@@ -139,10 +139,11 @@ async function ensurePostgresCampaignAndDm(entry, userId) {
   try {
     await client.query("BEGIN");
     await client.query(
-      `INSERT INTO campaigns (id, name, description) VALUES ($1, $2, $3)
+      `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1, $2, $3, 'dnd5e')
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          description = EXCLUDED.description,
+         game_system_id = COALESCE(campaigns.game_system_id, EXCLUDED.game_system_id),
          updated_at = now()`,
       [entry.id, entry.title || entry.id, entry.description || ""]
     );

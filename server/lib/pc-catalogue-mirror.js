@@ -6,6 +6,7 @@
 
 const db = require("./db");
 const catalogues = require("./catalogues");
+const dnd5e = require("./dnd5e-character");
 const { assertSafeId } = require("./ids");
 const { parseEntityRef } = require("./entity-ref");
 
@@ -62,6 +63,7 @@ function bundleToPcEntry(characterRow, stateRow, inventoryRows) {
       ? characterRow.sheet
       : {};
   const state = stateRow || {};
+  const playerState = dnd5e.systemStateToPlayerDto(dnd5e.readSystemState(state));
   const equipped = [];
   const loose = [];
   (inventoryRows || []).forEach((row) => {
@@ -81,7 +83,7 @@ function bundleToPcEntry(characterRow, stateRow, inventoryRows) {
     name: characterRow.name || "",
     portrait: characterRow.portrait_url || sheet.portrait || "",
     class: sheet.class != null ? String(sheet.class) : "",
-    level: Number.isFinite(Number(characterRow.level)) ? Number(characterRow.level) : 1,
+    level: dnd5e.getCharacterLevel(characterRow),
     race: sheet.race != null ? String(sheet.race) : "",
     background: sheet.background != null ? String(sheet.background) : "",
     alignment: sheet.alignment != null ? String(sheet.alignment) : "",
@@ -95,8 +97,8 @@ function bundleToPcEntry(characterRow, stateRow, inventoryRows) {
     wis: abilityScore(sheet, "wis"),
     cha: abilityScore(sheet, "cha"),
     ac: sheet.ac ?? null,
-    hpCurrent: state.hp_current ?? null,
-    hpMax: state.hp_max ?? null,
+    hpCurrent: playerState.hpCurrent,
+    hpMax: playerState.hpMax,
     speed: sheet.speed != null ? String(sheet.speed) : "",
     initiative: sheet.initiative != null ? String(sheet.initiative) : "",
     proficiencyBonus: sheet.proficiencyBonus != null ? String(sheet.proficiencyBonus) : "",
@@ -116,7 +118,6 @@ function bundleToPcEntry(characterRow, stateRow, inventoryRows) {
     sync: {
       source: "campaign-character",
       characterId: characterRow.id,
-      campaignId: characterRow.campaign_id,
       syncedAt: new Date().toISOString()
     }
   };
@@ -135,7 +136,7 @@ async function loadCharacterBundleById(characterId) {
   requireDb();
   const safeId = assertSafeId(characterId, "character id");
   const charResult = await db.query(
-    `SELECT id, campaign_id, name, type, level, portrait_url, sheet, catalogue_pc_id, created_at, updated_at
+    `SELECT id, name, type, game_system_id, portrait_url, sheet, catalogue_pc_id, created_at, updated_at
      FROM characters WHERE id = $1`,
     [safeId]
   );
@@ -168,7 +169,7 @@ async function findLinkedCharacters(cataloguePcId) {
   requireDb();
   const safeId = assertSafeId(cataloguePcId, "catalogue pc id");
   const result = await db.query(
-    `SELECT id, campaign_id, catalogue_pc_id
+    `SELECT id, catalogue_pc_id
      FROM characters
      WHERE catalogue_pc_id = $1 OR id = $1`,
     [safeId]
@@ -293,7 +294,10 @@ async function applyCatalogueEntryToCharacter(campaignId, characterId, raw) {
   const safeCampaign = assertSafeId(campaignId, "campaign id");
   const safeCharacter = assertSafeId(characterId, "character id");
   const existing = await db.query(
-    `SELECT id, sheet, catalogue_pc_id FROM characters WHERE id = $1 AND campaign_id = $2`,
+    `SELECT c.id, c.sheet, c.catalogue_pc_id
+     FROM characters c
+     JOIN campaign_characters cc ON cc.character_id = c.id AND cc.campaign_id = $2
+     WHERE c.id = $1`,
     [safeCharacter, safeCampaign]
   );
   if (!existing.rows.length) {
@@ -306,6 +310,7 @@ async function applyCatalogueEntryToCharacter(campaignId, characterId, raw) {
   const level = Number.isFinite(Number(raw?.level)) ? Number(raw.level) : 1;
   const portraitUrl = raw?.portrait ? String(raw.portrait) : null;
   const sheet = sheetFromPcEntry(raw || {}, existing.rows[0].sheet);
+  sheet.level = level;
   const cataloguePcId = assertSafeId(
     raw?.id || existing.rows[0].catalogue_pc_id || safeCharacter,
     "catalogue pc id"
@@ -313,24 +318,29 @@ async function applyCatalogueEntryToCharacter(campaignId, characterId, raw) {
 
   await db.query(
     `UPDATE characters
-     SET name = $1, level = $2, portrait_url = $3, sheet = $4::jsonb,
-         catalogue_pc_id = $5, updated_at = now()
-     WHERE id = $6 AND campaign_id = $7`,
-    [name, level, portraitUrl, JSON.stringify(sheet), cataloguePcId, safeCharacter, safeCampaign]
+     SET name = $1, portrait_url = $2, sheet = $3::jsonb,
+         catalogue_pc_id = $4, updated_at = now()
+     WHERE id = $5`,
+    [name, portraitUrl, JSON.stringify(sheet), cataloguePcId, safeCharacter]
   );
 
   const hpCurrent = Number.isFinite(Number(raw?.hpCurrent)) ? Number(raw.hpCurrent) : null;
   const hpMax = Number.isFinite(Number(raw?.hpMax)) ? Number(raw.hpMax) : null;
+  const systemState = dnd5e.normalizeSystemState({
+    hp: { current: hpCurrent, max: hpMax, temp: 0 },
+    conditions: [],
+    deathSaves: {},
+    spellSlots: {},
+    classResources: {},
+    inspiration: false
+  });
   await db.query(
-    `INSERT INTO character_state (
-      character_id, hp_current, hp_max, hp_temp, conditions, death_saves,
-      spell_slots, class_resources, inspiration, extras, updated_at
-    ) VALUES ($1, $2, $3, 0, '[]'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, false, '{}'::jsonb, now())
-    ON CONFLICT (character_id) DO UPDATE SET
-      hp_current = EXCLUDED.hp_current,
-      hp_max = EXCLUDED.hp_max,
+    `INSERT INTO character_state (character_id, system_state, extras, updated_at)
+     VALUES ($1, $2::jsonb, '{}'::jsonb, now())
+     ON CONFLICT (character_id) DO UPDATE SET
+      system_state = EXCLUDED.system_state,
       updated_at = now()`,
-    [safeCharacter, hpCurrent, hpMax]
+    [safeCharacter, JSON.stringify(systemState)]
   );
 
   await replaceInventoryFromPc(safeCharacter, raw || {});
@@ -339,7 +349,7 @@ async function applyCatalogueEntryToCharacter(campaignId, characterId, raw) {
 
 /**
  * DM catalogue save for type=pc: push into linked campaign characters, then
- * rewrite catalogue from the primary linked character (or plain upsert if none).
+ * rewrite catalogue from the linked character (or plain upsert if none).
  */
 async function upsertPcFromDm(cataloguePcId, body) {
   requireDb();
@@ -350,10 +360,16 @@ async function upsertPcFromDm(cataloguePcId, body) {
   }
 
   for (const row of linked) {
-    await applyCatalogueEntryToCharacter(row.campaign_id, row.id, {
-      ...(body || {}),
-      id: safeId
-    });
+    const campResult = await db.query(
+      `SELECT campaign_id FROM campaign_characters WHERE character_id = $1 ORDER BY campaign_id`,
+      [row.id]
+    );
+    for (const camp of campResult.rows) {
+      await applyCatalogueEntryToCharacter(camp.campaign_id, row.id, {
+        ...(body || {}),
+        id: safeId
+      });
+    }
   }
   return mirrorCharacterToCatalogue(linked[0].id, body || {});
 }

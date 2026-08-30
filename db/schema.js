@@ -48,10 +48,22 @@ export const sessions = pgTable(
   })
 );
 
+export const gameSystems = pgTable("game_systems", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  metadata: jsonb("metadata").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+});
+
 export const campaigns = pgTable("campaigns", {
   id: text("id").primaryKey(), /* slug, e.g. stormwreck-isle */
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
+  gameSystemId: text("game_system_id")
+    .notNull()
+    .references(() => gameSystems.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 });
@@ -76,19 +88,34 @@ export const campaignMemberships = pgTable(
 
 export const characters = pgTable("characters", {
   id: text("id").primaryKey(), /* preserve catalogue ids when importing */
-  campaignId: text("campaign_id")
-    .notNull()
-    .references(() => campaigns.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   type: characterTypeEnum("type").notNull().default("player"),
-  level: integer("level").notNull().default(1),
+  gameSystemId: text("game_system_id")
+    .notNull()
+    .references(() => gameSystems.id),
   portraitUrl: text("portrait_url"),
-  /* Mostly-static sheet fields; extend carefully — variable bits go in character_state.sheet */
   sheet: jsonb("sheet").notNull().default({}),
-  cataloguePcId: text("catalogue_pc_id"), /* optional link to legacy global PC catalogue id */
+  cataloguePcId: text("catalogue_pc_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 });
+
+export const campaignCharacters = pgTable(
+  "campaign_characters",
+  {
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    characterId: text("character_id")
+      .notNull()
+      .references(() => characters.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.campaignId, t.characterId] })
+  })
+);
 
 export const characterControllers = pgTable(
   "character_controllers",
@@ -110,14 +137,7 @@ export const characterState = pgTable("character_state", {
   characterId: text("character_id")
     .primaryKey()
     .references(() => characters.id, { onDelete: "cascade" }),
-  hpCurrent: integer("hp_current"),
-  hpMax: integer("hp_max"),
-  hpTemp: integer("hp_temp").notNull().default(0),
-  conditions: jsonb("conditions").notNull().default([]),
-  deathSaves: jsonb("death_saves").notNull().default({}),
-  spellSlots: jsonb("spell_slots").notNull().default({}),
-  classResources: jsonb("class_resources").notNull().default({}),
-  inspiration: boolean("inspiration").notNull().default(false),
+  systemState: jsonb("system_state").notNull().default({}),
   extras: jsonb("extras").notNull().default({}),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 });
@@ -188,3 +208,72 @@ export const campaignRevealedNpcs = pgTable(
     pk: primaryKey({ columns: [t.campaignId, t.npcId] })
   })
 );
+
+export const userAvailability = pgTable(
+  "user_availability",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: text("date").notNull(), /* stored as SQL date; Drizzle text for simplicity */
+    status: text("status").notNull().default("available"),
+    availableFrom: text("available_from"),
+    availableUntil: text("available_until"),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.date] })
+  })
+);
+
+export const campaignEvents = pgTable("campaign_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  campaignId: text("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default(""),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }),
+  location: text("location").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  status: text("status").notNull().default("scheduled"),
+  createdByUserId: uuid("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+export const campaignEventRsvps = pgTable(
+  "campaign_event_rsvps",
+  {
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => campaignEvents.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("going"),
+    note: text("note").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.eventId, t.userId] })
+  })
+);
+
+export const campaignPosts = pgTable("campaign_posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  campaignId: text("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  authorUserId: uuid("author_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  parentPostId: uuid("parent_post_id"),
+  body: text("body").notNull().default(""),
+  pinned: boolean("pinned").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+});

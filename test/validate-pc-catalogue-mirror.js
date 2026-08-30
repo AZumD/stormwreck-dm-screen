@@ -36,12 +36,11 @@ try {
   const entry = mirror.bundleToPcEntry(
     {
       id: "pc-test-1",
-      campaign_id: "camp-1",
       name: "Test Hero",
-      level: 3,
       portrait_url: "",
       catalogue_pc_id: "pc-test-1",
       sheet: {
+        level: 3,
         class: "Fighter",
         race: "Human",
         abilities: { str: 16, dex: 12, con: 14, int: 10, wis: 11, cha: 8 },
@@ -49,7 +48,7 @@ try {
         skillRefs: ["@skill:athletics|Athletics"]
       }
     },
-    { hp_current: 22, hp_max: 28 },
+    { system_state: { hp: { current: 22, max: 28, temp: 0 }, conditions: [] } },
     [
       {
         item_id: "item-sword",
@@ -110,6 +109,18 @@ const mirrorSrc = fs.readFileSync(path.join(root, "server/lib/pc-catalogue-mirro
 if (!mirrorSrc.includes("mergeCatalogueOnlyFields") || !mirrorSrc.includes("tokenImage")) {
   fail("pc-catalogue-mirror missing catalogue-only tokenImage merge");
 } else pass("mirror preserves catalogue-only tokenImage");
+
+if (mirrorSrc.includes("primaryCampaignIdForCharacter")) {
+  fail("pc-catalogue-mirror still defines primaryCampaignIdForCharacter");
+} else pass("mirror has no primaryCampaignIdForCharacter");
+
+if (/sync\s*:\s*\{[^}]*campaignId|sync\.campaignId/.test(mirrorSrc)) {
+  fail("pc-catalogue-mirror still writes sync.campaignId");
+} else pass("mirror omits sync.campaignId");
+
+if (/INSERT INTO characters\s*\([^)]*campaign_id/is.test(mirrorSrc)) {
+  fail("mirror still INSERTs characters.campaign_id");
+} else pass("mirror does not INSERT characters.campaign_id");
 
 if (!playerSrc.includes("async function createMyCharacter")) fail("player missing createMyCharacter");
 else pass("player createMyCharacter present");

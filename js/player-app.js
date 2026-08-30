@@ -9,20 +9,31 @@
 
   const els = {
     login: document.getElementById("view-login"),
-    campaigns: document.getElementById("view-campaigns"),
+    home: document.getElementById("view-home"),
     shell: document.getElementById("view-shell"),
+    characterShell: document.getElementById("view-character-shell"),
     loginForm: document.getElementById("login-form"),
     loginError: document.getElementById("login-error"),
     campaignList: document.getElementById("campaign-list"),
+    characterList: document.getElementById("character-list"),
     shellCampaign: document.getElementById("shell-campaign"),
     shellTitle: document.getElementById("shell-title"),
+    playingAs: document.getElementById("playing-as"),
+    characterShellTitle: document.getElementById("character-shell-title"),
+    characterShellEyebrow: document.getElementById("character-shell-eyebrow"),
+    characterCampaigns: document.getElementById("character-campaigns"),
     switcher: document.getElementById("char-switcher"),
     main: document.getElementById("main"),
+    characterMain: document.getElementById("character-main"),
     dialog: document.getElementById("detail-dialog"),
     detailTitle: document.getElementById("detail-title"),
     detailBody: document.getElementById("detail-body"),
-    logoutCampaigns: document.getElementById("logout-campaigns"),
+    logoutHome: document.getElementById("logout-home"),
     logoutShell: document.getElementById("logout-shell"),
+    logoutCharacter: document.getElementById("logout-character"),
+    backFromCampaign: document.getElementById("back-from-campaign"),
+    backFromCharacter: document.getElementById("back-from-character"),
+    createCharacterHome: document.getElementById("create-character-home"),
     noteDialog: document.getElementById("note-dialog"),
     noteForm: document.getElementById("note-form"),
     noteTitle: document.getElementById("note-dialog-title"),
@@ -49,7 +60,29 @@
     createCharacterDialog: document.getElementById("create-character-dialog"),
     createCharacterForm: document.getElementById("create-character-form"),
     createCharacterName: document.getElementById("create-character-name"),
-    createCharacterCancel: document.getElementById("create-character-cancel")
+    createCharacterCancel: document.getElementById("create-character-cancel"),
+    attachCampaignDialog: document.getElementById("attach-campaign-dialog"),
+    attachCampaignForm: document.getElementById("attach-campaign-form"),
+    attachCampaignSelect: document.getElementById("attach-campaign-select"),
+    attachCampaignEmpty: document.getElementById("attach-campaign-empty"),
+    attachCampaignCancel: document.getElementById("attach-campaign-cancel"),
+    homeScheduleList: document.getElementById("home-schedule-list"),
+    availabilityDialog: document.getElementById("availability-dialog"),
+    availabilityForm: document.getElementById("availability-form"),
+    availabilityDialogTitle: document.getElementById("availability-dialog-title"),
+    availabilityMain: document.getElementById("availability-main"),
+    availabilityCancel: document.getElementById("availability-cancel"),
+    eventDialog: document.getElementById("event-dialog"),
+    eventForm: document.getElementById("event-form"),
+    eventDialogTitle: document.getElementById("event-dialog-title"),
+    eventCancel: document.getElementById("event-cancel"),
+    eventDetailDialog: document.getElementById("event-detail-dialog"),
+    eventDetailTitle: document.getElementById("event-detail-title"),
+    eventDetailBody: document.getElementById("event-detail-body"),
+    postDialog: document.getElementById("post-dialog"),
+    postForm: document.getElementById("post-form"),
+    postDialogTitle: document.getElementById("post-dialog-title"),
+    postCancel: document.getElementById("post-cancel")
   };
 
   const LIBRARY_TYPES = ["spell", "skill", "feature", "race", "class", "source"];
@@ -73,16 +106,19 @@
 
   const state = {
     bootstrap: null,
+    viewMode: "login",
     campaignId: null,
     characters: [],
+    myCharacters: [],
     characterId: null,
+    activeCharacter: null,
     party: [],
     notes: [],
     noteId: null,
     notesQ: "",
     notesTag: "",
     notesCharacterId: "",
-    tab: "characters",
+    tab: "map",
     editingNoteId: null,
     collapsed: loadCollapsed(),
     libraryType: "spell",
@@ -93,7 +129,19 @@
     librarySearchTimer: null,
     addKind: null,
     addSearchTimer: null,
-    addResults: []
+    addResults: [],
+    campaignSection: "play",
+    personalCal: null,
+    campaignCal: null,
+    personalAvailability: {},
+    campaignEvents: [],
+    campaignAvailabilityAgg: {},
+    campaignPosts: [],
+    selectedScheduleDate: null,
+    editingEventId: null,
+    editingEvent: null,
+    viewingEventId: null,
+    editingPostId: null
   };
 
   function collapseKey() {
@@ -243,10 +291,48 @@
     return d.toLocaleString();
   }
 
+  function activeMain() {
+    return state.viewMode === "character" ? els.characterMain : els.main;
+  }
+
+  function portraitUrlFor(characterId) {
+    if (state.viewMode === "character") return api.portraitUrlDirect(characterId);
+    return api.portraitUrl(state.campaignId, characterId);
+  }
+
+  function patchState(characterId, patch) {
+    if (state.viewMode === "character") return api.patchStateDirect(characterId, patch);
+    return api.patchState(state.campaignId, characterId, patch);
+  }
+
+  function patchSheet(characterId, patch) {
+    if (state.viewMode === "character") return api.patchSheetDirect(characterId, patch);
+    return api.patchSheet(state.campaignId, characterId, patch);
+  }
+
+  function addInventory(characterId, payload) {
+    if (state.viewMode === "character") return api.addInventoryDirect(characterId, payload);
+    return api.addInventory(state.campaignId, characterId, payload);
+  }
+
+  function putPortrait(characterId, dataUrl) {
+    if (state.viewMode === "character") return api.putPortraitDirect(characterId, dataUrl);
+    return api.putPortrait(state.campaignId, characterId, dataUrl);
+  }
+
   function show(name) {
+    state.viewMode =
+      name === "home"
+        ? "home"
+        : name === "shell"
+          ? "campaign"
+          : name === "character"
+            ? "character"
+            : "login";
     els.login.hidden = name !== "login";
-    els.campaigns.hidden = name !== "campaigns";
+    els.home.hidden = name !== "home";
     els.shell.hidden = name !== "shell";
+    els.characterShell.hidden = name !== "character";
   }
 
   function expired(err) {
@@ -280,18 +366,17 @@
   }
 
   function setTabs() {
-    document.querySelectorAll(".tab").forEach((btn) => {
+    document.querySelectorAll("#view-shell .tab").forEach((btn) => {
       btn.classList.toggle("is-active", btn.getAttribute("data-tab") === state.tab);
     });
     if (els.shell) els.shell.setAttribute("data-active-tab", state.tab);
     els.shellTitle.textContent =
       {
-        characters: "Character sheet",
         map: "Map",
         party: "Party",
         library: "Library",
         notes: "Notes"
-      }[state.tab] || "Companion";
+      }[state.tab] || "Campaign";
   }
 
   function renderMapTab() {
@@ -453,13 +538,10 @@
   }
 
   function renderCharacter() {
+    const main = activeMain();
     const c = currentCharacter();
     if (!c) {
-      els.main.innerHTML = `
-        <p class="empty">No controlled characters in this campaign.</p>
-        <p class="section-add">
-          <button type="button" class="btn btn-primary" data-create-character>Create character</button>
-        </p>`;
+      main.innerHTML = `<p class="empty">No character loaded.</p>`;
       return;
     }
     const abs = c.abilities || {};
@@ -506,12 +588,12 @@
     const subclassBit = c.subclass ? ` (${displayRefLabel(c.subclass)})` : "";
     const metaLine = `${displayRefLabel(c.race)} · ${displayRefLabel(c.class)}${subclassBit} · L${c.level}`;
 
-    els.main.innerHTML = `
+    main.innerHTML = `
       <div class="sheet-toolbar">
         <button type="button" class="btn btn-primary" data-edit-sheet>Edit sheet</button>
       </div>
       <div class="vitals">
-        <img class="portrait" src="${esc(api.portraitUrl(state.campaignId, c.id))}?t=${Date.now()}" alt="" onerror="window.PlayerAppDropPortrait(this)">
+        <img class="portrait" src="${esc(portraitUrlFor(c.id))}?t=${Date.now()}" alt="" onerror="window.PlayerAppDropPortrait(this)">
         <div class="vitals-text">
           <h2 class="sheet-name">${esc(c.name)}</h2>
           <p class="vitals-meta">${esc(metaLine)}</p>
@@ -576,7 +658,8 @@
 
   function renderParty() {
     if (!state.party.length) {
-      els.main.innerHTML = `<p class="empty">No player characters in this party yet.</p>`;
+      els.main.innerHTML = `<p class="empty">No player characters in this party yet.</p>
+        <p class="section-add"><button type="button" class="btn btn-primary" data-create-character>Add character to campaign</button></p>`;
       return;
     }
     els.main.innerHTML = `<div class="party-list">${state.party
@@ -635,14 +718,29 @@
   async function submitCreateCharacter(e) {
     e.preventDefault();
     const name = String(els.createCharacterName?.value || "").trim();
-    if (!name || !state.campaignId) return;
-    const data = await safe(() => api.createCharacter(state.campaignId, { name }));
+    if (!name) return;
+    const mode = state.createCharacterMode;
+    const data =
+      mode === "standalone"
+        ? await safe(() => api.createStandaloneCharacter({ name, gameSystemId: "dnd5e" }))
+        : state.campaignId
+          ? await safe(() => api.createCharacter(state.campaignId, { name }))
+          : null;
     if (!data?.character) return;
     applyCharacter(data.character);
     state.characterId = data.character.id;
     els.createCharacterDialog?.close();
+    state.createCharacterMode = null;
+    if (mode === "standalone") {
+      state.bootstrap = await api.bootstrap();
+      renderHome();
+      await openCharacter(data.character.id);
+      return;
+    }
     renderSwitcher();
-    renderCharacter();
+    renderPlayingAs();
+    state.bootstrap = await api.bootstrap();
+    await openCharacter(data.character.id);
   }
 
   function openNoteEditor(note) {
@@ -937,9 +1035,17 @@
   }
 
   async function render() {
-    if (state.tab === "characters") {
+    if (state.viewMode === "character") {
       stopMapTab();
       renderCharacter();
+      return;
+    }
+    if (state.campaignSection === "schedule" || state.campaignSection === "board") {
+      stopMapTab();
+      if (window.PlayerSchedulingUI) {
+        PlayerSchedulingUI.setCampaignSectionNav();
+        await PlayerSchedulingUI.renderCampaignSection(els.main);
+      }
       return;
     }
     if (state.tab === "map") {
@@ -966,25 +1072,127 @@
 
   async function openCampaign(campaign) {
     state.campaignId = campaign.id;
+    state.campaignSection = "play";
     els.shellCampaign.textContent = campaign.name;
     const data = await safe(() => api.myCharacters(campaign.id));
     if (!data) return;
     state.characters = data.characters || [];
     state.characterId = state.characters[0] ? state.characters[0].id : null;
-    state.tab = "characters";
+    state.tab = state.characterId ? "map" : "party";
+    renderPlayingAs();
     show("shell");
+    if (window.PlayerSchedulingUI) PlayerSchedulingUI.setCampaignSectionNav();
     setTabs();
     renderSwitcher();
     await render();
   }
 
-  async function afterLogin(bootstrap) {
-    state.bootstrap = bootstrap;
-    const campaigns = bootstrap.campaigns || [];
-    if (campaigns.length === 1) {
-      await openCampaign(campaigns[0]);
+  async function openCharacter(characterId) {
+    const data = await safe(() => api.getCharacter(characterId));
+    if (!data?.character) return;
+    state.characterId = characterId;
+    state.activeCharacter = data.character;
+    state.characters = [data.character];
+    els.characterShellTitle.textContent = data.character.name || "Character";
+    els.characterShellEyebrow.textContent = data.character.gameSystemId || "Character";
+    renderCharacterCampaigns(data.character.campaigns || []);
+    show("character");
+    renderCharacter();
+  }
+
+  function renderCharacterCampaigns(campaigns) {
+    if (!els.characterCampaigns) return;
+    els.characterCampaigns.hidden = false;
+    const list =
+      campaigns.length > 0
+        ? campaigns
+            .map(
+              (camp) => `<div class="row campaign-part-row">
+            <span>✓ ${esc(camp.name)}</span>
+            <button type="button" class="btn btn-ghost btn-sm" data-detach-campaign-id="${esc(camp.id)}">Remove</button>
+          </div>`
+            )
+            .join("")
+        : `<p class="empty">Not in a campaign yet.</p>`;
+    els.characterCampaigns.innerHTML = `<div class="character-campaigns-panel stack-form">
+      <p class="eyebrow">Campaigns</p>
+      ${list}
+      <button type="button" class="btn btn-primary btn-sm" id="open-attach-campaign">+ Add to campaign</button>
+    </div>`;
+  }
+
+  async function openAttachCampaignDialog() {
+    if (!state.characterId || !els.attachCampaignDialog) return;
+    const data = await safe(() => api.attachableCampaigns(state.characterId));
+    if (!data) return;
+    const options = data.campaigns || [];
+    if (els.attachCampaignSelect) {
+      els.attachCampaignSelect.innerHTML = options
+        .map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`)
+        .join("");
+    }
+    if (els.attachCampaignEmpty) {
+      els.attachCampaignEmpty.hidden = options.length > 0;
+    }
+    if (options.length) els.attachCampaignDialog.showModal();
+    else if (els.attachCampaignEmpty) els.attachCampaignEmpty.hidden = false;
+  }
+
+  async function detachFromCampaign(campaignId) {
+    if (!state.characterId) return;
+    const data = await safe(() => api.detachFromCampaign(state.characterId, campaignId));
+    if (!data) return;
+    if (state.campaignId === campaignId && !els.shell.hidden) {
+      state.campaignId = null;
+      state.characters = [];
+      state.characterId = null;
+      show("home");
+      renderHome();
+      if (state.bootstrap) {
+        try {
+          state.bootstrap = await api.bootstrap();
+        } catch {
+          /* keep prior bootstrap */
+        }
+      }
       return;
     }
+    const refreshed = await safe(() => api.getCharacter(state.characterId));
+    if (refreshed?.character) {
+      state.activeCharacter = refreshed.character;
+      renderCharacterCampaigns(refreshed.character.campaigns || []);
+    }
+  }
+
+  async function attachToCampaign(campaignId) {
+    if (!state.characterId || !campaignId) return;
+    const data = await safe(() => api.attachToCampaign(state.characterId, campaignId));
+    if (!data?.character) return;
+    state.activeCharacter = data.character;
+    renderCharacterCampaigns(data.character.campaigns || []);
+    els.attachCampaignDialog?.close();
+    try {
+      state.bootstrap = await api.bootstrap();
+      renderHome();
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  function renderPlayingAs() {
+    if (!els.playingAs) return;
+    const c = currentCharacter();
+    if (!c) {
+      els.playingAs.hidden = true;
+      els.playingAs.innerHTML = "";
+      return;
+    }
+    els.playingAs.hidden = false;
+    els.playingAs.innerHTML = `Playing as <button type="button" class="linkish" data-open-character-id="${esc(c.id)}">${esc(c.name)}</button>`;
+  }
+
+  async function renderHome() {
+    const campaigns = state.bootstrap?.campaigns || [];
     if (!campaigns.length) {
       els.campaignList.innerHTML = `<li class="empty">No campaign memberships yet.</li>`;
     } else {
@@ -993,13 +1201,36 @@
           (c) => `<li>
           <button type="button" class="card card-btn" data-campaign-id="${esc(c.id)}">
             <h2>${esc(c.name)}</h2>
-            <p class="meta">${esc(c.role)} · ${(c.controlledCharacters || []).length} character(s)</p>
+            <p class="meta">${esc(c.role)} · ${(c.participatingCharacters || c.controlledCharacters || []).length} character(s)</p>
           </button>
         </li>`
         )
         .join("");
     }
-    show("campaigns");
+    state.myCharacters = state.bootstrap?.characters || [];
+    if (!state.myCharacters.length) {
+      els.characterList.innerHTML = `<li class="empty">No characters yet.</li>`;
+    } else {
+      els.characterList.innerHTML = state.myCharacters
+        .map(
+          (c) => `<li>
+          <button type="button" class="card card-btn" data-character-id="${esc(c.id)}">
+            <h2>${esc(c.name)}</h2>
+            <p class="meta">Level ${esc(String(c.level || 1))} · ${esc(c.gameSystemId || "dnd5e")}${(c.campaigns || []).length ? ` · ${c.campaigns.length} campaign(s)` : ""}</p>
+          </button>
+        </li>`
+        )
+        .join("");
+    }
+    if (els.homeScheduleList && window.PlayerSchedulingUI) {
+      await PlayerSchedulingUI.renderHomeSchedule(els.homeScheduleList);
+    }
+  }
+
+  async function afterLogin(bootstrap) {
+    state.bootstrap = bootstrap;
+    renderHome();
+    show("home");
   }
 
   async function openRef(type, id) {
@@ -1143,7 +1374,7 @@
     if (!kind || !c || !text) return;
     if (kind.catalogue === "item") {
       const data = await safe(() =>
-        api.addInventory(state.campaignId, c.id, { customName: text, quantity: 1 })
+        addInventory(c.id, { customName: text, quantity: 1 })
       );
       if (!data) return;
       applyCharacter(data.character);
@@ -1158,7 +1389,7 @@
         (r) => r.raw || (r.type && r.id ? `@${r.type}:${r.id}|${r.label || r.id}` : r.label || "")
       );
       existing.push(text);
-      const data = await safe(() => api.patchSheet(state.campaignId, c.id, { [field]: existing }));
+      const data = await safe(() => patchSheet(c.id, { [field]: existing }));
       if (!data) return;
       applyCharacter(data.character);
     }
@@ -1170,7 +1401,7 @@
     const c = currentCharacter();
     if (!c) return;
     const data = await safe(() =>
-      api.patchState(state.campaignId, c.id, { conditions: next })
+      patchState(c.id, { conditions: next })
     );
     if (!data) return;
     applyCharacter(data.character);
@@ -1183,7 +1414,7 @@
     const current = Number(c.state?.hpCurrent);
     if (!Number.isFinite(current)) return;
     const data = await safe(() =>
-      api.patchState(state.campaignId, c.id, { hp_current: current + delta })
+      patchState(c.id, { hp_current: current + delta })
     );
     if (!data) return;
     applyCharacter(data.character);
@@ -1194,7 +1425,7 @@
     const c = currentCharacter();
     if (!c) return;
     const data = await safe(() =>
-      api.patchState(state.campaignId, c.id, { inspiration: Boolean(on) })
+      patchState(c.id, { inspiration: Boolean(on) })
     );
     if (!data) return;
     applyCharacter(data.character);
@@ -1205,7 +1436,7 @@
     const c = currentCharacter();
     if (!c) return;
     const data = await safe(() =>
-      api.patchState(state.campaignId, c.id, { death_saves: parseDeathSaves(next) })
+      patchState(c.id, { death_saves: parseDeathSaves(next) })
     );
     if (!data) return;
     applyCharacter(data.character);
@@ -1225,7 +1456,7 @@
       };
     }
     const data = await safe(() =>
-      api.patchState(state.campaignId, c.id, { spell_slots: parseSpellSlots(slots) })
+      patchState(c.id, { spell_slots: parseSpellSlots(slots) })
     );
     if (!data) return;
     applyCharacter(data.character);
@@ -1262,7 +1493,7 @@
     const c = currentCharacter();
     if (!c || !root) return;
     const data = await safe(() =>
-      api.patchState(state.campaignId, c.id, {
+      patchState(c.id, {
         class_resources: readClassResourcesFromDom(root)
       })
     );
@@ -1282,7 +1513,7 @@
           state.characterId = state.characters[0]?.id || null;
         }
         renderSwitcher();
-        if (state.tab === "characters") renderCharacter();
+        if (state.viewMode === "character") renderCharacter();
       }
       if (state.tab === "party") {
         const party = await api.party(state.campaignId);
@@ -1306,6 +1537,24 @@
   els.createCharacterCancel?.addEventListener("click", () => {
     els.createCharacterDialog?.close();
   });
+  els.attachCampaignCancel?.addEventListener("click", () => {
+    els.attachCampaignDialog?.close();
+  });
+  els.attachCampaignForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const campaignId = els.attachCampaignSelect?.value;
+    if (campaignId) await attachToCampaign(campaignId);
+  });
+  els.characterCampaigns?.addEventListener("click", async (e) => {
+    const detachBtn = e.target.closest("[data-detach-campaign-id]");
+    if (detachBtn) {
+      await detachFromCampaign(detachBtn.getAttribute("data-detach-campaign-id"));
+      return;
+    }
+    if (e.target.id === "open-attach-campaign" || e.target.closest("#open-attach-campaign")) {
+      await openAttachCampaignDialog();
+    }
+  });
   els.createCharacterForm?.addEventListener("submit", (e) => {
     submitCreateCharacter(e);
   });
@@ -1324,8 +1573,43 @@
     }
   });
 
-  els.logoutCampaigns.addEventListener("click", logout);
-  els.logoutShell.addEventListener("click", logout);
+  els.logoutHome?.addEventListener("click", logout);
+  els.logoutShell?.addEventListener("click", logout);
+  els.logoutCharacter?.addEventListener("click", logout);
+  els.backFromCampaign?.addEventListener("click", () => {
+    renderHome();
+    show("home");
+  });
+  els.backFromCharacter?.addEventListener("click", () => {
+    renderHome();
+    show("home");
+  });
+
+  els.createCharacterHome?.addEventListener("click", () => {
+    state.createCharacterMode = "standalone";
+    openCreateCharacterDialog();
+  });
+
+  els.characterList?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-character-id]");
+    if (!btn) return;
+    await openCharacter(btn.getAttribute("data-character-id"));
+  });
+
+  els.characterCampaigns?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-open-campaign-id]");
+    if (!btn) return;
+    const campaign = (state.bootstrap?.campaigns || []).find(
+      (c) => c.id === btn.getAttribute("data-open-campaign-id")
+    );
+    if (campaign) await openCampaign(campaign);
+  });
+
+  els.playingAs?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-open-character-id]");
+    if (!btn) return;
+    await openCharacter(btn.getAttribute("data-open-character-id"));
+  });
 
   els.campaignList.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-campaign-id]");
@@ -1341,15 +1625,14 @@
     if (!btn) return;
     state.characterId = btn.getAttribute("data-character-id");
     renderSwitcher();
+    renderPlayingAs();
     if (state.tab === "map") renderMapTab();
-    else renderCharacter();
   });
 
-  document.querySelector(".tabs").addEventListener("click", async (e) => {
+  document.querySelector("#view-shell .tabs")?.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-tab]");
     if (!btn) return;
     state.tab = btn.getAttribute("data-tab");
-    if (state.tab === "people") state.tab = "characters";
     setTabs();
     await render();
   });
@@ -1364,7 +1647,10 @@
     }
   });
 
+  els.characterMain?.addEventListener("input", () => {});
+
   els.main.addEventListener("change", async (e) => {
+    if (!activeMain()?.contains(e.target)) return;
     if (e.target && e.target.id === "notes-character") {
       state.notesCharacterId = String(e.target.value || "");
       renderNotes();
@@ -1386,7 +1672,9 @@
     }
   });
 
-  els.main.addEventListener("click", async (e) => {
+  document.getElementById("app")?.addEventListener("click", async (e) => {
+    const surface = activeMain();
+    if (!surface || !surface.contains(e.target)) return;
     if (e.target.closest("[data-create-character]")) {
       openCreateCharacterDialog();
       return;
@@ -1448,7 +1736,7 @@
       const next = { ...(c.state?.classResources || {}) };
       if (!next[name]) next[name] = { current: 0, max: 1 };
       const data = await safe(() =>
-        api.patchState(state.campaignId, c.id, { class_resources: next })
+        patchState(c.id, { class_resources: next })
       );
       if (!data) return;
       applyCharacter(data.character);
@@ -1467,7 +1755,7 @@
       const next = { ...(c.state?.classResources || {}) };
       delete next[key];
       const data = await safe(() =>
-        api.patchState(state.campaignId, c.id, { class_resources: next })
+        patchState(c.id, { class_resources: next })
       );
       if (!data) return;
       applyCharacter(data.character);
@@ -1629,17 +1917,17 @@
         hp_max: Number(f.hpMax.value),
         hp_temp: Number(f.hpTemp.value) || 0
       };
-      const sheetData = await safe(() => api.patchSheet(state.campaignId, c.id, sheetPatch));
+      const sheetData = await safe(() => patchSheet(c.id, sheetPatch));
       if (!sheetData) return;
       applyCharacter(sheetData.character);
-      const stateData = await safe(() => api.patchState(state.campaignId, c.id, statePatch));
+      const stateData = await safe(() => patchState(c.id, statePatch));
       if (stateData) applyCharacter(stateData.character);
       const file = f.portrait.files && f.portrait.files[0];
       if (file) {
         try {
           const dataUrl = await fileToDataUrl(file);
           const portraitData = await safe(() =>
-            api.putPortrait(state.campaignId, c.id, dataUrl)
+            putPortrait(c.id, dataUrl)
           );
           if (portraitData) applyCharacter(portraitData.character);
         } catch (err) {
@@ -1700,6 +1988,24 @@
       btn.getAttribute("data-attach-id")
     );
   });
+
+  els.availabilityCancel?.addEventListener("click", () => els.availabilityDialog?.close());
+  els.eventCancel?.addEventListener("click", () => els.eventDialog?.close());
+  els.postCancel?.addEventListener("click", () => els.postDialog?.close());
+
+  if (window.PlayerSchedulingUI) {
+    PlayerSchedulingUI.init({
+      state,
+      els,
+      api,
+      safe,
+      render,
+      openCampaign,
+      setTabs,
+      stopMapTab,
+      root: document
+    });
+  }
 
   (async function boot() {
     try {

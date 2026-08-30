@@ -158,11 +158,10 @@ async function liveTests() {
   const playerId = playerIns.rows[0].id;
   const outsiderId = outsiderIns.rows[0].id;
 
-  await db.query(`INSERT INTO campaigns (id, name, description) VALUES ($1, $2, $3)`, [
-    campaignId,
-    "Auth test campaign",
-    ""
-  ]);
+  await db.query(
+    `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1, $2, $3, $4)`,
+    [campaignId, "Auth test campaign", "", "dnd5e"]
+  );
   await db.query(
     `INSERT INTO campaign_memberships (campaign_id, user_id, role) VALUES ($1, $2, 'dm')`,
     [campaignId, dmId]
@@ -173,9 +172,13 @@ async function liveTests() {
   );
 
   await db.query(
-    `INSERT INTO characters (id, campaign_id, name, type, level, sheet)
-     VALUES ($1, $2, 'Auth PC', 'player', 1, '{}'::jsonb)`,
-    [characterId, campaignId]
+    `INSERT INTO characters (id, name, type, game_system_id, sheet)
+     VALUES ($1, 'Auth PC', 'player', 'dnd5e', '{"level":1}'::jsonb)`,
+    [characterId]
+  );
+  await db.query(
+    `INSERT INTO campaign_characters (campaign_id, character_id, status) VALUES ($1, $2, 'active')`,
+    [campaignId, characterId]
   );
   await db.query(
     `INSERT INTO character_controllers (character_id, user_id) VALUES ($1, $2)`,
@@ -273,9 +276,13 @@ async function liveTests() {
 
   const otherCharId = `pc-test-other-${suffix}`;
   await db.query(
-    `INSERT INTO characters (id, campaign_id, name, type, level, sheet)
-     VALUES ($1, $2, 'Other', 'player', 1, '{}'::jsonb)`,
-    [otherCharId, campaignId]
+    `INSERT INTO characters (id, name, type, game_system_id, sheet)
+     VALUES ($1, 'Other', 'player', 'dnd5e', '{"level":1}'::jsonb)`,
+    [otherCharId]
+  );
+  await db.query(
+    `INSERT INTO campaign_characters (campaign_id, character_id, status) VALUES ($1, $2, 'active')`,
+    [campaignId, otherCharId]
   );
   try {
     await authorize.requireCharacterControl(fakeReq(loginPlayer.rawToken), campaignId, otherCharId);
@@ -379,9 +386,13 @@ async function liveTests() {
   /* Multi-character controller */
   const secondChar = `pc-test-second-${suffix}`;
   await db.query(
-    `INSERT INTO characters (id, campaign_id, name, type, level, sheet)
-     VALUES ($1, $2, 'Second', 'player', 1, '{}'::jsonb)`,
-    [secondChar, campaignId]
+    `INSERT INTO characters (id, name, type, game_system_id, sheet)
+     VALUES ($1, 'Second', 'player', 'dnd5e', '{"level":1}'::jsonb)`,
+    [secondChar]
+  );
+  await db.query(
+    `INSERT INTO campaign_characters (campaign_id, character_id, status) VALUES ($1, $2, 'active')`,
+    [campaignId, secondChar]
   );
   await db.query(
     `INSERT INTO character_controllers (character_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,

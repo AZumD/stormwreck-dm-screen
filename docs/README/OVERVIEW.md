@@ -1,16 +1,16 @@
 # OVERVIEW
 
-Personal local DM Library for **Dragons of Stormwreck Isle** (and custom sandbox campaigns).
+Personal local DM Library with **campaign content** (e.g. Dragons of Stormwreck Isle on D&D 5e) and custom sandbox campaigns.
 
 ## Surfaces
-- Root gate (`index.html`) — DM login / Player login (see `docs/README/HOME.md`); favicon at `/favicon.png`
-- DM Library (`/dm/`) — Stormwreck + **Create new campaign** + **Import browser data**
-- Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime
+- Root gate (`index.html`) — DM login / Player login entry links (see `docs/README/HOME.md`); favicon at `/favicon.png`
+- DM Library (`/dm/`) — built-in campaigns + **Create new campaign** + **Import browser data**
+- Campaign screen (`campaigns/stormwreck-isle/`) — booklet Play / Document runtime (campaign content, not platform branding)
 - Sandbox campaigns (`campaigns/sandbox/?id=`) — blank shells for user-created campaigns
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / Music / **Source**
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
-- Player companion (`/player/`) — mobile-first sheet / party / **Map tab** (read-only fog + tokens) / library / notes; Source Catalogue browseable (Rulebooks/Others only — Adventures + locations hidden); item/monster library browse removed (owned items still open); players can create PCs that mirror into the DM PC catalogue (see `docs/README/PC-CATALOGUE-MIRROR.md`, `PHASE5-PLAYER-SHEET.md`, `PLAYER-MAP.md`, `SOURCE.md`)
+- Player companion (`/player/`) — neutral home; **My campaigns** / **My characters** / **Schedule**; campaign workspace (Play: map, party, library, notes; Schedule + Board); character sheet workspace; see `docs/README/PLAYER.md`, `SCHEDULING.md`, `GAME-SYSTEMS.md`
 - Terminal DM client (`tui/`) — Go + Bubble Tea **scene-first** tracker over the same HTTPS API (Home → Library/Campaigns → Scene|Notes|Party|Map|Music; see `tui/README.md`, `docs/CLIENT-ARCHITECTURE.md`)
 
 ## Persistence (authoritative)

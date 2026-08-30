@@ -8,7 +8,10 @@ const db = require("./db");
 const catalogues = require("./catalogues");
 const assets = require("./assets");
 const authorize = require("./authorize");
+const characters = require("./characters");
 const pcCatalogueMirror = require("./pc-catalogue-mirror");
+const dnd5e = require("./dnd5e-character");
+const gameSystems = require("./game-systems");
 const { parseEntityRef } = require("./entity-ref");
 const { assertSafeId, assertCatalogueType } = require("./ids");
 
@@ -212,12 +215,13 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
   });
 
   const state = stateRow || {};
+  const playerState = dnd5e.systemStateToPlayerDto(dnd5e.readSystemState(state));
   return {
     id: characterRow.id,
-    campaignId: characterRow.campaign_id,
+    gameSystemId: characterRow.game_system_id || "dnd5e",
     name: characterRow.name,
     type: characterRow.type,
-    level: characterRow.level,
+    level: dnd5e.getCharacterLevel(characterRow),
     portraitUrl: characterRow.portrait_url || null,
     race: sheet.race != null ? String(sheet.race) : "",
     class: sheet.class != null ? String(sheet.class) : "",
@@ -239,16 +243,7 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
     skillRefs: parseRefList(sheet.skillRefs),
     featureRefs: parseRefList(sheet.featureRefs),
     spellRefs: parseRefList(sheet.spellRefs),
-    state: {
-      hpCurrent: state.hp_current ?? null,
-      hpMax: state.hp_max ?? null,
-      hpTemp: state.hp_temp ?? 0,
-      conditions: state.conditions ?? [],
-      deathSaves: state.death_saves ?? {},
-      spellSlots: state.spell_slots ?? {},
-      classResources: state.class_resources ?? {},
-      inspiration: Boolean(state.inspiration)
-    },
+    state: playerState,
     inventory: (inventoryRows || []).map((row) => ({
       id: row.id,
       itemId: row.item_id || null,
@@ -264,18 +259,18 @@ function toMechanicalDto(characterRow, stateRow, inventoryRows) {
 
 function toPartyCardDto(characterRow) {
   const sheet = characterRow.sheet && typeof characterRow.sheet === "object" ? characterRow.sheet : {};
-  const conditions = Array.isArray(characterRow.conditions) ? characterRow.conditions : [];
+  const playerState = dnd5e.systemStateToPlayerDto(dnd5e.readSystemState(characterRow));
+  const conditions = Array.isArray(playerState.conditions) ? playerState.conditions : [];
   return {
     id: characterRow.id,
-    campaignId: characterRow.campaign_id,
     name: characterRow.name,
     type: characterRow.type,
-    level: characterRow.level,
+    level: dnd5e.getCharacterLevel(characterRow),
     portraitUrl: characterRow.portrait_url || null,
     race: sheet.race != null ? String(sheet.race) : "",
     class: sheet.class != null ? String(sheet.class) : "",
-    hpCurrent: characterRow.hp_current != null ? Number(characterRow.hp_current) : null,
-    hpMax: characterRow.hp_max != null ? Number(characterRow.hp_max) : null,
+    hpCurrent: playerState.hpCurrent,
+    hpMax: playerState.hpMax,
     conditions
   };
 }
@@ -296,19 +291,48 @@ async function listControlledCharacterIds(userId, campaignId) {
   const result = await db.query(
     `SELECT cc.character_id
      FROM character_controllers cc
-     JOIN characters c ON c.id = cc.character_id
-     WHERE cc.user_id = $1 AND c.campaign_id = $2
-     ORDER BY c.name ASC`,
+     JOIN campaign_characters campc ON campc.character_id = cc.character_id
+     WHERE cc.user_id = $1 AND campc.campaign_id = $2
+     ORDER BY cc.character_id ASC`,
     [userId, campaignId]
   );
   return result.rows.map((r) => r.character_id);
+}
+
+async function listAllControlledCharacterIds(userId) {
+  const result = await db.query(
+    `SELECT cc.character_id
+     FROM character_controllers cc
+     JOIN characters c ON c.id = cc.character_id
+     WHERE cc.user_id = $1
+     ORDER BY c.name ASC`,
+    [userId]
+  );
+  return result.rows.map((r) => r.character_id);
+}
+
+async function listCharacterCampaigns(characterId) {
+  const result = await db.query(
+    `SELECT cc.campaign_id, cc.status, camp.name AS campaign_name, camp.game_system_id
+     FROM campaign_characters cc
+     JOIN campaigns camp ON camp.id = cc.campaign_id
+     WHERE cc.character_id = $1
+     ORDER BY camp.name ASC`,
+    [characterId]
+  );
+  return result.rows.map((r) => ({
+    id: r.campaign_id,
+    name: r.campaign_name,
+    status: r.status,
+    gameSystemId: r.game_system_id
+  }));
 }
 
 async function getBootstrap(req) {
   requireDb();
   const user = await authorize.requireUser(req);
   const memberships = await db.query(
-    `SELECT cm.campaign_id, cm.role, c.name AS campaign_name, c.description
+    `SELECT cm.campaign_id, cm.role, c.name AS campaign_name, c.description, c.game_system_id
      FROM campaign_memberships cm
      JOIN campaigns c ON c.id = cm.campaign_id
      WHERE cm.user_id = $1
@@ -322,11 +346,11 @@ async function getBootstrap(req) {
     const chars = controlledIds.length
       ? (
           await db.query(
-            `SELECT id, name, type, level, portrait_url
+            `SELECT id, name, type, portrait_url, sheet, game_system_id
              FROM characters
-             WHERE campaign_id = $1 AND id = ANY($2::text[])
+             WHERE id = ANY($1::text[])
              ORDER BY name ASC`,
-            [m.campaign_id, controlledIds]
+            [controlledIds]
           )
         ).rows
       : [];
@@ -335,33 +359,77 @@ async function getBootstrap(req) {
       name: m.campaign_name,
       description: m.description || "",
       role: m.role,
+      gameSystemId: m.game_system_id || "dnd5e",
+      participatingCharacters: chars.map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: c.type,
+        level: dnd5e.getCharacterLevel(c),
+        portraitUrl: c.portrait_url || null,
+        gameSystemId: c.game_system_id || "dnd5e"
+      })),
+      /* legacy alias */
       controlledCharacters: chars.map((c) => ({
         id: c.id,
         name: c.name,
         type: c.type,
-        level: c.level,
+        level: dnd5e.getCharacterLevel(c),
         portraitUrl: c.portrait_url || null
       }))
     });
   }
 
+  const allCharIds = await listAllControlledCharacterIds(user.id);
+  const charactersOut = allCharIds.length
+    ? (
+        await db.query(
+          `SELECT id, name, type, portrait_url, sheet, game_system_id
+           FROM characters WHERE id = ANY($1::text[]) ORDER BY name ASC`,
+          [allCharIds]
+        )
+      ).rows.map(async (c) => {
+        const campaigns = await listCharacterCampaigns(c.id);
+        return {
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          level: dnd5e.getCharacterLevel(c),
+          portraitUrl: c.portrait_url || null,
+          gameSystemId: c.game_system_id || "dnd5e",
+          campaigns
+        };
+      })
+    : [];
+
+  const resolvedCharacters = await Promise.all(charactersOut);
+
   return {
     user: { id: user.id, name: user.name, email: user.email },
-    campaigns: campaignsOut
+    campaigns: campaignsOut,
+    characters: resolvedCharacters,
+    gameSystems: gameSystems.listGameSystems().map((s) => ({ id: s.id, name: s.name }))
   };
 }
 
-async function loadControlledCharacterBundle(campaignId, characterId) {
+async function loadCharacterBundle(characterId, campaignId) {
   const charResult = await db.query(
-    `SELECT id, campaign_id, name, type, level, portrait_url, sheet, catalogue_pc_id, created_at, updated_at
+    `SELECT id, name, type, game_system_id, portrait_url, sheet, catalogue_pc_id, created_at, updated_at
      FROM characters
-     WHERE id = $1 AND campaign_id = $2`,
-    [characterId, campaignId]
+     WHERE id = $1`,
+    [characterId]
   );
   if (!charResult.rows.length) {
-    const err = new Error("Character not found in campaign");
+    const err = new Error("Character not found");
     err.status = 404;
     throw err;
+  }
+  if (campaignId) {
+    const inCampaign = await authorize.characterInCampaign(campaignId, characterId);
+    if (!inCampaign) {
+      const err = new Error("Character not found in campaign");
+      err.status = 404;
+      throw err;
+    }
   }
   const stateResult = await db.query("SELECT * FROM character_state WHERE character_id = $1", [
     characterId
@@ -383,6 +451,10 @@ async function loadControlledCharacterBundle(campaignId, characterId) {
   };
 }
 
+async function loadControlledCharacterBundle(campaignId, characterId) {
+  return loadCharacterBundle(characterId, campaignId);
+}
+
 async function listMyCharacters(req, campaignId) {
   requireDb();
   const { user } = await authorize.requireCampaignMember(req, campaignId);
@@ -402,18 +474,54 @@ async function getMyCharacter(req, campaignId, characterId) {
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
-/**
- * Player creates a PC in a campaign they belong to. Writes Postgres + mirrors to DM PC catalogue.
- */
-async function createMyCharacter(req, campaignId, body) {
+async function listAllMyCharacters(req) {
   requireDb();
-  const { user } = await authorize.requireCampaignMember(req, campaignId);
+  const user = await authorize.requireUser(req);
+  const ids = await listAllControlledCharacterIds(user.id);
+  const out = [];
+  for (const id of ids) {
+    const bundle = await loadCharacterBundle(id, null);
+    const dto = toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+    dto.campaigns = await listCharacterCampaigns(id);
+    out.push(dto);
+  }
+  return out;
+}
+
+async function getMyCharacterDirect(req, characterId) {
+  requireDb();
+  await authorize.requireCharacterControlDirect(req, characterId);
+  const bundle = await loadCharacterBundle(characterId, null);
+  const dto = toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+  dto.campaigns = await listCharacterCampaigns(characterId);
+  return dto;
+}
+
+async function createStandaloneCharacter(req, body) {
+  requireDb();
+  const user = await authorize.requireUser(req);
   const payload = body && typeof body === "object" ? body : {};
+  const gameSystemId = String(payload.gameSystemId || "dnd5e").trim();
+  gameSystems.assertGameSystem(gameSystemId);
+  return insertPlayerCharacter(user, null, gameSystemId, payload);
+}
+
+async function insertPlayerCharacter(user, campaignId, gameSystemId, payload) {
   const name = String(payload.name || "").trim();
   if (!name) {
     const err = new Error("name is required");
     err.status = 400;
     throw err;
+  }
+
+  if (campaignId) {
+    const camp = await db.query("SELECT game_system_id FROM campaigns WHERE id = $1", [campaignId]);
+    if (!camp.rows.length) {
+      const err = new Error("Campaign not found");
+      err.status = 404;
+      throw err;
+    }
+    gameSystems.assertCompatibleGameSystems(camp.rows[0].game_system_id, gameSystemId);
   }
 
   const id = pcCatalogueMirror.generatePcId();
@@ -438,6 +546,7 @@ async function createMyCharacter(req, campaignId, body) {
   const ac = Number.isFinite(Number(payload.ac)) ? Number(payload.ac) : 10;
 
   const sheet = {
+    level,
     race,
     class: klass,
     subclass,
@@ -455,41 +564,67 @@ async function createMyCharacter(req, campaignId, body) {
     updatedAt: Date.now()
   };
 
+  const systemState = dnd5e.normalizeSystemState({
+    hp: { current: hpCurrent, max: hpMax, temp: 0 },
+    conditions: [],
+    deathSaves: {},
+    spellSlots: {},
+    classResources: {},
+    inspiration: false
+  });
+
   try {
     await db.query(
       `INSERT INTO characters (
-        id, campaign_id, name, type, level, portrait_url, sheet, catalogue_pc_id, updated_at
-      ) VALUES ($1, $2, $3, 'player', $4, NULL, $5::jsonb, $1, now())`,
-      [id, campaignId, name, level, JSON.stringify(sheet)]
+        id, name, type, game_system_id, portrait_url, sheet, catalogue_pc_id, updated_at
+      ) VALUES ($1, $2, 'player', $3, NULL, $4::jsonb, $1, now())`,
+      [id, name, gameSystemId, JSON.stringify(sheet)]
     );
     await db.query(
-      `INSERT INTO character_state (
-        character_id, hp_current, hp_max, hp_temp, conditions, death_saves,
-        spell_slots, class_resources, inspiration, extras, updated_at
-      ) VALUES ($1, $2, $3, 0, '[]'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, false, '{}'::jsonb, now())`,
-      [id, hpCurrent, hpMax]
+      `INSERT INTO character_state (character_id, system_state, extras, updated_at)
+       VALUES ($1, $2::jsonb, '{}'::jsonb, now())`,
+      [id, JSON.stringify(systemState)]
     );
+    if (campaignId) {
+      await db.query(
+        `INSERT INTO campaign_characters (campaign_id, character_id, status)
+         VALUES ($1, $2, 'active')
+         ON CONFLICT DO NOTHING`,
+        [campaignId, id]
+      );
+    }
     await db.query(
       `INSERT INTO character_controllers (character_id, user_id) VALUES ($1, $2)
        ON CONFLICT DO NOTHING`,
       [id, user.id]
     );
-    await pcCatalogueMirror.mirrorCharacterToCatalogue(id);
+    if (campaignId) await pcCatalogueMirror.mirrorCharacterToCatalogue(id);
   } catch (err) {
-    await db.query("DELETE FROM characters WHERE id = $1 AND campaign_id = $2", [id, campaignId]).catch(
-      () => false
-    );
+    await db.query("DELETE FROM characters WHERE id = $1", [id]).catch(() => false);
     await catalogues.remove("pc", id).catch(() => false);
     throw err;
   }
 
-  const bundle = await loadControlledCharacterBundle(campaignId, id);
+  const bundle = await loadCharacterBundle(id, campaignId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
+}
+
+async function createMyCharacter(req, campaignId, body) {
+  requireDb();
+  const { user } = await authorize.requireCampaignMember(req, campaignId);
+  const payload = body && typeof body === "object" ? body : {};
+  const camp = await db.query("SELECT game_system_id FROM campaigns WHERE id = $1", [campaignId]);
+  const gameSystemId = String(payload.gameSystemId || camp.rows[0]?.game_system_id || "dnd5e").trim();
+  return insertPlayerCharacter(user, campaignId, gameSystemId, payload);
 }
 
 async function patchMyCharacterState(req, campaignId, characterId, body) {
   requireDb();
-  await authorize.requireCharacterControl(req, campaignId, characterId);
+  if (campaignId) {
+    await authorize.requireCharacterControl(req, campaignId, characterId);
+  } else {
+    await authorize.requireCharacterControlDirect(req, characterId);
+  }
 
   const patch = body && typeof body === "object" ? body : {};
   const unknown = Object.keys(patch).filter((k) => !PLAYER_STATE_WHITELIST.has(k));
@@ -515,67 +650,29 @@ async function patchMyCharacterState(req, campaignId, characterId, body) {
     characterId
   ]);
   const current = currentResult.rows[0] || {};
-  const next = {
-    hp_current: Object.prototype.hasOwnProperty.call(patch, "hp_current")
-      ? patch.hp_current
-      : current.hp_current,
-    hp_max: Object.prototype.hasOwnProperty.call(patch, "hp_max") ? patch.hp_max : current.hp_max,
-    hp_temp: Object.prototype.hasOwnProperty.call(patch, "hp_temp") ? patch.hp_temp : current.hp_temp ?? 0,
-    conditions: Object.prototype.hasOwnProperty.call(patch, "conditions")
-      ? patch.conditions
-      : current.conditions ?? [],
-    death_saves: Object.prototype.hasOwnProperty.call(patch, "death_saves")
-      ? patch.death_saves
-      : current.death_saves ?? {},
-    spell_slots: Object.prototype.hasOwnProperty.call(patch, "spell_slots")
-      ? patch.spell_slots
-      : current.spell_slots ?? {},
-    class_resources: Object.prototype.hasOwnProperty.call(patch, "class_resources")
-      ? patch.class_resources
-      : current.class_resources ?? {},
-    inspiration: Object.prototype.hasOwnProperty.call(patch, "inspiration")
-      ? Boolean(patch.inspiration)
-      : Boolean(current.inspiration),
-    extras: current.extras ?? {}
-  };
+  const nextState = dnd5e.applyStatePatch(current, patch, PLAYER_STATE_WHITELIST);
 
   await db.query(
-    `INSERT INTO character_state (
-      character_id, hp_current, hp_max, hp_temp, conditions, death_saves,
-      spell_slots, class_resources, inspiration, extras, updated_at
-    ) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9,$10::jsonb, now())
-    ON CONFLICT (character_id) DO UPDATE SET
-      hp_current = EXCLUDED.hp_current,
-      hp_max = EXCLUDED.hp_max,
-      hp_temp = EXCLUDED.hp_temp,
-      conditions = EXCLUDED.conditions,
-      death_saves = EXCLUDED.death_saves,
-      spell_slots = EXCLUDED.spell_slots,
-      class_resources = EXCLUDED.class_resources,
-      inspiration = EXCLUDED.inspiration,
+    `INSERT INTO character_state (character_id, system_state, extras, updated_at)
+     VALUES ($1, $2::jsonb, $3::jsonb, now())
+     ON CONFLICT (character_id) DO UPDATE SET
+      system_state = EXCLUDED.system_state,
       updated_at = now()`,
-    [
-      characterId,
-      next.hp_current ?? null,
-      next.hp_max ?? null,
-      next.hp_temp ?? 0,
-      JSON.stringify(next.conditions ?? []),
-      JSON.stringify(next.death_saves ?? {}),
-      JSON.stringify(next.spell_slots ?? {}),
-      JSON.stringify(next.class_resources ?? {}),
-      Boolean(next.inspiration),
-      JSON.stringify(next.extras ?? {})
-    ]
+    [characterId, JSON.stringify(nextState), JSON.stringify(current.extras ?? {})]
   );
 
   await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
-  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const bundle = await loadCharacterBundle(characterId, campaignId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
 async function patchMyCharacter(req, campaignId, characterId, body) {
   requireDb();
-  await authorize.requireCharacterControl(req, campaignId, characterId);
+  if (campaignId) {
+    await authorize.requireCharacterControl(req, campaignId, characterId);
+  } else {
+    await authorize.requireCharacterControlDirect(req, characterId);
+  }
 
   const patch = body && typeof body === "object" ? body : {};
   const unknown = Object.keys(patch).filter((k) => !PLAYER_SHEET_WHITELIST.has(k));
@@ -591,8 +688,8 @@ async function patchMyCharacter(req, campaignId, characterId, body) {
   }
 
   const rowResult = await db.query(
-    `SELECT id, name, level, sheet FROM characters WHERE id = $1 AND campaign_id = $2`,
-    [characterId, campaignId]
+    `SELECT id, name, sheet FROM characters WHERE id = $1`,
+    [characterId]
   );
   if (!rowResult.rows.length) {
     const err = new Error("Not found");
@@ -604,7 +701,7 @@ async function patchMyCharacter(req, campaignId, characterId, body) {
     row.sheet && typeof row.sheet === "object" && !Array.isArray(row.sheet) ? { ...row.sheet } : {};
 
   let name = row.name;
-  let level = row.level;
+  let level = dnd5e.getCharacterLevel(row);
 
   if (Object.prototype.hasOwnProperty.call(patch, "name")) {
     name = String(patch.name || "").trim();
@@ -668,22 +765,27 @@ async function patchMyCharacter(req, campaignId, characterId, body) {
     else sheet.currency = { ...(sheet.currency || {}), ...currency };
   }
 
+  sheet.level = level;
   sheet.updatedAt = Date.now();
 
   await db.query(
-    `UPDATE characters SET name = $1, level = $2, sheet = $3::jsonb, updated_at = now()
-     WHERE id = $4 AND campaign_id = $5`,
-    [name, level, JSON.stringify(sheet), characterId, campaignId]
+    `UPDATE characters SET name = $1, sheet = $2::jsonb, updated_at = now()
+     WHERE id = $3`,
+    [name, JSON.stringify(sheet), characterId]
   );
 
   await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
-  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const bundle = await loadCharacterBundle(characterId, campaignId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
 async function addInventoryEntry(req, campaignId, characterId, body) {
   requireDb();
-  await authorize.requireCharacterControl(req, campaignId, characterId);
+  if (campaignId) {
+    await authorize.requireCharacterControl(req, campaignId, characterId);
+  } else {
+    await authorize.requireCharacterControlDirect(req, characterId);
+  }
   const payload = body && typeof body === "object" ? body : {};
   const itemId = payload.itemId ? assertSafeId(String(payload.itemId), "item id") : null;
   const customName = String(payload.customName || payload.name || "").trim();
@@ -717,7 +819,7 @@ async function addInventoryEntry(req, campaignId, characterId, body) {
       JSON.stringify(itemId ? { source: "player" } : { source: "player", custom: true })
     ]
   );
-  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const bundle = await loadCharacterBundle(characterId, campaignId);
   await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
   return {
     entryId: result.rows[0].id,
@@ -727,13 +829,16 @@ async function addInventoryEntry(req, campaignId, characterId, body) {
 
 async function updateInventoryEntry(req, campaignId, characterId, entryId, body) {
   requireDb();
-  await authorize.requireCharacterControl(req, campaignId, characterId);
+  if (campaignId) {
+    await authorize.requireCharacterControl(req, campaignId, characterId);
+  } else {
+    await authorize.requireCharacterControlDirect(req, characterId);
+  }
   const id = assertSafeId(String(entryId), "inventory id");
   const existing = await db.query(
     `SELECT ie.* FROM inventory_entries ie
-     JOIN characters c ON c.id = ie.character_id
-     WHERE ie.id = $1 AND ie.character_id = $2 AND c.campaign_id = $3`,
-    [id, characterId, campaignId]
+     WHERE ie.id = $1 AND ie.character_id = $2`,
+    [id, characterId]
   );
   if (!existing.rows.length) {
     const err = new Error("Not found");
@@ -761,20 +866,23 @@ async function updateInventoryEntry(req, campaignId, characterId, entryId, body)
     [quantity, equipped, notes, customName, id]
   );
   await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
-  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const bundle = await loadCharacterBundle(characterId, campaignId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
 async function removeInventoryEntry(req, campaignId, characterId, entryId) {
   requireDb();
-  await authorize.requireCharacterControl(req, campaignId, characterId);
+  if (campaignId) {
+    await authorize.requireCharacterControl(req, campaignId, characterId);
+  } else {
+    await authorize.requireCharacterControlDirect(req, characterId);
+  }
   const id = assertSafeId(String(entryId), "inventory id");
   const result = await db.query(
     `DELETE FROM inventory_entries ie
-     USING characters c
-     WHERE ie.id = $1 AND ie.character_id = $2 AND c.id = ie.character_id AND c.campaign_id = $3
+     WHERE ie.id = $1 AND ie.character_id = $2
      RETURNING ie.id`,
-    [id, characterId, campaignId]
+    [id, characterId]
   );
   if (!result.rows.length) {
     const err = new Error("Not found");
@@ -782,13 +890,17 @@ async function removeInventoryEntry(req, campaignId, characterId, entryId) {
     throw err;
   }
   await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
-  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const bundle = await loadCharacterBundle(characterId, campaignId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
 async function putMyCharacterPortrait(req, campaignId, characterId, body) {
   requireDb();
-  await authorize.requireCharacterControl(req, campaignId, characterId);
+  if (campaignId) {
+    await authorize.requireCharacterControl(req, campaignId, characterId);
+  } else {
+    await authorize.requireCharacterControlDirect(req, characterId);
+  }
   const dataUrl = body?.dataUrl || body?.image || "";
   if (!dataUrl) {
     const err = new Error("dataUrl required");
@@ -796,12 +908,12 @@ async function putMyCharacterPortrait(req, campaignId, characterId, body) {
     throw err;
   }
   const saved = await assets.putFromDataUrl("portraits", "pc", characterId, dataUrl);
-  await db.query(
-    `UPDATE characters SET portrait_url = $1, updated_at = now() WHERE id = $2 AND campaign_id = $3`,
-    [saved.url, characterId, campaignId]
-  );
+  await db.query(`UPDATE characters SET portrait_url = $1, updated_at = now() WHERE id = $2`, [
+    saved.url,
+    characterId
+  ]);
   await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
-  const bundle = await loadControlledCharacterBundle(campaignId, characterId);
+  const bundle = await loadCharacterBundle(characterId, campaignId);
   return toMechanicalDto(bundle.character, bundle.state, bundle.inventory);
 }
 
@@ -809,11 +921,11 @@ async function listParty(req, campaignId) {
   requireDb();
   await authorize.requireCampaignMember(req, campaignId);
   const result = await db.query(
-    `SELECT c.id, c.campaign_id, c.name, c.type, c.level, c.portrait_url, c.sheet,
-            cs.hp_current, cs.hp_max, cs.conditions
+    `SELECT c.id, c.name, c.type, c.portrait_url, c.sheet, cs.system_state
      FROM characters c
+     JOIN campaign_characters cc ON cc.character_id = c.id AND cc.campaign_id = $1
      LEFT JOIN character_state cs ON cs.character_id = c.id
-     WHERE c.campaign_id = $1 AND c.type = 'player'
+     WHERE c.type = 'player'
      ORDER BY c.name ASC`,
     [campaignId]
   );
@@ -1175,12 +1287,83 @@ async function deleteNote(req, noteId) {
 /**
  * Player-safe character portrait. Member may see portraits of type=player PCs in the campaign.
  */
+async function listAttachableCampaigns(req, characterId) {
+  requireDb();
+  await authorize.requireCharacterControlDirect(req, characterId);
+  const charResult = await db.query("SELECT game_system_id FROM characters WHERE id = $1", [
+    characterId
+  ]);
+  if (!charResult.rows.length) {
+    const err = new Error("Character not found");
+    err.status = 404;
+    throw err;
+  }
+  const gameSystemId = charResult.rows[0].game_system_id || "dnd5e";
+  const user = req.user || (await authorize.requireUser(req));
+  const memberships = await db.query(
+    `SELECT cm.campaign_id, c.name, c.game_system_id
+     FROM campaign_memberships cm
+     JOIN campaigns c ON c.id = cm.campaign_id
+     WHERE cm.user_id = $1
+     ORDER BY c.name ASC`,
+    [user.id]
+  );
+  const attached = await listCharacterCampaigns(characterId);
+  const attachedIds = new Set(attached.map((c) => c.id));
+  return memberships.rows
+    .filter((m) => m.game_system_id === gameSystemId && !attachedIds.has(m.campaign_id))
+    .map((m) => ({
+      id: m.campaign_id,
+      name: m.name,
+      gameSystemId: m.game_system_id
+    }));
+}
+
+async function attachCharacterToCampaign(req, campaignId, characterId) {
+  requireDb();
+  const { user, membership } = await authorize.requireCampaignMember(req, campaignId);
+  if (membership.role !== "dm" && !(await authorize.userControlsCharacter(user.id, characterId))) {
+    authorize.deny(403, "You do not control this character");
+  }
+  await characters.attachCharacterToCampaign(campaignId, characterId);
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
+  return getMyCharacterDirect(req, characterId);
+}
+
+async function detachCharacterFromCampaign(req, campaignId, characterId) {
+  requireDb();
+  const { user, membership } = await authorize.requireCampaignMember(req, campaignId);
+  if (membership.role !== "dm" && !(await authorize.userControlsCharacter(user.id, characterId))) {
+    authorize.deny(403, "You do not control this character");
+  }
+  await characters.detachCharacterFromCampaign(campaignId, characterId);
+  return { characterId, campaignId, campaigns: await listCharacterCampaigns(characterId) };
+}
+
+async function attachCharacterToCampaignAsDm(req, campaignId, characterId) {
+  requireDb();
+  await authorize.requireDmIfAuthRequired(req, campaignId);
+  await characters.attachCharacterToCampaign(campaignId, characterId);
+  await pcCatalogueMirror.mirrorCharacterToCatalogueSafe(characterId);
+  return characters.getCharacter(campaignId, characterId);
+}
+
+async function detachCharacterFromCampaignAsDm(req, campaignId, characterId) {
+  requireDb();
+  await authorize.requireDmIfAuthRequired(req, campaignId);
+  await characters.detachCharacterFromCampaign(campaignId, characterId);
+  return { campaignId, characterId };
+}
+
 async function readCharacterPortrait(req, campaignId, characterId) {
   requireDb();
   await authorize.requireCampaignMember(req, campaignId);
   const safeId = assertSafeId(characterId, "character id");
   const result = await db.query(
-    `SELECT id, type, portrait_url FROM characters WHERE id = $1 AND campaign_id = $2`,
+    `SELECT c.id, c.type, c.portrait_url
+     FROM characters c
+     JOIN campaign_characters cc ON cc.character_id = c.id AND cc.campaign_id = $2
+     WHERE c.id = $1`,
     [safeId, campaignId]
   );
   if (!result.rows.length || result.rows[0].type !== "player") {
@@ -1233,9 +1416,12 @@ module.exports = {
   toMechanicalDto,
   toPartyCardDto,
   getBootstrap,
+  listAllMyCharacters,
   listMyCharacters,
   getMyCharacter,
+  getMyCharacterDirect,
   createMyCharacter,
+  createStandaloneCharacter,
   patchMyCharacterState,
   patchMyCharacter,
   addInventoryEntry,
@@ -1243,6 +1429,11 @@ module.exports = {
   removeInventoryEntry,
   putMyCharacterPortrait,
   listParty,
+  listAttachableCampaigns,
+  attachCharacterToCampaign,
+  detachCharacterFromCampaign,
+  attachCharacterToCampaignAsDm,
+  detachCharacterFromCampaignAsDm,
   listPlayerCatalogue,
   resolveCatalogue,
   attachLibraryEntry,

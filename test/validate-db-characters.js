@@ -112,11 +112,10 @@ async function liveTests() {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`INSERT INTO campaigns (id, name, description) VALUES ($1,$2,$3)`, [
-      campaignId,
-      "P2 test campaign",
-      ""
-    ]);
+    await client.query(
+      `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1,$2,$3,$4)`,
+      [campaignId, "P2 test campaign", "", "dnd5e"]
+    );
     const pcA = {
       id: firstId,
       name: "Test First",

@@ -382,11 +382,10 @@ async function liveCampaignSync() {
         ["Create DM", auth.normalizeEmail(dmEmail), hash]
       );
       const dmId = dmIns.rows[0].id;
-      await db.query(`INSERT INTO campaigns (id, name, description) VALUES ($1, $2, $3)`, [
-        seedCampaignId,
-        "Seed for any-dm",
-        ""
-      ]);
+      await db.query(
+        `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1, $2, $3, $4)`,
+        [seedCampaignId, "Seed for any-dm", "", "dnd5e"]
+      );
       await db.query(
         `INSERT INTO campaign_memberships (campaign_id, user_id, role) VALUES ($1, $2, 'dm')`,
         [seedCampaignId, dmId]

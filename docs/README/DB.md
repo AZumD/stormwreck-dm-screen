@@ -8,7 +8,11 @@ Additive PostgreSQL layer for multi-user campaigns. When `DATABASE_URL` is unset
 |------|------|
 | `db/schema.js` | Drizzle schema (ESM) |
 | `db/migrations/0001_phase1.sql` | Initial tables |
-| `db/migrations/0002_phase3_auth.sql` | `password_hash`, `sessions`, case-insensitive email |
+| `db/migrations/0003_phase5_npc_reveal.sql` | Revealed NPCs |
+| `db/migrations/0004_phase6_platform.sql` | Game systems, campaign participation, `system_state` |
+| `db/migrations/0005_phase6_platform_cleanup.sql` | Drop legacy D&D character columns |
+| `db/migrations/0006_drop_character_campaign_id.sql` | Drop `characters.campaign_id`; participation in `campaign_characters` only |
+| `db/migrations/0007_scheduling.sql` | User availability, campaign events, RSVPs, message board |
 | `db/migrate.mjs` | Apply SQL migrations |
 | `db/seed-items.mjs` | Import `{DM_DATA_ROOT}/catalogues/item/*.json` → `items` |
 | `db/seed-characters.mjs` | Import campaign PC catalogue → `characters` + state + inventory (**one-shot**) |
@@ -49,7 +53,8 @@ See `docs/README/AUTH.md` for authentication details and `docs/README/DEPLOY.md`
 | Party roster refs (`type` + catalogue id) | File `campaign-state.json` | DM UI / `CampaignState` unchanged |
 | Scene status, NPC memory, timeline, clock | File `campaign-state.json` | Unchanged |
 | Global PC catalogue JSON | File `data/catalogues/pc/*.json` | DM projection/editor for linked campaign PCs; mirrored both ways via `pc-catalogue-mirror` (see `PC-CATALOGUE-MIRROR.md`) |
-| Campaign character row + sheet | Postgres `characters` | Scoped by `campaign_id`; `id` preserves legacy PC id |
+| Campaign character row + sheet | Postgres `characters` | Standalone character rows; `id` preserves legacy PC id |
+| Campaign participation | Postgres `campaign_characters` | Many-to-many; sole authority for character ↔ campaign |
 | Character display name | Postgres `characters.name` | Trimmed from catalogue `name`; raw import string kept in `sheet.sourceName` |
 | HP, conditions, resources | Postgres `character_state` | Updated via character state API |
 | Equipment / inventory rows | Postgres `inventory_entries` | Resolved `item_id` when item exists; unresolved refs kept in `custom_item` |

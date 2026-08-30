@@ -29,6 +29,8 @@ const {
 const musicCatalogue = require("../lib/music-catalogue");
 const audioStorage = require("../lib/audio-storage");
 const campaignMaps = require("../lib/campaign-maps");
+const scheduling = require("../lib/scheduling");
+const campaignBoard = require("../lib/campaign-board");
 
 function route(method, pattern, keys, handler) {
   return { method, pattern, keys, handler };
@@ -162,6 +164,162 @@ function createApiRoutes() {
       const data = await player.getBootstrap(req);
       sendJson(res, 200, { ok: true, ...data });
     }),
+
+    route("GET", /^\/api\/player\/characters$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const list = await player.listAllMyCharacters(req);
+      sendJson(res, 200, { ok: true, characters: list });
+    }),
+
+    route("POST", /^\/api\/player\/characters$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const body = await readJsonBody(req);
+      const character = await player.createStandaloneCharacter(req, body || {});
+      sendJson(res, 201, { ok: true, character });
+    }),
+
+    route("GET", /^\/api\/player\/characters\/([^/]+)$/, ["characterId"], async (req, res, p) => {
+      const characterId = assertSafeId(p.characterId, "character id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const character = await player.getMyCharacterDirect(req, characterId);
+      sendJson(res, 200, { ok: true, character });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/player\/characters\/([^/]+)\/attachable-campaigns$/,
+      ["characterId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const campaigns = await player.listAttachableCampaigns(req, characterId);
+        sendJson(res, 200, { ok: true, characterId, campaigns });
+      }
+    ),
+
+    route(
+      "POST",
+      /^\/api\/player\/characters\/([^/]+)\/campaigns\/([^/]+)$/,
+      ["characterId", "campaignId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        const campaignId = assertSafeId(p.campaignId, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const character = await player.attachCharacterToCampaign(req, campaignId, characterId);
+        sendJson(res, 200, { ok: true, campaignId, character });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/player\/characters\/([^/]+)\/campaigns\/([^/]+)$/,
+      ["characterId", "campaignId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        const campaignId = assertSafeId(p.campaignId, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const result = await player.detachCharacterFromCampaign(req, campaignId, characterId);
+        sendJson(res, 200, { ok: true, ...result });
+      }
+    ),
+
+    route(
+      "PATCH",
+      /^\/api\/player\/characters\/([^/]+)\/state$/,
+      ["characterId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const character = await player.patchMyCharacterState(req, null, characterId, body || {});
+        sendJson(res, 200, { ok: true, character });
+      }
+    ),
+
+    route("PATCH", /^\/api\/player\/characters\/([^/]+)$/, ["characterId"], async (req, res, p) => {
+      const characterId = assertSafeId(p.characterId, "character id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const body = await readJsonBody(req);
+      const character = await player.patchMyCharacter(req, null, characterId, body || {});
+      sendJson(res, 200, { ok: true, character });
+    }),
+
+    route(
+      "POST",
+      /^\/api\/player\/characters\/([^/]+)\/inventory$/,
+      ["characterId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const result = await player.addInventoryEntry(req, null, characterId, body || {});
+        sendJson(res, 201, { ok: true, entryId: result.entryId, character: result.character });
+      }
+    ),
+
+    route(
+      "PATCH",
+      /^\/api\/player\/characters\/([^/]+)\/inventory\/([^/]+)$/,
+      ["characterId", "entryId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        const entryId = assertSafeId(p.entryId, "inventory id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const character = await player.updateInventoryEntry(req, null, characterId, entryId, body || {});
+        sendJson(res, 200, { ok: true, character });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/player\/characters\/([^/]+)\/inventory\/([^/]+)$/,
+      ["characterId", "entryId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        const entryId = assertSafeId(p.entryId, "inventory id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const character = await player.removeInventoryEntry(req, null, characterId, entryId);
+        sendJson(res, 200, { ok: true, character });
+      }
+    ),
+
+    route(
+      "PUT",
+      /^\/api\/player\/portraits\/characters\/([^/]+)$/,
+      ["characterId"],
+      async (req, res, p) => {
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const body = await readJsonBody(req);
+        const character = await player.putMyCharacterPortrait(req, null, characterId, body || {});
+        sendJson(res, 200, { ok: true, character });
+      }
+    ),
 
     route("GET", /^\/api\/player\/campaigns\/([^/]+)\/characters\/mine$/, ["id"], async (req, res, p) => {
       const id = assertSafeId(p.id, "campaign id");
@@ -423,6 +581,226 @@ function createApiRoutes() {
       sendJson(res, 200, { ok: true, ...result });
     }),
 
+    /* —— Platform scheduling (user availability, events, board) —— */
+
+    route("GET", /^\/api\/player\/availability$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      const from = url.searchParams.get("from");
+      const to = url.searchParams.get("to");
+      if (!from || !to) {
+        return sendJson(res, 400, { ok: false, error: "from and to query params required (YYYY-MM-DD)" });
+      }
+      const availability = await scheduling.listUserAvailability(req, from, to);
+      sendJson(res, 200, { ok: true, availability });
+    }),
+
+    route("PUT", /^\/api\/player\/availability\/([^/]+)$/, ["date"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const entry = await scheduling.upsertUserAvailability(req, p.date, body || {});
+      sendJson(res, 200, { ok: true, availability: entry });
+    }),
+
+    route("DELETE", /^\/api\/player\/availability\/([^/]+)$/, ["date"], async (req, res, p) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const result = await scheduling.deleteUserAvailability(req, p.date);
+      sendJson(res, 200, { ok: true, ...result });
+    }),
+
+    route("GET", /^\/api\/player\/upcoming-events$/, [], async (req, res) => {
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      const events = await scheduling.listUpcomingEventsForUser(req, {
+        limit: url.searchParams.get("limit"),
+        after: url.searchParams.get("after")
+      });
+      sendJson(res, 200, { ok: true, events });
+    }),
+
+    route("GET", /^\/api\/player\/campaigns\/([^/]+)\/events$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+      const events = await scheduling.listCampaignEvents(req, id, {
+        from: url.searchParams.get("from"),
+        to: url.searchParams.get("to")
+      });
+      sendJson(res, 200, { ok: true, campaignId: id, events });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/events\/([^/]+)$/,
+      ["id", "eventId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const detail = await scheduling.getCampaignEventDetail(req, id, p.eventId);
+        sendJson(res, 200, { ok: true, campaignId: id, ...detail });
+      }
+    ),
+
+    route(
+      "PUT",
+      /^\/api\/player\/campaigns\/([^/]+)\/events\/([^/]+)\/rsvp$/,
+      ["id", "eventId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        authorize.assertMutationSafety(req);
+        const body = await readJsonBody(req);
+        const rsvp = await scheduling.putEventRsvp(req, id, p.eventId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, rsvp });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/player\/campaigns\/([^/]+)\/events\/([^/]+)\/rsvp$/,
+      ["id", "eventId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        authorize.assertMutationSafety(req);
+        const result = await scheduling.deleteEventRsvp(req, id, p.eventId);
+        sendJson(res, 200, { ok: true, campaignId: id, ...result });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/availability$/,
+      ["id"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+        const from = url.searchParams.get("from");
+        const to = url.searchParams.get("to");
+        if (!from || !to) {
+          return sendJson(res, 400, { ok: false, error: "from and to query params required" });
+        }
+        const range = await scheduling.listCampaignAvailabilityRange(req, id, from, to);
+        sendJson(res, 200, { ok: true, campaignId: id, ...range });
+      }
+    ),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/availability\/([^/]+)$/,
+      ["id", "date"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const day = await scheduling.getCampaignAvailabilityDay(req, id, p.date);
+        sendJson(res, 200, { ok: true, campaignId: id, ...day });
+      }
+    ),
+
+    route("GET", /^\/api\/player\/campaigns\/([^/]+)\/posts$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      const posts = await campaignBoard.listCampaignPosts(req, id);
+      sendJson(res, 200, { ok: true, campaignId: id, posts });
+    }),
+
+    route("POST", /^\/api\/player\/campaigns\/([^/]+)\/posts$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const post = await campaignBoard.createCampaignPost(req, id, body || {});
+      sendJson(res, 201, { ok: true, campaignId: id, post });
+    }),
+
+    route(
+      "GET",
+      /^\/api\/player\/campaigns\/([^/]+)\/posts\/([^/]+)\/replies$/,
+      ["id", "postId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        const replies = await campaignBoard.listPostReplies(req, id, p.postId);
+        sendJson(res, 200, { ok: true, campaignId: id, postId: p.postId, replies });
+      }
+    ),
+
+    route(
+      "PATCH",
+      /^\/api\/player\/campaigns\/([^/]+)\/posts\/([^/]+)$/,
+      ["id", "postId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        authorize.assertMutationSafety(req);
+        const body = await readJsonBody(req);
+        const post = await campaignBoard.updateCampaignPost(req, id, p.postId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, post });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/player\/campaigns\/([^/]+)\/posts\/([^/]+)$/,
+      ["id", "postId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        authorize.assertMutationSafety(req);
+        const result = await campaignBoard.deleteCampaignPost(req, id, p.postId);
+        sendJson(res, 200, { ok: true, ...result });
+      }
+    ),
+
+    route(
+      "PUT",
+      /^\/api\/player\/campaigns\/([^/]+)\/posts\/([^/]+)\/pin$/,
+      ["id", "postId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        authorize.assertMutationSafety(req);
+        const body = await readJsonBody(req);
+        const post = await campaignBoard.setPostPinned(req, id, p.postId, body?.pinned !== false);
+        sendJson(res, 200, { ok: true, campaignId: id, post });
+      }
+    ),
+
     route(
       "GET",
       /^\/api\/player\/campaigns\/([^/]+)\/map-view$/,
@@ -599,6 +977,83 @@ function createApiRoutes() {
           /* mirror is best-effort after DM state writes */
         }
         sendJson(res, 200, { ok: true, campaignId: id, characterId, state });
+      }
+    ),
+
+    route(
+      "POST",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/participation$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        await authorize.requireDmIfAuthRequired(req, id);
+        const character = await player.attachCharacterToCampaignAsDm(req, id, characterId);
+        sendJson(res, 201, { ok: true, campaignId: id, character });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/campaigns\/([^/]+)\/characters\/([^/]+)\/participation$/,
+      ["id", "characterId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        const characterId = assertSafeId(p.characterId, "character id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        await authorize.requireDmIfAuthRequired(req, id);
+        const result = await player.detachCharacterFromCampaignAsDm(req, id, characterId);
+        sendJson(res, 200, { ok: true, ...result });
+      }
+    ),
+
+    route("POST", /^\/api\/campaigns\/([^/]+)\/events$/, ["id"], async (req, res, p) => {
+      const id = assertSafeId(p.id, "campaign id");
+      if (!db.isDbConfigured()) {
+        return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+      }
+      await authorize.requireDmIfAuthRequired(req, id);
+      authorize.assertMutationSafety(req);
+      const body = await readJsonBody(req);
+      const event = await scheduling.createCampaignEvent(req, id, body || {});
+      sendJson(res, 201, { ok: true, campaignId: id, event });
+    }),
+
+    route(
+      "PATCH",
+      /^\/api\/campaigns\/([^/]+)\/events\/([^/]+)$/,
+      ["id", "eventId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        await authorize.requireDmIfAuthRequired(req, id);
+        authorize.assertMutationSafety(req);
+        const body = await readJsonBody(req);
+        const event = await scheduling.updateCampaignEvent(req, id, p.eventId, body || {});
+        sendJson(res, 200, { ok: true, campaignId: id, event });
+      }
+    ),
+
+    route(
+      "DELETE",
+      /^\/api\/campaigns\/([^/]+)\/events\/([^/]+)$/,
+      ["id", "eventId"],
+      async (req, res, p) => {
+        const id = assertSafeId(p.id, "campaign id");
+        if (!db.isDbConfigured()) {
+          return sendJson(res, 503, { ok: false, error: "DATABASE_URL is not configured" });
+        }
+        await authorize.requireDmIfAuthRequired(req, id);
+        authorize.assertMutationSafety(req);
+        const result = await scheduling.deleteCampaignEvent(req, id, p.eventId);
+        sendJson(res, 200, { ok: true, ...result });
       }
     ),
 

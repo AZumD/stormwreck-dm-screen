@@ -179,14 +179,49 @@ async function userControlsCharacter(userId, characterId) {
   return result.rows.length > 0;
 }
 
+async function characterInCampaign(campaignId, characterId) {
+  const result = await db.query(
+    `SELECT 1 FROM campaign_characters
+     WHERE campaign_id = $1 AND character_id = $2
+     LIMIT 1`,
+    [campaignId, characterId]
+  );
+  return result.rows.length > 0;
+}
+
 async function requireCharacterControl(req, campaignId, characterId) {
   const { user, membership } = await requireCampaignMember(req, campaignId);
+  const inCampaign = await characterInCampaign(campaignId, characterId);
+  if (!inCampaign) deny(404, "Character not found in campaign");
   if (membership.role === "dm") {
     return { user, membership, asDm: true };
   }
   const controls = await userControlsCharacter(user.id, characterId);
   if (!controls) deny(403, "You do not control this character");
   return { user, membership, asDm: false };
+}
+
+async function userIsDmForCharacter(userId, characterId) {
+  const result = await db.query(
+    `SELECT 1 FROM campaign_memberships cm
+     JOIN campaign_characters cc ON cc.campaign_id = cm.campaign_id
+     WHERE cm.user_id = $1 AND cm.role = 'dm' AND cc.character_id = $2
+     LIMIT 1`,
+    [userId, characterId]
+  );
+  return result.rows.length > 0;
+}
+
+/** Character-level gate: controller or DM of a participating campaign. */
+async function requireCharacterControlDirect(req, characterId) {
+  const user = await requireUser(req);
+  if (await userControlsCharacter(user.id, characterId)) {
+    return { user, asDm: false };
+  }
+  if (await userIsDmForCharacter(user.id, characterId)) {
+    return { user, asDm: true };
+  }
+  deny(403, "You do not control this character");
 }
 
 module.exports = {
@@ -201,6 +236,9 @@ module.exports = {
   requireDmIfAuthRequired,
   requireAnyDmIfAuthRequired,
   userControlsCharacter,
+  characterInCampaign,
+  userIsDmForCharacter,
   requireCharacterControl,
+  requireCharacterControlDirect,
   deny
 };

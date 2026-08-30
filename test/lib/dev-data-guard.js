@@ -8,14 +8,12 @@ const IMPORTED_CAMPAIGN_ID = "stormwreck-isle";
 
 async function snapshotAlthariel(db) {
   const character = await db.query(
-    `SELECT id, campaign_id, name, type, level, portrait_url, catalogue_pc_id, sheet
+    `SELECT id, name, type, game_system_id, portrait_url, catalogue_pc_id, sheet
      FROM characters WHERE id = $1`,
     [IMPORTED_ALTHARIEL_ID]
   );
   const state = await db.query(
-    `SELECT hp_current, hp_max, hp_temp, conditions, death_saves, spell_slots,
-            class_resources, inspiration, extras
-     FROM character_state WHERE character_id = $1`,
+    `SELECT system_state, extras FROM character_state WHERE character_id = $1`,
     [IMPORTED_ALTHARIEL_ID]
   );
   const inventory = await db.query(
@@ -27,11 +25,17 @@ async function snapshotAlthariel(db) {
     `SELECT user_id FROM character_controllers WHERE character_id = $1 ORDER BY user_id::text`,
     [IMPORTED_ALTHARIEL_ID]
   );
+  const participation = await db.query(
+    `SELECT campaign_id, status FROM campaign_characters
+     WHERE character_id = $1 ORDER BY campaign_id`,
+    [IMPORTED_ALTHARIEL_ID]
+  );
   return JSON.stringify({
     character: character.rows[0] || null,
     state: state.rows[0] || null,
     inventory: inventory.rows,
-    controllers: controllers.rows
+    controllers: controllers.rows,
+    participation: participation.rows
   });
 }
 

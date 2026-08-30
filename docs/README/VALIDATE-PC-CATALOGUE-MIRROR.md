@@ -12,8 +12,9 @@ node test/validate-pc-catalogue-mirror.js
 ```
 
 ## What it checks
-- `generatePcId` / `bundleToPcEntry` mapping
+- `generatePcId` / `bundleToPcEntry` mapping (`sheet.level`, `character_state.system_state`)
 - `mergeCatalogueOnlyFields` keeps `tokenImage` on mirror (DM save + player remirror)
+- Mirror does not define `primaryCampaignIdForCharacter` or write `sync.campaignId`
 - `createMyCharacter` + mirror hooks in `player.js`
 - API create, DM `upsertPcFromDm`, remirror route
 - Player client `createCharacter` + UI create CTA

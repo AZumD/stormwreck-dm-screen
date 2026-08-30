@@ -26,7 +26,13 @@ const required = [
   "server/lib/db.js",
   ".env.example",
   "docs/README/DB.md",
-  "docs/README/MIGRATION-RAILWAY.md"
+  "docs/README/MIGRATION-RAILWAY.md",
+  "db/migrations/0004_phase6_platform.sql",
+  "db/migrations/0005_phase6_platform_cleanup.sql",
+  "db/migrations/0006_drop_character_campaign_id.sql",
+  "db/migrations/0007_scheduling.sql",
+  "server/lib/game-systems.js",
+  "server/lib/dnd5e-character.js"
 ];
 
 for (const rel of required) {
@@ -52,9 +58,9 @@ const sql = fs.readFileSync(path.join(root, "db/migrations/0001_phase1.sql"), "u
 pass("migration SQL has Phase 1 tables + stormwreck seed");
 
 const schema = fs.readFileSync(path.join(root, "db/schema.js"), "utf8");
-if (!schema.includes("inventoryEntries") || !schema.includes("playerNotes")) {
-  fail("drizzle schema missing inventory/notes");
-} else pass("drizzle schema exports core tables");
+if (!schema.includes("gameSystems") || !schema.includes("campaignCharacters") || !schema.includes("systemState")) {
+  fail("drizzle schema missing platform tables");
+} else pass("drizzle schema platform + core tables");
 
 const api = fs.readFileSync(path.join(root, "server/routes/api.js"), "utf8");
 if (!/db[\\/]+health/.test(api) || !api.includes('require("../lib/db")')) {

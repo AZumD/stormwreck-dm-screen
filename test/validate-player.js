@@ -88,9 +88,9 @@ if (!appSrc.includes("displayRefLabel") || !appSrc.includes("class-resources")) 
 if (!appSrc.includes("data-library-more") || !appSrc.includes("softRefreshLive")) {
   fail("player-app missing library load-more / soft refresh");
 } else pass("player-app library paging + soft refresh");
-if (!appSrc.includes("people-portrait") || !appSrc.includes("portraitUrl")) {
-  fail("player-app People missing portraits");
-} else pass("player-app People portraits");
+if (!appSrc.includes("renderParty") || !appSrc.includes("portraitUrl")) {
+  fail("player-app party missing portraits");
+} else pass("player-app party portraits");
 
 if (apiSrc.includes("theme/background") || apiSrc.includes("theme\\/background")) {
   fail("theme background must be static, not API under DM_DATA_ROOT");
@@ -226,12 +226,12 @@ else pass("abilityModifier");
 const mech = player.toMechanicalDto(
   {
     id: "pc-x",
-    campaign_id: "c",
     name: "Test",
     type: "player",
-    level: 1,
+    game_system_id: "dnd5e",
     portrait_url: null,
     sheet: {
+      level: 1,
       race: "Elf",
       class: "Druid",
       abilities: { str: 12, dex: 14, con: 14, int: 10, wis: 16, cha: 6 },
@@ -240,7 +240,7 @@ const mech = player.toMechanicalDto(
       backstory: "secret"
     }
   },
-  { hp_current: 1, hp_max: 1, hp_temp: 0, conditions: [] },
+  { system_state: { hp: { current: 1, max: 1, temp: 0 }, conditions: [] } },
   []
 );
 if (mech.state.hpCurrent !== 1 || mech.state.hpMax !== 1) fail("dto HP 1/1");
@@ -249,21 +249,19 @@ if (mech.abilities.wis.modifier !== 3) fail("dto modifiers");
 else pass("mechanical DTO ability modifiers");
 if (mech.backstory != null || mech.sheet) fail("dto leaked private fields");
 else pass("mechanical DTO omits private sheet fields");
+if (mech.campaignId != null) fail("mechanical DTO must not include singular campaignId");
+else pass("mechanical DTO has no singular campaignId");
 
 const party = player.toPartyCardDto({
   id: "pc-y",
-  campaign_id: "c",
   name: "Other",
   type: "player",
-  level: 2,
   portrait_url: null,
-  sheet: { race: "Human", class: "Fighter", backstory: "nope" },
-  hp_current: 8,
-  hp_max: 14,
-  conditions: ["prone"]
+  sheet: { level: 2, race: "Human", class: "Fighter", backstory: "nope" },
+  system_state: { hp: { current: 8, max: 14, temp: 0 }, conditions: ["prone"] }
 });
 const keys = Object.keys(party).sort().join(",");
-if (keys !== "campaignId,class,conditions,hpCurrent,hpMax,id,level,name,portraitUrl,race,type") {
+if (keys !== "class,conditions,hpCurrent,hpMax,id,level,name,portraitUrl,race,type") {
   fail(`party keys ${keys}`);
 } else pass("party DTO only allowed fields");
 if (party.backstory || party.inventory || party.state) fail("party leaked private");
@@ -332,11 +330,10 @@ async function liveTests() {
     p2Id = await insertUser("Player Two", p2Email);
     await insertUser("Outsider", outEmail);
 
-    await db.query(`INSERT INTO campaigns (id, name, description) VALUES ($1,$2,$3)`, [
-      campaignId,
-      "P3B Test Campaign",
-      ""
-    ]);
+    await db.query(
+      `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1,$2,$3,$4)`,
+      [campaignId, "P3B Test Campaign", "", "dnd5e"]
+    );
     await db.query(
       `INSERT INTO campaign_memberships (campaign_id, user_id, role) VALUES
         ($1,$2,'dm'),($1,$3,'player'),($1,$4,'player')`,
@@ -352,14 +349,19 @@ async function liveTests() {
       skillRefs: ["@skill:skill-perception|Perception"],
       backstory: "secret"
     };
+    const sheetAWithLevel = { ...sheetA, level: 1 };
     await db.query(
-      `INSERT INTO characters (id, campaign_id, name, type, level, sheet)
-       VALUES ($1,$2,'Test Althariel','player',1,$3::jsonb)`,
-      [pcAId, campaignId, JSON.stringify(sheetA)]
+      `INSERT INTO characters (id, name, type, game_system_id, sheet)
+       VALUES ($1,'Test Althariel','player','dnd5e',$2::jsonb)`,
+      [pcAId, JSON.stringify(sheetAWithLevel)]
     );
     await db.query(
-      `INSERT INTO character_state (character_id, hp_current, hp_max, hp_temp, conditions)
-       VALUES ($1,1,1,0,'[]'::jsonb)`,
+      `INSERT INTO campaign_characters (campaign_id, character_id, status) VALUES ($1,$2,'active')`,
+      [campaignId, pcAId]
+    );
+    await db.query(
+      `INSERT INTO character_state (character_id, system_state)
+       VALUES ($1,'{"hp":{"current":1,"max":1,"temp":0},"conditions":[]}'::jsonb)`,
       [pcAId]
     );
     await db.query(
@@ -368,19 +370,27 @@ async function liveTests() {
       [pcAId]
     );
     await db.query(
-      `INSERT INTO characters (id, campaign_id, name, type, level, sheet)
-       VALUES ($1,$2,'Second PC','player',1,'{"race":"Human","class":"Fighter"}'::jsonb)`,
-      [pcBId, campaignId]
-    );
-    await db.query(
-      `INSERT INTO character_state (character_id, hp_current, hp_max, hp_temp, conditions)
-       VALUES ($1,10,10,0,'[]'::jsonb)`,
+      `INSERT INTO characters (id, name, type, game_system_id, sheet)
+       VALUES ($1,'Second PC','player','dnd5e','{"race":"Human","class":"Fighter","level":1}'::jsonb)`,
       [pcBId]
     );
     await db.query(
-      `INSERT INTO characters (id, campaign_id, name, type, level, sheet)
-       VALUES ($1,$2,'Secret NPC','npc',1,'{}'::jsonb)`,
-      [npcId, campaignId]
+      `INSERT INTO campaign_characters (campaign_id, character_id, status) VALUES ($1,$2,'active')`,
+      [campaignId, pcBId]
+    );
+    await db.query(
+      `INSERT INTO character_state (character_id, system_state)
+       VALUES ($1,'{"hp":{"current":10,"max":10,"temp":0},"conditions":[]}'::jsonb)`,
+      [pcBId]
+    );
+    await db.query(
+      `INSERT INTO characters (id, name, type, game_system_id, sheet)
+       VALUES ($1,'Secret NPC','npc','dnd5e','{"level":1}'::jsonb)`,
+      [npcId]
+    );
+    await db.query(
+      `INSERT INTO campaign_characters (campaign_id, character_id, status) VALUES ($1,$2,'active')`,
+      [campaignId, npcId]
     );
     await db.query(
       `INSERT INTO character_controllers (character_id, user_id) VALUES ($1,$2),($3,$2),($3,$4)`,

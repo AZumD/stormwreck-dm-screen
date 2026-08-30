@@ -332,7 +332,8 @@ async function assertCharacterControl(req, campaignId, characterId) {
     `SELECT c.id, c.name, c.catalogue_pc_id, c.portrait_url
      FROM characters c
      JOIN character_controllers cc ON cc.character_id = c.id AND cc.user_id = $1
-     WHERE c.id = $2 AND c.campaign_id = $3`,
+     JOIN campaign_characters campc ON campc.character_id = c.id AND campc.campaign_id = $3
+     WHERE c.id = $2`,
     [user.id, safeCharacter, safeCampaign]
   );
   if (!result.rows.length) {
@@ -453,9 +454,10 @@ async function getPlayerMapView(req, campaignId, characterId) {
 async function loadCampaignPcLookup(campaignId) {
   if (!db.isDbConfigured()) return new Map();
   const result = await db.query(
-    `SELECT catalogue_pc_id, name, portrait_url
-     FROM characters
-     WHERE campaign_id = $1 AND catalogue_pc_id IS NOT NULL`,
+    `SELECT c.catalogue_pc_id, c.name, c.portrait_url
+     FROM characters c
+     JOIN campaign_characters cc ON cc.character_id = c.id AND cc.campaign_id = $1
+     WHERE c.catalogue_pc_id IS NOT NULL`,
     [campaignId]
   );
   const byCatalogue = new Map();

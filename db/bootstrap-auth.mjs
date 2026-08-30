@@ -89,7 +89,7 @@ async function main() {
   try {
     await client.query("BEGIN");
     await client.query(
-      `INSERT INTO campaigns (id, name, description) VALUES ($1, $2, $3)
+      `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1, $2, $3, 'dnd5e')
        ON CONFLICT (id) DO NOTHING`,
       [campaignId, campaignId, ""]
     );
@@ -109,10 +109,10 @@ async function main() {
     await upsertMembership(client, campaignId, playerId, "player");
 
     for (const characterId of characterIds) {
-      const exists = await client.query("SELECT 1 FROM characters WHERE id = $1 AND campaign_id = $2", [
-        characterId,
-        campaignId
-      ]);
+      const exists = await client.query(
+        "SELECT 1 FROM campaign_characters WHERE character_id = $1 AND campaign_id = $2",
+        [characterId, campaignId]
+      );
       if (!exists.rows.length) {
         console.warn(`skip controller: character ${characterId} not in campaign ${campaignId}`);
         continue;

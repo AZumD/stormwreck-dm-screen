@@ -6,6 +6,8 @@
 
 const db = require("./db");
 const { parseEntityRef } = require("./entity-ref");
+const dnd5e = require("./dnd5e-character");
+const gameSystems = require("./game-systems");
 
 const SHEET_KNOWN = new Set([
   "id",
@@ -156,42 +158,60 @@ async function upsertCharacterFromPc(client, campaignId, raw) {
   if (!id) throw new Error("PC entry missing id");
 
   const sheet = buildSheetFromPc(raw);
-  const name = String(raw.name || id).trim() || id;
   const level = Number.isFinite(Number(raw.level)) ? Number(raw.level) : 1;
+  sheet.level = level;
+  const name = String(raw.name || id).trim() || id;
   const portraitUrl = raw.portrait ? String(raw.portrait) : null;
+  const gameSystemId = "dnd5e";
+
+  await client.query(
+    `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO UPDATE SET game_system_id = COALESCE(campaigns.game_system_id, EXCLUDED.game_system_id)`,
+    [campaignId, campaignId, "", gameSystemId]
+  );
 
   await client.query(
     `INSERT INTO characters (
-      id, campaign_id, name, type, level, portrait_url, sheet, catalogue_pc_id, updated_at
-    ) VALUES ($1, $2, $3, 'player', $4, $5, $6::jsonb, $7, now())
+      id, name, type, game_system_id, portrait_url, sheet, catalogue_pc_id, updated_at
+    ) VALUES ($1, $2, 'player', $3, $4, $5::jsonb, $6, now())
     ON CONFLICT (id) DO UPDATE SET
-      campaign_id = EXCLUDED.campaign_id,
       name = EXCLUDED.name,
-      level = EXCLUDED.level,
+      game_system_id = EXCLUDED.game_system_id,
       portrait_url = EXCLUDED.portrait_url,
       sheet = EXCLUDED.sheet,
       catalogue_pc_id = EXCLUDED.catalogue_pc_id,
       updated_at = now()`,
-    [id, campaignId, name, level, portraitUrl, JSON.stringify(sheet), id]
+    [id, name, gameSystemId, portraitUrl, JSON.stringify(sheet), id]
+  );
+
+  await client.query(
+    `INSERT INTO campaign_characters (campaign_id, character_id, status)
+     VALUES ($1, $2, 'active')
+     ON CONFLICT (campaign_id, character_id) DO NOTHING`,
+    [campaignId, id]
   );
 
   const hpCurrent = Number.isFinite(Number(raw.hpCurrent)) ? Number(raw.hpCurrent) : null;
   const hpMax = Number.isFinite(Number(raw.hpMax)) ? Number(raw.hpMax) : null;
+  const systemState = dnd5e.normalizeSystemState({
+    hp: { current: hpCurrent, max: hpMax, temp: 0 },
+    conditions: [],
+    deathSaves: {},
+    spellSlots: {},
+    classResources: {},
+    inspiration: false
+  });
 
   await client.query(
-    `INSERT INTO character_state (
-      character_id, hp_current, hp_max, hp_temp, conditions, death_saves,
-      spell_slots, class_resources, inspiration, extras, updated_at
-    ) VALUES ($1, $2, $3, 0, '[]'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, false, $4::jsonb, now())
-    ON CONFLICT (character_id) DO UPDATE SET
-      hp_current = EXCLUDED.hp_current,
-      hp_max = EXCLUDED.hp_max,
+    `INSERT INTO character_state (character_id, system_state, extras, updated_at)
+     VALUES ($1, $2::jsonb, $3::jsonb, now())
+     ON CONFLICT (character_id) DO UPDATE SET
+      system_state = EXCLUDED.system_state,
       extras = EXCLUDED.extras,
       updated_at = now()`,
     [
       id,
-      hpCurrent,
-      hpMax,
+      JSON.stringify(systemState),
       JSON.stringify({
         importSource: "catalogue-pc",
         cataloguePcId: id,
@@ -265,7 +285,7 @@ async function importCampaignPartyPcs(campaignId) {
   try {
     await client.query("BEGIN");
     await client.query(
-      `INSERT INTO campaigns (id, name, description) VALUES ($1, $2, $3)
+      `INSERT INTO campaigns (id, name, description, game_system_id) VALUES ($1, $2, $3, 'dnd5e')
        ON CONFLICT (id) DO NOTHING`,
       [campaignId, campaignId, ""]
     );
@@ -286,7 +306,11 @@ async function importCampaignPartyPcs(campaignId) {
 async function assertCharacterInCampaign(campaignId, characterId) {
   requirePool();
   const result = await db.query(
-    "SELECT id, campaign_id, name, type, level, portrait_url, sheet, catalogue_pc_id, created_at, updated_at FROM characters WHERE id = $1 AND campaign_id = $2",
+    `SELECT c.id, c.name, c.type, c.game_system_id, c.portrait_url, c.sheet,
+            c.catalogue_pc_id, c.created_at, c.updated_at
+     FROM characters c
+     JOIN campaign_characters cc ON cc.character_id = c.id AND cc.campaign_id = $2
+     WHERE c.id = $1`,
     [characterId, campaignId]
   );
   if (!result.rows.length) {
@@ -300,21 +324,38 @@ async function assertCharacterInCampaign(campaignId, characterId) {
 async function listCharacters(campaignId) {
   requirePool();
   const result = await db.query(
-    `SELECT c.id, c.campaign_id, c.name, c.type, c.level, c.portrait_url, c.catalogue_pc_id,
-            c.created_at, c.updated_at,
-            cs.hp_current, cs.hp_max
+    `SELECT c.id, c.name, c.type, c.game_system_id, c.portrait_url, c.catalogue_pc_id,
+            c.created_at, c.updated_at, c.sheet,
+            cs.system_state
      FROM characters c
+     JOIN campaign_characters cc ON cc.character_id = c.id AND cc.campaign_id = $1
      LEFT JOIN character_state cs ON cs.character_id = c.id
-     WHERE c.campaign_id = $1
      ORDER BY c.name ASC`,
     [campaignId]
   );
-  return result.rows;
+  return result.rows.map((row) => {
+    const state = dnd5e.readSystemState(row);
+    return {
+      ...row,
+      level: dnd5e.getCharacterLevel(row),
+      hp_current: state.hp.current,
+      hp_max: state.hp.max
+    };
+  });
 }
 
 async function getCharacter(campaignId, characterId) {
   const row = await assertCharacterInCampaign(campaignId, characterId);
   return row;
+}
+
+function formatCharacterStateDto(characterId, stateRow) {
+  const dto = dnd5e.stateRowToApiDto(stateRow);
+  return {
+    character_id: characterId,
+    ...dto,
+    updated_at: stateRow?.updated_at || null
+  };
 }
 
 async function getCharacterState(campaignId, characterId) {
@@ -323,7 +364,7 @@ async function getCharacterState(campaignId, characterId) {
     "SELECT * FROM character_state WHERE character_id = $1",
     [characterId]
   );
-  return result.rows[0] || null;
+  return formatCharacterStateDto(characterId, result.rows[0] || null);
 }
 
 async function patchCharacterSheet(campaignId, characterId, patch) {
@@ -337,11 +378,10 @@ async function patchCharacterSheet(campaignId, characterId, patch) {
     sheet.ac = Number.isFinite(n) ? n : p.ac;
   }
 
-  await db.query(
-    `UPDATE characters SET sheet = $1::jsonb, updated_at = now()
-     WHERE id = $2 AND campaign_id = $3`,
-    [JSON.stringify(sheet), characterId, campaignId]
-  );
+  await db.query(`UPDATE characters SET sheet = $1::jsonb, updated_at = now() WHERE id = $2`, [
+    JSON.stringify(sheet),
+    characterId
+  ]);
   return getCharacter(campaignId, characterId);
 }
 
@@ -349,50 +389,83 @@ async function updateCharacterState(campaignId, characterId, patch) {
   await assertCharacterInCampaign(campaignId, characterId);
   const current = (await getCharacterState(campaignId, characterId)) || {};
   const p = patch || {};
-  const next = {
-    hp_current: Object.prototype.hasOwnProperty.call(p, "hp_current") ? p.hp_current : current.hp_current,
-    hp_max: Object.prototype.hasOwnProperty.call(p, "hp_max") ? p.hp_max : current.hp_max,
-    hp_temp: Object.prototype.hasOwnProperty.call(p, "hp_temp") ? p.hp_temp : current.hp_temp ?? 0,
-    conditions: Object.prototype.hasOwnProperty.call(p, "conditions") ? p.conditions : current.conditions ?? [],
-    death_saves: Object.prototype.hasOwnProperty.call(p, "death_saves") ? p.death_saves : current.death_saves ?? {},
-    spell_slots: Object.prototype.hasOwnProperty.call(p, "spell_slots") ? p.spell_slots : current.spell_slots ?? {},
-    class_resources: Object.prototype.hasOwnProperty.call(p, "class_resources")
-      ? p.class_resources
-      : current.class_resources ?? {},
-    inspiration: Object.prototype.hasOwnProperty.call(p, "inspiration") ? p.inspiration : current.inspiration ?? false,
-    extras: Object.prototype.hasOwnProperty.call(p, "extras") ? p.extras : current.extras ?? {}
-  };
+  const allowed = new Set([
+    "hp_current",
+    "hp_max",
+    "hp_temp",
+    "conditions",
+    "death_saves",
+    "spell_slots",
+    "class_resources",
+    "inspiration",
+    "extras"
+  ]);
+  const statePatch = {};
+  Object.keys(p).forEach((k) => {
+    if (allowed.has(k) && k !== "extras") statePatch[k] = p[k];
+  });
+  const nextState = dnd5e.applyStatePatch(current, statePatch, new Set(Object.keys(statePatch)));
+  const extras = Object.prototype.hasOwnProperty.call(p, "extras") ? p.extras : current.extras ?? {};
 
   await db.query(
-    `INSERT INTO character_state (
-      character_id, hp_current, hp_max, hp_temp, conditions, death_saves,
-      spell_slots, class_resources, inspiration, extras, updated_at
-    ) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb,$9,$10::jsonb, now())
-    ON CONFLICT (character_id) DO UPDATE SET
-      hp_current = EXCLUDED.hp_current,
-      hp_max = EXCLUDED.hp_max,
-      hp_temp = EXCLUDED.hp_temp,
-      conditions = EXCLUDED.conditions,
-      death_saves = EXCLUDED.death_saves,
-      spell_slots = EXCLUDED.spell_slots,
-      class_resources = EXCLUDED.class_resources,
-      inspiration = EXCLUDED.inspiration,
+    `INSERT INTO character_state (character_id, system_state, extras, updated_at)
+     VALUES ($1, $2::jsonb, $3::jsonb, now())
+     ON CONFLICT (character_id) DO UPDATE SET
+      system_state = EXCLUDED.system_state,
       extras = EXCLUDED.extras,
       updated_at = now()`,
-    [
-      characterId,
-      next.hp_current ?? null,
-      next.hp_max ?? null,
-      next.hp_temp ?? 0,
-      JSON.stringify(next.conditions ?? []),
-      JSON.stringify(next.death_saves ?? {}),
-      JSON.stringify(next.spell_slots ?? {}),
-      JSON.stringify(next.class_resources ?? {}),
-      Boolean(next.inspiration),
-      JSON.stringify(next.extras ?? {})
-    ]
+    [characterId, JSON.stringify(nextState), JSON.stringify(extras ?? {})]
   );
   return getCharacterState(campaignId, characterId);
+}
+
+async function attachCharacterToCampaign(campaignId, characterId) {
+  requirePool();
+  const camp = await db.query("SELECT id, game_system_id FROM campaigns WHERE id = $1", [campaignId]);
+  if (!camp.rows.length) {
+    const err = new Error("Campaign not found");
+    err.status = 404;
+    throw err;
+  }
+  const char = await db.query("SELECT id, game_system_id FROM characters WHERE id = $1", [characterId]);
+  if (!char.rows.length) {
+    const err = new Error("Character not found");
+    err.status = 404;
+    throw err;
+  }
+  gameSystems.assertCompatibleGameSystems(camp.rows[0].game_system_id, char.rows[0].game_system_id);
+  await db.query(
+    `INSERT INTO campaign_characters (campaign_id, character_id, status)
+     VALUES ($1, $2, 'active')
+     ON CONFLICT (campaign_id, character_id) DO NOTHING`,
+    [campaignId, characterId]
+  );
+  return { campaignId, characterId };
+}
+
+async function detachCharacterFromCampaign(campaignId, characterId) {
+  requirePool();
+  const result = await db.query(
+    `DELETE FROM campaign_characters
+     WHERE campaign_id = $1 AND character_id = $2
+     RETURNING character_id`,
+    [campaignId, characterId]
+  );
+  if (!result.rows.length) {
+    const err = new Error("Character not in campaign");
+    err.status = 404;
+    throw err;
+  }
+  return { campaignId, characterId };
+}
+
+async function isCharacterInCampaign(campaignId, characterId) {
+  requirePool();
+  const result = await db.query(
+    `SELECT 1 FROM campaign_characters WHERE campaign_id = $1 AND character_id = $2 LIMIT 1`,
+    [campaignId, characterId]
+  );
+  return result.rows.length > 0;
 }
 
 async function listInventory(campaignId, characterId) {
@@ -419,7 +492,11 @@ module.exports = {
   listCharacters,
   getCharacter,
   getCharacterState,
+  formatCharacterStateDto,
   patchCharacterSheet,
   updateCharacterState,
-  listInventory
+  listInventory,
+  attachCharacterToCampaign,
+  detachCharacterFromCampaign,
+  isCharacterInCampaign
 };
