@@ -2284,7 +2284,9 @@ body.workspace-session--reference .panel-view.hidden {
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 0.22rem 0.55rem;
+  padding: 0.35rem 0.65rem;
+  min-height: 2rem;
+  min-width: 2.75rem;
   border-radius: 2px;
   cursor: pointer;
 }
@@ -5301,6 +5303,26 @@ body.map-mode-workspace .map-tab-panel[data-map-tab-panel="map"]:not([hidden]) {
 
   .format-help-bar {
     padding: 0.5rem 1rem;
+  }
+}
+
+@media (max-height: 820px) {
+  .main-toolbar {
+    padding: 0.5rem 1rem;
+    gap: 0.4rem;
+  }
+
+  .main-chrome .main-toolbar {
+    padding-bottom: 0.45rem;
+  }
+
+  .content {
+    padding-top: 1rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .scene-state {
+    padding: 0.5rem 0.65rem;
   }
 }
 

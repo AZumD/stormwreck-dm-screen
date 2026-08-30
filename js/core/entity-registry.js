@@ -188,6 +188,7 @@ window.EntityRegistry = (function () {
       summary: asString(entry.summary || entry.role),
       portrait: asString(entry.portrait),
       stats: pickStats({
+        Role: entry.role,
         AC: entry.ac,
         HP: entry.hp,
         Speed: entry.speed,
@@ -203,18 +204,18 @@ window.EntityRegistry = (function () {
     const id = linkId(entry);
     const summary = [entry.size, entry.creatureType, entry.cr ? `CR ${entry.cr}` : ""].filter(Boolean).join(" · ");
     const details = joinBlocks([
-      refsBlock("Skills", entry.skillRefs, "skill"),
-      refsBlock("Traits", entry.traitRefs, "feature"),
       refsBlock("Actions", entry.actionRefs, "feature"),
       refsBlock("Bonus Actions", entry.bonusActionRefs, "feature"),
       refsBlock("Reactions", entry.reactionRefs, "feature"),
       refsBlock("Legendary Actions", entry.legendaryActionRefs, "feature"),
       refsBlock("Spells", entry.spellRefs, "spell"),
-      entry.traits && `**Trait notes:**\n${entry.traits}`,
       entry.actions && `**Action notes:**\n${entry.actions}`,
       entry.bonusActions && `**Bonus Action notes:**\n${entry.bonusActions}`,
       entry.reactions && `**Reaction notes:**\n${entry.reactions}`,
       entry.legendaryActions && `**Legendary Action notes:**\n${entry.legendaryActions}`,
+      refsBlock("Skills", entry.skillRefs, "skill"),
+      refsBlock("Traits", entry.traitRefs, "feature"),
+      entry.traits && `**Trait notes:**\n${entry.traits}`,
       entry.notes && `**Notes:**\n${entry.notes}`
     ]);
 

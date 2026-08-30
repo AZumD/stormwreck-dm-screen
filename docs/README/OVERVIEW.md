@@ -50,7 +50,8 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **Session** workspace hosts Notes \| Log \| Chronicle \| Progress (tab state in `sessionTab`)
 - Toolbar **Run | Prep | Map | Session**; Reference opens as an overlay without leaving the active workspace
 - Toolbar search is a universal command palette (**Ctrl+K**): entities, scenes, workspaces, session/reference tabs, Party/Music/Current Scene
-- **Escape** closes the topmost transient layer (entity modal → command palette → campaign time → Reference)
+- **Escape** closes the topmost transient layer (entity modal → command palette → campaign time → Reference); focus returns to the launching control where possible
+- Live-session hardening (Phase 11): palette abbreviations, entity modal focus restore, scene mark tooltips — see `docs/README/VALIDATE-LIVE-SESSION.md`
 - Scene cast + connections editable in Prep; stored in `scene-meta.json`
 
 ## Campaign editing
@@ -142,5 +143,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-compendium`, `validate-dm-ui`, `validate-layout`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-live-session`, `validate-compendium`, `validate-dm-ui`, `validate-layout`, …); browser smoke HTML under `test/`.
 

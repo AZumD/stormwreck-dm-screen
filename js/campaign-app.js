@@ -1379,12 +1379,23 @@
     return activeView.type === "panel" && activeView.workspace === "reference";
   }
 
+  let referenceReturnFocus = null;
+
   function closeReferencePanel() {
     if (!isReferenceOpen()) return;
     clearReferenceOverlay();
     showScrollView();
     applyWorkspaceChrome();
     updateNavActive();
+    const el = referenceReturnFocus;
+    referenceReturnFocus = null;
+    if (el && typeof el.focus === "function" && document.contains(el)) {
+      try {
+        el.focus({ preventScroll: true });
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   function clearReferenceOverlay() {
@@ -1557,6 +1568,7 @@
   }
 
   function showReferencePanel(tab) {
+    if (!isReferenceOpen()) referenceReturnFocus = document.activeElement;
     const resolvedTab = normalizeReferenceTab(tab);
     activeView = { type: "panel", id: resolvedTab, workspace: "reference" };
     saveReferenceTab(resolvedTab);
@@ -1962,7 +1974,7 @@
       if (window.CommandPalette?.isOpen?.()) {
         if (document.activeElement === searchInput) return;
         e.preventDefault();
-        CommandPalette.hide();
+        CommandPalette.hide({ restoreFocus: true });
         searchInput?.blur();
         return;
       }

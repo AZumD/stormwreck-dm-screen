@@ -25,6 +25,13 @@ const sandbox = fs.readFileSync(path.join(root, "campaigns/sandbox/index.html"),
 const css = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
 const i18n = fs.readFileSync(path.join(root, "js/i18n/en.js"), "utf8");
 
+if (!palette.includes("paletteReturnFocus")) fail("command-palette.js missing focus restore");
+else pass("command-palette focus restore");
+
+if (!palette.includes('"curr"') || !palette.includes('"chron"')) {
+  fail("command-palette missing abbreviation keywords");
+} else pass("command-palette abbreviation keywords");
+
 [
   "window.CommandPalette",
   "findMatches",

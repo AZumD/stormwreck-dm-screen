@@ -18,6 +18,7 @@ window.EntityUI = (function () {
   /* Single-modal navigation stack (previous entity ids) */
   let navStack = [];
   let currentModalId = null;
+  let modalReturnFocus = null;
 
   function init(options) {
     tooltipEl = options.tooltip;
@@ -32,7 +33,10 @@ window.EntityUI = (function () {
       modalEl.addEventListener("click", (e) => {
         if (e.target === modalEl) closeModal();
       });
-      modalEl.addEventListener("close", clearNavStack);
+      modalEl.addEventListener("close", () => {
+        clearNavStack();
+        restoreModalFocus();
+      });
 
       const modalClose = document.getElementById("modal-close");
       if (modalClose) {
@@ -121,11 +125,26 @@ window.EntityUI = (function () {
     modalBackEl.disabled = !show;
   }
 
+  function restoreModalFocus() {
+    const el = modalReturnFocus;
+    modalReturnFocus = null;
+    if (el && typeof el.focus === "function" && document.contains(el)) {
+      try {
+        el.focus({ preventScroll: true });
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   function closeModal() {
     if (!modalEl) return;
-    clearNavStack();
     if (typeof modalEl.close === "function") modalEl.close();
-    else modalEl.removeAttribute("open");
+    else {
+      modalEl.removeAttribute("open");
+      clearNavStack();
+      restoreModalFocus();
+    }
   }
 
   function goBack() {
@@ -255,6 +274,7 @@ window.EntityUI = (function () {
 
     if (!replace && !pushHistory) {
       navStack = [];
+      modalReturnFocus = document.activeElement;
     } else if (pushHistory && currentModalId && currentModalId !== entityId) {
       navStack.push(currentModalId);
     }
@@ -264,7 +284,7 @@ window.EntityUI = (function () {
     const entity = resolveEntity(entityId);
     if (!entity) {
       if (modalTitleEl) modalTitleEl.textContent = entityId;
-      modalBodyEl.innerHTML = `<p class="empty-state">No catalogue entry for <strong>${escapeHtml(entityId)}</strong>. Add or edit it in the matching catalogue on the DM Library landing page, then refresh.</p>`;
+      modalBodyEl.innerHTML = `<p class="empty-state">No catalogue entry for <strong>${escapeHtml(entityId)}</strong>. Add or edit it in the <strong>Compendium</strong>, then refresh.</p>`;
       syncBackButton();
       try {
         modalEl.showModal();
@@ -327,6 +347,7 @@ window.EntityUI = (function () {
     if (!modalEl) return;
     navStack = [];
     currentModalId = null;
+    modalReturnFocus = document.activeElement;
     syncBackButton();
     if (modalTitleEl) modalTitleEl.textContent = member.name;
     const portrait = member.portrait
@@ -354,6 +375,7 @@ window.EntityUI = (function () {
     if (!modalEl) return;
     navStack = [];
     currentModalId = null;
+    modalReturnFocus = document.activeElement;
     syncBackButton();
     if (modalTitleEl) modalTitleEl.textContent = pin.label;
     modalBodyEl.innerHTML = pin.summary ? `<p>${escapeHtml(pin.summary)}</p>` : `<p class="empty-state">No details.</p>`;

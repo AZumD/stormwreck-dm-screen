@@ -129,3 +129,4 @@
 [2026-08-31] UX Phase 8: campaign UX coherence audit (Reference close, Escape stack, terminology, shell parity). See validate-campaign-coherence.js
 [2026-08-31] UX Phase 9: unified Compendium (`/dm/compendium/`), CatalogueApp lifecycle, legacy katalog redirects. See COMPENDIUM.md, validate-compendium.js
 [2026-08-31] UX Phase 10: DM Library home base (Continue, Tools, Run/Prep launch). See LIBRARY-HOME.md, validate-library-home.js
+[2026-08-31] UX Phase 11: live-session readiness (focus restore, palette abbreviations, scene mark tooltips, entity hierarchy, short-viewport CSS). See validate-live-session.js

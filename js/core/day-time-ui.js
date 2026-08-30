@@ -189,5 +189,22 @@ window.DayTimeUI = (function () {
     refresh();
   }
 
-  return { init, refresh, formatTime, formatSummary, PRESETS, close: () => setOpen(false), openPopover: () => { refresh(); setOpen(true); }, isOpen: () => open };
+  return {
+    init,
+    refresh,
+    formatTime,
+    formatSummary,
+    PRESETS,
+    close: () => setOpen(false),
+    openPopover: () => {
+      refresh();
+      setOpen(true);
+      requestAnimationFrame(() => {
+        const first = popover?.querySelector("[data-time-preset]");
+        if (first) first.focus();
+        else trigger?.focus?.();
+      });
+    },
+    isOpen: () => open
+  };
 })();

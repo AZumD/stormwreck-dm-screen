@@ -198,10 +198,17 @@ window.CampaignStateUI = (function () {
       completed: t().sceneCompleted || "Completed",
       skipped: t().sceneSkipped || "Skipped"
     };
+    const tooltips = {
+      unseen: t().sceneMarkUnseen || "Mark unseen (reset progress for this scene)",
+      current: t().sceneMarkCurrent || "Mark as live current scene (CampaignState — not the same as viewing)",
+      completed: t().sceneMarkCompleted || "Mark completed",
+      skipped: t().sceneMarkSkipped || "Mark skipped"
+    };
     const buttons = statuses
       .map((status) => {
         const active = state.status === status ? " is-active" : "";
-        return `<button type="button" class="scene-status-btn${active}" data-scene-status="${status}" data-section="${escapeHtml(sectionId)}" title="${escapeHtml(labels[status])}">${escapeHtml(labels[status])}</button>`;
+        const pressed = state.status === status ? "true" : "false";
+        return `<button type="button" class="scene-status-btn${active}" data-scene-status="${status}" data-section="${escapeHtml(sectionId)}" title="${escapeHtml(tooltips[status])}" aria-pressed="${pressed}">${escapeHtml(labels[status])}</button>`;
       })
       .join("");
 

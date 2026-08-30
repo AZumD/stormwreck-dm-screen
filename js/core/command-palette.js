@@ -19,6 +19,7 @@ window.CommandPalette = (function () {
   let activeIdx = -1;
   let queryToken = 0;
   let bound = false;
+  let paletteReturnFocus = null;
 
   const DEFAULT_IDS = ["current-scene", "workspace-map", "workspace-session", "reference-overview", "party", "music"];
   const TYPE_ORDER = { entity: 0, scene: 1, workspace: 2, session: 3, reference: 4, command: 5 };
@@ -57,16 +58,22 @@ window.CommandPalette = (function () {
       { type: "workspace", id: "map", label: "Map", subtitle: t("commandPaletteWorkspace", "Workspace"), keywords: ["map", "maps"] },
       { type: "workspace", id: "session", label: "Session", subtitle: t("commandPaletteWorkspace", "Workspace"), keywords: ["session"] },
       { type: "session", id: "notes", label: t("headings.notes", "Session Notes"), subtitle: t("commandPaletteSession", "Session"), keywords: ["notes", "session notes"] },
-      { type: "session", id: "history", label: t("commandPaletteLog", "Session Log"), subtitle: t("commandPaletteSession", "Session"), keywords: ["log", "history"] },
-      { type: "session", id: "chronicle", label: t("headings.chronicle", "Chronicle"), subtitle: t("commandPaletteSession", "Session"), keywords: ["chronicle", "story"] },
+      { type: "session", id: "history", label: t("commandPaletteLog", "Session Log"), subtitle: t("commandPaletteSession", "Session"), keywords: ["log", "history", "chron"] },
+      { type: "session", id: "chronicle", label: t("headings.chronicle", "Chronicle"), subtitle: t("commandPaletteSession", "Session"), keywords: ["chronicle", "chron", "story"] },
       { type: "session", id: "checklist", label: t("commandPaletteProgress", "Progress"), subtitle: t("commandPaletteSession", "Session"), keywords: ["progress", "checklist"] },
       { type: "reference", id: "overview", label: t("referenceTitle", "Reference"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "overview"] },
       { type: "reference", id: "npcs", label: t("commandPaletteRefNpcs", "Reference: NPCs"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "npcs", "npc"] },
       { type: "reference", id: "monsters", label: t("commandPaletteRefMonsters", "Reference: Monsters"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "monsters", "monster"] },
       { type: "reference", id: "locations", label: t("commandPaletteRefLocations", "Reference: Locations"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "locations", "location"] },
-      { type: "command", id: "current-scene", label: t("jumpToCurrentScene", "Current Scene"), subtitle: t("commandPaletteCommand", "Command"), keywords: ["current", "current scene", "scene"] },
+      {
+        type: "command",
+        id: "current-scene",
+        label: t("currentSceneButton", "Current Scene"),
+        subtitle: t("commandPaletteCommand", "Command"),
+        keywords: ["current", "current scene", "curr", "cur", "scene"]
+      },
       { type: "command", id: "party", label: t("commandPaletteParty", "Open Party"), subtitle: t("commandPaletteCommand", "Command"), keywords: ["party", "roster", "pcs"] },
-      { type: "command", id: "music", label: t("commandPaletteMusic", "Open Music"), subtitle: t("commandPaletteCommand", "Command"), keywords: ["music", "ambience", "audio"] },
+      { type: "command", id: "music", label: t("commandPaletteMusic", "Open Music"), subtitle: t("commandPaletteCommand", "Command"), keywords: ["music", "mus", "ambience", "audio"] },
       { type: "command", id: "campaign-time", label: t("commandPaletteCampaignTime", "Campaign Time"), subtitle: t("commandPaletteCommand", "Command"), keywords: ["time", "clock", "day", "campaign time"] }
     ];
   }
@@ -96,6 +103,11 @@ window.CommandPalette = (function () {
     const text = String(label || "").toLowerCase();
     const qLower = q.toLowerCase();
     if (!qLower) return 50;
+    for (const kw of keywords || []) {
+      const k = String(kw).toLowerCase();
+      if (k === qLower) return 0;
+      if (qLower.length >= 2 && k.startsWith(qLower)) return 1;
+    }
     if (text === qLower) return 0;
     if (text.startsWith(qLower)) return 1;
     const words = text.split(/\s+/);
@@ -176,7 +188,7 @@ window.CommandPalette = (function () {
     }).filter(Boolean);
   }
 
-  function hide() {
+  function hide(opts = {}) {
     if (!resultsEl) return;
     resultsEl.classList.add("hidden");
     resultsEl.hidden = true;
@@ -185,6 +197,19 @@ window.CommandPalette = (function () {
     activeIdx = -1;
     input?.setAttribute("aria-expanded", "false");
     root?.classList.remove("is-open");
+    if (opts.restoreFocus !== false) {
+      const el = paletteReturnFocus;
+      paletteReturnFocus = null;
+      if (el && el !== input && typeof el.focus === "function" && document.contains(el)) {
+        try {
+          el.focus({ preventScroll: true });
+        } catch {
+          /* ignore */
+        }
+      }
+    } else {
+      paletteReturnFocus = null;
+    }
   }
 
   function isOpen() {
@@ -253,7 +278,7 @@ window.CommandPalette = (function () {
   function activateHit(idx) {
     const hit = hits[idx];
     if (!hit) return;
-    hide();
+    hide({ restoreFocus: false });
     if (input) input.value = "";
 
     switch (hit.type) {
@@ -283,8 +308,14 @@ window.CommandPalette = (function () {
     }
   }
 
+  function rememberPaletteFocus() {
+    const active = document.activeElement;
+    if (active && active !== input && !root?.contains(active)) paletteReturnFocus = active;
+  }
+
   function openPalette() {
     if (!input) return;
+    rememberPaletteFocus();
     input.focus();
     input.select();
     renderResults(input.value || "");
@@ -317,7 +348,7 @@ window.CommandPalette = (function () {
 
     input.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        hide();
+        hide({ restoreFocus: true });
         input.blur();
         return;
       }
