@@ -3354,7 +3354,7 @@ body[data-map-collapsed="true"] .map-panel {
 }
 .map-tokens { z-index: 3; pointer-events: none; }
 .map-fog-layer {
-  z-index: 2;
+  z-index: 4;
   width: 100%;
   height: 100%;
 }

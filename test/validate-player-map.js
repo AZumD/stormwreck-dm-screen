@@ -252,6 +252,37 @@ async function runAsyncPlayerMapTests() {
   } catch (err) {
     fail(`static NPC pins: ${err.message}`);
   }
+
+  try {
+    const mapFog = require(path.join(root, "server/lib/map-fog.js"));
+    const fog = {
+      enabled: true,
+      revealedAll: false,
+      strokes: [
+        {
+          id: "s1",
+          seq: 1,
+          mode: "reveal",
+          radius: 0.05,
+          points: [[0.5, 0.5]]
+        }
+      ]
+    };
+    assert.strictEqual(mapFog.isPointHidden(fog, 0.5, 0.5), false);
+    assert.strictEqual(mapFog.isPointHidden(fog, 0.1, 0.1), true);
+    const tokens = [
+      { id: "self", isSelf: true, percent: { x: 10, y: 10 } },
+      { id: "hidden", percent: { x: 10, y: 10 } },
+      { id: "shown", percent: { x: 50, y: 50 } }
+    ];
+    const visible = mapFog.filterVisibleTokens(tokens, fog);
+    assert.strictEqual(visible.length, 2);
+    assert.ok(visible.some((t) => t.id === "self"));
+    assert.ok(visible.some((t) => t.id === "shown"));
+    pass("fog hides unrevealed tokens but keeps own PC");
+  } catch (err) {
+    fail(`fog token visibility: ${err.message}`);
+  }
 }
 
 const playerMapViewSrc = fs.readFileSync(path.join(root, "js/core/player-map-view.js"), "utf8");

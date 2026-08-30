@@ -6,6 +6,10 @@ window.MapFog = (function () {
   "use strict";
 
   const BRUSH_PRESETS = [0.012, 0.025, 0.05, 0.09];
+  /** DM preview: light overlay so the map stays readable (20% opaque). */
+  const DM_FOG_ALPHA = 0.2;
+  /** Player view: fully opaque black fog. */
+  const PLAYER_FOG_ALPHA = 1;
   let painting = false;
   let currentStroke = null;
   let lastNorm = null;
@@ -40,6 +44,35 @@ window.MapFog = (function () {
     CampaignMapState.patch(campaignId, { fog: { [mapId]: partial } });
   }
 
+  function pointInStroke(stroke, x, y) {
+    const r = Number(stroke.radius) || 0.025;
+    return (stroke.points || []).some((pt) => {
+      if (!Array.isArray(pt) || pt.length < 2) return false;
+      return Math.hypot(Number(x) - pt[0], Number(y) - pt[1]) <= r;
+    });
+  }
+
+  /** Normalized 0–1 map coords. True when fog covers the point. */
+  function isPointHidden(fog, x, y) {
+    if (!fog?.enabled || fog.revealedAll) return false;
+    let hidden = true;
+    for (const stroke of strokeList(fog)) {
+      if (!pointInStroke(stroke, x, y)) continue;
+      hidden = stroke.mode === "hide";
+    }
+    return hidden;
+  }
+
+  function isPercentHidden(fog, percent) {
+    if (!percent || percent.x == null || percent.y == null) return false;
+    return isPointHidden(fog, percent.x / 100, percent.y / 100);
+  }
+
+  function filterVisibleTokens(tokens, fog) {
+    if (!fog?.enabled || fog.revealedAll) return tokens;
+    return (tokens || []).filter((t) => t.isSelf || !isPercentHidden(fog, t.percent));
+  }
+
   function ensureLayer(mapWorld) {
     if (!mapWorld) return null;
     let layer = document.getElementById("map-fog-layer");
@@ -48,9 +81,9 @@ window.MapFog = (function () {
       layer.id = "map-fog-layer";
       layer.className = "map-fog-layer";
       layer.setAttribute("aria-hidden", "true");
-      const tokens = document.getElementById("map-tokens");
-      if (tokens) mapWorld.insertBefore(layer, tokens);
-      else mapWorld.appendChild(layer);
+      mapWorld.appendChild(layer);
+    } else if (layer.parentNode === mapWorld && layer !== mapWorld.lastElementChild) {
+      mapWorld.appendChild(layer);
     }
     return layer;
   }
@@ -99,8 +132,9 @@ window.MapFog = (function () {
     if (!fog?.enabled || fog.revealedAll) return;
 
     const dm = Boolean(opts?.dm);
-    const fogColor = dm ? "rgba(0, 0, 0, 0.55)" : "rgba(0, 0, 0, 1)";
-    const hideColor = dm ? "rgba(0, 0, 0, 0.55)" : "rgba(0, 0, 0, 1)";
+    const fogAlpha = dm ? DM_FOG_ALPHA : PLAYER_FOG_ALPHA;
+    const fogColor = `rgba(0, 0, 0, ${fogAlpha})`;
+    const hideColor = fogColor;
 
     ctx.fillStyle = fogColor;
     ctx.fillRect(0, 0, w, h);
@@ -277,6 +311,8 @@ window.MapFog = (function () {
 
   return {
     BRUSH_PRESETS,
+    DM_FOG_ALPHA,
+    PLAYER_FOG_ALPHA,
     emptyFogMap,
     getFogState,
     strokeList,
@@ -289,6 +325,10 @@ window.MapFog = (function () {
     revealAll,
     setEnabled,
     bindDm,
-    render
+    render,
+    isPointHidden,
+    isPercentHidden,
+    filterVisibleTokens,
+    pointInStroke
   };
 })();

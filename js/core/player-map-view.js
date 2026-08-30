@@ -253,7 +253,10 @@ window.PlayerMapView = (function () {
   function renderTokens(view) {
     const layer = root?.querySelector(".player-map-tokens");
     if (!layer) return;
-    const tokens = collectTokens(view);
+    let tokens = collectTokens(view);
+    if (window.MapFog?.filterVisibleTokens) {
+      tokens = MapFog.filterVisibleTokens(tokens, view.fog);
+    }
     layer.innerHTML = tokens
       .map((token) => {
         const style = tokenStyle(token, view);

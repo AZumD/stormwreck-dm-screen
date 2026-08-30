@@ -36,7 +36,17 @@ Coordinates are **0–1 normalized** to map image space (pan/zoom independent).
 3. **Click and drag** on the map to paint reveal (erase fog) or hide (add fog back) strokes.
 4. **Undo**, **Hide all** (reset to fully hidden), **Reveal all** (clear fog overlay). **Ctrl+Z** / **Cmd+Z** undoes the last stroke when fog is enabled.
 
-Layer `#map-fog-layer` inside `#map-world` (semi-transparent fog on DM view).
+Layer `#map-fog-layer` inside `#map-world` (light fog overlay on DM view — map stays readable underneath).
+
+## Opacity
+| View | Alpha | Notes |
+|------|-------|-------|
+| DM (`render` / `refresh` with `{ dm: true }`) | `0.2` (`DM_FOG_ALPHA`) | Light overlay — map stays readable while indicating fogged areas |
+| Player (`PlayerMapView`, `{ dm: false }`) | `1.0` (`PLAYER_FOG_ALPHA`) | Fully opaque black fog |
+
+Fog layer sits **above** tokens/pins on the DM map (`z-index: 4`); revealed brush strokes are transparent so tokens show through. Player map matches: fog above tokens, own PC token (`isSelf`) stays on top.
+
+Hidden tokens are omitted from the player API when their center lies under fog (`server/lib/map-fog.js` → `filterVisibleTokens`), except the viewer's own PC.
 
 ## Player
 Same stroke data rendered **opaque** on the player Map tab via `PlayerMapView` + `MapFog.render`.

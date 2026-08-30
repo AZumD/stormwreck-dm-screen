@@ -17,6 +17,7 @@ const {
 } = require("./map-pc-placement");
 const { worldToPercent } = require("./map-distance");
 const mapTokenSize = require("./map-token-size");
+const mapFog = require("./map-fog");
 const { resolveCatalogueId } = require("./entity-link-aliases");
 const { pinsForMap } = require("./campaign-static-maps");
 
@@ -355,13 +356,13 @@ async function getPlayerMapView(req, campaignId, characterId) {
   const fog = playerFogDto(mapState.fog?.[mapId]);
   const mapMeta = mapMetaFromView(calibrated, uvtt, entry);
   const pcLookup = await loadCampaignPcLookup(campaignId);
-  const tokens = await buildPlayerMapTokens(mapState, mapId, catalogueId, mapMeta, pcLookup, {
+  const tokensRaw = await buildPlayerMapTokens(mapState, mapId, catalogueId, mapMeta, pcLookup, {
     campaignId,
     linkId
   });
 
   if (calibrated && mapMeta.grid) {
-    for (const t of tokens) {
+    for (const t of tokensRaw) {
       if (t.spanW == null || t.spanH == null) {
         const span = mapTokenSize.cellSpanPercent(t.gridCells || 1, mapMeta);
         t.spanW = span.w;
@@ -374,6 +375,8 @@ async function getPlayerMapView(req, campaignId, characterId) {
       tokenDto.spanH = span.h;
     }
   }
+
+  const tokens = mapFog.filterVisibleTokens(tokensRaw, fog);
 
   const selfFromList = tokens.find((t) => t.isSelf);
   let selfToken = selfFromList || tokens.find((t) => t.id === tokenDto.id);

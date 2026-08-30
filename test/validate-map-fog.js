@@ -41,6 +41,14 @@ if (!fogJs.includes("commitStroke") || !fogJs.includes("previewStroke")) {
   fail("map-fog missing stroke commit/preview");
 } else pass("map-fog commits and previews strokes");
 
+if (!fogJs.includes("DM_FOG_ALPHA = 0.2") || !fogJs.includes("PLAYER_FOG_ALPHA = 1")) {
+  fail("map-fog should use light DM fog and 100% player fog");
+} else pass("map-fog DM/player opacity split");
+
+if (!fogJs.includes("isPointHidden") || !fogJs.includes("filterVisibleTokens")) {
+  fail("map-fog missing fog visibility helpers");
+} else pass("map-fog exposes fog visibility helpers");
+
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);
   process.exit(1);
