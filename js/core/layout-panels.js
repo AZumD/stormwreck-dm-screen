@@ -221,7 +221,11 @@ window.LayoutPanels = (function () {
 
     if (toggle) {
       toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
-      toggle.setAttribute("aria-label", collapsed ? t.showMap || "Show map" : t.hideMap || "Hide map");
+      toggle.setAttribute(
+        "aria-label",
+        collapsed ? t.showUtilities || t.showMap || "Show utilities" : t.hideUtilities || t.hideMap || "Hide utilities"
+      );
+      toggle.setAttribute("title", t.utilitiesRail || "Utilities");
       toggle.classList.toggle("active", !collapsed);
     }
 

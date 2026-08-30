@@ -3428,7 +3428,25 @@ body[data-map-collapsed="true"] .map-panel {
   transform: rotate(45deg) translateX(-1px);
 }
 
-/* map-panel-toggle removed from campaign shell (Map is a workspace) */
+.map-panel-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+body.map-panel-collapsed:not(.workspace-map):not(.map-mode-workspace) .map-panel-toggle {
+  display: inline-flex;
+}
+
+.map-panel-toggle__icon {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
 
 .map-panel__body {
   flex: 1;

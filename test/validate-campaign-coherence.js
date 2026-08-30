@@ -71,7 +71,7 @@ for (const [label, html] of [
   else if (!html.includes("Current Scene")) fail(`${label} missing Current Scene button`);
   else pass(`${label} Current Scene label`);
 
-  if (html.includes('data-view="session"') || html.includes("edit-mode-toggle") || html.includes("map-panel-toggle")) {
+  if (html.includes('data-view="session"') || html.includes("edit-mode-toggle")) {
     fail(`${label} obsolete nav/toolbar controls`);
   } else pass(`${label} no obsolete primary controls`);
 }

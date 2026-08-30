@@ -132,3 +132,4 @@
 [2026-08-31] UX Phase 11: live-session readiness (focus restore, palette abbreviations, scene mark tooltips, entity hierarchy, short-viewport CSS). See validate-live-session.js
 [2026-08-31] Visual polish pass 1: DM Library composition (Continue layout, campaign surfaces, collapsed schedule). See LIBRARY-HOME.md
 [2026-08-31] Visual polish pass 1.1: Schedule as focused Library subview (`?view=schedule`). See LIBRARY-HOME.md
+[2026-08-31] Fix utility-rail restore: toolbar Utilities toggle when right panel collapsed. See LAYOUT-PANELS.md

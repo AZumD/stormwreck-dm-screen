@@ -55,9 +55,9 @@ if (!mapJs.includes("onWorkspaceChange"))
   fail("map-panel missing onWorkspaceChange");
 else pass("map-panel onWorkspaceChange");
 
-if (!html.includes('id="workspace-map"') || !html.includes('id="workspace-session"') || html.includes('id="map-panel-toggle"'))
-  fail("campaign should use Map/Session workspace switchers (no map-panel-toggle)");
-else pass("Map/Session workspace switchers");
+if (!html.includes('id="workspace-map"') || !html.includes('id="workspace-session"') || !html.includes('id="map-panel-toggle"'))
+  fail("campaign should have Map/Session workspace switchers and utility-rail toggle");
+else pass("Map/Session workspace switchers + utility toggle");
 
 if (!css.includes("map-mode-workspace"))
   fail("CSS missing map-mode-workspace");

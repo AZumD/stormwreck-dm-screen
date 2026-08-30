@@ -18,6 +18,8 @@ Nav sidebar + map rail collapse, and map display modes. Independent of `campaign
 
 Persisted: nav collapsed + map rail collapsed (localStorage). Expanded/combat/workspace session layout; workspace also via `CampaignPrefs.workspace`.
 
+Toolbar `#map-panel-toggle` (Utilities) appears when the right rail is collapsed in Run/Prep/Session — restores Party \| Music \| Map utility panel. Hidden in Map workspace.
+
 ## API
 `init()`, `setNavCollapsed(bool)`, `setMapCollapsed(bool)`, `setMapMode(...)`, `getMapMode()`, `toggleMapExpanded()`, `setCampaignWorkspace("run"|"prep"|"map", { panelOpen? })`, `applyChromeFromPrefs`
 

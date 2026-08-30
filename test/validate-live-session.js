@@ -89,7 +89,7 @@ const shellIds = [
   "catalogue-search"
 ];
 
-const obsolete = ["edit-mode-toggle", "map-panel-toggle", 'data-view="session"'];
+const obsolete = ["edit-mode-toggle", 'data-view="session"'];
 
 for (const [label, html] of [
   ["stormwreck", storm],

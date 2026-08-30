@@ -49,9 +49,9 @@ for (const [label, page] of [
     fail(`${label} workspace switcher must use text labels`);
   } else pass(`${label} Run|Prep|Map|Session workspace switcher`);
 
-  if (page.includes('id="map-panel-toggle"')) {
-    fail(`${label} still has map-panel-toggle (Map is a workspace)`);
-  } else pass(`${label} no map-panel-toggle`);
+  if (!page.includes('id="map-panel-toggle"') || !page.includes("map-panel-toggle__icon")) {
+    fail(`${label} missing utility-rail toggle (map-panel-toggle)`);
+  } else pass(`${label} utility-rail toggle`);
 
   if (page.includes('id="day-time-bar"')) {
     fail(`${label} still has persistent day-time-bar`);
@@ -59,6 +59,10 @@ for (const [label, page] of [
     fail(`${label} missing compact campaign-time control`);
   } else pass(`${label} compact campaign-time control`);
 }
+
+if (!css.includes("body.map-panel-collapsed:not(.workspace-map)") || !css.includes(".map-panel-toggle")) {
+  fail("CSS missing collapsed utility-rail toggle visibility");
+} else pass("utility-rail toggle CSS");
 
 if (!app.includes("setWorkspace") || !app.includes('activeWorkspace = "run"')) {
   fail("campaign-app missing workspace state");

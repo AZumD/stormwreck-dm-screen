@@ -80,7 +80,7 @@ for (const [label, html] of [
     fail(`${label} missing Run|Prep|Map switcher`);
   } else pass(`${label} Run|Prep|Map|Session switcher`);
 
-  if (html.includes('id="edit-mode-toggle"') || html.includes('id="view-mode-play"') || html.includes('id="map-panel-toggle"')) {
+  if (html.includes('id="edit-mode-toggle"') || html.includes('id="view-mode-play"')) {
     fail(`${label} still has Edit / Play-Document / Map toggle primary controls`);
   } else pass(`${label} primary toolbar free of Edit/Play-Document/Map-toggle`);
 }
