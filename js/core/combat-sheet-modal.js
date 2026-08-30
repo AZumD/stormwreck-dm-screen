@@ -485,22 +485,43 @@ window.CombatSheetModal = (function () {
       model.catalogueOpen?.();
     });
     bodyEl.querySelector("[data-remove-from-map]")?.addEventListener("click", () => {
-      if (!window.confirm(`Remove “${model.name || "this monster"}” from this map?`)) return;
-      removeMonsterFromMap().catch(() => undefined);
+      const label =
+        model.name ||
+        (model.kind === "npc" ? "this NPC" : model.kind === "monster" ? "this monster" : "this token");
+      if (!window.confirm(`Remove “${label}” from this map?`)) return;
+      removeFromMapPlacement().catch(() => undefined);
     });
   }
 
-  async function removeMonsterFromMap() {
-    if (!current || current.kind !== "monster-token") return;
-    const cid = current.campaignId;
-    const mapId = current.mapId;
-    if (!cid || !mapId || !window.CampaignMapState) throw new Error("Map state unavailable");
-    const prev = CampaignMapState.get(cid)?.tokens || {};
-    const list = Array.isArray(prev[mapId]) ? prev[mapId].filter((t) => t.id !== current.tokenId) : [];
-    CampaignMapState.patch(cid, { tokens: { [mapId]: list } });
-    syncInitiativeTracker(`tok:${current.tokenId}`, current.name, 0, "monster");
-    current.onRemoved?.();
+  async function removeFromMapPlacement() {
+    if (!current?.mapId) return;
+    const cid = current.campaignId || campaignId();
+    if (!cid || !window.CampaignMapState) throw new Error("Map state unavailable");
+
+    if (
+      current.tokenId &&
+      (current.kind === "monster-token" || (current.kind === "npc" && current.mapToken))
+    ) {
+      const prev = CampaignMapState.get(cid)?.tokens || {};
+      const list = Array.isArray(prev[current.mapId])
+        ? prev[current.mapId].filter((t) => t.id !== current.tokenId)
+        : [];
+      CampaignMapState.patch(cid, { tokens: { [current.mapId]: list } });
+      const key =
+        current.kind === "monster-token"
+          ? trackerKey("monster", current.tokenId)
+          : trackerKey("npc", current.catalogueId);
+      syncInitiativeTracker(key, current.name, 0, current.kind === "monster-token" ? "monster" : "npc");
+    }
+
+    if (typeof current.onRemoved === "function") {
+      await current.onRemoved();
+    }
     close();
+  }
+
+  async function removeMonsterFromMap() {
+    return removeFromMapPlacement();
   }
 
   async function resolvePcCharacter(catalogueId) {
@@ -576,25 +597,41 @@ window.CombatSheetModal = (function () {
     let entry = CatalogueStore.get("npc", catalogueId);
     if (!entry) throw new Error("NPC not found in catalogue");
     if (window.CatalogueImages?.hydrate) entry = CatalogueImages.hydrate("npc", entry);
-    const hp = parseHpBlob(entry.hp);
+    const mapToken = opts.token || null;
+    const mapPin = opts.pin || null;
+    const onMap = Boolean(opts.mapId && (mapToken || mapPin));
+    const entryHp = parseHpBlob(entry.hp);
+    const hp = mapToken
+      ? {
+          current: mapToken.hpCurrent ?? entryHp.current,
+          max: mapToken.hpMax ?? entryHp.max
+        }
+      : entryHp;
     current = {
       kind: "npc",
       catalogueId,
       entry,
       name: entry.name || opts.name || "NPC",
-      entityId: opts.entityId
+      entityId: opts.entityId,
+      mapToken,
+      mapPin,
+      tokenId: mapToken?.id || null,
+      mapId: opts.mapId || null,
+      campaignId: opts.campaignId || campaignId(),
+      onRemoved: typeof opts.onRemoved === "function" ? opts.onRemoved : null
     };
     renderShell({
       kind: "npc",
       badge: "NPC",
       name: current.name,
       subtitle: entry.role || "",
-      portrait: entry.portrait || "",
+      portrait: entry.portrait || mapToken?.imageUrl || "",
       hpCurrent: hp.current,
       hpMax: hp.max,
-      ac: parseAc(entry.ac),
+      ac: mapToken?.ac ?? parseAc(entry.ac),
       initiative: readInitiative(trackerKey("npc", catalogueId), entry.combatInitiative),
-      conditions: entry.combatConditions || "",
+      conditions: mapToken?.conditions || entry.combatConditions || "",
+      removeFromMap: onMap,
       catalogueOpen: () => openCatalogueEntity(opts.entityId, catalogueId, "npc")
     });
     fillCombatReference({ entityId: opts.entityId, catalogueId });

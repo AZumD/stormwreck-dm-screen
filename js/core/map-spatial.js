@@ -519,7 +519,16 @@ window.MapSpatial = (function () {
                   kind: "npc",
                   catalogueId: tok.catalogueId,
                   entityId: tok.entityId,
-                  name: tok.label
+                  name: tok.label,
+                  token: tok,
+                  mapId: map.id,
+                  campaignId,
+                  onRemoved: () => {
+                    selectedTokenIds = selectedTokenIds.filter((x) => x !== id);
+                    renderTokens(map);
+                    updateTokenDistance(map);
+                    refreshPins?.();
+                  }
                 });
                 return;
               }

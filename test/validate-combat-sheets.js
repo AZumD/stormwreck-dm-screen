@@ -79,9 +79,21 @@ if (!mapPanel.includes("CombatSheetModal.open") || !mapPanel.includes("spawnMons
   fail("MapPanel must open combat sheet + spawn monster tokens");
 } else pass("MapPanel combat wiring");
 
-if (!modal.includes("data-remove-from-map") || !modal.includes("removeMonsterFromMap")) {
-  fail("CombatSheetModal missing remove-from-map for monster tokens");
-} else pass("Monster remove from map");
+if (!mapPanel.includes("removeStaticPinFromMap") || !mapPanel.includes("removedPins")) {
+  fail("MapPanel missing static NPC pin removal");
+} else pass("MapPanel static NPC pin removal");
+
+if (!mapSpatial.includes("token: tok") || !mapSpatial.includes("onRemoved:")) {
+  fail("MapSpatial NPC token open should pass map token for removal");
+} else pass("MapSpatial NPC token remove wiring");
+
+if (!modal.includes("data-remove-from-map") || !modal.includes("removeFromMapPlacement")) {
+  fail("CombatSheetModal missing remove-from-map for map tokens");
+} else pass("Map token remove from map");
+
+if (!/removeFromMap:\s*onMap/.test(modal)) {
+  fail("CombatSheetModal missing remove-from-map for NPCs on the map");
+} else pass("NPC remove from map in combat sheet");
 
 if (!modal.includes("fillCombatReference") || !modal.includes("data-combat-reference")) {
   fail("CombatSheetModal missing combat reference stat block section");

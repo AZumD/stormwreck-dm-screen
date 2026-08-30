@@ -654,8 +654,15 @@ window.MapPanel = (function () {
 
       const customPins = getCustomPinsForMap();
       const pinSaved = loadPinPositions(campaignId)[activeMapId] || {};
+      const removedIds = new Set(
+        Array.isArray(window.CampaignMapState?.get(campaignId)?.removedPins?.[activeMapId])
+          ? window.CampaignMapState.get(campaignId).removedPins[activeMapId]
+          : []
+      );
 
-      return [...mapPins, ...pcPins, ...customPins].map((pin) => {
+      return [...mapPins, ...pcPins, ...customPins]
+        .filter((pin) => !removedIds.has(pin.id))
+        .map((pin) => {
         const pos = pinSaved[pin.id];
         if (pin.partyId) return pin;
         if (pos) return { ...pin, x: pos.x, y: pos.y };
@@ -710,6 +717,20 @@ window.MapPanel = (function () {
       }
     }
 
+    function removeStaticPinFromMap(pinId) {
+      const removed = window.CampaignMapState?.get(campaignId)?.removedPins || {};
+      const set = new Set(Array.isArray(removed[activeMapId]) ? removed[activeMapId] : []);
+      set.add(pinId);
+      if (window.CampaignMapState) {
+        CampaignMapState.patch(campaignId, { removedPins: { [activeMapId]: [...set] } });
+      }
+      const allPos = loadPinPositions(campaignId);
+      if (allPos[activeMapId]?.[pinId]) {
+        delete allPos[activeMapId][pinId];
+        savePinPositions(campaignId, allPos);
+      }
+    }
+
     function openPinDetails(pin) {
       if (window.CombatSheetModal?.open) {
         if (pin.partyId && window.PARTY) {
@@ -731,7 +752,24 @@ window.MapPanel = (function () {
         }
         if (pin.entityId && window.EntityRegistry?.resolve) {
           const entity = EntityRegistry.resolve(pin.entityId);
-          if (entity && (entity.type === "pc" || entity.type === "npc")) {
+          if (entity && entity.type === "npc") {
+            CombatSheetModal.open({
+              kind: "npc",
+              catalogueId: entity.catalogueId || entity.id,
+              entityId: entity.id,
+              name: entity.name,
+              pin,
+              mapId: activeMapId,
+              campaignId,
+              onRemoved: () => {
+                if (pin.custom) removeCustomPin(pin.id);
+                else removeStaticPinFromMap(pin.id);
+                renderPins();
+              }
+            });
+            return;
+          }
+          if (entity && entity.type === "pc") {
             CombatSheetModal.open({
               kind: entity.type,
               catalogueId: entity.catalogueId || entity.id,

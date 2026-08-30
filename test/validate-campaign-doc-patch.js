@@ -89,7 +89,7 @@ if (!mapStateSrc.includes("initiativeTracker") || !mapStateSrc.includes("initiat
   fail("CampaignMapState local fallback missing initiativeTracker");
 } else pass("initiativeTracker in local empty/load/save");
 
-for (const field of ["activeMap", "pinPositions", "partyPositions", "customPins", "tokens", "initiativeTracker"]) {
+for (const field of ["activeMap", "pinPositions", "partyPositions", "customPins", "tokens", "removedPins", "initiativeTracker"]) {
   if (!mapStateSrc.includes(`${field}:`)) fail(`empty() missing ${field}`);
 }
 pass("empty() shared state fields");

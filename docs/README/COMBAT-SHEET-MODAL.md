@@ -11,7 +11,7 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 | Kind | Open from | Save target |
 |------|-----------|-------------|
 | **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `class_resources`, other `extras`) + sheet `ac`; remirrors to PC catalogue. **Not** `extras.combat_initiative`. |
-| **NPC** | Party / map pin | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`); NPC memory enricher still attaches. **Not** `combatInitiative`. |
+| **NPC** | Party / map pin / combat token | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`); NPC memory enricher still attaches. **Not** `combatInitiative`. Map placement: **Remove from map** drops the token or pin (static pins → `removedPins` in map-state). |
 | **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` (HP/AC/conditions) — never writes the monster catalogue. **Not** token `initiative`. |
 
 ## Initiative (canonical)
@@ -29,6 +29,7 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 - **Combat reference** — resolved catalogue stat block (speed, saves, actions, spells, equipment, etc.; HP/AC omitted because they are editable above)
 - Autosave on blur / short debounce; Save button; last-saved hint
 - Monster token sheet: **Remove from map** button (also right-click the dot)
+- NPC on the map (combat token or catalogue pin): **Remove from map** in the combat sheet footer
 - Optional “Open full catalogue” for wiki read view
 - NPC: campaign memory enricher still attaches below combat reference
 

@@ -18,6 +18,7 @@ window.CampaignMapState = (function () {
       pinPositions: {},
       partyPositions: {},
       customPins: {},
+      removedPins: {},
       tokens: {},
       fog: {},
       initiativeTracker: {}

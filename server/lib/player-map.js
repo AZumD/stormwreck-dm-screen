@@ -170,12 +170,18 @@ function collectMapPins(campaignId, mapId, mapState, linkId) {
   for (const id of ids) {
     Object.assign(pinPos, mapState.pinPositions?.[id] || {});
   }
+  const removedIds = new Set();
+  for (const id of ids) {
+    const removed = mapState.removedPins?.[id];
+    if (Array.isArray(removed)) removed.forEach((pinId) => removedIds.add(pinId));
+  }
 
   const pins = [];
   const seenIds = new Set();
 
   for (const pin of pinsForMap(campaignId, mapId)) {
     if (!PLAYER_PIN_TYPES.has(pin.pinType)) continue;
+    if (removedIds.has(pin.id)) continue;
     const pos = pinPos[pin.id];
     pins.push({
       ...pin,
@@ -192,6 +198,7 @@ function collectMapPins(campaignId, mapId, mapState, linkId) {
     if (!Array.isArray(custom)) continue;
     for (const pin of custom) {
       if (!PLAYER_PIN_TYPES.has(pin.pinType)) continue;
+      if (removedIds.has(pin.id)) continue;
       if (seenIds.has(pin.id)) continue;
       const pos = pinPos[pin.id];
       pins.push({
