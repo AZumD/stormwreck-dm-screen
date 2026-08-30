@@ -49,6 +49,10 @@ if (!fogJs.includes("isPointHidden") || !fogJs.includes("filterVisibleTokens")) 
   fail("map-fog missing fog visibility helpers");
 } else pass("map-fog exposes fog visibility helpers");
 
+if (!fogJs.includes('globalCompositeOperation = "source-in"')) {
+  fail("map-fog should apply DM alpha once via source-in mask");
+} else pass("map-fog uses non-stacking mask render");
+
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);
   process.exit(1);

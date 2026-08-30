@@ -46,6 +46,8 @@ Layer `#map-fog-layer` inside `#map-world` (light fog overlay on DM view — map
 
 Fog layer sits **above** tokens/pins on the DM map (`z-index: 4`); revealed brush strokes are transparent so tokens show through. Player map matches: fog above tokens, own PC token (`isSelf`) stays on top.
 
+Strokes are rendered to an opaque mask first, then DM view applies a single `DM_FOG_ALPHA` pass — repainting the same spot does not stack darker.
+
 Hidden tokens are omitted from the player API when their center lies under fog (`server/lib/map-fog.js` → `filterVisibleTokens`), except the viewer's own PC.
 
 ## Player

@@ -133,30 +133,39 @@ window.MapFog = (function () {
 
     const dm = Boolean(opts?.dm);
     const fogAlpha = dm ? DM_FOG_ALPHA : PLAYER_FOG_ALPHA;
-    const fogColor = `rgba(0, 0, 0, ${fogAlpha})`;
-    const hideColor = fogColor;
 
-    ctx.fillStyle = fogColor;
+    /* Build an opaque hidden/revealed mask first so overlapping strokes never stack alpha. */
+    ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.fillRect(0, 0, w, h);
 
-    strokeList(fog).forEach((stroke) => {
-      const r = (Number(stroke.radius) || 0.025) * Math.min(w, h);
-      const mode = stroke.mode === "hide" ? "source-over" : "destination-out";
-      const color = stroke.mode === "hide" ? hideColor : "rgba(0,0,0,1)";
-      (stroke.points || []).forEach((pt) => {
-        if (!Array.isArray(pt) || pt.length < 2) return;
-        drawDisk(ctx, pt[0] * w, pt[1] * h, r, color, mode);
+    function paintStrokes(strokes) {
+      (strokes || []).forEach((stroke) => {
+        const r = (Number(stroke.radius) || 0.025) * Math.min(w, h);
+        const hide = stroke.mode === "hide";
+        (stroke.points || []).forEach((pt) => {
+          if (!Array.isArray(pt) || pt.length < 2) return;
+          drawDisk(
+            ctx,
+            pt[0] * w,
+            pt[1] * h,
+            r,
+            "rgba(0, 0, 0, 1)",
+            hide ? "source-over" : "destination-out"
+          );
+        });
       });
-    });
+    }
 
-    if (opts?.previewStroke && opts.previewStroke.points?.length) {
-      const stroke = opts.previewStroke;
-      const r = (Number(stroke.radius) || 0.025) * Math.min(w, h);
-      const mode = stroke.mode === "hide" ? "source-over" : "destination-out";
-      const color = stroke.mode === "hide" ? hideColor : "rgba(0,0,0,1)";
-      stroke.points.forEach((pt) => {
-        drawDisk(ctx, pt[0] * w, pt[1] * h, r, color, mode);
-      });
+    paintStrokes(strokeList(fog));
+    if (opts?.previewStroke?.points?.length) {
+      paintStrokes([opts.previewStroke]);
+    }
+
+    if (fogAlpha < 1) {
+      ctx.globalCompositeOperation = "source-in";
+      ctx.fillStyle = `rgba(0, 0, 0, ${fogAlpha})`;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
     }
   }
 
