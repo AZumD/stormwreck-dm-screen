@@ -24,13 +24,16 @@
   const cancelBtn = document.getElementById("create-campaign-cancel");
   const importBtn = document.getElementById("import-browser-data");
   const importReport = document.getElementById("import-browser-report");
-  const scheduleSection = document.getElementById("library-schedule");
-  const scheduleCollapseBtn = document.getElementById("library-schedule-collapse");
+  const libraryViewHome = document.getElementById("library-view-home");
+  const libraryViewSchedule = document.getElementById("library-view-schedule");
+  const scheduleBackBtn = document.getElementById("library-schedule-back");
+  const scheduleList = document.getElementById("dm-schedule-list");
 
   let authMode = "unknown"; /* session | open | login */
   let libraryBound = false;
-  let scheduleExpanded = false;
-  let scheduleToggleBound = false;
+  let libraryView = "home";
+  let homeScrollY = 0;
+  let libraryViewBound = false;
 
   function escapeHtml(str) {
     return window.LibrarySummary?.escapeHtml
@@ -184,49 +187,96 @@
     return `${weekday} · ${time}`;
   }
 
-  function scheduleExpandLink(label) {
-    return `<button type="button" class="library-next-session__link" data-expand-schedule>${escapeHtml(label)}</button>`;
+  function normalizeLibraryView(raw) {
+    return raw === "schedule" ? "schedule" : "home";
   }
 
-  async function expandSchedule(opts = {}) {
-    const { scroll = true } = opts;
-    if (!scheduleSection) return;
-    scheduleSection.hidden = false;
-    scheduleSection.classList.remove("library-schedule-section--collapsed");
-    scheduleExpanded = true;
-    if (scroll) {
-      scheduleSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  function readLibraryViewFromUrl() {
+    try {
+      const view = new URLSearchParams(location.search).get("view");
+      if (view === "schedule") return "schedule";
+      if (location.hash === "#library-schedule") return "schedule";
+    } catch {
+      /* ignore */
     }
-    if (location.hash !== "#library-schedule") {
-      history.replaceState(null, "", "#library-schedule");
+    return "home";
+  }
+
+  function buildLibraryViewUrl(view) {
+    const url = new URL(location.href);
+    if (view === "schedule") url.searchParams.set("view", "schedule");
+    else url.searchParams.delete("view");
+    url.hash = "";
+    return url.pathname + url.search;
+  }
+
+  function setLibraryView(view, opts = {}) {
+    const next = normalizeLibraryView(view);
+    const prev = libraryView;
+    const { push = false, replace = false, restoreHomeScroll = false } = opts;
+
+    if (next === "schedule" && prev === "home") homeScrollY = window.scrollY;
+
+    libraryView = next;
+
+    if (libraryViewHome) libraryViewHome.hidden = next !== "home";
+    if (libraryViewSchedule) libraryViewSchedule.hidden = next !== "schedule";
+
+    document.body.classList.toggle("library-view--schedule", next === "schedule");
+    document.body.classList.toggle("library-view--home", next === "home");
+
+    const url = buildLibraryViewUrl(next);
+    if (push) history.pushState({ libraryView: next }, "", url);
+    else if (replace) history.replaceState({ libraryView: next }, "", url);
+
+    if (next === "schedule") {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      requestAnimationFrame(() => scheduleBackBtn?.focus());
+    } else {
+      window.scrollTo({ top: restoreHomeScroll ? homeScrollY : 0, behavior: "auto" });
     }
   }
 
-  function collapseSchedule() {
-    if (!scheduleSection) return;
-    scheduleSection.hidden = true;
-    scheduleSection.classList.add("library-schedule-section--collapsed");
-    scheduleExpanded = false;
-    if (location.hash === "#library-schedule") {
-      history.replaceState(null, "", location.pathname + location.search);
-    }
+  function openScheduleView(opts = {}) {
+    setLibraryView("schedule", { push: opts.push !== false });
   }
 
-  function bindScheduleToggle() {
-    if (scheduleToggleBound) return;
-    scheduleToggleBound = true;
-    scheduleCollapseBtn?.addEventListener("click", () => collapseSchedule());
+  function openHomeView(opts = {}) {
+    setLibraryView("home", { push: opts.push !== false, restoreHomeScroll: true });
+  }
+
+  function bindLibraryViewNavigation() {
+    if (libraryViewBound) return;
+    libraryViewBound = true;
+
+    scheduleBackBtn?.addEventListener("click", () => openHomeView({ push: true }));
+
     document.addEventListener("click", (e) => {
-      const trigger = e.target.closest("[data-expand-schedule]");
+      const trigger = e.target.closest("[data-library-view]");
       if (!trigger) return;
-      e.preventDefault();
-      expandSchedule({ scroll: true });
-    });
-    window.addEventListener("hashchange", () => {
-      if (location.hash === "#library-schedule" && !scheduleExpanded) {
-        expandSchedule({ scroll: true });
+      const target = trigger.getAttribute("data-library-view");
+      if (target === "schedule") {
+        e.preventDefault();
+        openScheduleView({ push: true });
+      } else if (target === "home") {
+        e.preventDefault();
+        openHomeView({ push: true });
       }
     });
+
+    window.addEventListener("popstate", () => {
+      setLibraryView(readLibraryViewFromUrl(), { replace: true, restoreHomeScroll: true });
+    });
+
+    window.addEventListener("hashchange", () => {
+      if (location.hash !== "#library-schedule") return;
+      history.replaceState({ libraryView: "schedule" }, "", buildLibraryViewUrl("schedule"));
+      setLibraryView("schedule", { replace: true });
+    });
+  }
+
+  function scheduleViewLink(label) {
+    return `<button type="button" class="library-next-session__link" data-library-view="schedule">${escapeHtml(label)}</button>`;
   }
 
   async function renderNextSessionSummary(user) {
@@ -235,7 +285,7 @@
       nextSessionEl.innerHTML = `
         <h3 class="library-next-session__title">Next session</h3>
         <p class="meta library-next-session__body">Sign in to see upcoming sessions.</p>
-        ${scheduleExpandLink("Full schedule")}`;
+        ${scheduleViewLink("Full schedule")}`;
       return;
     }
     nextSessionEl.innerHTML = `
@@ -253,7 +303,7 @@
         nextSessionEl.innerHTML = `
           <h3 class="library-next-session__title">Next session</h3>
           <p class="meta library-next-session__body">No session scheduled</p>
-          ${scheduleExpandLink("Full schedule")}`;
+          ${scheduleViewLink("Full schedule")}`;
         return;
       }
       const title = next.title || next.campaignName || "Session";
@@ -263,12 +313,12 @@
         <p class="library-next-session__when">${escapeHtml(fmtEventWhen(next.startsAt))}</p>
         <p class="library-next-session__name">${escapeHtml(title)}</p>
         <p class="meta library-next-session__scope">${escapeHtml(scope)}</p>
-        ${scheduleExpandLink("Full schedule")}`;
+        ${scheduleViewLink("Full schedule")}`;
     } catch {
       nextSessionEl.innerHTML = `
         <h3 class="library-next-session__title">Next session</h3>
         <p class="meta library-next-session__body">Could not load schedule</p>
-        ${scheduleExpandLink("Full schedule")}`;
+        ${scheduleViewLink("Full schedule")}`;
     }
   }
 
@@ -435,7 +485,6 @@
     importBtn?.addEventListener("click", () => runImport());
   }
 
-  const scheduleList = document.getElementById("dm-schedule-list");
   let scheduleState = {
     bootstrap: null,
     personalCal: null,
@@ -499,15 +548,13 @@
 
   async function enterLibrary(user) {
     showLibrary(user || null);
-    bindScheduleToggle();
+    bindLibraryViewNavigation();
     if (window.LocalApiClient) await LocalApiClient.ready();
     if (window.CampaignRegistry?.bootstrap) await CampaignRegistry.bootstrap();
     await renderLibraryHome();
     await renderNextSessionSummary(user || null);
     await renderDmSchedule(user || null);
-    if (location.hash === "#library-schedule") {
-      await expandSchedule({ scroll: false });
-    }
+    setLibraryView(readLibraryViewFromUrl(), { replace: true });
     if (!window.LocalApiClient?.isAvailable()) {
       if (importReport) {
         importReport.hidden = false;

@@ -13,11 +13,22 @@ DM Library as the DM home base — Continue, campaigns, tools, schedule summary,
 
 ## Hierarchy
 1. **Continue** — last opened campaign (or featured Stormwreck), with session/time + current scene; two-column card with primary Continue + secondary Run/Prep
-2. **Campaigns** — all campaigns on translucent card surfaces; **+ New campaign** in section header
-3. **Tools** — Compendium, Schedule (expands full calendar), Player App
-4. **Next session** — compact summary in Tools column; **Full schedule** expands the calendar inline
-5. **Schedule** — full panel collapsed by default; expand via Tools, Next session, or `#library-schedule`
-6. **Data & backup** — import/export in footer
+2. **Campaigns** — all campaigns on translucent card surfaces; **+ New campaign** in Campaigns column header
+3. **Tools** — Compendium, Schedule (opens focused subview), Player App
+4. **Next session** — compact summary in Tools column; **Full schedule** opens Schedule subview
+5. **Schedule subview** — full calendar + upcoming events; `?view=schedule`; **← DM Library** returns home
+6. **Data & backup** — import/export in home footer
+
+## Library subviews
+Local view state: `home` (default) | `schedule`
+
+| URL | View |
+|-----|------|
+| `/dm/` | Home |
+| `/dm/?view=schedule` | Schedule |
+| `/dm/#library-schedule` | Schedule (legacy; normalized to query) |
+
+Browser Back/Forward uses `history.pushState` / `popstate`. Malformed `view` values fall back to Home.
 
 ## Continue selection
 `localStorage` key `dm-last-campaign-id`, updated when any campaign link is clicked from the Library. Falls back to Stormwreck Isle if unset.

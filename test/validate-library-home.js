@@ -37,8 +37,8 @@ if (!html.includes('href="/player/"') || !html.includes("Player App")) {
   fail("Tools missing Player App");
 } else pass("Tools Player App");
 
-if (!html.includes("#library-schedule") || !html.includes("library-next-session")) {
-  fail("schedule summary + full schedule missing");
+if (!html.includes("library-view-schedule") || !html.includes("library-next-session")) {
+  fail("schedule summary + schedule view missing");
 } else pass("schedule hierarchy");
 
 if (!html.includes("Data &amp; backup") || !html.includes("import-browser-data")) {
@@ -77,21 +77,29 @@ if (!css.includes(".library-continue-card") || !css.includes(".library-home-grid
   fail("landing.css missing library home styles");
 } else pass("library home CSS");
 
-if (!html.includes("library-schedule-section--collapsed") || !html.includes('id="library-schedule-collapse"')) {
-  fail("Schedule should be collapsible with collapse control");
-} else pass("collapsible schedule shell");
+if (!html.includes('id="library-view-home"') || !html.includes('id="library-view-schedule"')) {
+  fail("missing library home/schedule subviews");
+} else pass("library subview shells");
 
-if (!html.includes('id="library-schedule"') || !html.match(/id="library-schedule"[^>]*hidden/)) {
-  fail("Schedule section should be hidden by default");
-} else pass("schedule collapsed by default");
+if (!html.includes('id="library-view-schedule"') || !html.match(/id="library-view-schedule"[^>]*hidden/)) {
+  fail("schedule subview should be hidden by default");
+} else pass("schedule subview hidden by default");
 
-if (!html.includes("data-expand-schedule")) {
-  fail("missing schedule expand triggers");
-} else pass("schedule expand triggers");
+if (!html.includes("data-library-view") || !html.includes("?view=schedule")) {
+  fail("missing schedule subview navigation");
+} else pass("schedule subview navigation");
 
-if (!landingJs.includes("expandSchedule") || !landingJs.includes("collapseSchedule")) {
-  fail("landing.js missing schedule expand/collapse");
-} else pass("schedule expand/collapse logic");
+if (!html.includes('id="library-schedule-back"')) {
+  fail("missing back to DM Library control");
+} else pass("schedule back navigation");
+
+if (!landingJs.includes("setLibraryView") || !landingJs.includes("readLibraryViewFromUrl")) {
+  fail("landing.js missing library view state");
+} else pass("library view state");
+
+if (!landingJs.includes("buildLibraryViewUrl") || !landingJs.includes("popstate")) {
+  fail("landing.js missing schedule URL/history handling");
+} else pass("schedule URL + history");
 
 if (!landingJs.includes("library-continue-card__main") || !landingJs.includes("landing-tool-btn--secondary")) {
   fail("Continue card missing composed layout / action hierarchy");
@@ -101,8 +109,8 @@ if (!landingJs.includes("card-campaign__surface")) {
   fail("campaign cards missing surface panel");
 } else pass("campaign card surfaces");
 
-if (!html.includes("library-section-head") || !html.includes("library-new-campaign")) {
-  fail("New campaign should live in Campaigns heading row");
+if (!html.includes("library-campaigns-head") || !html.includes("library-new-campaign")) {
+  fail("New campaign should live in Campaigns header row");
 } else pass("New campaign in Campaigns header");
 
 const sandbox = { window: {}, console, localStorage: { _m: new Map(), getItem(k) { return this._m.get(k) ?? null; }, setItem(k, v) { this._m.set(k, v); } } };

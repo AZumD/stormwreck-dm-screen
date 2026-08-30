@@ -51,9 +51,9 @@ if (!html.includes("compendium/") || !html.includes("Compendium")) {
   pass("link compendium");
 }
 
-if (!html.includes("dm-schedule-list") || !html.includes("landing-section--schedule")) {
-  fail("DM landing missing schedule panel");
-} else pass("DM landing schedule panel");
+if (!html.includes("dm-schedule-list") || !html.includes("library-view-schedule")) {
+  fail("DM landing missing schedule subview");
+} else pass("DM landing schedule subview");
 
 if (!html.includes('href="/player/"') || !html.includes("Player App")) {
   fail("DM landing missing Player app in Tools");
