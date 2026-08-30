@@ -24,3 +24,5 @@ Stored inside the existing `campaign-state` document / `{campaignId}-campaign-st
 
 ## Init
 `DayTimeUI.init()` after `CampaignState.init(campaignId)` from `campaign-app.js`. Markup lives in both campaign `index.html` toolbars (`#campaign-time`).
+
+`DayTimeUI.openPopover()` opens the popover programmatically (used by the command palette).

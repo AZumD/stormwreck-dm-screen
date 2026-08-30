@@ -5,7 +5,7 @@
   <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dragons of Stormwreck Isle — DM Screen</title>
-  <link rel="stylesheet" href="../../css/style.css?v=20260830n5">
+  <link rel="stylesheet" href="../../css/style.css?v=20260830n6">
 </head>
 <body class="campaign-page" data-campaign-id="stormwreck-isle">
   <div class="campaign-atmosphere" aria-hidden="true"></div>
@@ -53,7 +53,8 @@
           <button type="button" id="workspace-session" class="toolbar-btn workspace-switch__btn" aria-pressed="false">Session</button>
         </div>
         <div class="catalogue-search" id="catalogue-search">
-          <input type="search" id="search" class="search" placeholder="Search catalogues…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogue-search-results">
+          <input type="search" id="search" class="search" placeholder="Search or jump…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogue-search-results" aria-label="Search or jump to scenes, entities, and commands">
+          <kbd class="catalogue-search__hint" aria-hidden="true">Ctrl K</kbd>
           <ul id="catalogue-search-results" class="catalogue-search__results hidden" role="listbox" hidden></ul>
         </div>
         <button type="button" id="current-scene-btn" class="toolbar-btn toolbar-btn--current-scene" title="Jump to current scene" aria-label="Jump to current scene">Current scene</button>
@@ -330,6 +331,7 @@
   <script src="../../js/core/map-spatial.js"></script>
   <script src="../../js/core/map-fullscreen.js"></script>
   <script src="../../js/core/map-panel.js"></script>
+  <script src="../../js/core/command-palette.js"></script>
   <script src="../../js/campaign-app.js"></script>
 </body>
 </html>

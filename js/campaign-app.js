@@ -68,9 +68,6 @@
   let focusedSceneId = null;
   let scrollSpyObserver = null;
   let editingSectionId = null;
-  let catalogueSearchTimer = null;
-  let catalogueSearchHits = [];
-  let catalogueSearchActive = -1;
 
   function normalizeWorkspaceId(workspace) {
     if (workspace === "prep" || workspace === "map" || workspace === "session") return workspace;
@@ -671,6 +668,7 @@
       addLi.appendChild(addBtn);
       sectionNav.appendChild(addLi);
     }
+    window.CommandPalette?.refreshSceneIndex?.();
   }
 
   function buildMapBrowserNav() {
@@ -1840,7 +1838,7 @@
       if (e.target === entityModal) entityModal.close();
     });
 
-    bindCatalogueSearch();
+    bindCommandPalette();
 
     const bindEntityEvents = (root) => EntityUI.bindEntityLinks(root);
 
@@ -1855,146 +1853,40 @@
     });
   }
 
-  function hideCatalogueSearch() {
-    if (!catalogueSearchResults) return;
-    catalogueSearchResults.classList.add("hidden");
-    catalogueSearchResults.hidden = true;
-    catalogueSearchResults.innerHTML = "";
-    catalogueSearchHits = [];
-    catalogueSearchActive = -1;
-    searchInput?.setAttribute("aria-expanded", "false");
-  }
-
-  function rankCatalogueMatch(entity, q) {
-    const name = (entity.name || "").toLowerCase();
-    if (name === q) return 0;
-    if (name.startsWith(q)) return 1;
-    if (name.includes(q)) return 2;
-    return 3;
-  }
-
-  function findCatalogueMatches(query) {
-    const q = query.trim().toLowerCase();
-    if (q.length < 1) return [];
-    const entities = Object.values(getEntities());
-    return entities
-      .map((entity) => {
-        const hay = [entity.name, entity.summary, entity.details, ...(entity.tags || [])]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!hay.includes(q)) return null;
-        return { entity, rank: rankCatalogueMatch(entity, q) };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.rank - b.rank || a.entity.name.localeCompare(b.entity.name))
-      .slice(0, 12)
-      .map((hit) => hit.entity);
-  }
-
-  function renderCatalogueSearch(query) {
-    if (!catalogueSearchResults) return;
-    const q = query.trim();
-    if (!q) {
-      hideCatalogueSearch();
-      return;
-    }
-
-    catalogueSearchHits = findCatalogueMatches(q);
-    catalogueSearchActive = catalogueSearchHits.length ? 0 : -1;
-
-    if (!catalogueSearchHits.length) {
-      catalogueSearchResults.innerHTML = `<li class="catalogue-search__empty" role="option">${escapeHtml(t.searchNoResults)} “${escapeHtml(q)}”</li>`;
-    } else {
-      catalogueSearchResults.innerHTML = catalogueSearchHits
-        .map((entity, i) => {
-          const type = t.typeLabels?.[entity.type] || entity.type;
-          const active = i === catalogueSearchActive ? " is-active" : "";
-          return `
-            <li class="catalogue-search__item${active}" role="option" data-idx="${i}" data-id="${escapeHtml(entity.id)}" aria-selected="${i === catalogueSearchActive ? "true" : "false"}">
-              <span class="catalogue-search__type">${escapeHtml(type)}</span>
-              <span class="catalogue-search__name">${escapeHtml(entity.name)}</span>
-              <span class="catalogue-search__meta">${escapeHtml(entity.summary || "")}</span>
-            </li>`;
-        })
-        .join("");
-    }
-
-    catalogueSearchResults.classList.remove("hidden");
-    catalogueSearchResults.hidden = false;
-    searchInput.setAttribute("aria-expanded", "true");
-
-    catalogueSearchResults.querySelectorAll(".catalogue-search__item[data-id]").forEach((el) => {
-      el.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        openCatalogueSearchResult(Number(el.dataset.idx));
-      });
-    });
-  }
-
-  function highlightCatalogueSearchActive() {
-    if (!catalogueSearchResults) return;
-    catalogueSearchResults.querySelectorAll(".catalogue-search__item").forEach((el, i) => {
-      const on = i === catalogueSearchActive;
-      el.classList.toggle("is-active", on);
-      el.setAttribute("aria-selected", on ? "true" : "false");
-      if (on) el.scrollIntoView({ block: "nearest" });
-    });
-  }
-
-  function openCatalogueSearchResult(idx) {
-    const entity = catalogueSearchHits[idx];
-    if (!entity) return;
-    hideCatalogueSearch();
-    searchInput.value = "";
-    EntityUI.openModal(entity.id);
-  }
-
-  function bindCatalogueSearch() {
-    if (!searchInput || !catalogueSearchResults) return;
-    if (t.searchCataloguesPlaceholder) searchInput.placeholder = t.searchCataloguesPlaceholder;
-
-    searchInput.addEventListener("input", () => {
-      clearTimeout(catalogueSearchTimer);
-      catalogueSearchTimer = setTimeout(() => renderCatalogueSearch(searchInput.value), 120);
-    });
-
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        hideCatalogueSearch();
-        searchInput.blur();
-        return;
+  function bindCommandPalette() {
+    if (!window.CommandPalette) return;
+    CommandPalette.init({
+      root: catalogueSearch,
+      input: searchInput,
+      results: catalogueSearchResults,
+      labels: t,
+      api: {
+        getEntities: () => Object.values(getEntities()),
+        getSections,
+        getGroups: () => (SectionEditor.getGroups ? SectionEditor.getGroups(campaignId) : []),
+        getSectionTitle: (id) => {
+          const section = getSectionById(id);
+          return section ? getSectionData(section).title : id;
+        },
+        setWorkspace: (ws, opts) => setWorkspace(ws, opts),
+        navigateToScene: (id) => setWorkspace("run", { preservePanel: false, focusSceneId: id }),
+        jumpToSection,
+        jumpToCurrentScene: () => {
+          const id = window.CampaignState?.getCurrentSceneId?.();
+          if (id) jumpToSection(id);
+        },
+        showReference: (tab) => showPanelView(`reference:${tab}`),
+        openParty: () => {
+          window.LayoutPanels?.setMapCollapsed?.(false, false);
+          window.MapPanel?.setActiveTab?.("party");
+        },
+        openMusic: () => {
+          window.LayoutPanels?.setMapCollapsed?.(false, false);
+          window.MapPanel?.setActiveTab?.("music");
+        },
+        openCampaignTime: () => window.DayTimeUI?.openPopover?.(),
+        openEntity: (id) => EntityUI.openModal(id)
       }
-      if (e.key === "ArrowDown") {
-        if (!catalogueSearchHits.length) renderCatalogueSearch(searchInput.value);
-        if (!catalogueSearchHits.length) return;
-        e.preventDefault();
-        catalogueSearchActive = (catalogueSearchActive + 1) % catalogueSearchHits.length;
-        highlightCatalogueSearchActive();
-        return;
-      }
-      if (e.key === "ArrowUp") {
-        if (!catalogueSearchHits.length) return;
-        e.preventDefault();
-        catalogueSearchActive =
-          (catalogueSearchActive - 1 + catalogueSearchHits.length) % catalogueSearchHits.length;
-        highlightCatalogueSearchActive();
-        return;
-      }
-      if (e.key === "Enter") {
-        if (catalogueSearchActive >= 0 && catalogueSearchHits[catalogueSearchActive]) {
-          e.preventDefault();
-          openCatalogueSearchResult(catalogueSearchActive);
-        }
-      }
-    });
-
-    searchInput.addEventListener("blur", () => {
-      setTimeout(() => hideCatalogueSearch(), 120);
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!catalogueSearch?.contains(e.target)) hideCatalogueSearch();
     });
   }
 
@@ -2113,7 +2005,8 @@
   }
 
   function bindChecklistEvents() {
-    panelView.querySelectorAll(".checklist-item input").forEach((input) => {
+    const host = sessionView?.querySelector(".session-workspace__content") || panelView;
+    host.querySelectorAll(".checklist-item input").forEach((input) => {
       input.addEventListener("change", () => {
         const state = getChecklistState();
         state[input.dataset.id] = input.checked;

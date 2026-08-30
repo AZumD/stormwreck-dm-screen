@@ -978,6 +978,39 @@ body[data-nav-collapsed="true"] .sidebar {
 .catalogue-search .search {
   width: 100%;
   max-width: none;
+  padding-right: 3.25rem;
+}
+
+.catalogue-search__hint {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.12rem 0.35rem;
+  background: rgba(10, 14, 20, 0.55);
+  pointer-events: none;
+  line-height: 1.2;
+}
+
+.catalogue-search.is-open .catalogue-search__hint {
+  opacity: 0.35;
+}
+
+.catalogue-search__group {
+  padding: 0.35rem 0.75rem 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .catalogue-search__results {
@@ -5106,6 +5139,14 @@ body.map-mode-workspace .map-tab-panel[data-map-tab-panel="map"]:not([hidden]) {
   .main-toolbar {
     padding: 0.65rem 0.85rem;
     flex-wrap: wrap;
+  }
+
+  .catalogue-search__hint {
+    display: none;
+  }
+
+  .catalogue-search .search {
+    padding-right: 0.75rem;
   }
 
   .catalogue-search {

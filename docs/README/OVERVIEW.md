@@ -49,6 +49,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **Map** workspace promotes the existing MapPanel to a full canvas (Party \| Music remain on the utility rail in Run/Prep)
 - **Session** workspace hosts Notes \| Log \| Chronicle \| Progress (tab state in `sessionTab`)
 - Toolbar **Run | Prep | Map | Session**; Reference opens as an overlay without leaving the active workspace
+- Toolbar search is a universal command palette (**Ctrl+K**): entities, scenes, workspaces, session/reference tabs, Party/Music/Current Scene
 - Scene cast + connections editable in Prep; stored in `scene-meta.json`
 
 ## Campaign editing
@@ -89,6 +90,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/editor.js` | Free-form ordered scenes, nav groups, edit-mode reorder |
 | `js/core/parser.js` | `@` links (all linkable types), YouTube chips, read-aloud / DM-note |
 | `js/core/media-bar.js` | Compact multi-track YouTube strip + mixer + dock |
+| `js/core/command-palette.js` | Universal search/command palette (Ctrl+K) |
 | `js/core/layout-panels.js` | Nav/map collapse + map modes (sidebar / expanded / combat / workspace) |
 | `js/core/entity-ui.js` | Tooltips + modals (map pins use compact tooltips) |
 | `js/core/entity-registry.js` | Catalogue → `ENTITIES` (+ `register()` for new types) |
