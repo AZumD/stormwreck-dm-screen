@@ -25,6 +25,47 @@ window.DayTimeUI = (function () {
   let open = false;
   let onDocPointer = null;
   let onDocKey = null;
+  let onReposition = null;
+
+  const POPOVER_GAP = 6;
+  const POPOVER_Z = 200;
+
+  function positionPopover() {
+    if (!trigger || !popover || !open) return;
+    const rect = trigger.getBoundingClientRect();
+    const popW = Math.min(352, window.innerWidth - 32);
+    popover.style.position = "fixed";
+    popover.style.width = `${popW}px`;
+    popover.style.zIndex = String(POPOVER_Z);
+    popover.style.left = `${Math.max(16, Math.min(rect.right - popW, window.innerWidth - popW - 16))}px`;
+    popover.style.right = "auto";
+
+    popover.hidden = false;
+    const popH = popover.offsetHeight || 240;
+    const spaceBelow = window.innerHeight - rect.bottom - POPOVER_GAP;
+    const spaceAbove = rect.top - POPOVER_GAP;
+    if (spaceBelow >= popH || spaceBelow >= spaceAbove) {
+      popover.style.top = `${rect.bottom + POPOVER_GAP}px`;
+      popover.style.bottom = "auto";
+    } else {
+      popover.style.top = "auto";
+      popover.style.bottom = `${window.innerHeight - rect.top + POPOVER_GAP}px`;
+    }
+  }
+
+  function attachReposition() {
+    detachReposition();
+    onReposition = () => positionPopover();
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+  }
+
+  function detachReposition() {
+    if (!onReposition) return;
+    window.removeEventListener("resize", onReposition);
+    window.removeEventListener("scroll", onReposition, true);
+    onReposition = null;
+  }
 
   function clampMinute(n) {
     const v = Number(n);
@@ -95,13 +136,29 @@ window.DayTimeUI = (function () {
 
   function setOpen(next) {
     open = !!next;
-    if (popover) popover.hidden = !open;
+    if (popover) {
+      if (open) {
+        popover.hidden = false;
+        positionPopover();
+      } else {
+        popover.hidden = true;
+        popover.style.position = "";
+        popover.style.top = "";
+        popover.style.bottom = "";
+        popover.style.left = "";
+        popover.style.right = "";
+        popover.style.width = "";
+        popover.style.zIndex = "";
+      }
+    }
     if (trigger) trigger.setAttribute("aria-expanded", open ? "true" : "false");
     root?.classList.toggle("is-open", open);
     if (open) {
       attachDismiss();
+      attachReposition();
     } else {
       detachDismiss();
+      detachReposition();
     }
   }
 
@@ -200,6 +257,7 @@ window.DayTimeUI = (function () {
       refresh();
       setOpen(true);
       requestAnimationFrame(() => {
+        positionPopover();
         const first = popover?.querySelector("[data-time-preset]");
         if (first) first.focus();
         else trigger?.focus?.();

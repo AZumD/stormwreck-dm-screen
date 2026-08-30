@@ -812,10 +812,10 @@ body[data-nav-collapsed="true"] .sidebar {
 }
 
 .campaign-time__popover {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
-  z-index: 50;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
   width: min(22rem, calc(100vw - 2rem));
   padding: 0.85rem 0.95rem 0.95rem;
   border: 1px solid var(--border-strong);
@@ -5307,8 +5307,7 @@ body.map-mode-workspace .map-tab-panel[data-map-tab-panel="map"]:not([hidden]) {
   }
 
   .campaign-time__popover {
-    left: auto;
-    right: 0;
+    width: min(22rem, calc(100vw - 2rem));
   }
 
   .campaign-time__presets {

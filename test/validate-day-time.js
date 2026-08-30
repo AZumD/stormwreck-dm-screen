@@ -53,10 +53,16 @@ if (!uiCode.includes("pointerdown") || !uiCode.includes("Escape")) {
   pass("DayTimeUI dismiss via Escape/outside");
 }
 
-if (!css.includes(".campaign-time__popover") || !css.includes(".campaign-time__slider--time") || !css.includes("#c9a227")) {
-  fail("campaign-time styles / noon yellow missing");
+if (!uiCode.includes("positionPopover") || !uiCode.includes('.position = "fixed"')) {
+  fail("DayTimeUI popover must use fixed viewport positioning");
 } else {
-  pass("campaign-time CSS");
+  pass("DayTimeUI fixed popover positioning");
+}
+
+if (!css.includes(".campaign-time__slider--time") || !css.includes("#c9a227")) {
+  fail("campaign-time slider / noon yellow missing");
+} else {
+  pass("campaign-time slider CSS");
 }
 
 if (css.includes(".day-time-bar {") || css.includes(".day-time-bar__slider")) {

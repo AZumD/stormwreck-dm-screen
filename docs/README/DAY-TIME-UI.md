@@ -8,7 +8,7 @@ Compact campaign tenday + time-of-day control in the main toolbar. A trigger sho
 
 ## UI
 - **Trigger** — `#campaign-time-trigger` / `#campaign-time-label` (`Day N · HH:MM`)
-- **Popover** — `#campaign-time-popover` (click outside or Escape closes; listeners detached when closed)
+- **Popover** — `#campaign-time-popover` (fixed to viewport below trigger; repositions on scroll/resize; click outside or Escape closes)
 - **Day** — snapping range `1–10` (tenday)
 - **Time** — continuous range `0–1439` minutes (`00:00`–`23:59`) with night→noon→night track gradient
 - **Presets** — Morning `08:00`, Noon `12:00`, Evening `18:00`, Night `22:00` (same minute model as the slider)
