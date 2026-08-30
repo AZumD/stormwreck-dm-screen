@@ -1,33 +1,40 @@
 /**
- * Player Map tab — full-bleed map from PC token location, fog, tokens, pan/zoom. Polls player-safe API.
+ * Player Map tab — PC-centered tactical view (limited zoom, no free pan).
+ * Fog + tokens from player-safe API; polls for DM moves / map switches.
  */
 window.PlayerMapView = (function () {
   "use strict";
 
+  const Cam = window.PlayerMapCamera;
+  if (!Cam) {
+    throw new Error("PlayerMapCamera must load before PlayerMapView");
+  }
+
   const POLL_MS = 1500;
-  const ZOOM_MIN = 1;
-  const ZOOM_MAX = 4;
-  const ZOOM_STEP = 1.12;
+  const {
+    PLAYER_MAP_MIN_ZOOM,
+    PLAYER_MAP_DEFAULT_ZOOM,
+    PLAYER_MAP_ZOOM_STEP,
+    clampZoom,
+    computeCenterPan
+  } = Cam;
 
   let root = null;
   let pollTimer = null;
+  let resizeObserver = null;
   let lastRevision = null;
   let lastMapId = null;
+  let lastSelfKey = null;
   let lastView = null;
   let ctx = null;
-  let zoom = 1;
+  let zoom = PLAYER_MAP_DEFAULT_ZOOM;
   let panX = 0;
   let panY = 0;
-  let dragging = false;
-  let dragStart = null;
   let pinchStart = null;
   let pollStale = false;
   let consecutiveFailures = 0;
-  const viewportsByMapId = Object.create(null);
-
-  function clamp(n, lo, hi) {
-    return Math.min(hi, Math.max(lo, n));
-  }
+  /** Session-level zoom only (no x/y offsets). */
+  let sessionZoom = PLAYER_MAP_DEFAULT_ZOOM;
 
   function worldToPercent(wx, wy, view) {
     if (!view?.grid || !view.widthPx || !view.heightPx) return null;
@@ -44,6 +51,26 @@ window.PlayerMapView = (function () {
     if (token.percent) return token.percent;
     if (token.world) return worldToPercent(token.world.x, token.world.y, view);
     return null;
+  }
+
+  function findSelfToken(view) {
+    if (!view?.available) return null;
+    if (Array.isArray(view.tokens)) {
+      const self = view.tokens.find((t) => t.isSelf && (t.percent || t.world));
+      if (self) return self;
+    }
+    if (view.token?.percent || view.token?.world) {
+      return { ...view.token, isSelf: true };
+    }
+    return null;
+  }
+
+  function selfPositionKey(view) {
+    const self = findSelfToken(view);
+    if (!self) return "";
+    const pos = tokenPosition(self, view);
+    if (!pos) return "";
+    return `${view.mapId || ""}:${pos.x.toFixed(3)},${pos.y.toFixed(3)}`;
   }
 
   function collectTokens(view) {
@@ -86,7 +113,7 @@ window.PlayerMapView = (function () {
         top: `${pos.y}%`,
         width: `${w}%`,
         height: `${h}%`,
-        margin: `calc(-${h / 2}% 0 0 calc(-${w / 2}%)`
+        transform: "translate(-50%, -50%)"
       };
     }
     return {
@@ -100,93 +127,40 @@ window.PlayerMapView = (function () {
     const world = root?.querySelector(".player-map-world");
     if (!world) return;
     world.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
-    world.classList.toggle("is-zoomed", zoom > 1.01);
+    world.classList.toggle("is-zoomed", zoom > PLAYER_MAP_MIN_ZOOM + 0.01);
   }
 
-  function saveViewport(mapId) {
-    if (!mapId) return;
-    viewportsByMapId[mapId] = { zoom, panX, panY };
-  }
-
-  function restoreViewport(mapId) {
-    const saved = viewportsByMapId[mapId];
-    if (saved) {
-      zoom = saved.zoom;
-      panX = saved.panX;
-      panY = saved.panY;
-    } else {
-      zoom = 1;
-      panX = 0;
-      panY = 0;
-    }
-  }
-
-  function resetView() {
-    zoom = 1;
-    panX = 0;
-    panY = 0;
-    if (lastMapId) saveViewport(lastMapId);
+  function centerOnSelf(view) {
+    if (!view?.available) return false;
+    const self = findSelfToken(view);
+    if (!self) return false;
+    const pos = tokenPosition(self, view);
+    if (!pos) return false;
+    const viewport = root?.querySelector(".player-map-viewport");
+    const world = root?.querySelector(".player-map-world");
+    if (!viewport || !world) return false;
+    const rect = viewport.getBoundingClientRect();
+    const ww = world.offsetWidth || 1;
+    const wh = world.offsetHeight || 1;
+    if (rect.width < 2 || rect.height < 2 || ww < 2 || wh < 2) return false;
+    const next = computeCenterPan(pos, ww, wh, rect.width, rect.height, zoom);
+    panX = next.panX;
+    panY = next.panY;
     applyTransform();
+    return true;
+  }
+
+  function setZoomCenteredOnPc(nextZoom) {
+    zoom = clampZoom(nextZoom);
+    sessionZoom = zoom;
+    if (lastView) centerOnSelf(lastView);
+    else applyTransform();
   }
 
   function setStaleBanner(show) {
     pollStale = show;
     const el = root?.querySelector(".player-map-stale");
     if (el) el.hidden = !show;
-  }
-
-  function updateCenterOnMe(view) {
-    const btn = root?.querySelector(".player-map-center-btn");
-    if (!btn) return;
-    const hasSelf = Boolean(
-      view?.available &&
-        (view.token?.percent ||
-          (Array.isArray(view.tokens) && view.tokens.some((t) => t.isSelf && t.percent)))
-    );
-    btn.disabled = !hasSelf;
-    btn.hidden = !view?.available;
-  }
-
-  function centerOnSelf(view) {
-    if (!view?.available) return;
-    const self =
-      (Array.isArray(view.tokens) && view.tokens.find((t) => t.isSelf && t.percent)) ||
-      (view.token?.percent ? { ...view.token, isSelf: true } : null);
-    if (!self) return;
-    const pos = tokenPosition(self, view);
-    if (!pos) return;
-    const viewport = root?.querySelector(".player-map-viewport");
-    const world = root?.querySelector(".player-map-world");
-    if (!viewport || !world) return;
-    const rect = viewport.getBoundingClientRect();
-    const ww = world.offsetWidth || 1;
-    const wh = world.offsetHeight || 1;
-    const tx = (pos.x / 100) * ww;
-    const ty = (pos.y / 100) * wh;
-    panX = rect.width / 2 - tx * zoom;
-    panY = rect.height / 2 - ty * zoom;
-    if (lastMapId) saveViewport(lastMapId);
-    applyTransform();
-  }
-
-  function zoomAt(nextZoom, clientX, clientY) {
-    const viewport = root?.querySelector(".player-map-viewport");
-    if (!viewport) return;
-    const rect = viewport.getBoundingClientRect();
-    const mx = clientX != null ? clientX - rect.left : rect.width / 2;
-    const my = clientY != null ? clientY - rect.top : rect.height / 2;
-    const wx = (mx - panX) / zoom;
-    const wy = (my - panY) / zoom;
-    zoom = clamp(nextZoom, ZOOM_MIN, ZOOM_MAX);
-    if (zoom <= ZOOM_MIN + 0.001) {
-      zoom = 1;
-      panX = 0;
-      panY = 0;
-    } else {
-      panX = mx - wx * zoom;
-      panY = my - wy * zoom;
-    }
-    applyTransform();
   }
 
   function syncMapAspect(img) {
@@ -201,7 +175,7 @@ window.PlayerMapView = (function () {
     }
   }
 
-  function bindPanZoom() {
+  function bindZoomGestures() {
     const viewport = root?.querySelector(".player-map-viewport");
     if (!viewport) return;
 
@@ -211,75 +185,38 @@ window.PlayerMapView = (function () {
       "wheel",
       (e) => {
         e.preventDefault();
-        const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
-        zoomAt(zoom * factor, e.clientX, e.clientY);
+        const factor = e.deltaY < 0 ? PLAYER_MAP_ZOOM_STEP : 1 / PLAYER_MAP_ZOOM_STEP;
+        setZoomCenteredOnPc(zoom * factor);
       },
       { passive: false }
     );
 
     viewport.addEventListener("pointerdown", (e) => {
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
       if (activePointers.size === 2) {
         const pts = [...activePointers.values()];
         pinchStart = {
           distance: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y),
-          zoom,
-          panX,
-          panY,
-          midX: (pts[0].x + pts[1].x) / 2,
-          midY: (pts[0].y + pts[1].y) / 2
+          zoom
         };
-        dragging = false;
-        dragStart = null;
-        return;
       }
-
-      if (zoom <= 1.01 || e.button !== 0) return;
-      dragging = true;
-      dragStart = { x: e.clientX - panX, y: e.clientY - panY };
-      viewport.setPointerCapture(e.pointerId);
     });
 
     viewport.addEventListener("pointermove", (e) => {
       if (activePointers.has(e.pointerId)) {
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       }
-
-      if (pinchStart && activePointers.size >= 2) {
-        const pts = [...activePointers.values()];
-        if (pts.length < 2) return;
-        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-        if (!dist || !pinchStart.distance) return;
-        const rect = viewport.getBoundingClientRect();
-        const mx = pinchStart.midX - rect.left;
-        const my = pinchStart.midY - rect.top;
-        const wx = (mx - pinchStart.panX) / pinchStart.zoom;
-        const wy = (my - pinchStart.panY) / pinchStart.zoom;
-        zoom = clamp(pinchStart.zoom * (dist / pinchStart.distance), ZOOM_MIN, ZOOM_MAX);
-        if (zoom <= ZOOM_MIN + 0.001) {
-          zoom = 1;
-          panX = 0;
-          panY = 0;
-        } else {
-          panX = mx - wx * zoom;
-          panY = my - wy * zoom;
-        }
-        applyTransform();
-        return;
-      }
-
-      if (!dragging || !dragStart) return;
-      panX = e.clientX - dragStart.x;
-      panY = e.clientY - dragStart.y;
-      applyTransform();
+      if (!pinchStart || activePointers.size < 2) return;
+      const pts = [...activePointers.values()];
+      if (pts.length < 2) return;
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (!dist || !pinchStart.distance) return;
+      setZoomCenteredOnPc(pinchStart.zoom * (dist / pinchStart.distance));
     });
 
     function endPointer(e) {
       activePointers.delete(e.pointerId);
       if (activePointers.size < 2) pinchStart = null;
-      dragging = false;
-      dragStart = null;
     }
 
     viewport.addEventListener("pointerup", endPointer);
@@ -288,21 +225,21 @@ window.PlayerMapView = (function () {
 
   function bindZoomChrome() {
     root?.querySelector(".player-map-zoom-out")?.addEventListener("click", () => {
-      const viewport = root?.querySelector(".player-map-viewport");
-      const rect = viewport?.getBoundingClientRect();
-      zoomAt(zoom / ZOOM_STEP, rect ? rect.left + rect.width / 2 : null, rect ? rect.top + rect.height / 2 : null);
-      if (lastMapId) saveViewport(lastMapId);
+      setZoomCenteredOnPc(zoom / PLAYER_MAP_ZOOM_STEP);
     });
     root?.querySelector(".player-map-zoom-in")?.addEventListener("click", () => {
-      const viewport = root?.querySelector(".player-map-viewport");
-      const rect = viewport?.getBoundingClientRect();
-      zoomAt(zoom * ZOOM_STEP, rect ? rect.left + rect.width / 2 : null, rect ? rect.top + rect.height / 2 : null);
-      if (lastMapId) saveViewport(lastMapId);
+      setZoomCenteredOnPc(zoom * PLAYER_MAP_ZOOM_STEP);
     });
-    root?.querySelector(".player-map-fit-btn")?.addEventListener("click", resetView);
-    root?.querySelector(".player-map-center-btn")?.addEventListener("click", () => {
+  }
+
+  function bindResize() {
+    const viewport = root?.querySelector(".player-map-viewport");
+    if (!viewport || typeof ResizeObserver === "undefined") return;
+    if (resizeObserver) resizeObserver.disconnect();
+    resizeObserver = new ResizeObserver(() => {
       if (lastView) centerOnSelf(lastView);
     });
+    resizeObserver.observe(viewport);
   }
 
   function renderFog(canvas, fog) {
@@ -339,8 +276,11 @@ window.PlayerMapView = (function () {
           .map(([k, v]) => `${k}:${v}`)
           .join(";");
         const label = token.label || "?";
-        const fallback = token.fallbackUrl && token.fallbackUrl !== token.imageUrl ? escapeAttr(token.fallbackUrl) : "";
-        const onerr = fallback ? ` onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback='';}else{this.remove();}"` : ` onerror="this.remove()"`;
+        const fallback =
+          token.fallbackUrl && token.fallbackUrl !== token.imageUrl ? escapeAttr(token.fallbackUrl) : "";
+        const onerr = fallback
+          ? ` onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.dataset.fallback='';}else{this.remove();}"`
+          : ` onerror="this.remove()"`;
         const inner = token.imageUrl
           ? `<img class="player-map-token__img" src="${escapeAttr(token.imageUrl)}"${fallback ? ` data-fallback="${fallback}"` : ""} alt="" draggable="false"${onerr}>`
           : `<span class="player-map-token__label">${escapeHtml(label.slice(0, 2))}</span>`;
@@ -370,6 +310,8 @@ window.PlayerMapView = (function () {
         empty.textContent = "No map available.";
       }
       if (stage) stage.hidden = true;
+      lastView = view;
+      lastSelfKey = null;
       return;
     }
     if (empty) empty.hidden = true;
@@ -383,7 +325,10 @@ window.PlayerMapView = (function () {
     if (title) title.textContent = view.mapName || view.mapId || "Map";
     if (img && view.imageUrl) {
       if (img.getAttribute("src") !== view.imageUrl) {
-        img.onload = () => syncMapAspect(img);
+        img.onload = () => {
+          syncMapAspect(img);
+          centerOnSelf(view);
+        };
         img.src = view.imageUrl;
       } else if (img.complete) {
         syncMapAspect(img);
@@ -406,14 +351,12 @@ window.PlayerMapView = (function () {
       );
     }
 
-    if (view.mapId !== lastMapId) {
-      if (lastMapId) saveViewport(lastMapId);
-      restoreViewport(view.mapId);
-      lastMapId = view.mapId;
-    }
+    if (view.mapId !== lastMapId) lastMapId = view.mapId;
+
+    zoom = clampZoom(sessionZoom);
     lastView = view;
-    updateCenterOnMe(view);
-    applyTransform();
+    lastSelfKey = selfPositionKey(view);
+    centerOnSelf(view);
   }
 
   async function refresh() {
@@ -424,7 +367,16 @@ window.PlayerMapView = (function () {
       if (!view) return;
       consecutiveFailures = 0;
       setStaleBanner(false);
-      if (view.revision === lastRevision) return;
+
+      const nextSelfKey = selfPositionKey(view);
+      const mapChanged = view.mapId !== lastMapId;
+      const selfMoved = Boolean(nextSelfKey) && nextSelfKey !== lastSelfKey;
+      const revisionChanged = view.revision !== lastRevision;
+
+      if (!revisionChanged && !selfMoved && !mapChanged && lastView?.available) {
+        return;
+      }
+
       lastRevision = view.revision;
       renderView(view);
     } catch (err) {
@@ -448,12 +400,16 @@ window.PlayerMapView = (function () {
   }
 
   function mount(container, options) {
-    if (lastMapId) saveViewport(lastMapId);
     const prevKey = ctx ? `${ctx.campaignId}:${ctx.characterId}` : "";
     const nextKey = options ? `${options.campaignId}:${options.characterId}` : "";
-    if (prevKey && prevKey !== nextKey) lastRevision = null;
+    if (prevKey && prevKey !== nextKey) {
+      lastRevision = null;
+      lastMapId = null;
+      lastSelfKey = null;
+    }
     stopPoll();
     ctx = options || {};
+    zoom = clampZoom(sessionZoom);
     if (!root) {
       container.innerHTML = `
       <div class="player-map-root">
@@ -463,8 +419,6 @@ window.PlayerMapView = (function () {
           <div class="player-map-toolbar">
             <p class="player-map-title"></p>
             <div class="player-map-toolbar__actions">
-              <button type="button" class="player-map-center-btn" title="Center on your character">Center on me</button>
-              <button type="button" class="player-map-fit-btn" title="Reset view">Fit</button>
               <button type="button" class="player-map-zoom-out" title="Zoom out">−</button>
               <button type="button" class="player-map-zoom-in" title="Zoom in">+</button>
             </div>
@@ -479,8 +433,9 @@ window.PlayerMapView = (function () {
         </div>
       </div>`;
       root = container.querySelector(".player-map-root");
-      bindPanZoom();
+      bindZoomGestures();
       bindZoomChrome();
+      bindResize();
     } else if (container && root.parentElement !== container) {
       container.appendChild(root);
     }
@@ -490,7 +445,7 @@ window.PlayerMapView = (function () {
   }
 
   function unmount() {
-    if (lastMapId) saveViewport(lastMapId);
+    sessionZoom = clampZoom(zoom);
     stopPoll();
     ctx = null;
     lastRevision = null;

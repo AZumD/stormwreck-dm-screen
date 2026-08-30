@@ -286,10 +286,115 @@ if (!playerApp.includes("renderMapTab") || !playerApp.includes("PlayerMapView"))
   fail("player-app missing Map tab wiring");
 } else pass("player Map tab");
 
+const playerMapViewSrc = fs.readFileSync(path.join(root, "js/core/player-map-view.js"), "utf8");
+if (!playerMapViewSrc.includes("player-map-zoom-in") || !playerMapViewSrc.includes("player-map-tokens")) {
+  fail("player-map-view missing zoom chrome or token layer");
+} else pass("player map view has zoom + token layer");
+
+if (playerMapViewSrc.includes("player-map-center-btn") || playerMapViewSrc.includes("player-map-fit-btn")) {
+  fail("player-map-view still has Center on me / Fit controls");
+} else pass("player map has no Center on me / Fit");
+
+if (
+  playerMapViewSrc.includes("viewportsByMapId") ||
+  playerMapViewSrc.includes("saveViewport") ||
+  playerMapViewSrc.includes("restoreViewport")
+) {
+  fail("player-map-view still persists pan/zoom viewports by map");
+} else pass("player map does not persist pan offsets");
+
+if (playerMapViewSrc.includes("dragging") || playerMapViewSrc.includes("dragStart")) {
+  fail("player-map-view still has free-pan drag state");
+} else pass("player map has no free-pan drag");
+
+if (!playerMapViewSrc.includes("centerOnSelf") || !playerMapViewSrc.includes("setZoomCenteredOnPc")) {
+  fail("player-map-view missing PC-centered camera helpers");
+} else pass("player map PC-centered camera helpers");
+
+if (!playerMapViewSrc.includes("sessionZoom") || !playerMapViewSrc.includes("ResizeObserver")) {
+  fail("player-map-view missing session zoom or resize recenter");
+} else pass("player map session zoom + resize recenter");
+
+if (!playerMapViewSrc.includes("selfMoved") || !playerMapViewSrc.includes("selfPositionKey")) {
+  fail("player-map-view should recenter when PC moves even if revision is unchanged");
+} else pass("player map follows PC position changes");
+
+if (!playerMapViewSrc.includes("PlayerMapCamera") || !playerMapViewSrc.includes("bindZoomGestures")) {
+  fail("player-map-view must use PlayerMapCamera and zoom-only gestures");
+} else pass("player map uses shared camera module + zoom gestures");
+
+if (!playerMapViewSrc.includes("translate(-50%, -50%)") || playerMapViewSrc.includes("margin: `calc(-")) {
+  fail("player-map-view tokens must center with translate, not broken margin calc");
+} else pass("player map tokens center with translate(-50%, -50%)");
+
+const playerMapCamera = require(path.join(root, "js/core/player-map-camera.js"));
+try {
+  assert.ok(playerMapCamera.PLAYER_MAP_MIN_ZOOM > 1, "min zoom must be > 1 (no full-map fit)");
+  assert.ok(playerMapCamera.PLAYER_MAP_MAX_ZOOM > playerMapCamera.PLAYER_MAP_MIN_ZOOM);
+  assert.ok(
+    playerMapCamera.PLAYER_MAP_DEFAULT_ZOOM >= playerMapCamera.PLAYER_MAP_MIN_ZOOM &&
+      playerMapCamera.PLAYER_MAP_DEFAULT_ZOOM <= playerMapCamera.PLAYER_MAP_MAX_ZOOM
+  );
+  assert.strictEqual(playerMapCamera.clampZoom(0.5), playerMapCamera.PLAYER_MAP_MIN_ZOOM);
+  assert.strictEqual(playerMapCamera.clampZoom(99), playerMapCamera.PLAYER_MAP_MAX_ZOOM);
+  assert.strictEqual(playerMapCamera.clampZoom(2), 2);
+  pass("player map zoom limits clamp correctly");
+} catch (err) {
+  fail(`zoom limits: ${err.message}`);
+}
+
+try {
+  const pan = playerMapCamera.computeCenterPan({ x: 25, y: 50 }, 400, 200, 800, 600, 2);
+  assert.strictEqual(pan.panX, 800 / 2 - 100 * 2);
+  assert.strictEqual(pan.panY, 600 / 2 - 100 * 2);
+  const pan2 = playerMapCamera.computeCenterPan({ x: 50, y: 50 }, 400, 400, 400, 400, 2);
+  assert.strictEqual(pan2.panX, 200 - 200 * 2);
+  assert.strictEqual(pan2.panY, 200 - 200 * 2);
+  pass("computeCenterPan places PC at viewport center");
+} catch (err) {
+  fail(`computeCenterPan: ${err.message}`);
+}
+
+try {
+  const p1 = playerMapCamera.computeCenterPan({ x: 10, y: 20 }, 1000, 700, 500, 400, 2);
+  const p2 = playerMapCamera.computeCenterPan({ x: 40, y: 60 }, 1000, 700, 500, 400, 2);
+  assert.notStrictEqual(p1.panX, p2.panX);
+  assert.notStrictEqual(p1.panY, p2.panY);
+  const z1 = playerMapCamera.computeCenterPan({ x: 40, y: 60 }, 1000, 700, 500, 400, 2);
+  const z2 = playerMapCamera.computeCenterPan({ x: 40, y: 60 }, 1000, 700, 500, 400, 3);
+  assert.notStrictEqual(z1.panX, z2.panX);
+  pass("recentering updates when PC moves or zoom changes");
+} catch (err) {
+  fail(`recenter deltas: ${err.message}`);
+}
+
+if (!playerMapViewSrc.includes("player-map-stale") || !playerMapViewSrc.includes("setStaleBanner")) {
+  fail("player-map-view missing poll stale/retrying indicator");
+} else pass("player map stale poll indicator");
+
+if (!playerMapViewSrc.includes("tokenSpan") || !playerMapViewSrc.includes("player-map-token--round")) {
+  fail("player-map-view missing DM-aligned grid token sizing");
+} else pass("player map view uses grid-aligned token sizing");
+
+const playerCss = fs.readFileSync(path.join(root, "css/player.css"), "utf8");
+if (!playerCss.includes("player-map-token--has-img") || !playerCss.includes("object-fit: contain")) {
+  fail("player.css missing frameless token art styling");
+} else pass("player map tokens render frameless when art is present");
+
+if (!playerCss.includes("cursor: default") || playerCss.includes("cursor: grab")) {
+  fail("player map viewport should use default cursor (not grab)");
+} else pass("player map viewport uses default cursor");
+
+const playerHtml = fs.readFileSync(path.join(root, "player/index.html"), "utf8");
+if (!playerHtml.includes("player-map-camera.js") || !playerHtml.includes("player-map-view.js")) {
+  fail("player/index.html must load camera module before map view");
+} else pass("player html loads map camera + view scripts");
+
 for (const doc of [
   "docs/README/MAP-PC-PLACEMENT.md",
   "docs/README/MAP-FOG.md",
   "docs/README/PLAYER-MAP.md",
+  "docs/README/PLAYER-MAP-CAMERA.md",
   "docs/README/VALIDATE-PLAYER-MAP.md"
 ]) {
   if (!fs.existsSync(path.join(root, doc))) fail(`missing ${doc}`);
@@ -308,6 +413,10 @@ if (!mapPanelSrc.includes("MapPcPlacement?.normalizeDuplicates")) {
 if (!mapPanelSrc.includes('getElementById("map-fog-btn")')) {
   fail("map-panel should block pan while fog paint is active");
 } else pass("map-panel blocks pan during fog paint");
+
+if (!spatialSrc.includes("onFogKeydown") || !spatialSrc.includes("undoFogStroke")) {
+  fail("map-spatial missing fog ctrl+z undo");
+} else pass("map-spatial binds fog ctrl+z undo");
 
 /* async player map token checks */
 async function runAsyncPlayerMapTests() {
@@ -449,36 +558,6 @@ async function runAsyncPlayerMapTests() {
     fail(`fog token visibility: ${err.message}`);
   }
 }
-
-const playerMapViewSrc = fs.readFileSync(path.join(root, "js/core/player-map-view.js"), "utf8");
-if (!playerMapViewSrc.includes("player-map-zoom-in") || !playerMapViewSrc.includes("player-map-tokens")) {
-  fail("player-map-view missing zoom chrome or token layer");
-} else pass("player map view has zoom + token layer");
-
-if (!playerMapViewSrc.includes("player-map-center-btn") || !playerMapViewSrc.includes("centerOnSelf")) {
-  fail("player-map-view missing Center on me control");
-} else pass("player map Center on me");
-
-if (!playerMapViewSrc.includes("viewportsByMapId") || !playerMapViewSrc.includes("saveViewport")) {
-  fail("player-map-view missing per-map viewport persistence");
-} else pass("player map viewport persistence");
-
-if (!playerMapViewSrc.includes("player-map-stale") || !playerMapViewSrc.includes("setStaleBanner")) {
-  fail("player-map-view missing poll stale/retrying indicator");
-} else pass("player map stale poll indicator");
-
-if (!playerMapViewSrc.includes("tokenSpan") || !playerMapViewSrc.includes("player-map-token--round")) {
-  fail("player-map-view missing DM-aligned grid token sizing");
-} else pass("player map view uses grid-aligned token sizing");
-
-const playerCss = fs.readFileSync(path.join(root, "css/player.css"), "utf8");
-if (!playerCss.includes("player-map-token--has-img") || !playerCss.includes("object-fit: contain")) {
-  fail("player.css missing frameless token art styling");
-} else pass("player map tokens render frameless when art is present");
-
-if (!spatialSrc.includes("onFogKeydown") || !spatialSrc.includes("undoFogStroke")) {
-  fail("map-spatial missing fog ctrl+z undo");
-} else pass("map-spatial binds fog ctrl+z undo");
 
 runAsyncPlayerMapTests().then(() => {
   if (failed) {

@@ -1214,13 +1214,92 @@ body.is-booting::before {
   display: grid;
   gap: 0.65rem;
 }
+.landing-page .list > li {
+  min-width: 0;
+}
 .landing-page .empty {
   margin: 0;
   color: var(--landing-muted);
 }
+.landing-page .dm-schedule-panel .card,
+.landing-page .dm-schedule-panel .card-btn,
+.landing-page .dm-schedule-panel .sched-event-card {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  color: var(--landing-text);
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--landing-border);
+  border-radius: 10px;
+  background: rgba(18, 26, 38, 0.88);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  appearance: none;
+  -webkit-appearance: none;
+}
+.landing-page .dm-schedule-panel .card-btn:hover,
+.landing-page .dm-schedule-panel .sched-event-card:hover,
+.landing-page .dm-schedule-panel .card-btn:focus-visible,
+.landing-page .dm-schedule-panel .sched-event-card:focus-visible {
+  border-color: var(--landing-border-strong);
+  background: rgba(24, 34, 50, 0.95);
+  outline: none;
+}
+.landing-page .dm-schedule-panel .card h2,
+.landing-page .dm-schedule-panel .sched-event-card h2 {
+  margin: 0.15rem 0 0.2rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--landing-text);
+}
+.landing-page .dm-schedule-panel .card p,
+.landing-page .dm-schedule-panel .sched-event-card p {
+  margin: 0;
+}
+.landing-page .dm-schedule-panel .sched-event-scope {
+  color: var(--landing-muted);
+}
+.landing-page .dm-schedule-panel .sched-event-scope--global {
+  color: var(--landing-gold);
+}
+.landing-page .dm-schedule-panel .sched-section-title {
+  margin: 0.85rem 0 0.55rem;
+  color: var(--landing-text);
+}
+.landing-page .dm-schedule-panel .sched-cal-toolbar {
+  margin-bottom: 0.35rem;
+}
+.landing-page .dm-schedule-panel .sched-cal-title {
+  color: var(--landing-text);
+}
+.landing-page .dm-schedule-panel .sched-legend {
+  color: var(--landing-muted);
+  font-size: 0.78rem;
+}
 .landing-page .sched-cal-cell {
   color: var(--landing-text);
   background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(109, 134, 165, 0.15);
+}
+.landing-page .sched-cal-cell:hover,
+.landing-page .sched-cal-cell:focus-visible {
+  border-color: var(--landing-border-strong);
+  background: rgba(196, 160, 53, 0.1);
+  outline: none;
+}
+.landing-page .dialog .card {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--landing-border);
+  border-radius: 10px;
+  background: rgba(18, 26, 38, 0.9);
+  color: var(--landing-text);
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-atmosphere {

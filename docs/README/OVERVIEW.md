@@ -10,7 +10,7 @@ Personal local DM Library with **campaign content** (e.g. Dragons of Stormwreck 
 - Catalogues — PC / NPC / Race / Class / Skill / Feature / Spell / Item / Monster / Location / Music / **Source**
 - Campaign maps — location catalogue images + UVTT; campaign picks which locations appear (see `docs/README/CAMPAIGN-LOCATIONS.md`)
 - Campaign screen uses static panel textures under `/assets/campaign/` (nav, main, map rail)
-- Player companion (`/player/`) — responsive home (mobile stacked / desktop grid); **DM Library** switcher when user is a campaign DM; see `docs/README/PLAYER.md`, `PLAYER-SCHEDULING.md`, `PLATFORM-EVENTS.md`, `PLATFORM-BOARD.md`, `SCHEDULING.md`, `GAME-SYSTEMS.md`
+- Player companion (`/player/`) — responsive home (mobile stacked / desktop grid); **DM Library** switcher when user is a campaign DM; Map tab is a PC-centered tactical aid (limited zoom, no free pan — see `PLAYER-MAP.md`); see `docs/README/PLAYER.md`, `PLAYER-SCHEDULING.md`, `PLATFORM-EVENTS.md`, `PLATFORM-BOARD.md`, `SCHEDULING.md`, `GAME-SYSTEMS.md`
 - Terminal DM client (`tui/`) — Go + Bubble Tea **scene-first** tracker over the same HTTPS API (Home → Library/Campaigns → Scene|Notes|Party|Map|Music; see `tui/README.md`, `docs/CLIENT-ARCHITECTURE.md`)
 
 ## Persistence (authoritative)

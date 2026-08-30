@@ -1,7 +1,7 @@
 # VALIDATE-PLAYER-MAP.js
 
 ## Purpose
-Checks player map tab, fog, single-map PC placement, and player map API wiring.
+Checks player map tab, fog, single-map PC placement, player map API wiring, and PC-centered camera constraints.
 
 ## File
 `test/validate-player-map.js`
@@ -22,4 +22,8 @@ node test/validate-player-map.js
 - Player map tokens include visible pcs/npcs/monsters with grid span via `buildPlayerMapTokens`
 - Static NPC map pins from `js/campaigns/*/maps.js` appear on player map
 - Normalize is idempotent (reload-safe)
-- Player Map tab + fog wiring + **Center on me**, viewport persistence, stale poll indicator + docs
+- Player Map tab + fog wiring + docs
+- **Camera:** PC-centered (`centerOnSelf` / `computeCenterPan` in `player-map-camera.js`), no free pan / Center-on-me / Fit / `viewportsByMapId`
+- Zoom clamped via `PLAYER_MAP_MIN_ZOOM` / `PLAYER_MAP_MAX_ZOOM` / `PLAYER_MAP_DEFAULT_ZOOM` (min > 1 so full-map fit is unreachable)
+- Session zoom preserved; pan offsets not persisted
+- Stale poll indicator

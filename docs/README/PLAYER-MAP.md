@@ -1,7 +1,22 @@
 # PLAYER-MAP
 
 ## Purpose
-Player-facing map tab — shows the map containing the player's PC, fog, and visible tokens on that map.
+Player-facing map tab — a **passive tactical aid**: show where the PC is and what is immediately around them. Not a miniature VTT or an archive for browsing explored areas.
+
+## Camera (player only)
+| Behavior | Detail |
+|----------|--------|
+| Anchor | Own PC token is always centered |
+| Pan | Disabled (no drag / keyboard pan) |
+| Zoom | Limited tactical range via `PLAYER_MAP_MIN_ZOOM` / `PLAYER_MAP_MAX_ZOOM` / `PLAYER_MAP_DEFAULT_ZOOM` |
+| Zoom center | Always the PC (wheel, pinch, +/−) |
+| Persistence | Session zoom only; no stored x/y viewport offsets |
+| Follow | Poll (~1.5s) recenters when the DM moves the PC or switches maps |
+| Layout | Map world is top-left anchored in the viewport; camera pan/zoom alone place the PC on screen |
+
+Fog still controls what map information is visible. Camera restriction does not replace fog.
+
+A separate in-world static map (if the party finds one) is out of scope for this module.
 
 ## Flow
 ```
@@ -15,7 +30,8 @@ No manual map picker. If the PC has no `partyPositions` entry → **No map avail
 ## Client
 | File | Role |
 |------|------|
-| `js/core/player-map-view.js` | Full-bleed map, pan/zoom (+/−/Fit/**Center on me**, wheel, pinch), fog, all visible tokens; grid-aligned sizing like DM; polls every ~1.5s; preserves viewport per map for the session; shows a subtle stale indicator when polls fail |
+| `js/core/player-map-camera.js` | Zoom constants + PC-centering pan math |
+| `js/core/player-map-view.js` | Full-bleed map, PC-centered limited zoom (−/+ / wheel / pinch), fog, visible tokens; grid-aligned sizing like DM; polls every ~1.5s; session zoom; subtle stale indicator when polls fail |
 | `js/player-app.js` | Map tab (reuses map host across tab switches) |
 | `player/index.html` | Tab + scripts |
 

@@ -57,6 +57,10 @@ if (!css.includes("dmwallpaper.jpg") || !css.includes("landing-main-grid")) {
   fail("landing.css missing wallpaper or desktop calendar grid");
 } else pass("DM wallpaper + desktop calendar layout");
 
+if (!css.includes("sched-event-card") || !css.includes("width: 100%")) {
+  fail("landing.css missing full-width schedule event cards");
+} else pass("DM schedule event cards full-width dark styled");
+
 if (!fs.existsSync(path.join(root, "assets/dm/dmwallpaper.jpg"))) {
   fail("missing assets/dm/dmwallpaper.jpg");
 } else pass("DM wallpaper asset present");
