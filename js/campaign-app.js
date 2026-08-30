@@ -44,6 +44,7 @@
   let activeView = { type: "play" };
 
   const REFERENCE_TABS = [
+    { id: "overview", label: "Overview" },
     { id: "npcs", label: "NPCs" },
     { id: "monsters", label: "Monsters" },
     { id: "locations", label: "Locations" }
@@ -268,6 +269,24 @@
       modalTitle: modalTitle,
       modalBody: modalBody
     });
+
+    if (window.ReferenceUI) {
+      ReferenceUI.init({
+        campaignId,
+        labels: t,
+        api: {
+          getSectionById,
+          getSectionBase,
+          getSectionData,
+          getContextSceneId: getReferenceContextSceneId,
+          renderEntityGrid,
+          openEntity: (id) => EntityUI.openModal(id),
+          showReferenceTab,
+          isReferenceOpen: () => activeView.type === "panel" && activeView.workspace === "reference",
+          getReferenceTab: () => activeView.id || loadReferenceTab()
+        }
+      });
+    }
 
     if (window.CampaignState) await CampaignState.init(campaignId);
     if (window.DayTimeUI) DayTimeUI.init();
@@ -1470,6 +1489,24 @@
     else renderPlayScene(focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id);
   }
 
+  function getReferenceContextSceneId() {
+    if (activeWorkspace === "run" && activeView.type === "play" && activeView.id) return activeView.id;
+    if (focusedSceneId && getSectionById(focusedSceneId)) return focusedSceneId;
+    if (activeWorkspace === "prep" && activeView.type === "document" && focusedSceneId) return focusedSceneId;
+    const current = window.CampaignState?.getCurrentSceneId?.();
+    if (current && getSectionById(current)) return current;
+    return getSections()[0]?.id || null;
+  }
+
+  function showReferenceTab(tab) {
+    const next = normalizeReferenceTab(tab);
+    activeView = { type: "panel", id: next, workspace: "reference" };
+    saveReferenceTab(next);
+    if (window.ReferenceUI) ReferenceUI.mount(panelView, next);
+    else renderPanel(next, "reference");
+    updateNavActive();
+  }
+
   function showReferencePanel(tab) {
     const resolvedTab = normalizeReferenceTab(tab);
     activeView = { type: "panel", id: resolvedTab, workspace: "reference" };
@@ -1479,7 +1516,8 @@
     if (sessionView) sessionView.classList.add("hidden");
     panelView.classList.remove("hidden");
     if (scrollSpyObserver) scrollSpyObserver.disconnect();
-    renderPanel(resolvedTab, "reference");
+    if (window.ReferenceUI) ReferenceUI.mount(panelView, resolvedTab);
+    else renderPanel(resolvedTab, "reference");
     applyWorkspaceChrome();
     updateNavActive();
   }
@@ -1612,7 +1650,8 @@
   }
 
   function normalizeReferenceTab(tab) {
-    return REFERENCE_TAB_IDS.has(tab) ? tab : "npcs";
+    if (window.ReferenceUI?.normalizeTab) return ReferenceUI.normalizeTab(tab);
+    return REFERENCE_TAB_IDS.has(tab) ? tab : "overview";
   }
 
   function normalizeSessionTab(tab) {
@@ -1646,8 +1685,8 @@
     if (!raw) return { workspace: "reference", tab: loadReferenceTab() };
 
     if (raw === "reference" || raw.startsWith("reference:")) {
-      const tab = raw.includes(":") ? raw.split(":")[1] : loadReferenceTab();
-      return { workspace: "reference", tab: normalizeReferenceTab(tab || loadReferenceTab()) };
+      const tab = raw.includes(":") ? raw.split(":")[1] : "overview";
+      return { workspace: "reference", tab: normalizeReferenceTab(tab || "overview") };
     }
     if (raw === "session" || raw.startsWith("session:")) {
       const tab = raw.includes(":") ? raw.split(":")[1] : loadSessionTab();
@@ -1702,6 +1741,10 @@
       setWorkspace("session", { sessionTab: normalizeSessionTab(view) });
       return;
     }
+    if (ws === "reference" && window.ReferenceUI) {
+      ReferenceUI.mount(panelView, view);
+      return;
+    }
     const bodyHost = (() => {
       if (!ws || ws !== "reference") {
         panelView.innerHTML = "";
@@ -1713,6 +1756,9 @@
     })();
 
     switch (view) {
+      case "overview":
+        bodyHost.innerHTML = `<p class="empty-state">${escapeHtml(t.referenceTitle || "Reference")}</p>`;
+        break;
       case "npcs":
         bodyHost.innerHTML = `<h1 class="panel-workspace__section-title">${t.headings.npcs}</h1>${renderEntityGrid("npc")}`;
         break;
@@ -1875,7 +1921,7 @@
           const id = window.CampaignState?.getCurrentSceneId?.();
           if (id) jumpToSection(id);
         },
-        showReference: (tab) => showPanelView(`reference:${tab}`),
+        showReference: (tab) => showPanelView(tab === "overview" ? "reference" : `reference:${tab}`),
         openParty: () => {
           window.LayoutPanels?.setMapCollapsed?.(false, false);
           window.MapPanel?.setActiveTab?.("party");

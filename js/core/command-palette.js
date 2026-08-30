@@ -20,7 +20,7 @@ window.CommandPalette = (function () {
   let queryToken = 0;
   let bound = false;
 
-  const DEFAULT_IDS = ["current-scene", "workspace-map", "workspace-session", "reference-npcs", "party", "music"];
+  const DEFAULT_IDS = ["current-scene", "workspace-map", "workspace-session", "reference-overview", "party", "music"];
   const TYPE_ORDER = { entity: 0, scene: 1, workspace: 2, session: 3, reference: 4, command: 5 };
   const GROUP_LABELS = {
     entity: "Entities",
@@ -60,6 +60,7 @@ window.CommandPalette = (function () {
       { type: "session", id: "history", label: t("commandPaletteLog", "Session Log"), subtitle: t("commandPaletteSession", "Session"), keywords: ["log", "history"] },
       { type: "session", id: "chronicle", label: t("headings.chronicle", "Chronicle"), subtitle: t("commandPaletteSession", "Session"), keywords: ["chronicle", "story"] },
       { type: "session", id: "checklist", label: t("commandPaletteProgress", "Progress"), subtitle: t("commandPaletteSession", "Session"), keywords: ["progress", "checklist"] },
+      { type: "reference", id: "overview", label: t("referenceTitle", "Reference"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "overview"] },
       { type: "reference", id: "npcs", label: t("commandPaletteRefNpcs", "Reference: NPCs"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "npcs", "npc"] },
       { type: "reference", id: "monsters", label: t("commandPaletteRefMonsters", "Reference: Monsters"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "monsters", "monster"] },
       { type: "reference", id: "locations", label: t("commandPaletteRefLocations", "Reference: Locations"), subtitle: t("commandPaletteReference", "Reference"), keywords: ["reference", "locations", "location"] },

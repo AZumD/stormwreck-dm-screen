@@ -28,5 +28,8 @@ Single `<dialog>` — no nested dialogs.
 
 Details HTML uses `ContentParser.markdownLite` (and `@` links in stats when present).
 
+## Open listeners
+`EntityUI.addOpenListener(fn)` — called after a successful entity modal open. Used by `ReferenceUI` for recent-entity tracking (centralized; no per-click sprawl).
+
 ## Related
 `EntityRegistry`, `ContentParser`, catalogue wiki `renderEntityRefHtml`

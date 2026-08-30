@@ -21,8 +21,10 @@ window.CampaignPrefs = (function () {
       mapPanelCollapsed: false,
       sceneTrayCollapsed: false,
       chronicleSessionOrder: "newest",
-      referenceTab: "npcs",
-      sessionTab: "notes"
+      referenceTab: "overview",
+      sessionTab: "notes",
+      referencePins: [],
+      referenceRecent: []
     };
   }
 
@@ -51,6 +53,22 @@ window.CampaignPrefs = (function () {
       if (refTab) data.referenceTab = refTab;
       const sessTab = localStorage.getItem(`${campaignId}-session-tab`);
       if (sessTab) data.sessionTab = sessTab;
+      const pins = localStorage.getItem(`${campaignId}-reference-pins`);
+      if (pins) {
+        try {
+          data.referencePins = JSON.parse(pins) || [];
+        } catch {
+          data.referencePins = [];
+        }
+      }
+      const recent = localStorage.getItem(`${campaignId}-reference-recent`);
+      if (recent) {
+        try {
+          data.referenceRecent = JSON.parse(recent) || [];
+        } catch {
+          data.referenceRecent = [];
+        }
+      }
     } catch {
       /* ignore */
     }
@@ -76,6 +94,8 @@ window.CampaignPrefs = (function () {
       );
       if (data.referenceTab) localStorage.setItem(`${campaignId}-reference-tab`, String(data.referenceTab));
       if (data.sessionTab) localStorage.setItem(`${campaignId}-session-tab`, String(data.sessionTab));
+      localStorage.setItem(`${campaignId}-reference-pins`, JSON.stringify(data.referencePins || []));
+      localStorage.setItem(`${campaignId}-reference-recent`, JSON.stringify(data.referenceRecent || []));
     } catch {
       /* ignore */
     }

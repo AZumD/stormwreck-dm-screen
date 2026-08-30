@@ -108,7 +108,8 @@ On boot, `syncCampaignChrome` sets the sidebar title from `ADVENTURE.meta`. Work
 
 | `showSessionWorkspace` / `renderSessionWorkspace` / `switchSessionTab` | Session workspace host + tabs |
 
-| `showReferencePanel` | Reference overlay (Map/Session/Run/Prep) |
+| `showReferencePanel` / `showReferenceTab` | Reference overlay + tab routing |
+| `getReferenceContextSceneId` | Scene for “In this scene” (viewed scene, not always current) |
 
 | `showPanelView` | Compatibility shim; session ids → Session workspace |
 

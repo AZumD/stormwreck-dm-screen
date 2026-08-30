@@ -125,3 +125,4 @@
 [2026-08-30] UX Phase 4: Map as first-class campaign workspace (Run|Prep|Map). See layout-panels.js, MAP-PANEL.md
 [2026-08-30] UX Phase 5: Session as first-class campaign workspace (Run|Prep|Map|Session). See campaign-app.js, CAMPAIGN-APP.md
 [2026-08-31] UX Phase 6: universal command palette (Ctrl+K). See command-palette.js, COMMAND-PALETTE.md
+[2026-08-31] UX Phase 7: Reference quick-reference overview (scene context, pins, recents). See reference-ui.js, REFERENCE-UI.md

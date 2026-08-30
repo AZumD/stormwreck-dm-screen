@@ -12,6 +12,7 @@ window.EntityUI = (function () {
   let t;
   let globalHandlersBound = false;
   let modalUiBound = false;
+  const openListeners = [];
   const modalEnrichers = [];
 
   /* Single-modal navigation stack (previous entity ids) */
@@ -305,6 +306,17 @@ window.EntityUI = (function () {
       modalEl.setAttribute("open", "");
     }
     hideTooltip();
+    openListeners.forEach((fn) => {
+      try {
+        fn(entityId, entity);
+      } catch (err) {
+        console.warn("EntityUI open listener failed:", err);
+      }
+    });
+  }
+
+  function addOpenListener(fn) {
+    if (typeof fn === "function" && !openListeners.includes(fn)) openListeners.push(fn);
   }
 
   function addModalEnricher(fn) {
@@ -361,6 +373,7 @@ window.EntityUI = (function () {
     showTooltipForPin,
     moveTooltip,
     hideTooltip,
+    addOpenListener,
     openModal,
     closeModal,
     goBack,

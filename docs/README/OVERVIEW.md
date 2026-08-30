@@ -91,6 +91,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/parser.js` | `@` links (all linkable types), YouTube chips, read-aloud / DM-note |
 | `js/core/media-bar.js` | Compact multi-track YouTube strip + mixer + dock |
 | `js/core/command-palette.js` | Universal search/command palette (Ctrl+K) |
+| `js/core/reference-ui.js` | Reference quick-reference overlay (overview, pins, recents) |
 | `js/core/layout-panels.js` | Nav/map collapse + map modes (sidebar / expanded / combat / workspace) |
 | `js/core/entity-ui.js` | Tooltips + modals (map pins use compact tooltips) |
 | `js/core/entity-registry.js` | Catalogue → `ENTITIES` (+ `register()` for new types) |
