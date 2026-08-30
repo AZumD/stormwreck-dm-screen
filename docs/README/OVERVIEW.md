@@ -45,8 +45,9 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 
 ## Scene runtime
 - Default **Run** workspace focuses one Play scene (content, notes, At this scene, connections)
-- **Prep** workspace shows the continuous Document scroll of the ordered scene list (authoring)
-- Toolbar **Run | Prep** switcher; Reference/Session panels keep the active workspace
+- **Prep** workspace shows the continuous Document scroll (authoring)
+- **Map** workspace promotes the existing MapPanel to a full canvas (Party \| Music remain on the utility rail in Run/Prep)
+- Toolbar **Run | Prep | Map**; Reference/Session panels keep the active workspace
 - Scene cast + connections editable in Prep; stored in `scene-meta.json`
 
 ## Campaign editing
@@ -87,7 +88,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `js/core/editor.js` | Free-form ordered scenes, nav groups, edit-mode reorder |
 | `js/core/parser.js` | `@` links (all linkable types), YouTube chips, read-aloud / DM-note |
 | `js/core/media-bar.js` | Compact multi-track YouTube strip + mixer + dock |
-| `js/core/layout-panels.js` | Nav/map collapse + map modes (sidebar / expanded / combat shell) |
+| `js/core/layout-panels.js` | Nav/map collapse + map modes (sidebar / expanded / combat / workspace) |
 | `js/core/entity-ui.js` | Tooltips + modals (map pins use compact tooltips) |
 | `js/core/entity-registry.js` | Catalogue → `ENTITIES` (+ `register()` for new types) |
 | `js/core/campaign-registry.js` | User campaigns on the landing page |

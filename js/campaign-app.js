@@ -32,11 +32,12 @@
   const formatHelp = document.getElementById("format-help");
   const workspaceRunBtn = document.getElementById("workspace-run");
   const workspacePrepBtn = document.getElementById("workspace-prep");
+  const workspaceMapBtn = document.getElementById("workspace-map");
 
-  /** @type {"run"|"prep"} */
+  /** @type {"run"|"prep"|"map"} */
   let activeWorkspace = "run";
 
-  /** @type {{ type: "play"|"document"|"panel", id?: string, workspace?: "reference"|"session"|null }} */
+  /** @type {{ type: "play"|"document"|"panel"|"map", id?: string, workspace?: "reference"|"session"|null }} */
   let activeView = { type: "play" };
 
   const REFERENCE_TABS = [
@@ -68,19 +69,26 @@
   let catalogueSearchHits = [];
   let catalogueSearchActive = -1;
 
+  function normalizeWorkspaceId(workspace) {
+    if (workspace === "prep" || workspace === "map") return workspace;
+    return "run";
+  }
+
   function loadWorkspace() {
     const prefs = window.CampaignPrefs?.get(campaignId);
-    if (prefs?.workspace === "prep" || prefs?.workspace === "run") return prefs.workspace;
+    if (prefs?.workspace === "prep" || prefs?.workspace === "run" || prefs?.workspace === "map") {
+      return prefs.workspace;
+    }
     if (prefs?.viewMode === "document") return "prep";
     return "run";
   }
 
   function saveWorkspace(workspace) {
     if (!window.CampaignPrefs) return;
-    CampaignPrefs.patch(campaignId, { workspace: workspace === "prep" ? "prep" : "run" });
+    CampaignPrefs.patch(campaignId, { workspace: normalizeWorkspaceId(workspace) });
   }
 
-  /** Compatibility shim: Play ↔ Run, Document ↔ Prep */
+  /** Compatibility shim: Play ↔ Run, Document ↔ Prep (Map has no legacy viewMode) */
   function loadViewMode() {
     return activeWorkspace === "prep" ? "document" : "play";
   }
@@ -328,6 +336,12 @@
     loadSessionBadge();
     applyWorkspaceChrome();
     MapPanel.init(campaignId);
+    window.MapPanel?.onWorkspaceChange?.(activeWorkspace);
+    if (window.LayoutPanels?.setCampaignWorkspace) {
+      LayoutPanels.setCampaignWorkspace(activeWorkspace, {
+        panelOpen: activeWorkspace === "map" && activeView.type === "panel"
+      });
+    }
     restoreInitialScene();
     document.body.classList.remove("is-booting");
 
@@ -581,6 +595,11 @@
   }
 
   function buildNav() {
+    if (activeWorkspace === "map") {
+      buildMapBrowserNav();
+      return;
+    }
+
     sectionNav.innerHTML = "";
     const sections = getSections();
     const groups = SectionEditor.getGroups ? SectionEditor.getGroups(campaignId) : [];
@@ -631,6 +650,46 @@
       addLi.appendChild(addBtn);
       sectionNav.appendChild(addLi);
     }
+  }
+
+  function buildMapBrowserNav() {
+    if (!sectionNav) return;
+    sectionNav.innerHTML = "";
+    const maps = window.MapPanel?.getEffectiveMaps?.(campaignId) || {};
+    const entries = Object.entries(maps);
+    const activeId = window.MapPanel?.getActiveMapId?.() || "";
+
+    const heading = document.createElement("li");
+    heading.className = "nav-empty-hint nav-map-browser__label";
+    heading.textContent = t.mapBrowserLabel || "Maps";
+    sectionNav.appendChild(heading);
+
+    if (!entries.length) {
+      const li = document.createElement("li");
+      li.className = "nav-empty-hint";
+      li.textContent = t.noMapsHint || "No maps in this campaign yet.";
+      sectionNav.appendChild(li);
+      return;
+    }
+
+    entries
+      .slice()
+      .sort((a, b) => String(a[1].title || a[0]).localeCompare(String(b[1].title || b[0])))
+      .forEach(([id, def]) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "nav-btn" + (id === activeId ? " active" : "");
+        btn.dataset.mapLocation = id;
+        btn.textContent = def.title || id;
+        btn.addEventListener("click", () => {
+          window.MapPanel?.selectMapByLocationId?.(id);
+          buildMapBrowserNav();
+          requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
+        });
+        li.appendChild(btn);
+        sectionNav.appendChild(li);
+      });
   }
 
   function clearNavDropTargets() {
@@ -1223,38 +1282,76 @@
     document.body.dataset.workspace = activeWorkspace;
     document.body.classList.toggle("workspace-prep", activeWorkspace === "prep");
     document.body.classList.toggle("workspace-run", activeWorkspace === "run");
+    document.body.classList.toggle("workspace-map", activeWorkspace === "map");
+    const panelOpen = activeWorkspace === "map" && activeView.type === "panel";
+    document.body.classList.toggle("workspace-map--panel", panelOpen);
     syncWorkspaceButtons();
     syncEditModeUI();
+    if (window.LayoutPanels?.setCampaignWorkspace) {
+      LayoutPanels.setCampaignWorkspace(activeWorkspace, { panelOpen });
+    } else {
+      window.MapPanel?.onWorkspaceChange?.(activeWorkspace);
+    }
   }
 
   function syncWorkspaceButtons() {
-    const isPrep = activeWorkspace === "prep";
-    workspaceRunBtn?.classList.toggle("is-active", !isPrep);
-    workspacePrepBtn?.classList.toggle("is-active", isPrep);
-    workspaceRunBtn?.setAttribute("aria-pressed", isPrep ? "false" : "true");
-    workspacePrepBtn?.setAttribute("aria-pressed", isPrep ? "true" : "false");
+    const ws = activeWorkspace;
+    workspaceRunBtn?.classList.toggle("is-active", ws === "run");
+    workspacePrepBtn?.classList.toggle("is-active", ws === "prep");
+    workspaceMapBtn?.classList.toggle("is-active", ws === "map");
+    workspaceRunBtn?.setAttribute("aria-pressed", ws === "run" ? "true" : "false");
+    workspacePrepBtn?.setAttribute("aria-pressed", ws === "prep" ? "true" : "false");
+    workspaceMapBtn?.setAttribute("aria-pressed", ws === "map" ? "true" : "false");
   }
 
   /**
-   * Switch Run | Prep. Panel views (Reference/Session) keep their content unless preservePanel is false.
-   * @param {"run"|"prep"} workspace
-   * @param {{ preservePanel?: boolean }} [opts]
+   * Switch Run | Prep | Map.
+   * @param {"run"|"prep"|"map"} workspace
+   * @param {{ preservePanel?: boolean, focusSceneId?: string }} [opts]
    */
   function setWorkspace(workspace, opts = {}) {
-    const next = workspace === "prep" ? "prep" : "run";
-    const preservePanel = opts.preservePanel !== false && activeView.type === "panel";
+    const next = normalizeWorkspaceId(workspace);
+    const preservePanel =
+      opts.preservePanel !== false && activeView.type === "panel" && next !== "map";
+    const keepPanelOnMap =
+      opts.preservePanel !== false && activeView.type === "panel" && next === "map";
+
     activeWorkspace = next;
     saveWorkspace(next);
     SectionEditor.setEditMode(next === "prep");
     applyWorkspaceChrome();
     buildNav();
 
-    if (preservePanel) {
+    if (next === "map") {
+      if (keepPanelOnMap) {
+        updateNavActive();
+        requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
+        return;
+      }
+      if (playView) playView.classList.add("hidden");
+      scrollDocument.classList.add("hidden");
+      panelView.classList.add("hidden");
+      if (scrollSpyObserver) scrollSpyObserver.disconnect();
+      activeView = { type: "map" };
+      document.body.classList.remove("workspace-map--panel");
+      if (window.LayoutPanels?.setCampaignWorkspace) {
+        LayoutPanels.setCampaignWorkspace("map", { panelOpen: false });
+      }
       updateNavActive();
+      requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
       return;
     }
 
-    const sceneId = focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
+    document.body.classList.remove("workspace-map--panel");
+
+    if (preservePanel) {
+      updateNavActive();
+      requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
+      return;
+    }
+
+    const sceneId =
+      opts.focusSceneId || focusedSceneId || location.hash.replace("#", "") || getSections()[0]?.id;
     if (next === "prep") {
       showDocumentView();
       if (sceneId) {
@@ -1268,17 +1365,26 @@
       renderPlayScene(sceneId);
     }
     updateNavActive();
+    requestAnimationFrame(() => window.MapPanel?.onLayoutChange?.());
   }
 
   function bindWorkspaceControls() {
     workspaceRunBtn?.addEventListener("click", () => setWorkspace("run"));
     workspacePrepBtn?.addEventListener("click", () => setWorkspace("prep"));
+    workspaceMapBtn?.addEventListener("click", () => setWorkspace("map", { preservePanel: false }));
+    document.getElementById("map-select")?.addEventListener("change", () => {
+      if (activeWorkspace === "map") buildMapBrowserNav();
+    });
     applyWorkspaceChrome();
   }
 
   function jumpToSection(id) {
     focusedSceneId = id;
     history.replaceState(null, "", `#${id}`);
+    if (activeWorkspace === "map") {
+      setWorkspace("run", { preservePanel: false, focusSceneId: id });
+      return;
+    }
     if (activeWorkspace === "prep") {
       if (activeView.type !== "document") showDocumentView();
       const el = document.getElementById(`section-${id}`);
@@ -1319,6 +1425,12 @@
     if (resolved.workspace === "reference") saveReferenceTab(resolved.tab);
     if (resolved.workspace === "session") saveSessionTab(resolved.tab);
     renderPanel(resolved.tab, resolved.workspace);
+    if (activeWorkspace === "map") {
+      document.body.classList.add("workspace-map--panel");
+      if (window.LayoutPanels?.setCampaignWorkspace) {
+        LayoutPanels.setCampaignWorkspace("map", { panelOpen: true });
+      }
+    }
     updateNavActive();
   }
 
@@ -1530,6 +1642,14 @@
   function updateNavActive() {
     document.querySelectorAll(".nav-btn").forEach((btn) => btn.classList.remove("active"));
 
+    if (activeWorkspace === "map" && activeView.type !== "panel") {
+      const activeId = window.MapPanel?.getActiveMapId?.() || "";
+      document.querySelectorAll(".nav-btn[data-map-location]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.mapLocation === activeId);
+      });
+      return;
+    }
+
     if (activeView.type === "play" || activeView.type === "document") {
       const hash = focusedSceneId || location.hash.replace("#", "");
       if (hash) highlightNavSection(hash);
@@ -1709,23 +1829,30 @@
     });
   }
 
-  /** Hash wins; otherwise restore saved current scene after first paint */
+  /** Hash wins for focused scene id; Map workspace restores without leaving Map */
   function restoreInitialScene() {
     const initialHash = location.hash.replace("#", "");
     requestAnimationFrame(() => {
-      if (initialHash) {
-        jumpToSection(initialHash);
+      if (initialHash && getSectionById(initialHash)) focusedSceneId = initialHash;
+      else {
+        const current = window.CampaignState?.getCurrentSceneId?.();
+        if (current && getSectionById(current)) focusedSceneId = current;
+        else focusedSceneId = getSections()[0]?.id || null;
+      }
+
+      if (activeWorkspace === "map") {
+        setWorkspace("map", { preservePanel: false });
         return;
       }
-      const current = window.CampaignState?.getCurrentSceneId?.();
-      if (current && getSectionById(current)) {
-        jumpToSection(current);
-        return;
-      }
-      const first = getSections()[0]?.id;
-      if (first) jumpToSection(first);
+
+      if (focusedSceneId) jumpToSection(focusedSceneId);
     });
   }
+
+  window.CampaignWorkspace = {
+    get: () => activeWorkspace,
+    set: (ws, opts) => setWorkspace(ws, opts)
+  };
 
   function renderNotesView() {
     const saved = window.CampaignPrefs?.get(campaignId)?.notes || "";

@@ -6,7 +6,7 @@ window.LayoutPanels = (function () {
   const MAP_WIDTH = "300px";
   const MAP_EXPANDED_WIDTH = "40vw";
 
-  /** @type {"sidebar" | "expanded" | "combat"} */
+  /** @type {"sidebar" | "expanded" | "combat" | "workspace"} */
   let mapMode = "sidebar";
 
   function campaignId() {
@@ -33,12 +33,16 @@ window.LayoutPanels = (function () {
     return mapMode;
   }
 
+  function isWideMapMode() {
+    return mapMode === "expanded" || mapMode === "combat" || mapMode === "workspace";
+  }
+
   function syncMapColumn() {
     const app = appEl();
     const body = document.body;
     if (!app || body.classList.contains("map-panel-collapsed")) return;
 
-    if (mapMode === "expanded" || mapMode === "combat") {
+    if (isWideMapMode()) {
       app.style.setProperty("--map-col", "minmax(0, 1fr)");
       return;
     }
@@ -54,18 +58,22 @@ window.LayoutPanels = (function () {
     const titleEl = document.getElementById("map-expanded-title");
     const select = document.getElementById("map-select");
     const t = labels();
-    const isWide = mapMode === "expanded" || mapMode === "combat";
+    const isWide = isWideMapMode();
 
     if (panel) panel.dataset.mapMode = mapMode;
     body.dataset.mapMode = mapMode;
-    body.classList.toggle("map-mode-expanded", isWide);
+    body.classList.toggle("map-mode-expanded", mapMode === "expanded");
     body.classList.toggle("map-mode-combat", mapMode === "combat");
-    document.documentElement.classList.toggle("map-mode-expanded", isWide);
+    body.classList.toggle("map-mode-workspace", mapMode === "workspace");
+    document.documentElement.classList.toggle("map-mode-expanded", mapMode === "expanded");
     document.documentElement.classList.toggle("map-mode-combat", mapMode === "combat");
+    document.documentElement.classList.toggle("map-mode-workspace", mapMode === "workspace");
 
     if (expandBtn) {
-      expandBtn.setAttribute("aria-pressed", isWide ? "true" : "false");
-      expandBtn.textContent = isWide
+      const hideExpand = mapMode === "workspace" || body.classList.contains("workspace-map");
+      expandBtn.hidden = hideExpand;
+      expandBtn.setAttribute("aria-pressed", isWide && mapMode !== "workspace" ? "true" : "false");
+      expandBtn.textContent = mapMode === "expanded" || mapMode === "combat"
         ? t.collapseMap || "Collapse"
         : t.expandMap || "Expand";
     }
@@ -87,12 +95,14 @@ window.LayoutPanels = (function () {
 
   /**
    * Map rail display mode.
-   * - sidebar: default right column
-   * - expanded: ~full content area (no combat chrome)
-   * - combat: reserved — same shell as expanded for now; Combat Mode builds on this later
+   * - sidebar: default right column (Party/Music utility in Run/Prep)
+   * - expanded: legacy full-content widen (shim; Map workspace preferred)
+   * - combat: reserved — same shell as expanded for now
+   * - workspace: first-class Map workspace (campaign activeWorkspace === "map")
    */
   function setMapMode(next, save = false) {
-    const allowed = next === "sidebar" || next === "expanded" || next === "combat";
+    const allowed =
+      next === "sidebar" || next === "expanded" || next === "combat" || next === "workspace";
     if (!allowed) return;
     mapMode = next;
 
@@ -105,11 +115,40 @@ window.LayoutPanels = (function () {
     syncExpandChrome();
 
     if (save) {
-      /* Expanded/combat are session UI only — do not persist across reload */
+      /* Expanded/combat/workspace are session UI — workspace also persisted via CampaignPrefs.workspace */
     }
   }
 
+  /**
+   * Sync layout shell with campaign Run | Prep | Map workspace.
+   * @param {"run"|"prep"|"map"} workspace
+   * @param {{ panelOpen?: boolean }} [opts]
+   */
+  function setCampaignWorkspace(workspace, opts = {}) {
+    const body = document.body;
+    const panelOpen = !!opts.panelOpen;
+    body.classList.toggle("workspace-map--panel", workspace === "map" && panelOpen);
+
+    if (workspace === "map") {
+      setMapCollapsed(false, false);
+      if (panelOpen) {
+        /* Reference/Session: show main column; map rail becomes utility width */
+        setMapMode("sidebar");
+      } else {
+        setMapMode("workspace");
+      }
+    } else if (mapMode === "workspace" || mapMode === "expanded" || mapMode === "combat") {
+      setMapMode("sidebar");
+    } else {
+      syncExpandChrome();
+      syncMapColumn();
+    }
+
+    window.MapPanel?.onWorkspaceChange?.(workspace);
+  }
+
   function toggleMapExpanded() {
+    if (document.body.dataset.workspace === "map") return;
     if (mapMode === "expanded" || mapMode === "combat") setMapMode("sidebar");
     else setMapMode("expanded");
   }
@@ -157,6 +196,9 @@ window.LayoutPanels = (function () {
     const app = appEl();
     const t = labels();
 
+    /* Map workspace owns the canvas — do not collapse it away */
+    if (collapsed && mapMode === "workspace") return;
+
     if (collapsed && (mapMode === "expanded" || mapMode === "combat")) {
       setMapMode("sidebar");
     }
@@ -184,7 +226,10 @@ window.LayoutPanels = (function () {
 
     if (collapse) {
       collapse.setAttribute("aria-expanded", collapsed ? "false" : "true");
-      collapse.setAttribute("aria-label", collapsed ? t.showMap || "Show map" : t.hideMap || "Hide map");
+      collapse.setAttribute(
+        "aria-label",
+        collapsed ? t.showMap || "Show utilities" : t.hideMap || "Hide utilities"
+      );
     }
 
     if (save) {
@@ -212,11 +257,21 @@ window.LayoutPanels = (function () {
     }
 
     if (button.id === "map-panel-toggle") {
+      /* Legacy toggle — prefer Map workspace; still toggles utility rail if present */
+      if (typeof window.CampaignWorkspace?.set === "function" && !document.getElementById("map-panel-toggle")?.dataset?.legacyRail) {
+        /* If toggle removed from DOM this branch is unused */
+      }
       setMapCollapsed(!document.body.classList.contains("map-panel-collapsed"));
       return;
     }
 
     if (button.id === "map-panel-collapse") {
+      if (mapMode === "workspace") {
+        if (typeof window.CampaignWorkspace?.set === "function") {
+          window.CampaignWorkspace.set("run");
+        }
+        return;
+      }
       if (mapMode === "expanded" || mapMode === "combat") {
         setMapMode("sidebar");
         return;
@@ -267,7 +322,7 @@ window.LayoutPanels = (function () {
     syncExpandChrome();
 
     document.getElementById("map-select")?.addEventListener("change", () => {
-      if (mapMode === "expanded" || mapMode === "combat") syncExpandChrome();
+      if (isWideMapMode()) syncExpandChrome();
     });
   }
 
@@ -278,6 +333,7 @@ window.LayoutPanels = (function () {
     setMapMode,
     getMapMode,
     toggleMapExpanded,
+    setCampaignWorkspace,
     applyChromeFromPrefs
   };
 })();

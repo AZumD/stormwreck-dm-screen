@@ -64,9 +64,17 @@ for (const [label, html] of [
   } else pass(`${label} has separate media dock`);
 }
 
-if (!layoutJs.includes('setMapMode') || !layoutJs.includes('"sidebar"') || !layoutJs.includes('"expanded"') || !layoutJs.includes('"combat"')) {
-  fail("layout-panels missing mapPanel.mode sidebar|expanded|combat");
-} else pass("layout-panels defines sidebar|expanded|combat modes");
+if (!layoutJs.includes('setMapMode') || !layoutJs.includes('"sidebar"') || !layoutJs.includes('"expanded"') || !layoutJs.includes('"combat"') || !layoutJs.includes('"workspace"')) {
+  fail("layout-panels missing mapPanel.mode sidebar|expanded|combat|workspace");
+} else pass("layout-panels defines sidebar|expanded|combat|workspace modes");
+
+if (!layoutJs.includes("setCampaignWorkspace")) {
+  fail("layout-panels missing setCampaignWorkspace");
+} else pass("layout-panels wires campaign workspace");
+
+if (!mapJs.includes("onWorkspaceChange") || !mapJs.includes("map-panel--utility")) {
+  fail("map-panel missing workspace utility/workspace chrome");
+} else pass("map-panel workspace chrome");
 
 if (!layoutJs.includes("toggleMapExpanded") || !layoutJs.includes("map-expand-btn")) {
   fail("layout-panels missing expand wiring");

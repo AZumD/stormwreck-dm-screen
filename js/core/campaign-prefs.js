@@ -27,7 +27,7 @@ window.CampaignPrefs = (function () {
   }
 
   function normalizeWorkspace(value, viewMode) {
-    if (value === "prep" || value === "run") return value;
+    if (value === "prep" || value === "run" || value === "map") return value;
     /* Migrate legacy Play/Document preference into Run/Prep */
     return viewMode === "document" ? "prep" : "run";
   }
@@ -128,7 +128,10 @@ window.CampaignPrefs = (function () {
     if (partial && Object.prototype.hasOwnProperty.call(partial, "workspace")) {
       next.workspace = normalizeWorkspace(partial.workspace, next.viewMode);
     } else if (partial && Object.prototype.hasOwnProperty.call(partial, "viewMode")) {
-      next.workspace = partial.viewMode === "document" ? "prep" : "run";
+      /* Legacy viewMode patches must not clobber an explicit Map workspace */
+      if (next.workspace !== "map") {
+        next.workspace = partial.viewMode === "document" ? "prep" : "run";
+      }
     } else {
       next.workspace = normalizeWorkspace(next.workspace, next.viewMode);
     }

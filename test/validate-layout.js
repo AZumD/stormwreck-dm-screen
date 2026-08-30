@@ -39,9 +39,29 @@ if (!layoutJs.includes("MAP_EXPANDED_WIDTH"))
   fail("layout-panels.js missing expanded map width");
 else pass("layout-panels defines expanded map width");
 
-if (!layoutJs.includes("setMapMode") || !layoutJs.includes('"combat"'))
-  fail("layout-panels.js missing map mode API (sidebar|expanded|combat)");
+if (!layoutJs.includes("setMapMode") || !layoutJs.includes('"combat"') || !layoutJs.includes('"workspace"'))
+  fail("layout-panels.js missing map mode API (sidebar|expanded|combat|workspace)");
 else pass("layout-panels exposes map mode API");
+
+if (!layoutJs.includes("setCampaignWorkspace"))
+  fail("layout-panels.js missing setCampaignWorkspace");
+else pass("layout-panels setCampaignWorkspace");
+
+if (!appJs.includes('activeWorkspace = "run"') || !appJs.includes("workspace-map") || !appJs.includes("CampaignWorkspace"))
+  fail("campaign-app missing Map workspace wiring");
+else pass("campaign-app Map workspace");
+
+if (!mapJs.includes("onWorkspaceChange"))
+  fail("map-panel missing onWorkspaceChange");
+else pass("map-panel onWorkspaceChange");
+
+if (!html.includes('id="workspace-map"') || html.includes('id="map-panel-toggle"'))
+  fail("campaign should use Map workspace switcher (no map-panel-toggle)");
+else pass("Map workspace switcher replaces map-panel-toggle");
+
+if (!css.includes("map-mode-workspace"))
+  fail("CSS missing map-mode-workspace");
+else pass("CSS map-mode-workspace");
 
 if (appJs.includes("function initSidebar")) fail("campaign-app.js still owns sidebar init");
 else pass("sidebar init moved out of campaign-app.js");

@@ -12,12 +12,13 @@ Main controller for a campaign DM screen: **Run** (live play) and **Prep** (docu
 ## Workspaces
 | Workspace | Behavior |
 |-----------|----------|
-| **Run** (default) | Live DM: focused Play scene, prev/next, status/notes, Reference/Session, map/party/music, catalogue search. No Edit or Play/Document toggles; no drag-reorder authoring. |
-| **Prep** | Document scroll of the adventure + authoring (edit mode, groups, DnD, add scene/group). Sidebar scrollspy tracks the visible section. |
+| **Run** (default) | Live DM: focused Play scene, prev/next, status/notes, Reference/Session, Party/Music utility rail, catalogue search. No authoring chrome. |
+| **Prep** | Document scroll + authoring (edit mode, groups, DnD, add scene/group). Scrollspy tracks the visible section. |
+| **Map** | Same MapPanel instance promoted to a full canvas workspace; left nav becomes map browser; Current Scene returns to Run. |
 
-Toolbar **Run | Prep** switcher (`#workspace-run` / `#workspace-prep`). Persisted as `workspace` in campaign prefs (legacy `viewMode` play/document is kept in sync).
+Toolbar **Run | Prep | Map** (`#workspace-run` / `#workspace-prep` / `#workspace-map`). Persisted as `workspace` in campaign prefs.
 
-`activeWorkspace` is separate from `activeView` (`play` | `document` | `panel`). Opening Reference/Session does not change the workspace; switching Run↔Prep while on a panel keeps the panel.
+`activeWorkspace` is separate from `activeView` (`play` | `document` | `panel` | `map`). Reference/Session from Map use `workspace-map--panel` without wiping map persistence.
 
 ## Content views
 | Mode | Behavior |

@@ -334,11 +334,36 @@ window.MapPanel = (function () {
     }
 
     function showLocationOnMap(locationId) {
-      if (!isFullscreenPage && window.LayoutPanels?.setMapCollapsed) {
+      if (typeof window.CampaignWorkspace?.set === "function") {
+        window.CampaignWorkspace.set("map", { preservePanel: false });
+      } else if (!isFullscreenPage && window.LayoutPanels?.setMapCollapsed) {
         LayoutPanels.setMapCollapsed(false);
+        setActiveTab("map");
       }
-      setActiveTab("map");
       return selectMapByLocationId(locationId);
+    }
+
+    function onWorkspaceChange(workspace) {
+      const isMapWs = workspace === "map";
+      panel.classList.toggle("map-panel--workspace", isMapWs);
+      panel.classList.toggle("map-panel--utility", !isMapWs);
+
+      const mapTabBtn = document.getElementById("map-tab-btn");
+      if (mapTabBtn) {
+        mapTabBtn.hidden = !isMapWs;
+        mapTabBtn.setAttribute("aria-hidden", isMapWs ? "false" : "true");
+      }
+
+      const expandBtn = document.getElementById("map-expand-btn");
+      if (expandBtn) expandBtn.hidden = true;
+
+      if (isMapWs) {
+        setActiveTab("map");
+      } else if (panel.dataset.activeTab === "map") {
+        setActiveTab("party");
+      }
+
+      onLayoutChange();
     }
 
     function setZoomAt(nextZoom, clientX, clientY) {
@@ -1290,6 +1315,7 @@ window.MapPanel = (function () {
       refreshPins: renderPins,
       refreshTokens: () => spatialApi?.refreshTokens?.(),
       onLayoutChange,
+      onWorkspaceChange,
       setActiveTab,
       selectMapByLocationId,
       showLocationOnMap,
@@ -1365,6 +1391,7 @@ window.MapPanel = (function () {
     refresh,
     refreshInitiative,
     onLayoutChange,
+    onWorkspaceChange: (ws) => activeInstance?.onWorkspaceChange?.(ws),
     resolveMapImage,
     getEffectiveMaps,
     findLocationEntry,

@@ -67,13 +67,13 @@ for (const [label, html] of [
   if (!html.includes(">Tools<")) fail(`${label} missing Tools section heading`);
   else pass(`${label} Tools section heading`);
 
-  if (!html.includes('id="workspace-run"') || !html.includes('id="workspace-prep"')) {
-    fail(`${label} missing Run|Prep switcher`);
-  } else pass(`${label} Run|Prep switcher`);
+  if (!html.includes('id="workspace-run"') || !html.includes('id="workspace-prep"') || !html.includes('id="workspace-map"')) {
+    fail(`${label} missing Run|Prep|Map switcher`);
+  } else pass(`${label} Run|Prep|Map switcher`);
 
-  if (html.includes('id="edit-mode-toggle"') || html.includes('id="view-mode-play"')) {
-    fail(`${label} still has Edit / Play-Document primary toggles`);
-  } else pass(`${label} primary toolbar free of Edit/Play-Document`);
+  if (html.includes('id="edit-mode-toggle"') || html.includes('id="view-mode-play"') || html.includes('id="map-panel-toggle"')) {
+    fail(`${label} still has Edit / Play-Document / Map toggle primary controls`);
+  } else pass(`${label} primary toolbar free of Edit/Play-Document/Map-toggle`);
 }
 
 if (!prefs.includes("referenceTab") || !prefs.includes("sessionTab")) {
@@ -82,7 +82,9 @@ if (!prefs.includes("referenceTab") || !prefs.includes("sessionTab")) {
 
 if (!prefs.includes('workspace: "run"') || !prefs.includes("normalizeWorkspace")) {
   fail("CampaignPrefs missing Run/Prep workspace");
-} else pass("CampaignPrefs remembers Run/Prep workspace");
+} else if (!prefs.includes('value === "map"') && !prefs.includes('"map"')) {
+  fail("CampaignPrefs missing Map workspace");
+} else pass("CampaignPrefs remembers Run/Prep/Map workspace");
 
 if (!css.includes(".panel-workspace__tab") || !css.includes("position: sticky")) {
   fail("style.css missing sticky panel workspace tabs");

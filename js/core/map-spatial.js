@@ -890,6 +890,7 @@ window.MapSpatial = (function () {
     els.fogRevealAll?.addEventListener("click", () => {
       const map = activeMap();
       if (!map || !window.MapFog) return;
+      if (!window.confirm("Reveal the entire map (clear all fog)?")) return;
       MapFog.revealAll(campaignId, map.id);
       MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
     });
