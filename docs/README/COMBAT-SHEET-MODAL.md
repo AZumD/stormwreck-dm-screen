@@ -11,7 +11,7 @@ Shared DM combat sheet for live HP / AC / conditions / initiative during play. O
 | Kind | Open from | Save target |
 |------|-----------|-------------|
 | **PC** | Party / map pin | Postgres `character_state` (HP, temp HP, conditions, inspiration, `death_saves`, `spell_slots`, `class_resources`, other `extras`) + sheet `ac`; remirrors to PC catalogue. **Not** `extras.combat_initiative`. |
-| **NPC** | Party / map pin / combat token | Sitewide NPC catalogue (`hp`, `ac`, `combatConditions`); NPC memory enricher still attaches. **Not** `combatInitiative`. Map placement: **Remove from map** drops the token or pin (static pins → `removedPins` in map-state). |
+| **NPC** | Party / map pin / combat token | **Catalogue path** (party/pin): upserts sitewide NPC catalogue (`hp`, `ac`, `combatConditions`). **Combat token path**: instance HP/AC/conditions patch `tokens[mapId]` only (like monsters) — catalogue not overwritten. NPC memory enricher still attaches. **Not** `combatInitiative`. Map placement: **Remove from map** drops the token or pin (static pins → `removedPins` in map-state). |
 | **Monster token** | Map combat token click | That token only in `CampaignMapState.tokens` (HP/AC/conditions) — never writes the monster catalogue. **Not** token `initiative`. |
 
 ## Initiative (canonical)

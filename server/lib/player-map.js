@@ -23,6 +23,28 @@ const { pinsForMap } = require("./campaign-static-maps");
 
 const PLAYER_PIN_TYPES = new Set(["pc", "npc", "monster"]);
 
+/** Canonical PC percent from partyPositions — tokens must not override this. */
+function canonicalPcPercent(mapState, mapId, linkId, catalogueId) {
+  const partyId = partyIdFromCatalogueId(catalogueId);
+  const pos = mapState.partyPositions?.[partyId];
+  if (!pos || pos.x == null || pos.y == null) return null;
+  if (pos.mapId !== mapId && pos.mapId !== linkId) return null;
+  return { x: pos.x, y: pos.y };
+}
+
+/** Strip stale world coords from PC combat tokens; partyPositions percent is authoritative. */
+function withCanonicalPcPosition(raw, mapState, mapId, linkId) {
+  if (raw?.kind !== "pc") return raw;
+  const catalogueId = raw.catalogueId || catalogueIdFromPartyId(raw.partyId);
+  if (!catalogueId) return raw;
+  const pct = canonicalPcPercent(mapState, mapId, linkId, catalogueId);
+  if (!pct) return raw;
+  const next = { ...raw, percent: pct };
+  delete next.x;
+  delete next.y;
+  return next;
+}
+
 function locationLinkId(entry) {
   if (!entry) return null;
   if (entry.linkId) return entry.linkId;
@@ -224,7 +246,8 @@ async function buildPlayerMapTokens(mapState, mapId, viewerCatalogueId, mapMeta,
   const list = mapState.tokens?.[mapId];
   if (Array.isArray(list)) {
     for (const raw of list) {
-      const dto = await enrichPlayerToken(raw, mapMeta, viewerCatalogueId, pcLookup);
+      const adjusted = withCanonicalPcPosition(raw, mapState, mapId, linkId);
+      const dto = await enrichPlayerToken(adjusted, mapMeta, viewerCatalogueId, pcLookup);
       if (!dto) continue;
       tokens.push(dto);
       seenKeys.add(tokenDedupeKey(dto.kind, dto.catalogueId, dto.entityId, dto.id));
@@ -354,7 +377,6 @@ async function getPlayerMapView(req, campaignId, characterId) {
     tokenDto = {
       label: loc.token.label || character.name,
       percent: loc.percent,
-      world: { x: loc.token.x, y: loc.token.y },
       gridCells: loc.token.gridCells || 1,
       imageUrl: loc.token.imageUrl || character.portrait_url || null
     };
@@ -397,8 +419,6 @@ async function getPlayerMapView(req, campaignId, characterId) {
         catalogueId,
         visible: true,
         percent: tokenDto.percent,
-        x: tokenDto.world?.x,
-        y: tokenDto.world?.y,
         gridCells: tokenDto.gridCells || 1,
         imageUrl: tokenDto.imageUrl || character.portrait_url || null
       },

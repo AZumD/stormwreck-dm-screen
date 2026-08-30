@@ -13,7 +13,8 @@ node test/validate-player-map.js
 
 ## What it checks
 - `partyPositions` is canonical; stale token on map B ignored when canonical is map A
-- `normalizePcMapState` removes non-canonical tokens
+- Player token assembly uses canonical PC x/y even when a stale combat token exists on the same map
+- `normalizePcMapState` removes non-canonical tokens and syncs stale PC token coords on the canonical map
 - PC A move does not affect PC B
 - Removed PC has no canonical location
 - Legacy token-only state migrates to `partyPositions`
@@ -21,4 +22,4 @@ node test/validate-player-map.js
 - Player map tokens include visible pcs/npcs/monsters with grid span via `buildPlayerMapTokens`
 - Static NPC map pins from `js/campaigns/*/maps.js` appear on player map
 - Normalize is idempotent (reload-safe)
-- Player Map tab + fog wiring + docs
+- Player Map tab + fog wiring + **Center on me**, viewport persistence, stale poll indicator + docs

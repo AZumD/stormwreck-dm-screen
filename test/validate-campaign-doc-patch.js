@@ -94,6 +94,28 @@ for (const field of ["activeMap", "pinPositions", "partyPositions", "customPins"
 }
 pass("empty() shared state fields");
 
+if (
+  !mapStateSrc.includes("removed-pins") ||
+  !mapStateSrc.includes("data.removedPins = JSON.parse") ||
+  !mapStateSrc.includes("JSON.stringify(data.removedPins")
+) {
+  fail("CampaignMapState loadLocal/saveLocal must persist removedPins");
+} else pass("removedPins localStorage round-trip wiring");
+
+try {
+  const store = {};
+  const campaignId = "test-removed-pins";
+  const removedPins = { "map-a": ["pin-static-npc"] };
+  store[`${campaignId}-removed-pins`] = JSON.stringify(removedPins);
+  const reloaded = JSON.parse(store[`${campaignId}-removed-pins`] || "{}");
+  if (!Array.isArray(reloaded["map-a"]) || reloaded["map-a"][0] !== "pin-static-npc") {
+    throw new Error("removedPins value mismatch");
+  }
+  pass("removedPins localStorage key round-trip");
+} catch (err) {
+  fail(`removedPins local round-trip: ${err.message}`);
+}
+
 if (!modalSrc.includes("readInitiative") || !modalSrc.includes("initiativeTracker")) {
   fail("CombatSheetModal missing canonical initiative read");
 } else pass("CombatSheetModal reads tracker");

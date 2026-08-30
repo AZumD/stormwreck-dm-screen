@@ -297,10 +297,15 @@
   function renderMapTab() {
     if (!state.characterId || !window.PlayerMapView) {
       els.main.innerHTML = `<p class="empty">No character selected.</p>`;
+      window.PlayerMapView?.unmount?.();
       return;
     }
-    els.main.innerHTML = `<div id="player-map-host" class="player-map-host"></div>`;
-    PlayerMapView.mount(document.getElementById("player-map-host"), {
+    let host = els.main.querySelector("#player-map-host");
+    if (!host) {
+      els.main.innerHTML = `<div id="player-map-host" class="player-map-host"></div>`;
+      host = els.main.querySelector("#player-map-host");
+    }
+    PlayerMapView.mount(host, {
       campaignId: state.campaignId,
       characterId: state.characterId,
       api

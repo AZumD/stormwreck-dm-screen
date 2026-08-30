@@ -32,6 +32,7 @@ Stable key: catalogue PC id (`pc-mswdvrcy-u6nnt`). Party id format: `pc:{catalog
 ## Normalization
 - Removes PC tokens on maps ≠ `partyPositions.mapId`
 - Dedupes multiple PC tokens on the canonical map (newest `tok-pc-*` id wins)
+- Syncs the remaining canonical-map PC token `x`/`y` to match `partyPositions` (client bootstrap also converts to world coords on calibrated maps)
 - Legacy: token-only state (no `partyPositions`) promotes newest token → `partyPositions`
 
 ## Used by

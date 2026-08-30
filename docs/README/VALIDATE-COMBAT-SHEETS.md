@@ -16,6 +16,7 @@ node test/validate-combat-sheets.js
 - `LocalApiClient` character helpers + DM sheet PATCH
 - Party + MapPanel + MapSpatial wiring
 - NPC **Remove from map** in combat sheet (combat token + static/custom pin via `removedPins`)
+- NPC combat token instance save (`saveNpcCombatToken`) — does not upsert catalogue
 - Monster edits do not upsert the monster catalogue
 - NPC `combatConditions` field + campaign HTML script include
 - Docs present

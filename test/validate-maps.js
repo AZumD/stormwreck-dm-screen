@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 
 const root = path.join(__dirname, "..");
 let failed = 0;
@@ -20,8 +21,9 @@ function pass(msg) {
 
 function loadGlobal(file, globalName) {
   const code = fs.readFileSync(path.join(root, file), "utf8");
-  const fn = new Function(code + `\nreturn ${globalName};`);
-  return fn();
+  const sandbox = { window: {} };
+  vm.runInNewContext(code, sandbox);
+  return sandbox.window[globalName];
 }
 
 function catalogueLinkId(entry) {

@@ -77,6 +77,7 @@ window.CampaignMapState = (function () {
       data.pinPositions = JSON.parse(localStorage.getItem(`${campaignId}-pin-positions`) || "{}") || {};
       data.partyPositions = JSON.parse(localStorage.getItem(`${campaignId}-party-positions`) || "{}") || {};
       data.customPins = JSON.parse(localStorage.getItem(`${campaignId}-custom-pins`) || "{}") || {};
+      data.removedPins = JSON.parse(localStorage.getItem(`${campaignId}-removed-pins`) || "{}") || {};
       data.tokens = JSON.parse(localStorage.getItem(`${campaignId}-map-tokens`) || "{}") || {};
       data.fog = JSON.parse(localStorage.getItem(`${campaignId}-map-fog`) || "{}") || {};
       data.initiativeTracker =
@@ -96,6 +97,7 @@ window.CampaignMapState = (function () {
       localStorage.setItem(`${campaignId}-pin-positions`, JSON.stringify(data.pinPositions || {}));
       localStorage.setItem(`${campaignId}-party-positions`, JSON.stringify(data.partyPositions || {}));
       localStorage.setItem(`${campaignId}-custom-pins`, JSON.stringify(data.customPins || {}));
+      localStorage.setItem(`${campaignId}-removed-pins`, JSON.stringify(data.removedPins || {}));
       localStorage.setItem(`${campaignId}-map-tokens`, JSON.stringify(data.tokens || {}));
       localStorage.setItem(`${campaignId}-map-fog`, JSON.stringify(data.fog || {}));
       localStorage.setItem(

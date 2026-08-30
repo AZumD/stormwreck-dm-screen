@@ -15,8 +15,8 @@ No manual map picker. If the PC has no `partyPositions` entry → **No map avail
 ## Client
 | File | Role |
 |------|------|
-| `js/core/player-map-view.js` | Full-bleed map, pan/zoom (+/−/Fit, wheel, pinch), fog, all visible tokens; grid-aligned sizing like DM; polls every ~1.5s |
-| `js/player-app.js` | Map tab |
+| `js/core/player-map-view.js` | Full-bleed map, pan/zoom (+/−/Fit/**Center on me**, wheel, pinch), fog, all visible tokens; grid-aligned sizing like DM; polls every ~1.5s; preserves viewport per map for the session; shows a subtle stale indicator when polls fail |
+| `js/player-app.js` | Map tab (reuses map host across tab switches) |
 | `player/index.html` | Tab + scripts |
 
 ## Server
@@ -38,7 +38,7 @@ Implemented in `server/lib/player-map.js`.
 ## Player-safe payload
 `mapId`, map name, image URL, grid/size when calibrated, fog revision/strokes, and **visible tokens** on that map:
 
-- Combat tokens from `map-state.tokens[mapId]` (`pc` / `npc` / `monster`)
+- Combat tokens from `map-state.tokens[mapId]` (`pc` / `npc` / `monster`) — **PC positions always taken from `partyPositions`**, never stale token coords
 - Static + custom **map pins** of those types (same as DM `#map-pins` layer on calibrated maps)
 - Party PCs from `partyPositions` when not already present
 

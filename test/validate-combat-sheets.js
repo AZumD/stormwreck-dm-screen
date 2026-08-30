@@ -95,6 +95,15 @@ if (!/removeFromMap:\s*onMap/.test(modal)) {
   fail("CombatSheetModal missing remove-from-map for NPCs on the map");
 } else pass("NPC remove from map in combat sheet");
 
+if (!modal.includes("saveNpcCombatToken") || !modal.includes("current.mapToken")) {
+  fail("NPC combat token save must patch map token instance, not catalogue only");
+} else pass("NPC combat token instance save");
+
+const npcTokenSaveBlock = modal.match(/async function saveNpcCombatToken[\s\S]*?(?=async function saveNpc)/);
+if (!npcTokenSaveBlock || npcTokenSaveBlock[0].includes("CatalogueStore.upsert")) {
+  fail("saveNpcCombatToken must not upsert the NPC catalogue");
+} else pass("NPC instance save isolated from catalogue upsert");
+
 if (!modal.includes("fillCombatReference") || !modal.includes("data-combat-reference")) {
   fail("CombatSheetModal missing combat reference stat block section");
 } else pass("Combat reference section");
@@ -103,9 +112,9 @@ if (!registry.includes("catalogueId") || !registry.includes("seen.has(key)")) {
   fail("EntityRegistry.byType must dedupe catalogue alias keys");
 } else pass("EntityRegistry byType dedupe");
 
-if (!mapSpatial.includes("map-pin map-pin--monster") || mapSpatial.includes("map-token--monster")) {
-  fail("Monster tokens should render as map-pin dots, not large map-token");
-} else pass("Monster pin dot rendering");
+if (!mapSpatial.includes("renderGridToken") || !mapSpatial.includes('t.kind === "monster"')) {
+  fail("Monster tokens should render as map-grid-token footprints, not pin dots");
+} else pass("Monster grid token rendering");
 
 if (!configs.includes("combatConditions")) {
   fail("NPC catalogue schema missing combatConditions");

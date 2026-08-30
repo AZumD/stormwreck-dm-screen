@@ -32,10 +32,14 @@ Campaign map rail: map selector, catalogue image override, filterable pins, drag
 - See `docs/README/UVTT.md`, `docs/README/MAP-SPATIAL.md`, `docs/README/MAP-TOKEN-SIZE.md`, and `docs/README/COMBAT-SHEET-MODAL.md`
 
 ## Pin persistence
-| Key | Contents |
-|-----|----------|
-| `{campaignId}-pin-positions` | `{ [mapId]: { [pinId]: { x, y } } }` |
-| `{campaignId}-party-positions` | `{ [partyId]: { mapId, x, y } }` |
+All map panel state (pin positions, party positions, custom pins, removed static pins, tokens, fog, initiative) persists through **`CampaignMapState`** → `map-state.json` (or localStorage fallback when the API is offline).
+
+| Field | Role |
+|-------|------|
+| `partyPositions` | **Canonical** PC map + percent position (`pc:{catalogueId}`) |
+| `pinPositions` | Dragged pin overrides |
+| `removedPins` | Static catalogue pins hidden from DM + player maps |
+| `tokens` | Combat token instances (synced render representation for PCs) |
 
 Drag moves pins; click (without drag) opens the combat sheet (PC/NPC) or entity modal (other).
 

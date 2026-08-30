@@ -13,6 +13,7 @@ window.PlayerMapView = (function () {
   let pollTimer = null;
   let lastRevision = null;
   let lastMapId = null;
+  let lastView = null;
   let ctx = null;
   let zoom = 1;
   let panX = 0;
@@ -20,6 +21,9 @@ window.PlayerMapView = (function () {
   let dragging = false;
   let dragStart = null;
   let pinchStart = null;
+  let pollStale = false;
+  let consecutiveFailures = 0;
+  const viewportsByMapId = Object.create(null);
 
   function clamp(n, lo, hi) {
     return Math.min(hi, Math.max(lo, n));
@@ -99,10 +103,69 @@ window.PlayerMapView = (function () {
     world.classList.toggle("is-zoomed", zoom > 1.01);
   }
 
+  function saveViewport(mapId) {
+    if (!mapId) return;
+    viewportsByMapId[mapId] = { zoom, panX, panY };
+  }
+
+  function restoreViewport(mapId) {
+    const saved = viewportsByMapId[mapId];
+    if (saved) {
+      zoom = saved.zoom;
+      panX = saved.panX;
+      panY = saved.panY;
+    } else {
+      zoom = 1;
+      panX = 0;
+      panY = 0;
+    }
+  }
+
   function resetView() {
     zoom = 1;
     panX = 0;
     panY = 0;
+    if (lastMapId) saveViewport(lastMapId);
+    applyTransform();
+  }
+
+  function setStaleBanner(show) {
+    pollStale = show;
+    const el = root?.querySelector(".player-map-stale");
+    if (el) el.hidden = !show;
+  }
+
+  function updateCenterOnMe(view) {
+    const btn = root?.querySelector(".player-map-center-btn");
+    if (!btn) return;
+    const hasSelf = Boolean(
+      view?.available &&
+        (view.token?.percent ||
+          (Array.isArray(view.tokens) && view.tokens.some((t) => t.isSelf && t.percent)))
+    );
+    btn.disabled = !hasSelf;
+    btn.hidden = !view?.available;
+  }
+
+  function centerOnSelf(view) {
+    if (!view?.available) return;
+    const self =
+      (Array.isArray(view.tokens) && view.tokens.find((t) => t.isSelf && t.percent)) ||
+      (view.token?.percent ? { ...view.token, isSelf: true } : null);
+    if (!self) return;
+    const pos = tokenPosition(self, view);
+    if (!pos) return;
+    const viewport = root?.querySelector(".player-map-viewport");
+    const world = root?.querySelector(".player-map-world");
+    if (!viewport || !world) return;
+    const rect = viewport.getBoundingClientRect();
+    const ww = world.offsetWidth || 1;
+    const wh = world.offsetHeight || 1;
+    const tx = (pos.x / 100) * ww;
+    const ty = (pos.y / 100) * wh;
+    panX = rect.width / 2 - tx * zoom;
+    panY = rect.height / 2 - ty * zoom;
+    if (lastMapId) saveViewport(lastMapId);
     applyTransform();
   }
 
@@ -228,13 +291,18 @@ window.PlayerMapView = (function () {
       const viewport = root?.querySelector(".player-map-viewport");
       const rect = viewport?.getBoundingClientRect();
       zoomAt(zoom / ZOOM_STEP, rect ? rect.left + rect.width / 2 : null, rect ? rect.top + rect.height / 2 : null);
+      if (lastMapId) saveViewport(lastMapId);
     });
     root?.querySelector(".player-map-zoom-in")?.addEventListener("click", () => {
       const viewport = root?.querySelector(".player-map-viewport");
       const rect = viewport?.getBoundingClientRect();
       zoomAt(zoom * ZOOM_STEP, rect ? rect.left + rect.width / 2 : null, rect ? rect.top + rect.height / 2 : null);
+      if (lastMapId) saveViewport(lastMapId);
     });
     root?.querySelector(".player-map-fit-btn")?.addEventListener("click", resetView);
+    root?.querySelector(".player-map-center-btn")?.addEventListener("click", () => {
+      if (lastView) centerOnSelf(lastView);
+    });
   }
 
   function renderFog(canvas, fog) {
@@ -339,9 +407,12 @@ window.PlayerMapView = (function () {
     }
 
     if (view.mapId !== lastMapId) {
-      resetView();
+      if (lastMapId) saveViewport(lastMapId);
+      restoreViewport(view.mapId);
       lastMapId = view.mapId;
     }
+    lastView = view;
+    updateCenterOnMe(view);
     applyTransform();
   }
 
@@ -351,11 +422,15 @@ window.PlayerMapView = (function () {
       const data = await ctx.api.mapView(ctx.campaignId, ctx.characterId);
       const view = data?.view;
       if (!view) return;
+      consecutiveFailures = 0;
+      setStaleBanner(false);
       if (view.revision === lastRevision) return;
       lastRevision = view.revision;
       renderView(view);
     } catch (err) {
+      consecutiveFailures += 1;
       console.warn("player map refresh failed", err);
+      if (consecutiveFailures >= 1) setStaleBanner(true);
     }
   }
 
@@ -373,20 +448,22 @@ window.PlayerMapView = (function () {
   }
 
   function mount(container, options) {
-    unmount();
+    if (lastMapId) saveViewport(lastMapId);
+    const prevKey = ctx ? `${ctx.campaignId}:${ctx.characterId}` : "";
+    const nextKey = options ? `${options.campaignId}:${options.characterId}` : "";
+    if (prevKey && prevKey !== nextKey) lastRevision = null;
+    stopPoll();
     ctx = options || {};
-    lastRevision = null;
-    lastMapId = null;
-    zoom = 1;
-    panX = 0;
-    panY = 0;
-    container.innerHTML = `
+    if (!root) {
+      container.innerHTML = `
       <div class="player-map-root">
         <p class="player-map-empty">Loading map…</p>
+        <p class="player-map-stale" hidden>Map connection interrupted — retrying…</p>
         <div class="player-map-stage" hidden>
           <div class="player-map-toolbar">
             <p class="player-map-title"></p>
             <div class="player-map-toolbar__actions">
+              <button type="button" class="player-map-center-btn" title="Center on your character">Center on me</button>
               <button type="button" class="player-map-fit-btn" title="Reset view">Fit</button>
               <button type="button" class="player-map-zoom-out" title="Zoom out">−</button>
               <button type="button" class="player-map-zoom-in" title="Zoom in">+</button>
@@ -401,18 +478,24 @@ window.PlayerMapView = (function () {
           </div>
         </div>
       </div>`;
-    root = container.querySelector(".player-map-root");
-    bindPanZoom();
-    bindZoomChrome();
+      root = container.querySelector(".player-map-root");
+      bindPanZoom();
+      bindZoomChrome();
+    } else if (container && root.parentElement !== container) {
+      container.appendChild(root);
+    }
+    consecutiveFailures = 0;
+    setStaleBanner(false);
     startPoll();
   }
 
   function unmount() {
+    if (lastMapId) saveViewport(lastMapId);
     stopPoll();
-    root = null;
     ctx = null;
     lastRevision = null;
-    lastMapId = null;
+    consecutiveFailures = 0;
+    pollStale = false;
   }
 
   return { mount, unmount, refresh };

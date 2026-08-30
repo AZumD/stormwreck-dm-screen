@@ -707,7 +707,39 @@ window.CombatSheetModal = (function () {
     refreshParty();
   }
 
+  async function saveNpcCombatToken(form) {
+    const cid = current.campaignId;
+    const mapId = current.mapId;
+    if (!cid || !mapId || !window.CampaignMapState) throw new Error("Map state unavailable");
+    const prev = CampaignMapState.get(cid)?.tokens || {};
+    const list = Array.isArray(prev[mapId]) ? prev[mapId].slice() : [];
+    const idx = list.findIndex((t) => t.id === current.tokenId);
+    if (idx < 0) throw new Error("Token not found");
+    const nextTok = {
+      ...list[idx],
+      hpCurrent: form.hpCurrent,
+      hpMax: form.hpMax,
+      ac: form.ac,
+      conditions: form.conditions || ""
+    };
+    delete nextTok.initiative;
+    list[idx] = nextTok;
+    CampaignMapState.patch(cid, { tokens: { [mapId]: list } });
+    current.mapToken = nextTok;
+    syncInitiativeTracker(
+      trackerKey("npc", current.catalogueId),
+      current.name,
+      form.initiative,
+      "npc"
+    );
+    window.MapPanel?.refreshTokens?.();
+  }
+
   async function saveNpc(form) {
+    if (current.tokenId && current.mapId && current.mapToken) {
+      await saveNpcCombatToken(form);
+      return;
+    }
     const entry = { ...current.entry };
     const cur = Number.isFinite(form.hpCurrent) ? form.hpCurrent : "";
     const max = Number.isFinite(form.hpMax) ? form.hpMax : "";

@@ -13,10 +13,15 @@ Document: `map-state.json`
 |-------|------|
 | `activeMap` | Selected map id |
 | `filters` | Pin type visibility |
-| `pinPositions` / `partyPositions` / `customPins` | Legacy % pins |
-| `tokens` | `{ [mapId]: Token[] }` world-space DM tokens |
+| `pinPositions` | Dragged % pin overrides |
+| `partyPositions` | **Canonical** PC map location — `{ [pc:catalogueId]: { mapId, x, y } }` |
+| `customPins` | DM-added pins |
+| `removedPins` | Static pin ids hidden per map |
+| `tokens` | `{ [mapId]: Token[] }` combat instances (PC world coords synced from partyPositions) |
 | `fog` | `{ [mapId]: { enabled, revision, revealedAll, strokes: { [id]: Stroke } } }` manual fog |
 | `initiativeTracker` | Canonical combatant initiative map (shared table state) |
+
+**PC placement rule:** `partyPositions` is the only authoritative source for which map a PC is on and their percent position. `tokens[]` is a synchronized combat/render copy and must not override canonical placement (see `docs/README/MAP-PC-PLACEMENT.md`).
 
 ## Persistence
 - **API available:** `patch(campaignId, partial)` sends **only** the partial body via `LocalApiClient.patchCampaignDocument` (`PATCH`), optimistically deep-merges locally, then reconciles with the returned canonical document.

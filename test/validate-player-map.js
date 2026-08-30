@@ -130,7 +130,7 @@ try {
   fail(`player resolution: ${err.message}`);
 }
 
-/* reload invariant — normalize idempotent */
+/* reload invariant — normalize idempotent after token coord sync */
 try {
   const state = {
     partyPositions: { "pc:pc-a": { mapId: "map-a", x: 1, y: 2 } },
@@ -139,12 +139,32 @@ try {
     }
   };
   const once = placement.normalizePcMapState(state);
+  assert.strictEqual(once.tokens["map-a"][0].x, 1);
+  assert.strictEqual(once.tokens["map-a"][0].y, 2);
   const twice = placement.normalizePcMapState(once);
   assert.deepStrictEqual(once.partyPositions, twice.partyPositions);
   assert.deepStrictEqual(once.tokens, twice.tokens);
-  pass("normalize is idempotent after reload");
+  pass("normalize syncs stale PC token coords and is idempotent");
 } catch (err) {
   fail(`idempotent: ${err.message}`);
+}
+
+/* canonical partyPositions wins over stale token on same map */
+try {
+  const before = {
+    partyPositions: { "pc:pc-a": { mapId: "map-a", x: 10, y: 20 } },
+    tokens: {
+      "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: 99, y: 99 }]
+    }
+  };
+  const once = placement.normalizePcMapState(before);
+  assert.strictEqual(once.tokens["map-a"][0].x, 10);
+  assert.strictEqual(once.tokens["map-a"][0].y, 20);
+  const twice = placement.normalizePcMapState(once);
+  assert.deepStrictEqual(once.tokens, twice.tokens);
+  pass("normalize repairs stale PC token on canonical map");
+} catch (err) {
+  fail(`stale same-map token sync: ${err.message}`);
 }
 
 const placementSrc = fs.readFileSync(path.join(root, "js/core/map-pc-placement.js"), "utf8");
@@ -228,6 +248,46 @@ async function runAsyncPlayerMapTests() {
       grid: { pixelsPerGrid: 100, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
     };
     const mapState = {
+      partyPositions: { "pc:pc-a": { mapId: "map-a", x: 10, y: 20 } },
+      tokens: {
+        "map-a": [
+          {
+            id: "t-pc-stale",
+            kind: "pc",
+            catalogueId: "pc-a",
+            label: "Hero",
+            x: 9,
+            y: 9,
+            visible: true,
+            gridCells: 1
+          }
+        ]
+      }
+    };
+    const tokens = await playerMap.buildPlayerMapTokens(
+      mapState,
+      "map-a",
+      "pc-a",
+      mapMeta,
+      new Map([["pc-a", { name: "Hero" }]])
+    );
+    const self = tokens.find((t) => t.catalogueId === "pc-a");
+    assert.ok(self, "expected PC token");
+    assert.strictEqual(self.percent.x, 10);
+    assert.strictEqual(self.percent.y, 20);
+    pass("player map uses canonical partyPositions for PC coords on same map");
+  } catch (err) {
+    fail(`canonical PC coords on player map: ${err.message}`);
+  }
+
+  try {
+    const mapMeta = {
+      calibrated: true,
+      widthPx: 1000,
+      heightPx: 700,
+      grid: { pixelsPerGrid: 100, origin: { x: 0, y: 0 }, sizeX: 10, sizeY: 10 }
+    };
+    const mapState = {
       partyPositions: { "pc:pc-a": { mapId: "dragons-rest", x: 10, y: 20 } },
       pinPositions: {
         "dragons-rest": {
@@ -289,6 +349,18 @@ const playerMapViewSrc = fs.readFileSync(path.join(root, "js/core/player-map-vie
 if (!playerMapViewSrc.includes("player-map-zoom-in") || !playerMapViewSrc.includes("player-map-tokens")) {
   fail("player-map-view missing zoom chrome or token layer");
 } else pass("player map view has zoom + token layer");
+
+if (!playerMapViewSrc.includes("player-map-center-btn") || !playerMapViewSrc.includes("centerOnSelf")) {
+  fail("player-map-view missing Center on me control");
+} else pass("player map Center on me");
+
+if (!playerMapViewSrc.includes("viewportsByMapId") || !playerMapViewSrc.includes("saveViewport")) {
+  fail("player-map-view missing per-map viewport persistence");
+} else pass("player map viewport persistence");
+
+if (!playerMapViewSrc.includes("player-map-stale") || !playerMapViewSrc.includes("setStaleBanner")) {
+  fail("player-map-view missing poll stale/retrying indicator");
+} else pass("player map stale poll indicator");
 
 if (!playerMapViewSrc.includes("tokenSpan") || !playerMapViewSrc.includes("player-map-token--round")) {
   fail("player-map-view missing DM-aligned grid token sizing");

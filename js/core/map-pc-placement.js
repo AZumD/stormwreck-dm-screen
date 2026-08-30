@@ -36,6 +36,33 @@ window.MapPcPlacement = (function () {
     return 0;
   }
 
+  function syncTokenToCanonicalCoords(token, canonical) {
+    if (!token || !canonical || canonical.x == null || canonical.y == null) return token;
+    if (token.x === canonical.x && token.y === canonical.y) return token;
+    return { ...token, x: canonical.x, y: canonical.y };
+  }
+
+  function syncCalibratedTokenWorldCoords(state) {
+    if (!window.MapPanel?.getEffectiveMaps || !window.MapDistance?.percentToWorld) return state;
+    const maps = MapPanel.getEffectiveMaps();
+    Object.entries(state.partyPositions || {}).forEach(([partyId, canonical]) => {
+      if (!canonical?.mapId || canonical.x == null || canonical.y == null) return;
+      const catalogueId = catalogueIdFromPartyId(partyId);
+      if (!catalogueId) return;
+      const mapDef = maps.find((m) => m.id === canonical.mapId);
+      if (!mapDef || !window.MapTokenSize?.isCalibratedMap?.(mapDef)) return;
+      const list = state.tokens[canonical.mapId];
+      if (!Array.isArray(list)) return;
+      const idx = list.findIndex((t) => matchesPcToken(t, catalogueId, partyId));
+      if (idx < 0) return;
+      const world = MapDistance.percentToWorld(canonical.x, canonical.y, mapDef);
+      if (!world) return;
+      if (list[idx].x === world.x && list[idx].y === world.y) return;
+      list[idx] = { ...list[idx], x: world.x, y: world.y };
+    });
+    return state;
+  }
+
   function cloneTokensMap(tokens) {
     const out = {};
     Object.keys(tokens || {}).forEach((mapId) => {
@@ -115,6 +142,18 @@ window.MapPcPlacement = (function () {
           (t) => !matchesPcToken(t, catalogueId, partyId) || t.id === keep.id
         );
       }
+
+      const token = (state.tokens[canonicalMapId] || []).find((t) =>
+        matchesPcToken(t, catalogueId, partyId)
+      );
+      if (token && canonical.x != null && canonical.y != null) {
+        const synced = syncTokenToCanonicalCoords(token, canonical);
+        if (synced !== token) {
+          state.tokens[canonicalMapId] = state.tokens[canonicalMapId].map((t) =>
+            t.id === token.id ? synced : t
+          );
+        }
+      }
     });
 
     return state;
@@ -125,7 +164,7 @@ window.MapPcPlacement = (function () {
     const state = CampaignMapState.get(campaignId);
     const beforeTokens = state.tokens || {};
     const beforeParty = state.partyPositions || {};
-    const normalized = normalizePcMapState(state);
+    const normalized = syncCalibratedTokenWorldCoords(normalizePcMapState(state));
 
     const tokensPatch = {};
     const allMapIds = new Set([

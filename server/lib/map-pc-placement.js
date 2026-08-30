@@ -28,6 +28,12 @@ function tokenTimestamp(token) {
   return 0;
 }
 
+function syncTokenToCanonicalCoords(token, canonical) {
+  if (!token || !canonical || canonical.x == null || canonical.y == null) return token;
+  if (token.x === canonical.x && token.y === canonical.y) return token;
+  return { ...token, x: canonical.x, y: canonical.y };
+}
+
 /**
  * Canonical PC location from partyPositions only.
  * Token on the canonical map is attached for world coords / combat art — never used to pick mapId.
@@ -57,6 +63,7 @@ function findCanonicalPcLocation(mapState, catalogueId) {
  * Repair tokens to agree with canonical partyPositions.
  * - Removes PC tokens on non-canonical maps
  * - Dedupes multiple PC tokens on the canonical map (newest wins)
+ * - Syncs remaining canonical-map PC token x/y to partyPositions
  * - Legacy: if tokens exist but no partyPositions, promotes newest token to partyPositions
  */
 function normalizePcMapState(mapState) {
@@ -117,6 +124,18 @@ function normalizePcMapState(mapState) {
       state.tokens[canonicalMapId] = state.tokens[canonicalMapId].filter(
         (t) => !matchesPcToken(t, catalogueId, partyId) || t.id === keep.id
       );
+    }
+
+    const token = (state.tokens[canonicalMapId] || []).find((t) =>
+      matchesPcToken(t, catalogueId, partyId)
+    );
+    if (token && canonical.x != null && canonical.y != null) {
+      const synced = syncTokenToCanonicalCoords(token, canonical);
+      if (synced !== token) {
+        state.tokens[canonicalMapId] = state.tokens[canonicalMapId].map((t) =>
+          t.id === token.id ? synced : t
+        );
+      }
     }
   });
 
