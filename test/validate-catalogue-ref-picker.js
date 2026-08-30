@@ -92,19 +92,11 @@ if (!registry.includes("inventory") || !registry.includes('refsBlock("Spells"'))
   pass("entity-registry includes inventory and spell refs");
 }
 
-const pcHtml = fs.readFileSync(path.join(root, "pc-katalog/index.html"), "utf8");
-const npcHtml = fs.readFileSync(path.join(root, "npc-katalog/index.html"), "utf8");
-const monHtml = fs.readFileSync(path.join(root, "monster-katalog/index.html"), "utf8");
-for (const [label, html] of [
-  ["pc", pcHtml],
-  ["npc", npcHtml],
-  ["monster", monHtml]
-]) {
-  for (const seed of ["core-skills.js", "core-features.js", "core-spells.js", "stormwreck-isle.js"]) {
-    if (!html.includes(seed)) fail(`${label} page missing ${seed}`);
-  }
+const compendiumHtml = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
+for (const seed of ["core-skills.js", "core-features.js", "core-spells.js", "stormwreck-isle.js"]) {
+  if (!compendiumHtml.includes(seed)) fail(`compendium page missing ${seed}`);
 }
-pass("PC/NPC/monster pages load related catalogue seeds");
+pass("compendium loads related catalogue seeds");
 
 if (failed) {
   console.error(`\n${failed} failure(s)`);

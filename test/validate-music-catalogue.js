@@ -99,6 +99,7 @@ const configs = fs.readFileSync(path.join(root, "js/core/catalogue/configs.js"),
 const api = fs.readFileSync(path.join(root, "server/routes/api.js"), "utf8");
 const player = fs.readFileSync(path.join(root, "server/lib/player.js"), "utf8");
 const landing = fs.readFileSync(path.join(root, "dm/index.html"), "utf8");
+const compendiumHtml = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
 const musicHtml = fs.readFileSync(path.join(root, "music-katalog/index.html"), "utf8");
 
 if (!ids.includes('"music"')) fail("ids.js missing music type");
@@ -110,12 +111,16 @@ else pass("client CatalogueTypes.music");
 if (!configs.includes("music:") || !configs.includes('type: "audio"')) fail("configs.js music schema");
 else pass("music catalogue config");
 
-if (!landing.includes("music-katalog") || !landing.includes("Media")) fail("landing Music link");
-else pass("landing Music catalogue link");
+if (!landing.includes("compendium/") || !landing.includes("Compendium")) fail("landing Compendium link");
+else pass("landing Compendium link");
 
-if (!musicHtml.includes('CatalogueApp.init("music")') || !musicHtml.includes("music-ui.js")) {
-  fail("music-katalog page");
-} else pass("music-katalog page");
+if (!musicHtml.includes('data-type="music"') || !musicHtml.includes("legacy-redirect.js")) {
+  fail("music-katalog legacy redirect");
+} else pass("music-katalog legacy redirect");
+
+if (!compendiumHtml.includes("music-ui.js") || !compendiumHtml.includes("CatalogueApp")) {
+  fail("compendium missing music catalogue wiring");
+} else pass("compendium music wiring");
 
 if (!player.includes('"music"') || !/PLAYER_BLOCKED_CATALOGUE_TYPES[\s\S]*music/.test(player)) {
   fail("music should be blocked from player catalogues");

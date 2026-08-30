@@ -127,3 +127,4 @@
 [2026-08-31] UX Phase 6: universal command palette (Ctrl+K). See command-palette.js, COMMAND-PALETTE.md
 [2026-08-31] UX Phase 7: Reference quick-reference overview (scene context, pins, recents). See reference-ui.js, REFERENCE-UI.md
 [2026-08-31] UX Phase 8: campaign UX coherence audit (Reference close, Escape stack, terminology, shell parity). See validate-campaign-coherence.js
+[2026-08-31] UX Phase 9: unified Compendium (`/dm/compendium/`), CatalogueApp lifecycle, legacy katalog redirects. See COMPENDIUM.md, validate-compendium.js

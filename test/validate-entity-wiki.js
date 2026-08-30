@@ -31,7 +31,7 @@ const configs = read("js/core/catalogue/configs.js");
 const appSrc = read("js/core/catalogue/app.js");
 const features = read("js/catalogue-seeds/core-features.js");
 const storm = read("js/catalogue-seeds/stormwreck-isle.js");
-const monsterHtml = read("monster-katalog/index.html");
+const compendiumHtml = read("dm/compendium/index.html");
 const parserSrc = read("js/core/parser.js");
 const typesSrc = read("js/core/catalogue/types.js");
 
@@ -55,9 +55,9 @@ if (!storm.includes("traitRefs") || !storm.includes("undead-fortitude") || !stor
   fail("Zombie seed missing trait/action refs");
 } else pass("Zombie catalogue refs");
 
-if (!monsterHtml.includes("entity-ui.js") || !monsterHtml.includes("entity-modal")) {
-  fail("Monster katalog missing EntityUI");
-} else pass("Monster katalog EntityUI");
+if (!compendiumHtml.includes("entity-ui.js") || !compendiumHtml.includes("entity-modal")) {
+  fail("Compendium missing EntityUI");
+} else pass("Compendium EntityUI");
 
 if (!appSrc.includes("cannot resolve") && !appSrc.includes("No broken link") && !appSrc.includes("Legacy plain")) {
   /* renderEntityRefHtml comment */

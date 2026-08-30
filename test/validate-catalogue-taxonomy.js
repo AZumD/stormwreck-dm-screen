@@ -364,7 +364,11 @@ for (const needle of [
 }
 pass("stormwreck-isle.js taxonomy fields present");
 
-/* Catalogue pages still boot */
+/* Legacy catalogue folders redirect; compendium hosts CatalogueApp */
+const compendiumHtml = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
+if (!compendiumHtml.includes("CatalogueApp") || !compendiumHtml.includes("CompendiumApp.init")) {
+  fail("compendium missing CatalogueApp host");
+}
 const folders = {
   item: "item-katalog",
   class: "class-katalog",
@@ -377,9 +381,11 @@ const folders = {
 };
 for (const [type, folder] of Object.entries(folders)) {
   const html = fs.readFileSync(path.join(root, folder, "index.html"), "utf8");
-  if (!html.includes(`CatalogueApp.init("${type}")`)) fail(`${folder} broken init`);
+  if (!html.includes("legacy-redirect.js") || !html.includes(`data-type="${type}"`)) {
+    fail(`${folder} missing legacy redirect`);
+  }
 }
-pass("catalogue pages still call CatalogueApp.init");
+pass("legacy catalogue URLs redirect to compendium");
 
 if (failed) {
   console.error(`\n${failed} failure(s)`);

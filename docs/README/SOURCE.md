@@ -49,7 +49,7 @@ DM Library groups and facets by Kind. Set Kind on the Identity section when crea
 ```
 
 ## Where to paste text (DM)
-1. Open **DM Library → Source Catalogue** (`/source-katalog/`)
+1. Open **DM Library → Compendium** (`/dm/compendium/?type=source`)
 2. **New source** (or pick an existing entry → **Edit**)
 3. Fill **Identity** (title, **Kind**, abbreviation…) as usual
 4. Scroll to **Chapters & subchapters**

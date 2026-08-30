@@ -88,7 +88,7 @@ window.MapSpatial = (function () {
     const settingsHtml = `
       <div id="map-spatial-chrome" class="map-spatial-chrome">
         <div class="map-spatial-row">
-          <a class="map-uvtt-import btn-like" id="map-uvtt-catalogue-link" href="/location-katalog/index.html">
+          <a class="map-uvtt-import btn-like" id="map-uvtt-catalogue-link" href="/dm/compendium/?type=location">
             Manage UVTT in Location catalogue
           </a>
           <span id="map-kind-badge" class="map-kind-badge" hidden></span>

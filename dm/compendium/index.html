@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compendium — DM Library</title>
+  <link rel="stylesheet" href="../../css/catalogue.css?v=20260831c1">
+  <link rel="stylesheet" href="../../css/style.css?v=20260831c1">
+  <link rel="stylesheet" href="../../css/compendium.css?v=20260831c1">
+</head>
+<body class="landing-page landing-subpage catalogue-page compendium-page">
+  <div class="landing-atmosphere" aria-hidden="true"></div>
+
+  <div class="compendium-layout">
+    <aside class="compendium-rail" aria-label="Compendium categories">
+      <div class="compendium-rail__head">
+        <a class="compendium-rail__back" href="/dm/">← DM Library</a>
+        <p class="compendium-rail__eyebrow">Compendium</p>
+      </div>
+      <nav id="compendium-nav" class="compendium-nav"></nav>
+    </aside>
+
+    <div class="compendium-main">
+      <header class="compendium-header landing-header landing-header--compact">
+        <button type="button" id="compendium-nav-toggle" class="compendium-nav-toggle" aria-expanded="false" aria-controls="compendium-nav">Browse</button>
+        <div class="compendium-header__titles">
+          <h1 id="cat-title">NPCs</h1>
+          <p class="lead" id="cat-subtitle">Recurring characters with stats, gear, and story notes.</p>
+        </div>
+        <div class="header-rule" aria-hidden="true"></div>
+      </header>
+
+      <div class="catalogue-shell compendium-catalogue-shell">
+        <aside class="catalogue-sidebar" aria-label="Entry list">
+          <div class="catalogue-sidebar__tools">
+            <input type="search" id="cat-search" class="cat-search" placeholder="Search…">
+            <button type="button" id="cat-new" class="cat-new-btn">New entry</button>
+          </div>
+          <div id="cat-list" class="cat-list"></div>
+        </aside>
+
+        <main class="catalogue-editor" id="cat-editor" aria-label="Catalogue entry"></main>
+      </div>
+
+      <footer class="landing-footer compendium-footer">
+        <p>Local storage · no login · just for you</p>
+      </footer>
+    </div>
+  </div>
+
+  <div id="entity-tooltip" class="entity-tooltip hidden" role="tooltip"></div>
+  <dialog id="entity-modal" class="entity-modal">
+    <div class="modal-header">
+      <h2 id="modal-title"></h2>
+      <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </dialog>
+
+  <script src="../../js/core/save-status.js?v=20260831c1"></script>
+  <script src="../../js/core/local-api-client.js?v=20260831c1"></script>
+  <script src="../../js/i18n/en.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/types.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/store.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/images.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/configs.js?v=20260831c1"></script>
+  <script src="../../js/catalogue-seeds/core-skills.js?v=20260831c1"></script>
+  <script src="../../js/catalogue-seeds/core-features.js?v=20260831c1"></script>
+  <script src="../../js/catalogue-seeds/core-spells.js?v=20260831c1"></script>
+  <script src="../../js/catalogue-seeds/core-rules.js?v=20260831c1"></script>
+  <script src="../../js/catalogue-seeds/stormwreck-isle.js?v=20260831c1"></script>
+  <script src="../../js/core/parser.js?v=20260831c1"></script>
+  <script src="../../js/core/entity-registry.js?v=20260831c1"></script>
+  <script src="../../js/core/entity-ui.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/music-ui.js?v=20260831c1"></script>
+  <script src="../../js/core/source-ui.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/app.js?v=20260831c1"></script>
+  <script src="../../js/core/catalogue/compendium.js?v=20260831c1"></script>
+  <script>CompendiumApp.init().catch(function (err) { console.error(err); });</script>
+</body>
+</html>

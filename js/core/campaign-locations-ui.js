@@ -57,7 +57,7 @@ window.CampaignLocationsUI = (function () {
 
     return `
       <div class="campaign-locations">
-        <p class="campaign-locations__lede">Locations in this campaign appear in the map panel. Upload maps and UVTT files in the <a href="/location-katalog/index.html">Location catalogue</a>.</p>
+        <p class="campaign-locations__lede">Locations in this campaign appear in the map panel. Upload maps and UVTT files in the <a href="/dm/compendium/?type=location">Compendium → Locations</a>.</p>
         <div class="campaign-locations__toolbar">
           <button type="button" class="toolbar-btn" id="campaign-add-location">Add location</button>
         </div>

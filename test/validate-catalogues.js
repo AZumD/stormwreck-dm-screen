@@ -49,14 +49,26 @@ for (const type of types) {
     continue;
   }
   const html = fs.readFileSync(htmlPath, "utf8");
-  if (!html.includes(`CatalogueApp.init("${type}")`)) fail(`${folder} missing init("${type}")`);
-  else pass(`${folder} init call`);
-
-  if (!html.includes("catalogue/store.js")) fail(`${folder} missing store.js`);
-  if (!html.includes("catalogue.css")) fail(`${folder} missing catalogue.css`);
+  if (!html.includes("legacy-redirect.js") || !html.includes(`data-type="${type}"`)) {
+    fail(`${folder} missing legacy redirect to compendium`);
+  } else {
+    pass(`${folder} legacy redirect`);
+  }
 
   if (!configsCode.includes(`${type}:`)) fail(`configs.js missing ${type} config`);
   else pass(`config for ${type}`);
+}
+
+const compendiumHtml = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
+if (!compendiumHtml.includes("CompendiumApp.init") || !compendiumHtml.includes('id="cat-list"')) {
+  fail("dm/compendium/index.html incomplete");
+} else {
+  pass("unified compendium page");
+}
+if (!compendiumHtml.includes("stormwreck-isle.js") || !compendiumHtml.includes("core-rules.js")) {
+  fail("compendium missing seed scripts");
+} else {
+  pass("compendium loads catalogue seeds");
 }
 
 if (!storeCode.includes("catalogue-${type}") && !storeCode.includes("`catalogue-${type}`"))
@@ -72,9 +84,11 @@ if (!appCode.includes("renderWikiView") || !appCode.includes('data-action="edit"
   pass("app.js wiki read view");
 }
 
-if (!landing.includes("pc-katalog") || !landing.includes("location-katalog") || !landing.includes("race-katalog") || !landing.includes("class-katalog") || !landing.includes("spell-katalog") || !landing.includes("skill-katalog") || !landing.includes("feature-katalog"))
-  fail("landing page missing catalogue links");
-else pass("landing page links to catalogues");
+if (!landing.includes("compendium/") || !landing.includes("Compendium")) {
+  fail("landing page missing Compendium link");
+} else {
+  pass("landing page links to Compendium");
+}
 
 if (!landing.includes("landing-sidebar")) fail("landing missing catalogue sidebar");
 else pass("landing catalogue sidebar");
@@ -101,25 +115,23 @@ if (!coreSeeds.includes("CatalogueSeeds.race") || !coreSeeds.includes("Catalogue
 
 const raceHtml = fs.readFileSync(path.join(root, "race-katalog/index.html"), "utf8");
 const classHtml = fs.readFileSync(path.join(root, "class-katalog/index.html"), "utf8");
-if (!raceHtml.includes("core-rules.js")) fail("race-katalog missing core-rules seeds");
-else pass("race-katalog loads core-rules");
-if (!classHtml.includes("core-rules.js")) fail("class-katalog missing core-rules seeds");
-else pass("class-katalog loads core-rules");
+if (!compendiumHtml.includes("core-rules.js")) fail("compendium missing core-rules seeds");
+else pass("compendium loads core-rules");
 
 const spellSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-spells.js"), "utf8");
-const spellHtml = fs.readFileSync(path.join(root, "spell-katalog/index.html"), "utf8");
+const spellHtml = compendiumHtml;
 if (!spellSeeds.includes("CatalogueSeeds.spell") || !spellSeeds.includes("spell-fireball")) {
   fail("core-spells seeds incomplete");
 } else {
   pass("core-spells seed file");
 }
-if (!spellHtml.includes("core-spells.js")) fail("spell-katalog missing core-spells");
-else pass("spell-katalog loads core-spells");
+if (!compendiumHtml.includes("core-spells.js")) fail("compendium missing core-spells");
+else pass("compendium loads core-spells");
 
 const skillSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-skills.js"), "utf8");
 const featureSeeds = fs.readFileSync(path.join(root, "js/catalogue-seeds/core-features.js"), "utf8");
-const skillHtml = fs.readFileSync(path.join(root, "skill-katalog/index.html"), "utf8");
-const featureHtml = fs.readFileSync(path.join(root, "feature-katalog/index.html"), "utf8");
+const skillHtml = compendiumHtml;
+const featureHtml = compendiumHtml;
 if (!skillSeeds.includes("CatalogueSeeds.skill") || !skillSeeds.includes("skill-nature")) {
   fail("core-skills seeds incomplete");
 } else {
@@ -130,10 +142,10 @@ if (!featureSeeds.includes("CatalogueSeeds.feature") || !featureSeeds.includes("
 } else {
   pass("core-features seed file");
 }
-if (!skillHtml.includes("core-skills.js")) fail("skill-katalog missing core-skills");
-else pass("skill-katalog loads core-skills");
-if (!featureHtml.includes("core-features.js")) fail("feature-katalog missing core-features");
-else pass("feature-katalog loads core-features");
+if (!compendiumHtml.includes("core-skills.js")) fail("compendium missing core-skills");
+else pass("compendium loads core-skills");
+if (!compendiumHtml.includes("core-features.js")) fail("compendium missing core-features");
+else pass("compendium loads core-features");
 
 if (!coreSeeds.includes("featureRefs") || !coreSeeds.includes("@feature:wild-shape")) {
   fail("core-rules missing feature references on classes/races");
@@ -166,10 +178,10 @@ else pass("app merges seeds on init");
 
 const npcHtml = fs.readFileSync(path.join(root, "npc-katalog/index.html"), "utf8");
 const itemHtml = fs.readFileSync(path.join(root, "item-katalog/index.html"), "utf8");
-if (!npcHtml.includes("stormwreck-isle.js")) fail("npc-katalog missing seed script");
-else pass("npc-katalog loads seeds");
-if (!itemHtml.includes("stormwreck-isle.js")) fail("item-katalog missing seed script");
-else pass("item-katalog loads seeds");
+if (!compendiumHtml.includes("stormwreck-isle.js")) fail("compendium missing stormwreck seeds");
+else pass("compendium loads stormwreck seeds");
+if (!npcHtml.includes("legacy-redirect.js")) fail("npc-katalog should redirect to compendium");
+else pass("npc-katalog legacy redirect");
 
 if (failed) {
   console.error(`\n${failed} check(s) failed.`);

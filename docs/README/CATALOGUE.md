@@ -9,6 +9,8 @@ Shared catalogue engine for PC / NPC / Race / Class / Skill / Feature / Spell / 
 - `js/core/catalogue/images.js` — file-backed portraits/maps (`/data/assets`, IndexedDB legacy)
 - `js/core/catalogue/configs.js` — field schemas
 - `js/core/catalogue/app.js` — list + wiki view + form editor (map tokens compress to PNG with alpha)
+- `dm/compendium/` + `js/core/catalogue/compendium.js` — unified Compendium shell (see `docs/README/COMPENDIUM.md`)
+- `{type}-katalog/index.html` — legacy URLs redirect into Compendium
 
 ## Browse vs edit
 Selecting a list entry opens a **wiki-style read view** (title, summary, sections, portrait/map).

@@ -102,11 +102,7 @@ if (!registry.includes("CatalogueImages.hydrateAll")) {
 }
 
 const pages = [
-  "pc-katalog/index.html",
-  "npc-katalog/index.html",
-  "item-katalog/index.html",
-  "monster-katalog/index.html",
-  "location-katalog/index.html",
+  "dm/compendium/index.html",
   "campaigns/stormwreck-isle/index.html"
 ];
 

@@ -190,6 +190,19 @@
     color 0.2s var(--landing-ease);
 }
 
+.landing-nav__link--featured {
+  font-weight: 600;
+  border: 1px solid rgba(196, 160, 53, 0.35);
+  background: rgba(196, 160, 53, 0.08);
+}
+
+.landing-sidebar__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--landing-muted, #9aa4b2);
+}
+
 .landing-nav__link:hover,
 .landing-nav__link:focus-visible {
   background: rgba(196, 160, 53, 0.1);

@@ -47,7 +47,7 @@ for (const [label, html] of [
     fail(`${label} missing Layers popover / filters`);
   } else pass(`${label} has Layers popover`);
 
-  if (!html.includes('id="map-settings"') || !html.includes("location-katalog")) {
+  if (!html.includes('id="map-settings"') || !html.includes("compendium/?type=location")) {
     fail(`${label} missing collapsible map settings / Location catalogue link`);
   } else pass(`${label} has map settings`);
 

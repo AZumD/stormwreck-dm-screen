@@ -8,6 +8,19 @@ window.CatalogueApp = (function () {
   const MAX_MAP_CHARS = 20 * 1024 * 1024;
   const ABILITY_IDS = new Set(["str", "dex", "con", "int", "wis", "cha"]);
 
+  /** @type {{ type: string, flushSave: () => Promise<void>, selectEntry: (id: string, mode?: string) => void, dispose: () => void } | null} */
+  let activeInstance = null;
+
+  async function flushActive() {
+    if (activeInstance?.flushSave) await activeInstance.flushSave();
+  }
+
+  function disposeActive() {
+    if (!activeInstance) return;
+    activeInstance.dispose();
+    activeInstance = null;
+  }
+
   function escapeHtml(str) {
     return String(str ?? "")
       .replace(/&/g, "&amp;")
@@ -983,7 +996,7 @@ window.CatalogueApp = (function () {
     });
   }
 
-  function init(type) {
+  function assertCatalogueType(type) {
     const config = CatalogueConfigs[type];
     if (!config) {
       const registered = window.CatalogueTypes?.ids?.()?.includes(type);
@@ -993,21 +1006,13 @@ window.CatalogueApp = (function () {
           : `Unknown catalogue type: ${type}`
       );
     }
+    return config;
+  }
 
-    const start = async () => {
-      document.body.classList.add("is-booting");
-      if (window.LocalApiClient) await LocalApiClient.ready();
-      const relatedTypes = collectRelatedTypes(config);
-      if (window.CatalogueStore) await CatalogueStore.bootstrap([type, ...relatedTypes]);
-      if (window.CatalogueImages) {
-        await CatalogueImages.preload(type);
-        await CatalogueImages.migrateType(type);
-      }
-      await boot();
-      document.body.classList.remove("is-booting");
-    };
-
-    async function boot() {
+  async function mountCatalogue(type, options = {}) {
+    const config = assertCatalogueType(type);
+    const ac = new AbortController();
+    const bindOpts = { signal: ac.signal };
     const relatedTypes = collectRelatedTypes(config);
     if (window.CatalogueStore && relatedTypes.length) {
       await CatalogueStore.bootstrap([type, ...relatedTypes]);
@@ -1035,7 +1040,7 @@ window.CatalogueApp = (function () {
     const titleEl = document.getElementById("cat-title");
     const subtitleEl = document.getElementById("cat-subtitle");
 
-    if (titleEl) titleEl.textContent = config.title;
+    if (titleEl) titleEl.textContent = options.titleOverride || config.title;
     if (subtitleEl) subtitleEl.textContent = config.subtitle;
     if (newBtn) newBtn.textContent = config.newLabel;
     if (searchEl) searchEl.placeholder = config.searchPlaceholder;
@@ -1726,7 +1731,9 @@ window.CatalogueApp = (function () {
       });
     }
 
-    newBtn?.addEventListener("click", async () => {
+    newBtn?.addEventListener(
+      "click",
+      async () => {
       clearTimeout(saveTimer);
       if (type === "music" && window.MusicCatalogueUi) {
         const entry = await MusicCatalogueUi.openUploadDialog({
@@ -1748,28 +1755,120 @@ window.CatalogueApp = (function () {
         return;
       }
       renderEditor(entry.id, { mode: "edit" });
-    });
+    },
+      bindOpts
+    );
 
-    listEl?.addEventListener("click", async (e) => {
+    listEl?.addEventListener(
+      "click",
+      async (e) => {
       const btn = e.target.closest(".cat-list-item");
       if (!btn) return;
       clearTimeout(saveTimer);
       const form = editorEl.querySelector(".cat-form");
       if (form && activeId) await saveCurrent(form);
       renderEditor(btn.dataset.id, { mode: "view" });
-    });
+    },
+      bindOpts
+    );
 
-    searchEl?.addEventListener("input", renderList);
+    searchEl?.addEventListener("input", renderList, bindOpts);
+
+    if (searchEl) searchEl.value = "";
 
     renderList();
     renderEditor(null);
-    } /* end boot */
 
-    start();
+    return {
+      type,
+      flushSave: async () => {
+        clearTimeout(saveTimer);
+        const form = editorEl?.querySelector(".cat-form");
+        if (form && activeId) await saveCurrent(form);
+      },
+      selectEntry: (id, mode) => {
+        clearTimeout(saveTimer);
+        renderEditor(id, { mode: mode || "view" });
+      },
+      dispose: () => {
+        ac.abort();
+        clearTimeout(saveTimer);
+        const tools = searchEl?.closest(".catalogue-sidebar__tools");
+        tools?.querySelector("[data-cat-facets]")?.remove();
+        if (searchEl) searchEl.value = "";
+        if (listEl) listEl.innerHTML = "";
+        if (editorEl) {
+          editorEl.innerHTML = `<div class="cat-editor-empty"><p>Select an entry or create a new one.</p></div>`;
+        }
+      }
+    };
+  }
+
+  async function open(type, options = {}) {
+    assertCatalogueType(type);
+    if (activeInstance?.type === type && !options.forceRemount) {
+      if (options.titleOverride) {
+        const titleEl = document.getElementById("cat-title");
+        if (titleEl) titleEl.textContent = options.titleOverride;
+      }
+      if (options.entryId && activeInstance.selectEntry) {
+        await flushActive();
+        activeInstance.selectEntry(options.entryId, options.mode);
+      }
+      return activeInstance;
+    }
+
+    await flushActive();
+    disposeActive();
+
+    document.body.classList.add("is-booting");
+    try {
+      if (window.LocalApiClient) await LocalApiClient.ready();
+      const config = CatalogueConfigs[type];
+      const relatedTypes = collectRelatedTypes(config);
+      if (window.CatalogueStore) await CatalogueStore.bootstrap([type, ...relatedTypes]);
+      if (window.CatalogueImages) {
+        await CatalogueImages.preload(type);
+        await CatalogueImages.migrateType(type);
+      }
+      activeInstance = await mountCatalogue(type, options);
+      if (options.entryId && activeInstance.selectEntry) {
+        activeInstance.selectEntry(options.entryId, options.mode);
+      }
+    } finally {
+      document.body.classList.remove("is-booting");
+    }
+    return activeInstance;
+  }
+
+  function init(type) {
+    open(type).catch((err) => console.error("CatalogueApp.init failed", err));
+  }
+
+  function setType(type, options = {}) {
+    return open(type, options);
+  }
+
+  function getCurrentType() {
+    return activeInstance?.type ?? null;
+  }
+
+  async function flushPendingSave() {
+    await flushActive();
+  }
+
+  async function dispose() {
+    await flushActive();
+    disposeActive();
   }
 
   return {
     init,
+    open,
+    setType,
+    dispose,
+    getCurrentType,
+    flushPendingSave,
     /* Exported for tests / tooling — browsing helpers stay config-driven */
     _test: {
       matchesShowWhen,

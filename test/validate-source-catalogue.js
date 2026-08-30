@@ -50,12 +50,12 @@ if (!app.includes('field.type === "chapters"') || !app.includes("SourceUi") || !
 if (!sourceUi.includes("window.SourceUi") || !sourceUi.includes("renderChaptersWiki")) {
   fail("source-ui.js incomplete");
 } else pass("source-ui.js");
-if (!landing.includes("source-katalog") || !landing.includes("Source Catalogue")) {
-  fail("landing missing Source link");
-} else pass("landing Source Catalogue link");
-if (!page.includes('CatalogueApp.init("source")') || !page.includes("source-ui.js")) {
-  fail("source-katalog page");
-} else pass("source-katalog page");
+if (!landing.includes("compendium/") || !landing.includes("Compendium")) {
+  fail("landing missing Compendium link");
+} else pass("landing Compendium link");
+if (!page.includes("legacy-redirect.js") || !page.includes('data-type="source"')) {
+  fail("source-katalog legacy redirect");
+} else pass("source-katalog legacy redirect");
 if (!player.includes("PLAYER_LIBRARY_BROWSE_TYPES") || !player.includes('"source"')) {
   fail("player allowlist missing source browse");
 } else pass("player source browse allowlist");

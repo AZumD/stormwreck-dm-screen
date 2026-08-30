@@ -87,10 +87,11 @@ if (html.includes("catalogue-grid") || html.includes("landing-section--reference
   pass("bottom catalogue grid removed");
 }
 
-["pc-katalog", "npc-katalog", "race-katalog", "class-katalog", "spell-katalog", "skill-katalog", "feature-katalog", "item-katalog", "monster-katalog", "location-katalog", "music-katalog", "source-katalog"].forEach((folder) => {
-  if (!html.includes(folder)) fail(`landing missing link to ${folder}`);
-  else pass(`link ${folder}`);
-});
+if (!html.includes("compendium/") || !html.includes("Compendium")) {
+  fail("landing missing Compendium link");
+} else {
+  pass("link compendium");
+}
 
 if (!css.includes(".landing-sidebar") || !css.includes(".landing-body")) {
   fail("landing.css missing sidebar layout");
@@ -148,11 +149,12 @@ if (!css.includes(".card-create") || !css.includes(".create-campaign-dialog")) {
   pass("create campaign styles");
 }
 
-["campaigns/stormwreck-isle/index.html", "location-katalog/index.html", "npc-katalog/index.html"].forEach((rel) => {
-  const page = fs.readFileSync(path.join(root, rel), "utf8");
-  if (!page.includes('href="/dm/">← DM Library')) fail(`${rel} back link must point to /dm/`);
-  else pass(`${rel} DM Library back link`);
-});
+const compendiumPage = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
+if (!compendiumPage.includes('href="/dm/">← DM Library')) {
+  fail("compendium back link must point to /dm/");
+} else {
+  pass("compendium DM Library back link");
+}
 
 if (failed) {
   console.error(`\n${failed} check(s) failed`);

@@ -129,6 +129,7 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 | `scripts/data-init.mjs` + `docs/README/DEPLOY.md` | Phase 4B volume init + Railway hybrid runbook |
 
 ## Catalogues
+- **Compendium** (`/dm/compendium/`) — unified catalogue shell for all types (`docs/README/COMPENDIUM.md`)
 - Flat JSON per type under `data/catalogues/<type>/` (no category subfolders)
 - Items use controlled `category` + freeform `itemType` / `tags`
 - **Source** catalogue uses Kind: Adventures (DM-only for players), Rulebooks, Others
@@ -141,5 +142,5 @@ PC, NPC, Monster, Item, Race, Class, and Spell catalogues support a **portrait**
 ```bash
 npm test
 ```
-Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-dm-ui`, `validate-layout`, `validate-map-aspect`, `validate-catalogue-taxonomy`, `validate-catalogue-ref-picker`, `validate-write-queue`, `validate-static-guard`, `validate-add-scene-nav`, `validate-tui-lookup`, `validate-tui-functionality`, …); browser smoke HTML under `test/`.
+Live Postgres suites use dedicated test ids and must leave imported Stormwreck character data unchanged. Also: `test/validate-*.js` Node validators (`validate-compendium`, `validate-dm-ui`, `validate-layout`, …); browser smoke HTML under `test/`.
 
