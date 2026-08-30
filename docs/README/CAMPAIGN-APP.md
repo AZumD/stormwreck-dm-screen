@@ -80,6 +80,17 @@ On boot, `syncCampaignChrome` sets the sidebar title from `ADVENTURE.meta`. Work
 
 - **Current scene** toolbar jumps to the saved current section (disabled when none is marked current); from Map/Session switches to Run first
 
+## Viewed scene vs current scene
+
+| Concept | Source | Used for |
+|---------|--------|----------|
+| **Viewed/focused scene** | `focusedSceneId`, Run play view, Prep scrollspy | Sidebar highlight, scene navigation, Reference “In this scene” in Run/Prep |
+| **Current scene** | `CampaignState.getCurrentSceneId()` only | **Current Scene** toolbar/command — never inferred from browsing |
+
+Navigating to a scene (sidebar, palette, hash) changes the viewed scene only; it does not mark a scene current, complete, or skipped.
+
+## Campaign play state (continued)
+
 - NPC modals gain campaign memory through `EntityUI.addModalEnricher`
 
 
@@ -110,6 +121,8 @@ On boot, `syncCampaignChrome` sets the sidebar title from `ADVENTURE.meta`. Work
 
 | `showReferencePanel` / `showReferenceTab` | Reference overlay + tab routing |
 | `getReferenceContextSceneId` | Scene for “In this scene” (viewed scene, not always current) |
+| `closeReferencePanel` / `isReferenceOpen` | Close Reference and restore underlying workspace |
+| `bindGlobalEscape` | Escape stack: modal → palette → campaign time → Reference |
 
 | `showPanelView` | Compatibility shim; session ids → Session workspace |
 

@@ -750,6 +750,9 @@ body[data-nav-collapsed="true"] .sidebar {
   top: 0;
   z-index: 10;
   flex-wrap: wrap;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: thin;
 }
 
 .main-chrome {
@@ -1115,21 +1118,6 @@ body[data-nav-collapsed="true"] .sidebar {
   max-width: 740px;
 }
 
-.view-mode-toggle {
-  display: inline-flex;
-  gap: 0.15rem;
-  padding: 0.15rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.view-mode-btn.is-active {
-  background: var(--accent-soft);
-  border-color: rgba(196, 160, 53, 0.35);
-  color: var(--accent);
-}
-
 .workspace-switch {
   display: inline-flex;
   gap: 0.15rem;
@@ -1140,12 +1128,32 @@ body[data-nav-collapsed="true"] .sidebar {
 }
 
 .workspace-switch__btn {
-  min-width: 3.25rem;
-  padding: 0.35rem 0.7rem;
+  min-width: 3rem;
+  padding: 0.35rem 0.55rem;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.toolbar-btn--current-scene {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ref-overview__empty {
+  margin-bottom: 0.75rem;
+}
+
+.ref-overview__empty + .ref-overview__section:first-of-type {
+  margin-top: 0;
 }
 
 .workspace-switch__btn.is-active {
@@ -3418,30 +3426,7 @@ body[data-map-collapsed="true"] .map-panel {
   transform: rotate(45deg) translateX(-1px);
 }
 
-.map-panel-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
-
-.map-panel-toggle__icon {
-  display: block;
-  width: 14px;
-  height: 14px;
-  border: 1.5px solid currentColor;
-  border-radius: 2px;
-  position: relative;
-}
-
-.map-panel-toggle__icon::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border: 1px dotted currentColor;
-  border-radius: 1px;
-  opacity: 0.6;
-}
+/* map-panel-toggle removed from campaign shell (Map is a workspace) */
 
 .map-panel__body {
   flex: 1;

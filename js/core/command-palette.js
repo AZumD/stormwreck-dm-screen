@@ -187,6 +187,10 @@ window.CommandPalette = (function () {
     root?.classList.remove("is-open");
   }
 
+  function isOpen() {
+    return !!root?.classList.contains("is-open");
+  }
+
   function show() {
     if (!resultsEl || !input) return;
     root?.classList.add("is-open");
@@ -378,6 +382,7 @@ window.CommandPalette = (function () {
     refreshSceneIndex,
     open: openPalette,
     hide,
+    isOpen,
     findMatches
   };
 })();

@@ -1351,6 +1351,18 @@
     workspaceSessionBtn?.setAttribute("aria-pressed", ws === "session" ? "true" : "false");
   }
 
+  function isReferenceOpen() {
+    return activeView.type === "panel" && activeView.workspace === "reference";
+  }
+
+  function closeReferencePanel() {
+    if (!isReferenceOpen()) return;
+    clearReferenceOverlay();
+    showScrollView();
+    applyWorkspaceChrome();
+    updateNavActive();
+  }
+
   function clearReferenceOverlay() {
     document.body.classList.remove("workspace-map--panel", "workspace-session--reference");
     if (panelView) panelView.classList.add("hidden");
@@ -1439,8 +1451,20 @@
   }
 
   function bindWorkspaceControls() {
-    workspaceRunBtn?.addEventListener("click", () => setWorkspace("run"));
-    workspacePrepBtn?.addEventListener("click", () => setWorkspace("prep"));
+    workspaceRunBtn?.addEventListener("click", () => {
+      if (activeWorkspace === "run" && isReferenceOpen()) {
+        closeReferencePanel();
+        return;
+      }
+      setWorkspace("run");
+    });
+    workspacePrepBtn?.addEventListener("click", () => {
+      if (activeWorkspace === "prep" && isReferenceOpen()) {
+        closeReferencePanel();
+        return;
+      }
+      setWorkspace("prep");
+    });
     workspaceMapBtn?.addEventListener("click", () => setWorkspace("map", { preservePanel: false }));
     workspaceSessionBtn?.addEventListener("click", () => {
       if (activeWorkspace === "session" && activeView.type === "panel") {
@@ -1456,6 +1480,7 @@
   }
 
   function jumpToSection(id) {
+    if (isReferenceOpen()) closeReferencePanel();
     focusedSceneId = id;
     history.replaceState(null, "", `#${id}`);
     if (activeWorkspace === "map" || activeWorkspace === "session") {
@@ -1620,12 +1645,12 @@
       setWorkspace("session", { sessionTab: resolved.tab, preservePanel: false });
       return;
     }
-    if (!resolved.workspace) return;
-
-    if (resolved.workspace === "reference" && (activeWorkspace === "session" || activeWorkspace === "map")) {
+    if (resolved.workspace === "reference") {
       showReferencePanel(resolved.tab);
       return;
     }
+
+    if (!resolved.workspace) return;
 
     activeView = {
       type: "panel",
@@ -1885,6 +1910,7 @@
     });
 
     bindCommandPalette();
+    bindGlobalEscape();
 
     const bindEntityEvents = (root) => EntityUI.bindEntityLinks(root);
 
@@ -1896,6 +1922,37 @@
     window.addEventListener("hashchange", () => {
       const id = location.hash.replace("#", "");
       if (id && (activeView.type === "play" || activeView.type === "document")) jumpToSection(id);
+    });
+  }
+
+  function bindGlobalEscape() {
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+
+      const entityModal = document.getElementById("entity-modal");
+      if (entityModal?.open) return;
+
+      const interactionDialog = document.getElementById("interaction-dialog");
+      if (interactionDialog?.open) return;
+
+      if (window.CommandPalette?.isOpen?.()) {
+        if (document.activeElement === searchInput) return;
+        e.preventDefault();
+        CommandPalette.hide();
+        searchInput?.blur();
+        return;
+      }
+
+      if (window.DayTimeUI?.isOpen?.()) {
+        e.preventDefault();
+        DayTimeUI.close();
+        return;
+      }
+
+      if (isReferenceOpen()) {
+        e.preventDefault();
+        closeReferencePanel();
+      }
     });
   }
 
@@ -1918,6 +1975,7 @@
         navigateToScene: (id) => setWorkspace("run", { preservePanel: false, focusSceneId: id }),
         jumpToSection,
         jumpToCurrentScene: () => {
+          if (isReferenceOpen()) closeReferencePanel();
           const id = window.CampaignState?.getCurrentSceneId?.();
           if (id) jumpToSection(id);
         },

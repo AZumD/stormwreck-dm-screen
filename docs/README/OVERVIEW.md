@@ -50,6 +50,7 @@ Legacy browser `localStorage` / IndexedDB remain as a **fallback** when the API 
 - **Session** workspace hosts Notes \| Log \| Chronicle \| Progress (tab state in `sessionTab`)
 - Toolbar **Run | Prep | Map | Session**; Reference opens as an overlay without leaving the active workspace
 - Toolbar search is a universal command palette (**Ctrl+K**): entities, scenes, workspaces, session/reference tabs, Party/Music/Current Scene
+- **Escape** closes the topmost transient layer (entity modal → command palette → campaign time → Reference)
 - Scene cast + connections editable in Prep; stored in `scene-meta.json`
 
 ## Campaign editing

@@ -234,8 +234,14 @@ window.ReferenceUI = (function () {
         </div>
       </section>`;
 
+    const hasContent = sceneHtml || pinnedHtml || recentHtml;
+    const emptyHint = hasContent
+      ? ""
+      : `<p class="empty-state ref-overview__empty">${escapeHtml(t("referenceOverviewEmpty", "Pin entities or browse catalogues below. Scene context appears when a scene has cast or entity links."))}</p>`;
+
     return `
       <div class="ref-overview">
+        ${emptyHint}
         ${renderSection(t("referenceInThisScene", "In this scene"), sceneHtml)}
         ${renderSection(t("referencePinned", "Pinned"), pinnedHtml)}
         ${renderSection(t("referenceRecent", "Recent"), recentHtml)}
