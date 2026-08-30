@@ -9,9 +9,9 @@ Shared camera math and zoom constants for the player Map tab (PC-centered tactic
 ## Exports
 | Name | Role |
 |------|------|
-| `PLAYER_MAP_MIN_ZOOM` | Widest tactical zoom (above 1 — full-map fit unreachable) |
-| `PLAYER_MAP_MAX_ZOOM` | Closest tactical zoom |
-| `PLAYER_MAP_DEFAULT_ZOOM` | Session / first-open default |
+| `PLAYER_MAP_MIN_ZOOM` | Widest tactical zoom (3.2 — former closest zoom) |
+| `PLAYER_MAP_MAX_ZOOM` | Closest tactical zoom (7) |
+| `PLAYER_MAP_DEFAULT_ZOOM` | Session / first-open default (starts at min) |
 | `PLAYER_MAP_ZOOM_STEP` | Wheel / button / pinch step factor |
 | `clampZoom(z)` | Clamp into min/max |
 | `computeCenterPan(pos, worldW, worldH, viewportW, viewportH, z)` | Pan offsets that place PC percent position at viewport center |

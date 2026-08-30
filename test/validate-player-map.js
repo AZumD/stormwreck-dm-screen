@@ -329,15 +329,17 @@ if (!playerMapViewSrc.includes("translate(-50%, -50%)") || playerMapViewSrc.incl
 
 const playerMapCamera = require(path.join(root, "js/core/player-map-camera.js"));
 try {
-  assert.ok(playerMapCamera.PLAYER_MAP_MIN_ZOOM > 1, "min zoom must be > 1 (no full-map fit)");
+  assert.ok(playerMapCamera.PLAYER_MAP_MIN_ZOOM >= 3, "min zoom should be the former close tactical level");
   assert.ok(playerMapCamera.PLAYER_MAP_MAX_ZOOM > playerMapCamera.PLAYER_MAP_MIN_ZOOM);
-  assert.ok(
-    playerMapCamera.PLAYER_MAP_DEFAULT_ZOOM >= playerMapCamera.PLAYER_MAP_MIN_ZOOM &&
-      playerMapCamera.PLAYER_MAP_DEFAULT_ZOOM <= playerMapCamera.PLAYER_MAP_MAX_ZOOM
+  assert.strictEqual(
+    playerMapCamera.PLAYER_MAP_DEFAULT_ZOOM,
+    playerMapCamera.PLAYER_MAP_MIN_ZOOM,
+    "default should open at widest allowed tactical zoom"
   );
   assert.strictEqual(playerMapCamera.clampZoom(0.5), playerMapCamera.PLAYER_MAP_MIN_ZOOM);
   assert.strictEqual(playerMapCamera.clampZoom(99), playerMapCamera.PLAYER_MAP_MAX_ZOOM);
-  assert.strictEqual(playerMapCamera.clampZoom(2), 2);
+  assert.strictEqual(playerMapCamera.clampZoom(2), playerMapCamera.PLAYER_MAP_MIN_ZOOM);
+  assert.strictEqual(playerMapCamera.clampZoom(5), 5);
   pass("player map zoom limits clamp correctly");
 } catch (err) {
   fail(`zoom limits: ${err.message}`);

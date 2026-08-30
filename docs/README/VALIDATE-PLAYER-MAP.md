@@ -24,7 +24,7 @@ node test/validate-player-map.js
 - Normalize is idempotent (reload-safe)
 - Player Map tab + fog wiring + docs
 - **Camera:** PC-centered (`centerOnSelf` / `computeCenterPan` in `player-map-camera.js`), no free pan / Center-on-me / Fit / `viewportsByMapId`
-- Zoom clamped via `PLAYER_MAP_MIN_ZOOM` / `PLAYER_MAP_MAX_ZOOM` / `PLAYER_MAP_DEFAULT_ZOOM` (min > 1 so full-map fit is unreachable)
+- Zoom clamped via `PLAYER_MAP_MIN_ZOOM` (3.2) / `PLAYER_MAP_MAX_ZOOM` (7) / default at min
 - Session zoom preserved; pan offsets not persisted
 - Map tab shell fills `100dvh` and `.player-map-world` stays in-flow (absolute positioning collapses the viewport)
 - Stale poll indicator

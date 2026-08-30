@@ -11,15 +11,18 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  /** Closest tactical view (inspect immediate surroundings). */
-  const PLAYER_MAP_MAX_ZOOM = 3.2;
   /**
-   * Widest tactical view. Kept above 1 so the fitted full-map overview
-   * (world sized to the viewport at scale 1) is not reachable.
+   * Widest tactical view (most zoomed out).
+   * Matches the former closest zoom so players start tighter on the PC.
    */
-  const PLAYER_MAP_MIN_ZOOM = 1.45;
-  /** Sensible middle tactical zoom for first open / session default. */
-  const PLAYER_MAP_DEFAULT_ZOOM = 2;
+  const PLAYER_MAP_MIN_ZOOM = 3.2;
+  /**
+   * Closest tactical view (inspect immediate surroundings).
+   * Same relative span above min as the previous 1.45→3.2 range.
+   */
+  const PLAYER_MAP_MAX_ZOOM = 7;
+  /** First open / session default — start at the widest allowed tactical view. */
+  const PLAYER_MAP_DEFAULT_ZOOM = PLAYER_MAP_MIN_ZOOM;
   const PLAYER_MAP_ZOOM_STEP = 1.12;
 
   function clamp(n, lo, hi) {
