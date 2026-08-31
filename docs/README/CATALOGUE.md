@@ -22,7 +22,7 @@ Empty fields are omitted from the wiki body so pages stay readable.
 
 ### Declarative browsing (`configs.js`)
 Catalogue configs may declare:
-- `facets` — sidebar filter selects (derived options + optional fixed `options`)
+- `facets` — sidebar filter selects inside a collapsible **Filters** panel (derived options + optional fixed `options`); active filters show a count and auto-expand the panel
 - `groupBy` / `groupOrder` / `groupLabels` — compact list headings (`""` → Uncategorized)
 - `searchFields` — haystack for search (falls back to common fields)
 - `listMeta` — sidebar meta line

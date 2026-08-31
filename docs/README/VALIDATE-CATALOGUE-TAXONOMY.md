@@ -17,7 +17,7 @@ Included in `npm test` alongside `validate-catalogues.js`.
 - Item config exposes controlled `category` select + category/rarity facets and `groupBy: "category"`
 - Class/race configs group/filter by `entryKind` with Classes/Subclasses and Species/Subspecies labels
 - Feature/location/monster/spell/skill declare facets; location lists use `refType`
-- `CatalogueApp` supports `showWhen`, facets, grouping, declarative `searchFields` (no item-only facet hardcoding)
+- `CatalogueApp` supports `showWhen`, facets (collapsible Filters panel), grouping, declarative `searchFields` (no item-only facet hardcoding)
 - `mergeSeeds` backfills taxonomy fields including `legendaryActionRefs`
 - Server storage stays flat (`data/catalogues/<type>/<id>.json`); no category subfolders
 - Browse helpers: search + facets combine; missing category → Uncategorized; `showWhen` equals/notEquals

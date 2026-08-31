@@ -105,7 +105,7 @@ if (!appCode.includes("showWhen") || !appCode.includes("matchesShowWhen")) {
 } else {
   pass("app.js showWhen support");
 }
-if (!appCode.includes("data-cat-facets") || !appCode.includes("groupBy") || !appCode.includes("Uncategorized")) {
+if (!appCode.includes("data-cat-facets-panel") || !appCode.includes("data-cat-facets") || !appCode.includes("groupBy") || !appCode.includes("Uncategorized")) {
   fail("app.js missing facet/group browsing UI");
 } else {
   pass("app.js facet/group browsing");

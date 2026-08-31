@@ -1081,16 +1081,43 @@ window.CatalogueApp = (function () {
       });
     }
 
+    function activeFacetCount() {
+      return (config.facets || []).filter((f) => facetState[f.id]).length;
+    }
+
     function ensureFacetControls() {
       const tools = searchEl?.closest(".catalogue-sidebar__tools");
       if (!tools || !Array.isArray(config.facets) || !config.facets.length) return;
-      let host = tools.querySelector("[data-cat-facets]");
-      if (!host) {
-        host = document.createElement("div");
+      let panel = tools.querySelector("[data-cat-facets-panel]");
+      if (!panel) {
+        panel = document.createElement("details");
+        panel.className = "cat-facets-panel";
+        panel.setAttribute("data-cat-facets-panel", "");
+        panel.innerHTML = `<summary class="cat-facets-panel__summary"><span class="cat-facets-panel__title">Filters</span></summary>`;
+        const host = document.createElement("div");
         host.className = "cat-facets";
         host.setAttribute("data-cat-facets", "");
-        searchEl.insertAdjacentElement("afterend", host);
+        panel.appendChild(host);
+        searchEl.insertAdjacentElement("afterend", panel);
+        panel.addEventListener(
+          "change",
+          (e) => {
+            const select = e.target.closest?.("[data-facet-id]");
+            if (!select) return;
+            facetState[select.dataset.facetId] = select.value || "";
+            renderList();
+          },
+          bindOpts
+        );
       }
+      const host = panel.querySelector("[data-cat-facets]");
+      if (!host) return;
+      const active = activeFacetCount();
+      const title = panel.querySelector(".cat-facets-panel__title");
+      if (title) title.textContent = active ? `Filters (${active})` : "Filters";
+      panel.classList.toggle("cat-facets-panel--active", active > 0);
+      if (active > 0) panel.open = true;
+
       const pool = allEntries();
       host.innerHTML = config.facets
         .map((facet) => {
@@ -1110,13 +1137,6 @@ window.CatalogueApp = (function () {
             </label>`;
         })
         .join("");
-
-      host.querySelectorAll("[data-facet-id]").forEach((select) => {
-        select.addEventListener("change", () => {
-          facetState[select.dataset.facetId] = select.value || "";
-          renderList();
-        });
-      });
     }
 
     function renderList() {
@@ -1802,7 +1822,7 @@ window.CatalogueApp = (function () {
         ac.abort();
         clearTimeout(saveTimer);
         const tools = searchEl?.closest(".catalogue-sidebar__tools");
-        tools?.querySelector("[data-cat-facets]")?.remove();
+        tools?.querySelector("[data-cat-facets-panel]")?.remove();
         if (searchEl) searchEl.value = "";
         if (listEl) listEl.innerHTML = "";
         if (editorEl) {

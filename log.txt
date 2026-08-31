@@ -140,3 +140,4 @@
 [2026-08-31] Fix fog/token/grid coordinate sync (image-space paint, grid.origin, translate centering). See validate-map-coordinate-sync.js
 [2026-08-31] Fix map overlay drift: shared map-surface box for image/fog/tokens on DM and player. See validate-map-coordinate-sync.js
 [2026-08-31] Fix compendium panels hidden under wallpaper (remove duplicate style.css, z-index, opaque panels). See validate-compendium.js
+[2026-08-31] Catalogue facet filters in collapsible Filters panel (all facet catalogues). See validate-catalogue-facet-panel.js, css/catalogue.css
