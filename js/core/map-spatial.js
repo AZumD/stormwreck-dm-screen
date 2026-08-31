@@ -409,14 +409,12 @@ window.MapSpatial = (function () {
       const imgUrl = resolved.url || t.imageUrl || t.tokenImage || null;
       const hasImg = !!imgUrl;
       const labelText = (t.label || "?").slice(0, 2);
-      const fallbackLabel = MTS?.tokenLabelHtml?.(labelText, true) || "";
       const inner =
         labelHtml != null
           ? labelHtml
           : hasImg
-            ? fallbackLabel +
-              (MTS?.tokenImageHtml?.(imgUrl, t.label || t.id, resolved.fallbackUrl || t.fallbackUrl) ||
-                `<img class="map-grid-token__img" src="${escape(imgUrl)}" alt="" loading="lazy" draggable="false" ${MTS?.tokenImageErrorAttr?.() || 'onerror="this.remove()"'}>`)
+            ? MTS?.tokenImageHtml?.(imgUrl, t.label || t.id, resolved.fallbackUrl || t.fallbackUrl) ||
+                `<img class="map-grid-token__img" src="${escape(imgUrl)}" alt="" loading="lazy" draggable="false" ${MTS?.tokenImageErrorAttr?.() || 'onerror="this.remove()"'}>`
             : MTS?.tokenLabelHtml?.(labelText, false) ||
               `<span class="map-grid-token__label">${escape(labelText)}</span>`;
       return `<button type="button" class="map-grid-token${extraClass}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${sel}" data-token-id="${escape(t.id)}"
@@ -526,28 +524,52 @@ window.MapSpatial = (function () {
         let dragging = false;
         let moved = false;
         let dragWorld = null;
+        let dragOffsetPct = null;
+        let startX = 0;
+        let startY = 0;
         btn.addEventListener("pointerdown", (e) => {
           e.stopPropagation();
           e.preventDefault();
           dragging = true;
           moved = false;
           dragWorld = null;
+          dragOffsetPct = null;
+          startX = e.clientX;
+          startY = e.clientY;
+          const tok = tokensForMap(map.id).find((t) => t.id === id);
+          const pos = tok ? tokenStylePos(tok, map) : null;
+          const clickPct = window.MapDistance?.clientToPercent?.(e.clientX, e.clientY, mapImage, map);
+          if (pos && clickPct) {
+            dragOffsetPct = {
+              x: parseFloat(pos.left) - clickPct.x,
+              y: parseFloat(pos.top) - clickPct.y
+            };
+          }
+          btn.classList.add("map-grid-token--dragging");
           btn.setPointerCapture(e.pointerId);
         });
         btn.addEventListener("pointermove", (e) => {
           if (!dragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          if (!moved && Math.hypot(dx, dy) < 5) return;
           moved = true;
-          let world = clientToWorld(e.clientX, e.clientY, map);
+          const clickPct = window.MapDistance?.clientToPercent?.(e.clientX, e.clientY, mapImage, map);
+          if (!clickPct) return;
+          const offset = dragOffsetPct || { x: 0, y: 0 };
+          let world = window.MapDistance?.percentToWorld?.(clickPct.x + offset.x, clickPct.y + offset.y, map);
           if (!world) return;
           world = snapWorld(world, map);
           dragWorld = world;
-          const pos = worldToStyle(world.x, world.y, map);
-          btn.style.left = pos.left;
-          btn.style.top = pos.top;
+          const pct = window.MapDistance?.worldToPercent?.(world.x, world.y, map);
+          if (!pct) return;
+          btn.style.left = `${pct.x}%`;
+          btn.style.top = `${pct.y}%`;
         });
         btn.addEventListener("pointerup", (e) => {
           if (!dragging) return;
           dragging = false;
+          btn.classList.remove("map-grid-token--dragging");
           try {
             btn.releasePointerCapture(e.pointerId);
           } catch {

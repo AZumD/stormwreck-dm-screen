@@ -31,7 +31,8 @@ Snap measure (Map settings) applies to measure tape distance rounding when check
 - **NPC / PC** — click opens catalogue-backed combat sheet; art prefers own `tokenImage`, else race-bound monster token
 - Shift-click selects for distance; right-click removes; drag always snaps to **cell center**
 - **PC tokens render from `partyPositions` percent** (same source as the player map) so DM/player stay aligned after reloads
-- **Drag persists on pointer release** — live DOM updates while dragging; `CampaignMapState` PATCH runs once on pointerup (PC drags atomically update `partyPositions` + `tokens` via `MapPcPlacement.syncTokenDrag`)
+- **Drag persists on pointer release** — live DOM updates while dragging; preserves grab offset so tokens do not jump on first move; `CampaignMapState` PATCH runs once on pointerup (PC drags atomically update `partyPositions` + `tokens` via `MapPcPlacement.syncTokenDrag`)
+- Tokens **with** uploaded art render image-only on DM (no initials box); initials appear only when art fails to load
 
 ## Manual fog
 **Fog** tool (primary row) + settings: enable fog, Reveal/Hide modes, **Brush** / **Select** instruments, brush sizes, Undo, Hide all, Reveal all. Enabling fog or picking Reveal/Hide enters **paint mode** — drag with the brush or drag a rectangle with Select. **F** toggles edit mode; **X** switches Reveal/Hide. Strokes persist in `CampaignMapState.fog` — see `docs/README/MAP-FOG.md`.

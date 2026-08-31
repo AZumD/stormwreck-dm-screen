@@ -39,9 +39,9 @@ if (!mapToken.includes("map-grid-token--has-img")) {
   fail("tokenImageErrorAttr should restore frame when image fails");
 } else pass("tokenImageErrorAttr restores visible frame");
 
-if (!spatial.includes("tokenLabelHtml")) {
-  fail("map-spatial renderGridToken should include hidden fallback label");
-} else pass("renderGridToken includes fallback label");
+if (!spatial.includes("tokenImageHtml") || !spatial.includes("map-grid-token--has-img")) {
+  fail("map-spatial renderGridToken should render image-only tokens when art exists");
+} else pass("renderGridToken image-only when art exists");
 
 if (!panel.includes("tokenLabelHtml(label, false)")) {
   fail("map-panel calibrated pins should show initials when no image");
@@ -82,6 +82,8 @@ if (!html.includes('data-fallback="/fallback.png"')) {
 
 if (!html.includes("dataset.tried") || !html.includes("map-grid-token--has-img")) {
   fail("tokenImageHtml onerror should try fallback then restore label frame");
+} else if (!html.includes("createElement('span')") && !html.includes('createElement("span")')) {
+  fail("tokenImageHtml onerror should inject initials label when image fails");
 } else pass("tokenImageHtml chained fallback + label restore");
 
 const visible = MTS.tokenLabelHtml("Spore", false);

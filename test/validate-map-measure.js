@@ -45,6 +45,14 @@ if (/function snapWorld[\s\S]{0,120}els\.snap\?\.checked/.test(spatialJs)) {
   fail("combat token snap must not depend on measure-snap checkbox");
 } else pass("combat tokens always snap to cell centers");
 
+if (!spatialJs.includes("dragOffsetPct") || !spatialJs.includes("clientToPercent")) {
+  fail("combat token drag should preserve grab offset via clientToPercent");
+} else pass("combat token drag preserves grab offset");
+
+if (!/Math\.hypot\(dx, dy\) < 5/.test(spatialJs)) {
+  fail("combat token drag should ignore tiny pointer jitter before moving");
+} else pass("combat token drag uses movement threshold");
+
 const mapPanelJs = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
 if (!mapPanelJs.includes("snapWorldToCellCenter")) {
   fail("map-panel pin drag must snap to cell center");

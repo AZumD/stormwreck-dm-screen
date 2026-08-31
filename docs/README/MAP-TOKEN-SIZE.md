@@ -33,7 +33,7 @@ Map art: catalogue **`tokenImage`**, then **race-bound monster** `tokenImage` (N
 
 Image URLs are resolved via `resolvePinImageUrls` (checks catalogue row, party member, entity registry, memory cache, and `/api/assets/…` paths). If a primary image 404s, the `<img>` tries the next URL in the chain. If every URL fails, the hidden initials label is shown and the colored type frame is restored (never an empty invisible token).
 
-Tokens **with** uploaded art render **without** the colored type frame (transparent over the map). Empty placeholders keep the colored ring. Map-token uploads are stored as **PNG** so alpha is preserved — re-upload older tokens that were saved as JPEG with a dark matte. Uploading or clearing a catalogue **tokenImage** refreshes open map tokens via `MapPanel.refreshTokens()`.
+Tokens **with** uploaded art render **without** the colored type frame (transparent over the map) and **without** a visible initials box — image only. If every URL fails, the `<img>` is removed and initials are injected (or the colored frame restored). Empty placeholders keep the colored ring. Map-token uploads are stored as **PNG** so alpha is preserved — re-upload older tokens that were saved as JPEG with a dark matte. Uploading or clearing a catalogue **tokenImage** refreshes open map tokens via `MapPanel.refreshTokens()`.
 
 ### PC pin
 1. Race catalogue by PC `race`

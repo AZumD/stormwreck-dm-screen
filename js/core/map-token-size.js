@@ -352,7 +352,7 @@ window.MapTokenSize = (function () {
 
   /** When all image URLs fail, restore initials instead of an invisible frameless token. */
   function tokenImageErrorAttr() {
-    return `onerror="(function(i){var b=i.closest('.map-grid-token');if(i.dataset.fallback&&!i.dataset.tried){i.dataset.tried='1';i.src=i.dataset.fallback;return}i.remove();if(!b)return;b.classList.remove('map-grid-token--has-img');var f=b.querySelector('.map-grid-token__label--fallback');if(f){f.hidden=false;f.removeAttribute('aria-hidden')}})(this)"`;
+    return `onerror="(function(i){var b=i.closest('.map-grid-token');if(i.dataset.fallback&&!i.dataset.tried){i.dataset.tried='1';i.src=i.dataset.fallback;return}i.remove();if(!b)return;b.classList.remove('map-grid-token--has-img');var f=b.querySelector('.map-grid-token__label--fallback');if(f){f.hidden=false;f.removeAttribute('aria-hidden');return}var t=b.getAttribute('title')||b.getAttribute('aria-label')||'?';var s=document.createElement('span');s.className='map-grid-token__label';s.textContent=String(t).slice(0,2);b.appendChild(s)})(this)"`;
   }
 
   function tokenLabelHtml(label, hiddenFallback) {
