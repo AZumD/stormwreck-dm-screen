@@ -338,8 +338,15 @@ window.PlayerMapView = (function () {
     renderTokens(view);
 
     if (fogCanvas && world) {
-      const w = world.clientWidth || 1;
-      const h = world.clientHeight || 1;
+      let surface = world.querySelector(".player-map-surface");
+      if (!surface) {
+        surface = document.createElement("div");
+        surface.className = "player-map-surface";
+        while (world.firstChild) surface.appendChild(world.firstChild);
+        world.appendChild(surface);
+      }
+      const w = surface.clientWidth || 1;
+      const h = surface.clientHeight || 1;
       if (fogCanvas.width !== w || fogCanvas.height !== h) {
         fogCanvas.width = w;
         fogCanvas.height = h;
@@ -425,9 +432,11 @@ window.PlayerMapView = (function () {
           </div>
           <div class="player-map-viewport">
             <div class="player-map-world">
-              <img class="player-map-image" alt="" draggable="false">
-              <canvas class="player-map-fog" aria-hidden="true"></canvas>
-              <div class="player-map-tokens"></div>
+              <div class="player-map-surface">
+                <img class="player-map-image" alt="" draggable="false">
+                <canvas class="player-map-fog" aria-hidden="true"></canvas>
+                <div class="player-map-tokens"></div>
+              </div>
             </div>
           </div>
         </div>

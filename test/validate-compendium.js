@@ -121,14 +121,16 @@ if (!compendiumJs.includes("history.pushState") || !compendiumJs.includes("popst
   pass("compendium URL/history");
 }
 
-if (!compendiumJs.includes("compendiumLastType")) fail("compendium missing last-type persistence hint");
-else pass("compendium last-type key");
+if (!compendiumJs.includes("config?.subtitle")) fail("compendium should sync subtitle on type change");
+else pass("compendium subtitle sync");
 
-if (!compendiumCss.includes("compendium-nav__link.is-active") || !compendiumCss.includes("@media (max-width: 900px)")) {
-  fail("compendium.css missing active state or responsive rail");
-} else {
-  pass("compendium styles");
-}
+if (!compendiumHtml.includes("catalogue.css") || compendiumHtml.includes("css/style.css")) {
+  fail("compendium should load catalogue.css only once (no duplicate style.css link)");
+} else pass("compendium stylesheet wiring");
+
+if (!compendiumCss.includes("z-index: 1") || !compendiumCss.includes(".compendium-page .catalogue-sidebar")) {
+  fail("compendium.css missing stacking / opaque catalogue panels");
+} else pass("compendium panel stacking");
 
 if (failed) {
   console.error(`\n${failed} check(s) failed`);

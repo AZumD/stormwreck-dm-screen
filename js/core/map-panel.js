@@ -227,6 +227,8 @@ window.MapPanel = (function () {
     const mapViewport = document.getElementById("map-viewport") || mapStage;
     const mapWorld = document.getElementById("map-world") || mapStage;
     const mapImage = document.getElementById("map-image");
+    const mapSurface =
+      window.MapDistance?.ensureMapSurface?.(mapWorld, mapImage) || mapWorld;
     const pinsLayer = document.getElementById("map-pins");
     const filtersEl = document.getElementById("map-filters");
     const partyList = document.getElementById("party-list");
@@ -1260,6 +1262,7 @@ window.MapPanel = (function () {
       spatialApi = MapSpatial.bind({
         campaignId,
         mapWorld,
+        mapSurface,
         mapImage,
         mapViewport,
         getActiveMapId: () => activeMapId,

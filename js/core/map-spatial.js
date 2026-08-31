@@ -146,15 +146,17 @@ window.MapSpatial = (function () {
     }
   }
 
-  function ensureLayers(mapWorld) {
-    if (!mapWorld) return {};
+  function ensureLayers(mapSurface) {
+    if (!mapSurface) return {};
     let grid = document.getElementById("map-grid-overlay");
     if (!grid) {
       grid = document.createElement("div");
       grid.id = "map-grid-overlay";
       grid.className = "map-grid-overlay";
       grid.setAttribute("aria-hidden", "true");
-      mapWorld.appendChild(grid);
+      mapSurface.appendChild(grid);
+    } else if (grid.parentNode !== mapSurface) {
+      mapSurface.appendChild(grid);
     }
     let measure = document.getElementById("map-measure-layer");
     if (!measure) {
@@ -162,14 +164,18 @@ window.MapSpatial = (function () {
       measure.id = "map-measure-layer";
       measure.className = "map-measure-layer";
       measure.setAttribute("aria-hidden", "true");
-      mapWorld.appendChild(measure);
+      mapSurface.appendChild(measure);
+    } else if (measure.parentNode !== mapSurface) {
+      mapSurface.appendChild(measure);
     }
     let tokens = document.getElementById("map-tokens");
     if (!tokens) {
       tokens = document.createElement("div");
       tokens.id = "map-tokens";
       tokens.className = "map-tokens";
-      mapWorld.appendChild(tokens);
+      mapSurface.appendChild(tokens);
+    } else if (tokens.parentNode !== mapSurface) {
+      mapSurface.appendChild(tokens);
     }
     return { grid, measure, tokens };
   }
@@ -178,6 +184,7 @@ window.MapSpatial = (function () {
     const {
       campaignId,
       mapWorld,
+      mapSurface: mapSurfaceIn,
       mapImage,
       mapViewport,
       getActiveMapId,
@@ -186,11 +193,16 @@ window.MapSpatial = (function () {
       refreshPins
     } = ctx;
 
+    const mapSurface =
+      mapSurfaceIn ||
+      window.MapDistance?.ensureMapSurface?.(mapWorld, mapImage) ||
+      mapWorld;
+
     attachChrome(
       document.querySelector(".map-panel__body") ||
         document.getElementById("map-fullscreen-drawer-panel")
     );
-    const layers = ensureLayers(mapWorld);
+    const layers = ensureLayers(mapSurface);
 
     let measuring = false;
     let fogging = false;
@@ -668,7 +680,7 @@ window.MapSpatial = (function () {
       if (window.MapFog) {
         const fog = MapFog.getFogState(campaignId, map.id);
         if (els.fogEnabled) els.fogEnabled.checked = Boolean(fog.enabled);
-        MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+        MapFog.refresh(campaignId, map.id, mapSurface, { dm: true });
         updateFogHint?.();
       }
       if (els.showGrid && detail.display) {
@@ -833,7 +845,7 @@ window.MapSpatial = (function () {
       if (!els.fogEnabled?.checked) {
         els.fogEnabled.checked = true;
         MapFog.setEnabled(campaignId, map.id, true);
-        MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+        MapFog.refresh(campaignId, map.id, mapSurface, { dm: true });
       }
     }
 
@@ -879,7 +891,7 @@ window.MapSpatial = (function () {
       const map = activeMap();
       if (!map || !window.MapFog) return;
       MapFog.setEnabled(campaignId, map.id, els.fogEnabled.checked);
-      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      MapFog.refresh(campaignId, map.id, mapSurface, { dm: true });
       if (els.fogEnabled.checked) setFogPaintActive(true);
       else setFogPaintActive(false);
     });
@@ -894,7 +906,7 @@ window.MapSpatial = (function () {
       if (!window.confirm("Reset fog on this map (fully hidden)?")) return;
       MapFog.clearFog(campaignId, map.id);
       if (els.fogEnabled) els.fogEnabled.checked = true;
-      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      MapFog.refresh(campaignId, map.id, mapSurface, { dm: true });
     });
 
     els.fogRevealAll?.addEventListener("click", () => {
@@ -902,14 +914,14 @@ window.MapSpatial = (function () {
       if (!map || !window.MapFog) return;
       if (!window.confirm("Reveal the entire map (clear all fog)?")) return;
       MapFog.revealAll(campaignId, map.id);
-      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      MapFog.refresh(campaignId, map.id, mapSurface, { dm: true });
     });
 
     function undoFogStroke() {
       const map = activeMap();
       if (!map || !window.MapFog) return false;
       if (!MapFog.undoLastStroke(campaignId, map.id)) return false;
-      MapFog.refresh(campaignId, map.id, mapWorld, { dm: true });
+      MapFog.refresh(campaignId, map.id, mapSurface, { dm: true });
       return true;
     }
 
@@ -942,6 +954,7 @@ window.MapSpatial = (function () {
       MapFog.bindDm({
         campaignId,
         mapWorld,
+        mapSurface,
         mapImage,
         mapViewport,
         getActiveMapId,

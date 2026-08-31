@@ -120,6 +120,29 @@ window.MapDistance = (function () {
     return { x: norm.x * 100, y: norm.y * 100 };
   }
 
+  /**
+   * One shared box for map image + overlays so %/normalized coords match visible art.
+   * Safe to call repeatedly (migrates existing DOM).
+   */
+  function ensureMapSurface(mapWorld, mapImage) {
+    if (!mapWorld) return null;
+    let surface = mapWorld.querySelector(":scope > .map-surface");
+    if (!surface) {
+      surface = document.createElement("div");
+      surface.className = "map-surface";
+      surface.id = mapWorld.id ? `${mapWorld.id}-surface` : "map-surface";
+      mapWorld.insertBefore(surface, mapWorld.firstChild);
+    }
+    if (mapImage && mapImage.parentNode !== surface) surface.appendChild(mapImage);
+    const pins = mapWorld.querySelector(":scope > .map-pins") || document.getElementById("map-pins");
+    if (pins && pins.parentNode !== surface) surface.appendChild(pins);
+    ["map-grid-overlay", "map-measure-layer", "map-tokens", "map-fog-layer"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && el.parentNode !== surface) surface.appendChild(el);
+    });
+    return surface;
+  }
+
   return {
     distanceBetween,
     formatDistance,
@@ -130,6 +153,7 @@ window.MapDistance = (function () {
     imageContentRect,
     clientToNormalized,
     clientToPercent,
+    ensureMapSurface,
     clamp
   };
 })();

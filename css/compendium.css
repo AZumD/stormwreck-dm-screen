@@ -13,6 +13,8 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 1.25rem 1.25rem 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .compendium-rail {
@@ -109,6 +111,18 @@
 .compendium-main {
   min-width: 0;
   padding-left: 1.25rem;
+  position: relative;
+  z-index: 1;
+}
+
+.compendium-page .catalogue-sidebar,
+.compendium-page .catalogue-editor {
+  background: rgba(14, 20, 32, 0.94);
+  backdrop-filter: blur(10px);
+}
+
+.compendium-page .catalogue-sidebar {
+  min-width: 220px;
 }
 
 .compendium-page .landing-header--compact {
@@ -148,6 +162,8 @@
 
 .compendium-catalogue-shell {
   min-height: calc(100vh - 11rem);
+  width: 100%;
+  min-width: 0;
 }
 
 .compendium-page .catalogue-shell {

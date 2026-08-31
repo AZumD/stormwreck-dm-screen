@@ -51,7 +51,7 @@ Coordinates are **0–1 normalized** to map **image** space (pan/zoom independen
 | **X** | Switch Reveal ↔ Hide mode |
 | **Ctrl+Z** / **Cmd+Z** | Undo last stroke (when fog is enabled) |
 
-Layer `#map-fog-layer` inside `#map-world` (40% fog overlay on DM view — obvious at a glance, map still readable underneath).
+Layer `#map-fog-layer` inside `#map-surface` (shared with image, tokens, grid). Fog painting and rendering use the same surface box so strokes align with map art on DM and player views.
 
 ## Opacity
 | View | Alpha | Notes |

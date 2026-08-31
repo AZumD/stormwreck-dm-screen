@@ -51,9 +51,17 @@ if (mapImageBlock && /object-fit:\s*contain/.test(mapImageBlock[0])) {
   fail("DM map-image should not letterbox with object-fit contain");
 } else pass("DM map-image avoids object-fit contain letterboxing");
 
-if (!playerCss.includes("height: auto") || !css.includes("height: auto")) {
-  fail("DM and player map images should use height:auto layout");
-} else pass("DM/player map image layout aligned");
+if (!distance.includes("ensureMapSurface")) {
+  fail("map-distance missing ensureMapSurface");
+} else pass("map-distance ensureMapSurface");
+
+if (!css.includes(".map-surface") || !css.match(/\.map-image\s*\{[^}]*position:\s*absolute/)) {
+  fail("DM map-image should fill map-surface absolutely");
+} else pass("DM map-surface + absolute image");
+
+if (!playerCss.includes(".player-map-surface")) {
+  fail("player map missing player-map-surface");
+} else pass("player-map-surface wrapper");
 
 const sandbox = { window: {} };
 sandbox.window = sandbox;

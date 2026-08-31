@@ -121,7 +121,10 @@ window.CompendiumApp = (function () {
 
   function setPageTitle(type) {
     const titleEl = document.getElementById("cat-title");
+    const subtitleEl = document.getElementById("cat-subtitle");
+    const config = window.CatalogueConfigs?.[type];
     if (titleEl) titleEl.textContent = LABELS[type] || type;
+    if (subtitleEl && config?.subtitle) subtitleEl.textContent = config.subtitle;
     document.title = `${LABELS[type] || type} — Compendium — DM Library`;
   }
 

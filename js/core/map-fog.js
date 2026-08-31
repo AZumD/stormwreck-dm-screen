@@ -133,36 +133,41 @@ window.MapFog = (function () {
     return (tokens || []).filter((t) => t.isSelf || !isPercentHidden(fog, t.percent));
   }
 
-  function ensureLayer(mapWorld) {
-    if (!mapWorld) return null;
-    let layer = document.getElementById("map-fog-layer");
+  function ensureLayer(mapSurface) {
+    if (!mapSurface) return null;
+    let layer = mapSurface.querySelector("#map-fog-layer");
+    if (!layer) {
+      layer = document.getElementById("map-fog-layer");
+    }
     if (!layer) {
       layer = document.createElement("canvas");
       layer.id = "map-fog-layer";
       layer.className = "map-fog-layer";
       layer.setAttribute("aria-hidden", "true");
-      mapWorld.appendChild(layer);
-    } else if (layer.parentNode === mapWorld && layer !== mapWorld.lastElementChild) {
-      mapWorld.appendChild(layer);
+      mapSurface.appendChild(layer);
+    } else if (layer.parentNode !== mapSurface) {
+      mapSurface.appendChild(layer);
+    } else if (layer.parentNode === mapSurface && layer !== mapSurface.lastElementChild) {
+      mapSurface.appendChild(layer);
     }
     return layer;
   }
 
-  function resizeCanvas(canvas, mapWorld) {
-    if (!canvas || !mapWorld) return;
-    const w = mapWorld.clientWidth || 1;
-    const h = mapWorld.clientHeight || 1;
+  function resizeCanvas(canvas, mapSurface) {
+    if (!canvas || !mapSurface) return;
+    const w = mapSurface.clientWidth || 1;
+    const h = mapSurface.clientHeight || 1;
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
     }
   }
 
-  function clientToNorm(clientX, clientY, mapWorld, mapImage, map) {
+  function clientToNorm(clientX, clientY, mapSurface, mapImage, map) {
     if (window.MapDistance?.clientToNormalized && mapImage) {
       return MapDistance.clientToNormalized(clientX, clientY, mapImage, map);
     }
-    const rect = mapWorld?.getBoundingClientRect?.();
+    const rect = mapSurface?.getBoundingClientRect?.();
     if (!rect?.width || !rect.height) return null;
     return {
       x: clamp((clientX - rect.left) / rect.width, 0, 1),
@@ -238,10 +243,10 @@ window.MapFog = (function () {
     }
   }
 
-  function refresh(campaignId, mapId, mapWorld, opts) {
-    const canvas = ensureLayer(mapWorld);
+  function refresh(campaignId, mapId, mapSurface, opts) {
+    const canvas = ensureLayer(mapSurface);
     if (!canvas) return canvas;
-    resizeCanvas(canvas, mapWorld);
+    resizeCanvas(canvas, mapSurface);
     const fog = getFogState(campaignId, mapId);
     canvas.classList.toggle("map-fog-layer--active", fog.enabled && !fog.revealedAll);
     canvas.classList.toggle("map-fog-layer--dm", Boolean(opts?.dm));
@@ -320,6 +325,7 @@ window.MapFog = (function () {
     const {
       campaignId,
       mapWorld,
+      mapSurface: mapSurfaceIn,
       mapImage,
       mapViewport,
       getActiveMapId,
@@ -330,6 +336,11 @@ window.MapFog = (function () {
       getBrushRadius,
       shouldSnapSelectToGrid
     } = ctx;
+
+    const mapSurface =
+      mapSurfaceIn ||
+      window.MapDistance?.ensureMapSurface?.(mapWorld, mapImage) ||
+      mapWorld;
 
     function activeMapId() {
       return getActiveMapId?.() || null;
@@ -374,13 +385,13 @@ window.MapFog = (function () {
         if (!mapId) return;
         e.preventDefault();
         e.stopPropagation();
-        const norm = clientToNorm(e.clientX, e.clientY, mapWorld, mapImage, getActiveMap?.());
+        const norm = clientToNorm(e.clientX, e.clientY, mapSurface, mapImage, getActiveMap?.());
         if (!norm) return;
         mapViewport.setPointerCapture(e.pointerId);
         if (isSelectTool()) {
           rectDrag = { startNorm: norm };
           currentStroke = previewRectStroke(norm, norm);
-          refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+          refresh(campaignId, mapId, mapSurface, { dm: true, previewStroke: currentStroke });
           return;
         }
         painting = true;
@@ -391,7 +402,7 @@ window.MapFog = (function () {
           radius: getBrushRadius?.() || BRUSH_PRESETS[1],
           points: [[norm.x, norm.y]]
         };
-        refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+        refresh(campaignId, mapId, mapSurface, { dm: true, previewStroke: currentStroke });
       },
       true
     );
@@ -403,20 +414,20 @@ window.MapFog = (function () {
         if (!mapId) return;
         if (rectDrag) {
           e.preventDefault();
-          const norm = clientToNorm(e.clientX, e.clientY, mapWorld, mapImage, getActiveMap?.());
+          const norm = clientToNorm(e.clientX, e.clientY, mapSurface, mapImage, getActiveMap?.());
           if (!norm) return;
           currentStroke = previewRectStroke(rectDrag.startNorm, norm);
-          refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+          refresh(campaignId, mapId, mapSurface, { dm: true, previewStroke: currentStroke });
           return;
         }
         if (!painting || !currentStroke) return;
         e.preventDefault();
-        const norm = clientToNorm(e.clientX, e.clientY, mapWorld, mapImage, getActiveMap?.());
+        const norm = clientToNorm(e.clientX, e.clientY, mapSurface, mapImage, getActiveMap?.());
         if (!norm) return;
         if (lastNorm && Math.hypot(norm.x - lastNorm.x, norm.y - lastNorm.y) < 0.002) return;
         lastNorm = norm;
         currentStroke.points.push([norm.x, norm.y]);
-        refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
+        refresh(campaignId, mapId, mapSurface, { dm: true, previewStroke: currentStroke });
       },
       true
     );
@@ -435,7 +446,7 @@ window.MapFog = (function () {
         if (mapId && stroke?.shape === "rect" && rectLargeEnough(stroke.rect)) {
           commitStroke(campaignId, mapId, stroke);
         }
-        if (mapId) refresh(campaignId, mapId, mapWorld, { dm: true });
+        if (mapId) refresh(campaignId, mapId, mapSurface, { dm: true });
         return;
       }
       if (!painting || !currentStroke) return;
@@ -450,7 +461,7 @@ window.MapFog = (function () {
       }
       currentStroke = null;
       lastNorm = null;
-      if (mapId) refresh(campaignId, mapId, mapWorld, { dm: true });
+      if (mapId) refresh(campaignId, mapId, mapSurface, { dm: true });
     }
 
     mapViewport?.addEventListener("pointerup", endPaint, true);

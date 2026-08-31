@@ -10,13 +10,15 @@ Unified DM Library catalogue experience — one shell with a category rail and a
 
 Legacy `{type}-katalog/` URLs redirect into Compendium via `js/core/catalogue/legacy-redirect.js`.
 
+Styles: `catalogue.css` already imports `style.css` — do **not** add a second `<link>` to `style.css` on the compendium page (it can override catalogue grid rules).
+
 ## Files
 | File | Role |
 |------|------|
 | `dm/compendium/index.html` | Shell markup + script bundle |
 | `js/core/catalogue/compendium.js` | Category rail, URL/history, last-type prefs |
 | `js/core/catalogue/legacy-redirect.js` | Thin legacy page redirect helper |
-| `css/compendium.css` | Rail layout, active state, responsive drawer |
+| `css/compendium.css` | Rail layout, active state, responsive drawer, opaque catalogue panels over wallpaper |
 | `js/core/catalogue/app.js` | Shared catalogue engine (`open` / `dispose` / `setType`) |
 
 ## Navigation hierarchy

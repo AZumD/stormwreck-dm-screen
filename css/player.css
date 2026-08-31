@@ -1309,11 +1309,19 @@ textarea { min-height: 6.5rem; resize: vertical; }
   aspect-ratio: var(--map-aspect, 4 / 3);
 }
 
+.player-map-surface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .player-map-image {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: var(--map-aspect, 4 / 3);
+  height: 100%;
   user-select: none;
   pointer-events: none;
 }
