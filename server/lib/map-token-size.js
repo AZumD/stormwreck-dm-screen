@@ -26,9 +26,19 @@ const CREATURE_DEFAULTS = Object.freeze({
 let monstersCache = null;
 let racesCache = null;
 
+const DND_KNOWN_SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"];
+
 function normalizeDndSize(size) {
   const s = String(size || "Medium").trim();
   if (!s) return "Medium";
+  const lower = s.toLowerCase();
+  const hit = DND_KNOWN_SIZES.find(
+    (k) =>
+      lower === k.toLowerCase() ||
+      lower.startsWith(`${k.toLowerCase()} `) ||
+      lower.startsWith(`${k.toLowerCase()}(`)
+  );
+  if (hit) return hit;
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 

@@ -1253,9 +1253,9 @@ window.CatalogueApp = (function () {
     }
 
     function refreshMapTokenArt(fieldId) {
-      if (fieldId === "tokenImage" && window.MapPanel?.refreshTokens) {
-        MapPanel.refreshTokens();
-      }
+      if (!window.MapPanel?.refreshTokens) return;
+      if (fieldId === "tokenImage") MapPanel.refreshTokens();
+      if (config.type === "monster" && fieldId === "size") MapPanel.refreshTokens();
     }
 
     async function saveCurrent(form, options = {}) {

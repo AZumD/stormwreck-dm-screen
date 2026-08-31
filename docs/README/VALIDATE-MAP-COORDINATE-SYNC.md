@@ -17,6 +17,7 @@ node test/validate-map-coordinate-sync.js
 - Grid overlay lines via `worldToPercent` + `grid.origin`
 - DM `gridTokenStyle` uses `translate(-50%, -50%)` (matches player tokens)
 - DM `.map-image` layout matches player (`height: auto`, no `object-fit: contain`)
+- Combat token drag does **not** PATCH `tokens` on `pointermove` (persist on pointerup; PC uses `syncTokenDrag`)
 
 ## See also
 `docs/README/MAP-FOG.md`, `docs/README/MAP-TOKEN-SIZE.md`, `docs/README/VALIDATE-PLAYER-MAP.md`

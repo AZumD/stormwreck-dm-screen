@@ -79,7 +79,7 @@ function findCanonicalPcLocation(mapState, catalogueId) {
  * - Legacy: if tokens exist but no partyPositions, promotes newest token to partyPositions
  * Coordinate sync (percent ↔ world) is handled separately by syncPcTokenWorldCoords().
  */
-function normalizePcMapState(mapState) {
+function normalizePcMapState(mapState, options = {}) {
   const state = {
     partyPositions: { ...(mapState?.partyPositions || {}) },
     tokens: {}
@@ -107,10 +107,15 @@ function normalizePcMapState(mapState) {
       const winner = placements.reduce((a, b) =>
         tokenTimestamp(b.token) > tokenTimestamp(a.token) ? b : a
       );
-      const pct =
-        winner.token.x != null && winner.token.y != null
-          ? { x: winner.token.x, y: winner.token.y }
-          : { x: 50, y: 50 };
+      let pct = { x: 50, y: 50 };
+      if (winner.token.x != null && winner.token.y != null) {
+        const mapDef = typeof options.resolveMap === "function" ? options.resolveMap(winner.mapId) : null;
+        const converted =
+          mapDef && mapDistance.worldToPercent
+            ? mapDistance.worldToPercent(winner.token.x, winner.token.y, mapDef)
+            : null;
+        if (converted) pct = converted;
+      }
       canonical = { mapId: winner.mapId, x: pct.x, y: pct.y };
       state.partyPositions[partyId] = canonical;
     }

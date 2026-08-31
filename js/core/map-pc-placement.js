@@ -119,7 +119,7 @@ window.MapPcPlacement = (function () {
     return result;
   }
 
-  function normalizePcMapState(mapState) {
+  function normalizePcMapState(mapState, options = {}) {
     const state = {
       partyPositions: { ...(mapState?.partyPositions || {}) },
       tokens: cloneTokensMap(mapState?.tokens)
@@ -144,7 +144,17 @@ window.MapPcPlacement = (function () {
         const winner = placements.reduce((a, b) =>
           tokenTimestamp(b.token) > tokenTimestamp(a.token) ? b : a
         );
-        canonical = { mapId: winner.mapId, x: 50, y: 50 };
+        let pct = { x: 50, y: 50 };
+        if (winner.token.x != null && winner.token.y != null) {
+          const mapDef =
+            typeof options.resolveMap === "function" ? options.resolveMap(winner.mapId) : null;
+          const converted =
+            mapDef && window.MapDistance?.worldToPercent
+              ? MapDistance.worldToPercent(winner.token.x, winner.token.y, mapDef)
+              : null;
+          if (converted) pct = converted;
+        }
+        canonical = { mapId: winner.mapId, x: pct.x, y: pct.y };
         state.partyPositions[partyId] = canonical;
       }
 
@@ -177,7 +187,7 @@ window.MapPcPlacement = (function () {
   }
 
   function normalizeMapState(campaignId, state, options = {}) {
-    const normalized = normalizePcMapState(state);
+    const normalized = normalizePcMapState(state, options);
     return syncPcTokenWorldCoords(normalized, campaignId, options);
   }
 

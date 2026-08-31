@@ -29,6 +29,7 @@ const html = fs.readFileSync(path.join(root, "campaigns/stormwreck-isle/index.ht
   "dndSizeToGridCells",
   "resolveNpcSize",
   "resolvePinSize",
+  "resolveTokenGridCells",
   "gridCells",
   "MapTokenSize"
 ].forEach((token) => {
@@ -102,6 +103,37 @@ sizes.forEach(([label, cells]) => {
   if (MTS.dndSizeToGridCells(label) !== cells) fail(`dndSizeToGridCells(${label}) expected ${cells}`);
   else pass(`dndSizeToGridCells(${label}) = ${cells}`);
 });
+
+if (MTS.normalizeDndSize("large (10 ft.)") !== "Large") fail("normalizeDndSize should match size prefix");
+else pass("normalizeDndSize handles legacy free-text prefix");
+
+const largeToken = MTS.resolveTokenGridCells({
+  kind: "monster",
+  catalogueId: "sw-merrow",
+  gridCells: 1
+});
+if (largeToken.gridCells !== 2) fail(`resolveTokenGridCells Large monster expected 2 got ${largeToken.gridCells}`);
+else pass("resolveTokenGridCells prefers catalogue size over stale gridCells");
+
+const configsCode = fs.readFileSync(path.join(root, "js/core/catalogue/configs.js"), "utf8");
+const sandboxCfg = { window: {} };
+sandboxCfg.window = sandboxCfg;
+vm.createContext(sandboxCfg);
+vm.runInContext(configsCode, sandboxCfg);
+const monsterSizeField = sandboxCfg.window.CatalogueConfigs.monster.sections
+  .flatMap((s) => s.fields)
+  .find((f) => f.id === "size");
+if (!monsterSizeField || monsterSizeField.type !== "select") fail("monster size must be select");
+else if (!monsterSizeField.options?.includes("Large") || !monsterSizeField.options?.includes("Gargantuan")) {
+  fail("monster size select missing standard 5e sizes");
+} else pass("monster catalogue size is controlled select");
+
+if (!spatial.includes("resolveTokenGridCells")) fail("map-spatial should resolve token size from catalogue");
+else pass("map-spatial uses resolveTokenGridCells");
+
+const catalogueApp = fs.readFileSync(path.join(root, "js/core/catalogue/app.js"), "utf8");
+if (!catalogueApp.includes('fieldId === "size"')) fail("catalogue should refresh map tokens when monster size changes");
+else pass("monster size edit refreshes map tokens");
 
 const map = { grid: { sizeX: 20, sizeY: 20 } };
 const largeSpan = MTS.cellSpanPercent(2, map);

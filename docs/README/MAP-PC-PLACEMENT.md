@@ -25,7 +25,7 @@ Stable key: catalogue PC id (`pc-mswdvrcy-u6nnt`). Party id format: `pc:{catalog
 |----------|------|
 | `findPcLocation(mapState, catalogueId)` | Read canonical `partyPositions`; attach token on that map if present |
 | `placePcOnMap(campaignId, opts)` | PATCH canonical location + sync/remove tokens on all maps |
-| `syncTokenDrag(...)` | After combat-token drag, update canonical `{ mapId, x, y }` |
+| `syncTokenDrag(...)` | After combat-token drag **on pointer release**, atomically PATCH canonical `{ mapId, x, y }` percent + matching token world coords |
 | `removePcToken(...)` | Clear canonical location + all tokens |
 | `normalizeDuplicates(campaignId)` | Repair token arrays to match `partyPositions` on bootstrap |
 

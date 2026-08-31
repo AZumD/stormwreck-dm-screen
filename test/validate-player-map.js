@@ -246,6 +246,27 @@ try {
   fail(`drag round-trip: ${err.message}`);
 }
 
+/* token-only PATCH during drag (stale partyPositions) reverts world coords on normalize */
+try {
+  const oldCanonical = { mapId: "map-a", x: 40, y: 60 };
+  const oldWorld = mapDistance.percentToWorld(oldCanonical.x, oldCanonical.y, calibratedMap);
+  const movedWorld = { x: 8, y: 12 };
+  const midDrag = {
+    partyPositions: { "pc:pc-a": oldCanonical },
+    tokens: {
+      "map-a": [{ id: "tok-pc-aa-1", kind: "pc", catalogueId: "pc-a", x: movedWorld.x, y: movedWorld.y }]
+    }
+  };
+  const reverted = placement.syncPcTokenWorldCoords(placement.normalizePcMapState(midDrag), {
+    resolveMap: resolveCalibratedMap
+  });
+  assert.strictEqual(reverted.tokens["map-a"][0].x, oldWorld.x);
+  assert.strictEqual(reverted.tokens["map-a"][0].y, oldWorld.y);
+  pass("stale partyPositions reverts unsynced token drag (defer PATCH until pointerup)");
+} catch (err) {
+  fail(`mid-drag stale canonical: ${err.message}`);
+}
+
 /* repeated coord sync must not churn tokens (no repeated PATCH payload) */
 try {
   const canonical = { mapId: "map-a", x: 40, y: 60 };

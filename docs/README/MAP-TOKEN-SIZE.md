@@ -21,7 +21,7 @@ Footprint is expressed as a percentage of the map image (`cellSpanPercent`) so t
 ## Resolution order
 
 ### Monster / combat token
-Uses the monster catalogue entry `size` field (`buildMonsterToken` stores `dndSize` + `gridCells` on the token). Map art: **`tokenImage`**, then **`portrait`** fallback.
+Uses the monster catalogue entry **`size`** field (controlled select: Tiny → Gargantuan). `resolveTokenGridCells` reads live catalogue size when rendering map tokens (ignores stale `gridCells` baked in at spawn). `buildCombatToken` stores `dndSize` + `gridCells` on new tokens. Map art: **`tokenImage`**, then **`portrait`** fallback.
 
 ### NPC pin
 1. **Monster catalogue** — match NPC `race` text to a creature name (e.g. `"Kobold"` → monster named Kobold)
@@ -62,6 +62,8 @@ Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin*
 | `resolveNpcSize(entry)` | NPC catalogue row → size label |
 | `resolvePcSize(entry)` | PC catalogue row → size label |
 | `lookupMonsterEntryByRace(race)` | Race text → monster catalogue row (size + art binding) |
+| `resolveGridCells(kind, entry)` | Catalogue row → `{ dndSize, gridCells }` |
+| `resolveTokenGridCells(token)` | Combat token footprint (catalogue size overrides stale `gridCells`) |
 | `resolvePinSize(pin, { map })` | Map pin → `{ dndSize, gridCells, span, tokenUrl, fallbackUrl }` |
 | `resolvePinImageUrls(kind, entry, pin)` | `{ url, fallbackUrl }` for map / combat tokens |
 | `resolveImageUrl(kind, entry, pin)` | Primary image URL (shorthand) |

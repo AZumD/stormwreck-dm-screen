@@ -21,9 +21,20 @@ window.MapTokenSize = (function () {
     wyrmling: "Medium"
   };
 
+  /** Standard 5e creature sizes (grid footprint in map-token-size.js). */
+  const DND_KNOWN_SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"];
+
   function normalizeDndSize(size) {
     const s = String(size || "Medium").trim();
     if (!s) return "Medium";
+    const lower = s.toLowerCase();
+    const hit = DND_KNOWN_SIZES.find(
+      (k) =>
+        lower === k.toLowerCase() ||
+        lower.startsWith(`${k.toLowerCase()} `) ||
+        lower.startsWith(`${k.toLowerCase()}(`)
+    );
+    if (hit) return hit;
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
   }
 
@@ -155,6 +166,23 @@ window.MapTokenSize = (function () {
   function resolveGridCells(kind, entry) {
     const dndSize = resolveEntitySize(kind, entry);
     return { dndSize: normalizeDndSize(dndSize), gridCells: dndSizeToGridCells(dndSize) };
+  }
+
+  /** Live footprint for map combat tokens — prefers catalogue size over stale token.gridCells. */
+  function resolveTokenGridCells(token) {
+    const kind =
+      token?.kind === "monster" || token?.kind === "npc" || token?.kind === "pc" ? token.kind : null;
+    if (kind && token.catalogueId) {
+      const entry = loadEntry(kind, token.catalogueId);
+      if (entry) return resolveGridCells(kind, entry);
+    }
+    if (token?.dndSize || token?.catalogueSize) {
+      const dndSize = normalizeDndSize(token.dndSize || token.catalogueSize);
+      return { dndSize, gridCells: dndSizeToGridCells(dndSize) };
+    }
+    const cells = Number(token?.gridCells);
+    if (cells > 0) return { dndSize: "Medium", gridCells: cells };
+    return { dndSize: "Medium", gridCells: 1 };
   }
 
   function loadEntry(type, id) {
@@ -374,6 +402,7 @@ window.MapTokenSize = (function () {
     resolvePcSize,
     resolveEntitySize,
     resolveGridCells,
+    resolveTokenGridCells,
     resolvePinSize,
     resolveTokenUrl,
     resolveImageUrl,

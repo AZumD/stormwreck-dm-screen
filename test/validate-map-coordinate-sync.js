@@ -111,6 +111,10 @@ const docs = fs.readFileSync(path.join(root, "docs/README/VALIDATE-MAP-COORDINAT
 if (!docs.includes("validate-map-coordinate-sync.js")) fail("docs missing");
 else pass("docs README present");
 
+if (/pointermove[\s\S]{0,500}setTokensForMap/.test(spatial)) {
+  fail("token drag should not PATCH tokens on pointermove");
+} else pass("token drag defers persistence to pointerup");
+
 if (failed) {
   console.error(`\n${failed} failure(s)`);
   process.exit(1);

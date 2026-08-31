@@ -387,10 +387,8 @@ window.MapSpatial = (function () {
 
     function renderGridToken(t, map, pos, sel, extraClass, title, labelHtml) {
       const MTS = window.MapTokenSize;
-      const cells =
-        Number(t.gridCells) ||
-        MTS?.dndSizeToGridCells?.(t.dndSize || t.catalogueSize) ||
-        1;
+      const sizeMeta = MTS?.resolveTokenGridCells?.(t) || { gridCells: Number(t.gridCells) || 1 };
+      const cells = sizeMeta.gridCells || 1;
       const span = MTS?.cellSpanPercent?.(cells, map) || { w: 2, h: 2, cells: 1 };
       const style = MTS?.gridTokenStyle?.(pos, span) || `left:${pos.left};top:${pos.top}`;
       const roundClass = span.cells === 1 ? " map-grid-token--round" : "";
@@ -501,11 +499,13 @@ window.MapSpatial = (function () {
         const id = btn.getAttribute("data-token-id");
         let dragging = false;
         let moved = false;
+        let dragWorld = null;
         btn.addEventListener("pointerdown", (e) => {
           e.stopPropagation();
           e.preventDefault();
           dragging = true;
           moved = false;
+          dragWorld = null;
           btn.setPointerCapture(e.pointerId);
         });
         btn.addEventListener("pointermove", (e) => {
@@ -514,10 +514,7 @@ window.MapSpatial = (function () {
           let world = clientToWorld(e.clientX, e.clientY, map);
           if (!world) return;
           world = snapWorld(world, map);
-          const next = tokensForMap(map.id).map((t) =>
-            t.id === id ? { ...t, x: world.x, y: world.y } : t
-          );
-          setTokensForMap(map.id, next);
+          dragWorld = world;
           const pos = worldToStyle(world.x, world.y, map);
           btn.style.left = pos.left;
           btn.style.top = pos.top;
@@ -530,12 +527,18 @@ window.MapSpatial = (function () {
           } catch {
             /* ignore */
           }
-          if (moved) {
+          if (moved && dragWorld) {
             const tok = tokensForMap(map.id).find((t) => t.id === id);
             if (tok?.kind === "pc" && window.MapPcPlacement?.syncTokenDrag) {
-              MapPcPlacement.syncTokenDrag(campaignId, map.id, tok, map);
+              MapPcPlacement.syncTokenDrag(campaignId, map.id, { ...tok, x: dragWorld.x, y: dragWorld.y }, map);
+            } else if (tok) {
+              const next = tokensForMap(map.id).map((t) =>
+                t.id === id ? { ...t, x: dragWorld.x, y: dragWorld.y } : t
+              );
+              setTokensForMap(map.id, next);
             }
           }
+          dragWorld = null;
           if (!moved) {
             const tok = tokensForMap(map.id).find((t) => t.id === id);
             if (!e.shiftKey && window.CombatSheetModal?.open) {

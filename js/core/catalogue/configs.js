@@ -578,7 +578,7 @@ window.CatalogueConfigs = {
             emptyLabel: "No token uploaded — map uses a colored square sized to creature size",
             hint: "Square image shown on calibrated maps. Scaled to D&D size (1×1, 2×2, etc.) regardless of file dimensions."
           },
-          { id: "size", label: "Size", type: "text", grid: "third" },
+          { id: "size", label: "Size", type: "select", grid: "third", options: ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"] },
           { id: "creatureType", label: "Type", type: "text", grid: "third", placeholder: "Humanoid, dragon…" },
           { id: "alignment", label: "Alignment", type: "text", grid: "third" },
           { id: "cr", label: "Challenge rating", type: "text", grid: "third" },

@@ -30,6 +30,7 @@ Snap measure (Map settings) applies to both preview and final distance when chec
 - **Monster** — instance HP/AC; click opens monster-token combat sheet (**Remove from map**)
 - **NPC / PC** — click opens catalogue-backed combat sheet; art prefers own `tokenImage`, else race-bound monster token
 - Shift-click selects for distance; right-click removes; drag snaps to **cell center** when **Snap measure** is on
+- **Drag persists on pointer release** — live DOM updates while dragging; `CampaignMapState` PATCH runs once on pointerup (PC drags atomically update `partyPositions` + `tokens` via `MapPcPlacement.syncTokenDrag`)
 
 ## Manual fog
 **Fog** tool (primary row) + settings: enable fog, Reveal/Hide modes, **Brush** / **Select** instruments, brush sizes, Undo, Hide all, Reveal all. Enabling fog or picking Reveal/Hide enters **paint mode** — drag with the brush or drag a rectangle with Select. **F** toggles edit mode; **X** switches Reveal/Hide. Strokes persist in `CampaignMapState.fog` — see `docs/README/MAP-FOG.md`.

@@ -161,9 +161,13 @@ async function enrichPlayerToken(raw, mapMeta, viewerCatalogueId, pcLookup, opti
     portrait: raw.portrait
   });
 
-  let gridCells = Number(raw.gridCells) > 0 ? Number(raw.gridCells) : 0;
-  if (!gridCells) {
-    const sizeMeta = await mapTokenSize.resolveGridCells(kind, entry);
+  let gridCells = 0;
+  const sizeMeta = await mapTokenSize.resolveGridCells(kind, entry);
+  if (entry) {
+    gridCells = sizeMeta.gridCells;
+  } else if (Number(raw.gridCells) > 0) {
+    gridCells = Number(raw.gridCells);
+  } else {
     gridCells = sizeMeta.gridCells;
   }
   const span = mapTokenSize.cellSpanPercent(gridCells, mapMeta);
