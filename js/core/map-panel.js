@@ -1145,7 +1145,7 @@ window.MapPanel = (function () {
         ) {
           const world = MapDistance.percentToWorld(x, y, map);
           if (world) {
-            const snapped = MapDistance.snapWorldToCellCenter(world);
+            const snapped = MapDistance.snapWorldToCellCenter(world, map.grid);
             const pct = MapDistance.worldToPercent(snapped.x, snapped.y, map);
             if (pct) {
               x = clamp(pct.x, 1, 99);

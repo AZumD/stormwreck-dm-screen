@@ -103,6 +103,14 @@ const cornerSnap = mapDistance.snapWorldToCellCenter({ x: 1, y: 2 });
 if (cornerSnap.x !== 1.5 || cornerSnap.y !== 2.5) fail(`intersection snap ${JSON.stringify(cornerSnap)}`);
 else pass("snapWorldToCellCenter avoids grid intersections");
 
+const originSnap = mapDistance.snapWorldToCellCenter(
+  { x: 2.3, y: 1.1 },
+  { origin: { x: 2, y: 1 } }
+);
+if (originSnap.x !== 2.5 || originSnap.y !== 1.5) {
+  fail(`origin-relative snap ${JSON.stringify(originSnap)}`);
+} else pass("snapWorldToCellCenter honors grid.origin");
+
 /* custom scale not hard-coded */
 const d10 = mapDistance.distanceBetween(
   { x: 0, y: 0 },

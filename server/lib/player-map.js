@@ -141,11 +141,10 @@ async function enrichPlayerToken(raw, mapMeta, viewerCatalogueId, pcLookup, opti
   if (raw.visible === false) return null;
 
   let percent = null;
-  if (raw.x != null && raw.y != null && mapMeta.calibrated) {
-    percent = worldToPercent(raw.x, raw.y, mapMeta);
-  }
-  if (!percent && raw.percent?.x != null && raw.percent?.y != null) {
+  if (raw.percent?.x != null && raw.percent?.y != null) {
     percent = { x: raw.percent.x, y: raw.percent.y };
+  } else if (raw.x != null && raw.y != null && mapMeta.calibrated) {
+    percent = worldToPercent(raw.x, raw.y, mapMeta);
   }
   if (!percent) return null;
 

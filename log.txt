@@ -143,3 +143,4 @@
 [2026-08-31] Catalogue facet filters in collapsible Filters panel (all facet catalogues). See validate-catalogue-facet-panel.js, css/catalogue.css
 [2026-08-31] Fix PC token drift: defer combat-token PATCH to pointerup; sync partyPositions atomically on release. See validate-map-coordinate-sync.js
 [2026-08-31] Monster catalogue size is controlled select; map tokens resolve footprint from catalogue live. See validate-map-token-size.js
+[2026-08-31] Align DM/player PC tokens: render from partyPositions, always snap to origin-relative cell centers. See validate-map-coordinate-sync.js

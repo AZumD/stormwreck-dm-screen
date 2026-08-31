@@ -22,14 +22,15 @@ Display/scale toggles persist via `PATCH /api/catalogue-assets/location/:id/uvtt
 4. Second click locks the line and final distance label.
 5. Toggle Measure off (or change map) clears the graphics.
 
-Snap measure (Map settings) applies to both preview and final distance when checked. Token and pin drag with snap on aligns to **grid cell centers** (not line intersections) via `MapDistance.snapWorldToCellCenter`.
+Snap measure (Map settings) applies to measure tape distance rounding when checked. **Combat tokens always snap** to **grid cell centers** (not line intersections; origin-aware) via `MapDistance.snapWorldToCellCenter`. Pin drag still follows the Snap checkbox.
 
 ## Combat tokens (monster / NPC / PC)
 `bind()` returns `spawnMonsterToken(entry)` and `spawnCombatToken(kind, entry)` — builds tokens via `CombatSheetModal.buildCombatToken` / `buildNpcToken` / `buildPcToken`. Tokens render as **grid-aligned** footprints from D&D **Size** (`MapTokenSize`).
 
 - **Monster** — instance HP/AC; click opens monster-token combat sheet (**Remove from map**)
 - **NPC / PC** — click opens catalogue-backed combat sheet; art prefers own `tokenImage`, else race-bound monster token
-- Shift-click selects for distance; right-click removes; drag snaps to **cell center** when **Snap measure** is on
+- Shift-click selects for distance; right-click removes; drag always snaps to **cell center**
+- **PC tokens render from `partyPositions` percent** (same source as the player map) so DM/player stay aligned after reloads
 - **Drag persists on pointer release** — live DOM updates while dragging; `CampaignMapState` PATCH runs once on pointerup (PC drags atomically update `partyPositions` + `tokens` via `MapPcPlacement.syncTokenDrag`)
 
 ## Manual fog

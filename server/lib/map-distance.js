@@ -64,13 +64,21 @@ function formatDistance(distance, unit) {
   return `${rounded} ${unit || "ft"}`;
 }
 
-/** Snap world coords to the center of the nearest grid cell (not line intersections). */
-function snapWorldToCellCenter(world) {
+/**
+ * Snap world coords to the center of the nearest grid cell (not line intersections).
+ * When grid.origin is set, cell centers are origin + n + 0.5.
+ */
+function snapWorldToCellCenter(world, grid) {
   if (!world || typeof world !== "object") return world;
   const x = Number(world.x);
   const y = Number(world.y);
   if (!Number.isFinite(x) || !Number.isFinite(y)) return world;
-  return { x: Math.round(x - 0.5) + 0.5, y: Math.round(y - 0.5) + 0.5 };
+  const ox = Number(grid?.origin?.x) || 0;
+  const oy = Number(grid?.origin?.y) || 0;
+  return {
+    x: ox + Math.floor(x - ox) + 0.5,
+    y: oy + Math.floor(y - oy) + 0.5
+  };
 }
 
 /** Pixel → world (grid cells), UVTT convention. */

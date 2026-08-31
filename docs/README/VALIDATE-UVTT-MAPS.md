@@ -21,7 +21,7 @@ Included in `npm test`.
 - Campaign-scoped `GET …/maps/:mapId/image` (streamed + ETag/304 + immutable Cache-Control)
 - `resolveMapImage` does not buffer the full file for HTTP
 - Distance uses `scale.distancePerGrid` (not hard-coded 5 ft)
-- `snapWorldToCellCenter` snaps tokens to grid cell centers (not intersections)
+- `snapWorldToCellCenter` snaps tokens to grid cell centers (not intersections); respects `grid.origin` when provided
 - Token coordinates in `map-state.tokens`
 - Legacy location `mapImage` PNG upload still works
 - Map panel / MapSpatial UVTT UI wiring

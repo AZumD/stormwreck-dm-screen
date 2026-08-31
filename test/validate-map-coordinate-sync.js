@@ -115,6 +115,14 @@ if (/pointermove[\s\S]{0,500}setTokensForMap/.test(spatial)) {
   fail("token drag should not PATCH tokens on pointermove");
 } else pass("token drag defers persistence to pointerup");
 
+if (!spatial.includes("tokenStylePos") || !spatial.includes("findPcLocation")) {
+  fail("DM map should render PC tokens from partyPositions (matches player)");
+} else pass("DM PC tokens use canonical partyPositions percent");
+
+if (!distance.includes("Math.floor(x - ox)") && !distance.includes("Math.floor(x-ox)")) {
+  fail("snapWorldToCellCenter should be origin-relative");
+} else pass("snapWorldToCellCenter is origin-relative");
+
 if (failed) {
   console.error(`\n${failed} failure(s)`);
   process.exit(1);

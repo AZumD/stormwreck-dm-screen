@@ -37,6 +37,14 @@ if (!spatialJs.includes("snapWorldToCellCenter")) {
   fail("map-spatial snap must use cell-center helper");
 } else pass("token drag snaps to cell center");
 
+if (!spatialJs.includes("tokenStylePos") || !spatialJs.includes("findPcLocation")) {
+  fail("map-spatial must render PC tokens from partyPositions percent");
+} else pass("PC tokens render from canonical partyPositions");
+
+if (/function snapWorld[\s\S]{0,120}els\.snap\?\.checked/.test(spatialJs)) {
+  fail("combat token snap must not depend on measure-snap checkbox");
+} else pass("combat tokens always snap to cell centers");
+
 const mapPanelJs = fs.readFileSync(path.join(root, "js/core/map-panel.js"), "utf8");
 if (!mapPanelJs.includes("snapWorldToCellCenter")) {
   fail("map-panel pin drag must snap to cell center");

@@ -299,6 +299,18 @@ window.MapSpatial = (function () {
       return { left: `${pct.x}%`, top: `${pct.y}%` };
     }
 
+    /** PC tokens: prefer canonical partyPositions percent (matches player map). */
+    function tokenStylePos(t, map) {
+      if (t?.kind === "pc" && (t.catalogueId || t.partyId) && window.MapPcPlacement?.findPcLocation) {
+        const state = window.CampaignMapState?.get?.(campaignId);
+        const loc = MapPcPlacement.findPcLocation(state, t.catalogueId, t.partyId);
+        if (loc?.percent && loc.mapId === map.id && loc.percent.x != null && loc.percent.y != null) {
+          return { left: `${loc.percent.x}%`, top: `${loc.percent.y}%` };
+        }
+      }
+      return worldToStyle(t.x, t.y, map);
+    }
+
     function renderGrid(map) {
       const el = layers.grid;
       if (!el) return;
@@ -364,8 +376,9 @@ window.MapSpatial = (function () {
     }
 
     function snapWorld(world, map) {
-      if (!world || !map?.grid || !els.snap?.checked) return world;
-      return window.MapDistance?.snapWorldToCellCenter?.(world) || world;
+      if (!world || !map?.grid) return world;
+      /* Combat tokens always snap to cell centers; measure tool still honors the checkbox. */
+      return window.MapDistance?.snapWorldToCellCenter?.(world, map.grid) || world;
     }
 
     function resolveCombatTokenImages(t) {
@@ -454,8 +467,21 @@ window.MapSpatial = (function () {
       }
     }
 
+    function mapForRender(map) {
+      if (!map) return null;
+      const full = fullMapCache[map.id];
+      if (!full) return map;
+      return {
+        ...map,
+        ...full,
+        id: map.id,
+        calibrated: true,
+        title: full.name || map.title
+      };
+    }
+
     function refreshTokens() {
-      const map = activeMap();
+      const map = mapForRender(activeMap());
       if (!map) return;
       ensurePartyPcCombatTokens(map);
       renderTokens(map);
@@ -471,7 +497,7 @@ window.MapSpatial = (function () {
       const list = tokensForMap(map.id).filter((t) => t.visible !== false);
       el.innerHTML = list
         .map((t) => {
-          const pos = worldToStyle(t.x, t.y, map);
+          const pos = tokenStylePos(t, map);
           const sel = selectedTokenIds.includes(t.id) ? " is-selected" : "";
           if (t.kind === "monster" || t.kind === "npc" || t.kind === "pc") {
             return renderGridToken(
@@ -537,6 +563,7 @@ window.MapSpatial = (function () {
               );
               setTokensForMap(map.id, next);
             }
+            renderTokens(map);
           }
           dragWorld = null;
           if (!moved) {
