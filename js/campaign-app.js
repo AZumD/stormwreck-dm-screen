@@ -976,7 +976,7 @@
             <div class="section-body" data-body="${section.id}">
               ${parseContent(data.content, getEntities())}
             </div>
-            ${window.SceneUI ? SceneUI.sceneExtrasHtml(section.id) : ""}
+            ${window.SceneUI ? SceneUI.sceneExtrasHtml(section.id, { authoring: true }) : ""}
             <div class="section-editor hidden" data-editor="${section.id}"></div>
           </section>
           ${addPassageControlsHtml(section.id)}`;
@@ -1018,26 +1018,26 @@
     const nextId = idx >= 0 && idx < sections.length - 1 ? sections[idx + 1].id : null;
     const navHtml = `
       <div class="play-scene-nav" role="navigation" aria-label="${escapeHtml(t.playSceneNav || "Scene")}">
-        <button type="button" class="play-scene-nav__btn" data-play-prev ${prevId ? "" : "disabled"} data-jump-scene="${escapeHtml(
+        <button type="button" class="play-scene-nav__btn play-scene-nav__btn--prev" data-play-prev ${prevId ? "" : "disabled"} data-jump-scene="${escapeHtml(
           prevId || ""
-        )}">${escapeHtml(t.playPrevScene || "← Prev")}</button>
-        <button type="button" class="play-scene-nav__btn" data-play-next ${nextId ? "" : "disabled"} data-jump-scene="${escapeHtml(
+        )}">${escapeHtml(t.playPrevScene || "← Previous")}</button>
+        <button type="button" class="play-scene-nav__btn play-scene-nav__btn--next" data-play-next ${nextId ? "" : "disabled"} data-jump-scene="${escapeHtml(
           nextId || ""
         )}">${escapeHtml(t.playNextScene || "Next →")}</button>
       </div>`;
 
     playView.innerHTML = `
       <section class="adventure-section play-scene${window.CampaignStateUI ? CampaignStateUI.sectionStatusClass(section.id) : ""}" id="section-${section.id}" data-section="${section.id}">
-        <div class="section-header">
-          <h1 class="section-title">${escapeHtml(data.title)}</h1>
-          ${sectionActionsHtml(section)}
+        <div class="play-scene-head">
+          <div class="section-header play-scene-header">
+            <h1 class="section-title">${escapeHtml(data.title)}</h1>
+          </div>
+          ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id, { compact: true }) : ""}
+          ${navHtml}
         </div>
-        ${navHtml}
-        ${window.CampaignStateUI ? CampaignStateUI.sceneChromeHtml(section.id) : ""}
         <div class="section-body" data-body="${section.id}">
           ${parseContent(data.content, getEntities())}
         </div>
-        ${window.SceneUI ? SceneUI.sceneExtrasHtml(section.id) : ""}
         <div class="section-editor hidden" data-editor="${section.id}"></div>
       </section>`;
 
@@ -1049,7 +1049,6 @@
 
     bindDocumentEditControls();
     if (window.CampaignStateUI) CampaignStateUI.bindSceneChrome(playView);
-    if (window.SceneUI) SceneUI.bind(playView);
     playView.querySelectorAll("[data-jump-scene]").forEach((btn) => {
       if (btn.disabled) return;
       btn.addEventListener("click", () => {

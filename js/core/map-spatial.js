@@ -272,6 +272,8 @@ window.MapSpatial = (function () {
 
     function clientToWorld(clientX, clientY, map) {
       if (!mapImage || !map?.grid || !window.MapDistance) return null;
+      const norm = MapDistance.clientToNormalized?.(clientX, clientY, mapImage, map);
+      if (norm) return MapDistance.percentToWorld(norm.x * 100, norm.y * 100, map);
       const rect = mapImage.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return null;
       const px = ((clientX - rect.left) / rect.width) * (map.widthPx || rect.width);
@@ -294,15 +296,19 @@ window.MapSpatial = (function () {
         return;
       }
       el.hidden = false;
+      const ox = Number(map.grid.origin?.x) || 0;
+      const oy = Number(map.grid.origin?.y) || 0;
       const sx = Number(map.grid.sizeX) || 1;
       const sy = Number(map.grid.sizeY) || 1;
       const lines = [];
       for (let i = 0; i <= Math.ceil(sx); i++) {
-        const x = (i / sx) * 100;
+        const pct = window.MapDistance?.worldToPercent?.(ox + i, oy, map);
+        const x = pct ? pct.x : (i / sx) * 100;
         lines.push(`<span class="map-grid-line map-grid-line--v" style="left:${x}%"></span>`);
       }
       for (let j = 0; j <= Math.ceil(sy); j++) {
-        const y = (j / sy) * 100;
+        const pct = window.MapDistance?.worldToPercent?.(ox, oy + j, map);
+        const y = pct ? pct.y : (j / sy) * 100;
         lines.push(`<span class="map-grid-line map-grid-line--h" style="top:${y}%"></span>`);
       }
       el.innerHTML = lines.join("");
@@ -379,13 +385,17 @@ window.MapSpatial = (function () {
       const resolved = resolveCombatTokenImages(t);
       const imgUrl = resolved.url || t.imageUrl || t.tokenImage || null;
       const hasImg = !!imgUrl;
+      const labelText = (t.label || "?").slice(0, 2);
+      const fallbackLabel = MTS?.tokenLabelHtml?.(labelText, true) || "";
       const inner =
         labelHtml != null
           ? labelHtml
           : hasImg
-            ? MTS?.tokenImageHtml?.(imgUrl, t.label || t.id, resolved.fallbackUrl || t.fallbackUrl) ||
-              `<img class="map-grid-token__img" src="${escape(imgUrl)}" alt="" loading="lazy" draggable="false" onerror="this.remove()">`
-            : `<span class="map-grid-token__label">${escape((t.label || "?").slice(0, 2))}</span>`;
+            ? fallbackLabel +
+              (MTS?.tokenImageHtml?.(imgUrl, t.label || t.id, resolved.fallbackUrl || t.fallbackUrl) ||
+                `<img class="map-grid-token__img" src="${escape(imgUrl)}" alt="" loading="lazy" draggable="false" ${MTS?.tokenImageErrorAttr?.() || 'onerror="this.remove()"'}>`)
+            : MTS?.tokenLabelHtml?.(labelText, false) ||
+              `<span class="map-grid-token__label">${escape(labelText)}</span>`;
       return `<button type="button" class="map-grid-token${extraClass}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${sel}" data-token-id="${escape(t.id)}"
             style="${style}"
             title="${escape(title)}" aria-label="${escape(title)}">${inner}</button>`;
@@ -932,6 +942,7 @@ window.MapSpatial = (function () {
       MapFog.bindDm({
         campaignId,
         mapWorld,
+        mapImage,
         mapViewport,
         getActiveMapId,
         getActiveMap: activeMap,

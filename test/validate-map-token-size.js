@@ -52,6 +52,10 @@ if (!css.includes(".map-grid-token") || css.match(/\.map-grid-token\s*\{[^}]*tra
   fail("map-grid-token should not counter-scale with zoom");
 } else pass("map-grid-token skips pin counter-scale");
 
+if (src.includes("margin:calc(-")) {
+  fail("gridTokenStyle should not use margin calc centering");
+} else pass("gridTokenStyle avoids margin calc");
+
 const sandbox = {
   window: {},
   CatalogueStore: {

@@ -67,7 +67,7 @@ window.PartyRoster = (function () {
 
     const subtitle =
       ref.type === "pc"
-        ? [entry.class, entry.level ? `Lv ${entry.level}` : ""].filter(Boolean).join(" · ") || "PC"
+        ? [entry.class, entry.level ? `Level ${entry.level}` : ""].filter(Boolean).join(" · ") || "PC"
         : entry.role || entry.summary?.slice(0, 48) || "NPC";
 
     return {
@@ -241,6 +241,7 @@ window.PartyRoster = (function () {
               ? `<img class="party-card__img" src="${escapeHtml(m.portrait)}" alt="">`
               : `<span class="party-card__initials" style="--pc-color:${escapeHtml(m.color || "#c4a035")}">${escapeHtml(initials)}</span>`;
             const typeLabel = m.memberType === "npc" ? "NPC" : "PC";
+            const hpAc = `<span class="party-card__stat">HP ${escapeHtml(m.hp)}</span><span class="party-card__stat">AC ${escapeHtml(String(m.ac))}</span>`;
 
             return `
               <div class="party-card-wrap">
@@ -248,8 +249,9 @@ window.PartyRoster = (function () {
                   <div class="party-card__portrait">${portrait}</div>
                   <div class="party-card__info">
                     <span class="party-card__name">${escapeHtml(m.name)}</span>
-                    <span class="party-card__class">${escapeHtml(typeLabel)} · ${escapeHtml(m.class || "")}</span>
-                    <span class="party-card__stats">HP ${escapeHtml(m.hp)} · AC ${escapeHtml(String(m.ac))}</span>
+                    <span class="party-card__class">${escapeHtml(m.class || "")}</span>
+                    <span class="party-card__meta">${escapeHtml(typeLabel)}</span>
+                    <span class="party-card__stats">${hpAc}</span>
                   </div>
                 </button>
                 <button type="button" class="party-card__remove" data-remove-party="${escapeHtml(m.id)}" aria-label="${escapeHtml(t().removeFromParty || "Remove from party")}">×</button>

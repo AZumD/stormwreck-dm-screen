@@ -1120,10 +1120,19 @@ window.MapPanel = (function () {
         if (!moved && Math.hypot(dx, dy) < 5) return;
         moved = true;
 
-        const rect = mapWorld.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
-        let x = clamp(((e.clientX - rect.left) / rect.width) * 100, 1, 99);
-        let y = clamp(((e.clientY - rect.top) / rect.height) * 100, 1, 99);
+        let x;
+        let y;
+        if (window.MapDistance?.clientToPercent && mapImage) {
+          const pct = MapDistance.clientToPercent(e.clientX, e.clientY, mapImage, maps[activeMapId]);
+          if (!pct) return;
+          x = clamp(pct.x, 1, 99);
+          y = clamp(pct.y, 1, 99);
+        } else {
+          const rect = mapWorld.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          x = clamp(((e.clientX - rect.left) / rect.width) * 100, 1, 99);
+          y = clamp(((e.clientY - rect.top) / rect.height) * 100, 1, 99);
+        }
         const map = maps[activeMapId];
         const snapOn = document.getElementById("map-snap-measure")?.checked;
         if (
@@ -1204,8 +1213,9 @@ window.MapPanel = (function () {
               const title = `${label} (${sizeInfo.dndSize})`;
               const hasImg = !!sizeInfo.tokenUrl;
               const inner = hasImg
-                ? MapTokenSize.tokenImageHtml(sizeInfo.tokenUrl, label, sizeInfo.fallbackUrl)
-                : "";
+                ? MapTokenSize.tokenLabelHtml(label, true) +
+                  MapTokenSize.tokenImageHtml(sizeInfo.tokenUrl, label, sizeInfo.fallbackUrl)
+                : MapTokenSize.tokenLabelHtml(label, false);
               return `<button type="button" class="map-grid-token map-grid-token--${pin.pinType}${roundClass}${hasImg ? " map-grid-token--has-img" : ""}${pin.custom ? " map-grid-token--custom" : ""}"
           style="${style}"
           data-pin-id="${escape(pin.id)}"

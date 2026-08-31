@@ -189,7 +189,8 @@ window.CampaignStateUI = (function () {
 
   /* ── Scene chrome ───────────────────────────────────── */
 
-  function sceneChromeHtml(sectionId) {
+  function sceneChromeHtml(sectionId, options = {}) {
+    const compact = !!options.compact;
     const state = CampaignState.getSceneState(sectionId);
     const statuses = CampaignState.SCENE_STATUSES;
     const labels = {
@@ -212,6 +213,26 @@ window.CampaignStateUI = (function () {
       })
       .join("");
 
+    if (compact) {
+      const hasNotes = !!(state.notes || "").trim();
+      const notesOpen = hasNotes ? " open" : "";
+      const indicator = hasNotes ? `<span class="scene-notes-indicator" aria-hidden="true"> •</span>` : "";
+      return `
+      <div class="scene-state scene-state--compact" data-scene-chrome="${escapeHtml(sectionId)}">
+        <div class="scene-run-bar">
+          <div class="scene-status-row" role="group" aria-label="${escapeHtml(t().sceneState || "Scene state")}">
+            ${buttons}
+          </div>
+          <details class="scene-notes-details"${notesOpen}>
+            <summary class="scene-notes-summary">${escapeHtml(t().privateSceneNotes || "Private notes")}${indicator}</summary>
+            <label class="scene-notes-label scene-notes-label--compact">
+              <textarea class="scene-notes" data-scene-notes="${escapeHtml(sectionId)}" rows="3" placeholder="${escapeHtml(t().sceneNotesPlaceholder || "Private DM notes for this scene…")}">${escapeHtml(state.notes)}</textarea>
+            </label>
+          </details>
+        </div>
+      </div>`;
+    }
+
     return `
       <div class="scene-state" data-scene-chrome="${escapeHtml(sectionId)}">
         <div class="scene-status-row" role="group" aria-label="${escapeHtml(t().sceneState || "Scene state")}">
@@ -222,6 +243,11 @@ window.CampaignStateUI = (function () {
           <textarea class="scene-notes" data-scene-notes="${escapeHtml(sectionId)}" rows="2" placeholder="${escapeHtml(t().sceneNotesPlaceholder || "Private DM notes for this scene…")}">${escapeHtml(state.notes)}</textarea>
         </label>
       </div>`;
+  }
+
+  function isCompactChromeHost(sectionEl) {
+    if (!sectionEl) return false;
+    return sectionEl.classList.contains("play-scene") || !!sectionEl.closest(".play-view");
   }
 
   function sectionStatusClass(sectionId) {
@@ -274,7 +300,7 @@ window.CampaignStateUI = (function () {
     if (section) {
       const host = section.querySelector(`[data-scene-chrome="${sectionId}"]`);
       if (host) {
-        host.outerHTML = sceneChromeHtml(sectionId);
+        host.outerHTML = sceneChromeHtml(sectionId, { compact: isCompactChromeHost(section) });
         bindSceneChrome(section);
       }
     }
@@ -284,13 +310,15 @@ window.CampaignStateUI = (function () {
   }
 
   function refreshAllSceneChrome() {
-    const root = document.getElementById("scroll-document");
-    if (!root) return;
-    root.querySelectorAll("[data-scene-chrome]").forEach((host) => {
-      const id = host.getAttribute("data-scene-chrome");
-      host.outerHTML = sceneChromeHtml(id);
+    [document.getElementById("scroll-document"), document.getElementById("play-view")].forEach((root) => {
+      if (!root) return;
+      root.querySelectorAll("[data-scene-chrome]").forEach((host) => {
+        const id = host.getAttribute("data-scene-chrome");
+        const section = host.closest(".adventure-section");
+        host.outerHTML = sceneChromeHtml(id, { compact: isCompactChromeHost(section) });
+      });
+      bindSceneChrome(root);
     });
-    bindSceneChrome(root);
     applySectionSceneClasses();
     applyNavSceneClasses();
     syncCurrentSceneButton();

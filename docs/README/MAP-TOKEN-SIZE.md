@@ -31,9 +31,9 @@ Uses the monster catalogue entry `size` field (`buildMonsterToken` stores `dndSi
 
 Map art: catalogue **`tokenImage`**, then **race-bound monster** `tokenImage` (NPC/PC `race` → monster catalogue name match), then **`portrait`** (own, then race monster). An uploaded NPC/PC map token always overrides the bound monster token.
 
-Image URLs are resolved via `resolvePinImageUrls` (checks catalogue row, party member, entity registry, memory cache, and `/api/assets/…` paths). If a primary image 404s, the `<img>` tries the next URL in the chain.
+Image URLs are resolved via `resolvePinImageUrls` (checks catalogue row, party member, entity registry, memory cache, and `/api/assets/…` paths). If a primary image 404s, the `<img>` tries the next URL in the chain. If every URL fails, the hidden initials label is shown and the colored type frame is restored (never an empty invisible token).
 
-Tokens **with** uploaded art render **without** the colored type frame (transparent over the map). Empty placeholders keep the colored ring. Map-token uploads are stored as **PNG** so alpha is preserved — re-upload older tokens that were saved as JPEG with a dark matte.
+Tokens **with** uploaded art render **without** the colored type frame (transparent over the map). Empty placeholders keep the colored ring. Map-token uploads are stored as **PNG** so alpha is preserved — re-upload older tokens that were saved as JPEG with a dark matte. Uploading or clearing a catalogue **tokenImage** refreshes open map tokens via `MapPanel.refreshTokens()`.
 
 ### PC pin
 1. Race catalogue by PC `race`
@@ -66,12 +66,16 @@ Grid tokens scale with the map (they stay one cell wide/tall). Legacy **map-pin*
 | `resolvePinImageUrls(kind, entry, pin)` | `{ url, fallbackUrl }` for map / combat tokens |
 | `resolveImageUrl(kind, entry, pin)` | Primary image URL (shorthand) |
 | `tokenImageHtml(url, label, fallbackUrl)` | `<img>` markup with portrait fallback on error |
-| `gridTokenStyle(pos, span)` | Inline CSS for centered grid token |
+| `tokenLabelHtml(label, hiddenFallback)` | Initials label (visible or hidden until image fails) |
+| `tokenImageErrorAttr()` | Inline `onerror` handler restoring initials |
+| `gridTokenStyle(pos, span)` | Inline CSS for centered grid token (`translate(-50%, -50%)`) |
 | `isCalibratedMap(map)` | Whether grid sizing applies |
 
 ## Test
 ```bash
 node test/validate-map-token-size.js
+node test/validate-map-token-image-fallback.js
+node test/validate-map-coordinate-sync.js
 ```
 
 Included in `npm test`.

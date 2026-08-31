@@ -35,7 +35,7 @@ Manual fog of war — normalized brush strokes persisted in `map-state.fog[mapId
 
 Strokes are **object-keyed** so PATCH merge appends without replacing the whole array.
 
-Coordinates are **0–1 normalized** to map image space (pan/zoom independent).
+Coordinates are **0–1 normalized** to map **image** space (pan/zoom independent). Fog painting uses the visible `#map-image` bounds (letterboxing trimmed via `MapDistance.imageContentRect`) so strokes align with tokens and the UVTT grid.
 
 ## DM UI
 1. Check **Fog enabled** (or click **Reveal** / **Hide** — both turn fog on and enter paint mode).

@@ -135,3 +135,6 @@
 [2026-08-31] Fix utility-rail restore: toolbar Utilities toggle when right panel collapsed. See LAYOUT-PANELS.md
 [2026-08-31] Player UX polish pass 1: home hierarchy (next session, character, board, campaigns), schedule subview, atmosphere backdrop. See PLAYER.md, validate-player-home.js
 [2026-08-31] Fix campaign-time popover clipped by toolbar scroll (fixed viewport positioning). See DAY-TIME-UI.md
+[2026-08-31] Campaign visual polish pass 1: Run-first scene chrome, Prep-only authoring extras, party rail density. See validate-run-polish.js
+[2026-08-31] Fix map token invisible when tokenImage fails to load; refresh map after catalogue token upload. See validate-map-token-image-fallback.js
+[2026-08-31] Fix fog/token/grid coordinate sync (image-space paint, grid.origin, translate centering). See validate-map-coordinate-sync.js

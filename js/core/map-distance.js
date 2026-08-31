@@ -78,5 +78,58 @@ window.MapDistance = (function () {
     return pixelToWorld((Number(pctX) / 100) * map.widthPx, (Number(pctY) / 100) * map.heightPx, map.grid);
   }
 
-  return { distanceBetween, formatDistance, pixelToWorld, worldToPercent, percentToWorld, snapWorldToCellCenter };
+  function clamp(n, lo, hi) {
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  /** Visible image pixels when CSS letterboxes (object-fit: contain). */
+  function imageContentRect(img) {
+    if (!img) return null;
+    const rect = img.getBoundingClientRect();
+    const nw = img.naturalWidth || 0;
+    const nh = img.naturalHeight || 0;
+    if (!nw || !nh || !rect.width || !rect.height) return rect;
+    const elAspect = rect.width / rect.height;
+    const imgAspect = nw / nh;
+    if (Math.abs(elAspect - imgAspect) < 0.001) return rect;
+    if (elAspect > imgAspect) {
+      const h = rect.height;
+      const w = h * imgAspect;
+      const left = rect.left + (rect.width - w) / 2;
+      return { left, top: rect.top, width: w, height: h, right: left + w, bottom: rect.bottom };
+    }
+    const w = rect.width;
+    const h = w / imgAspect;
+    const top = rect.top + (rect.height - h) / 2;
+    return { left: rect.left, top, width: w, height: h, right: rect.right, bottom: top + h };
+  }
+
+  /** Normalized 0–1 coords on map image (ignores letterbox padding). */
+  function clientToNormalized(clientX, clientY, img, map) {
+    const rect = imageContentRect(img);
+    if (!rect || !rect.width || !rect.height) return null;
+    return {
+      x: clamp((clientX - rect.left) / rect.width, 0, 1),
+      y: clamp((clientY - rect.top) / rect.height, 0, 1)
+    };
+  }
+
+  function clientToPercent(clientX, clientY, img, map) {
+    const norm = clientToNormalized(clientX, clientY, img, map);
+    if (!norm) return null;
+    return { x: norm.x * 100, y: norm.y * 100 };
+  }
+
+  return {
+    distanceBetween,
+    formatDistance,
+    pixelToWorld,
+    worldToPercent,
+    percentToWorld,
+    snapWorldToCellCenter,
+    imageContentRect,
+    clientToNormalized,
+    clientToPercent,
+    clamp
+  };
 })();

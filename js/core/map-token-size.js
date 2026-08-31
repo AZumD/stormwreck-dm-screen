@@ -322,17 +322,27 @@ window.MapTokenSize = (function () {
       .replace(/</g, "&lt;");
   }
 
+  /** When all image URLs fail, restore initials instead of an invisible frameless token. */
+  function tokenImageErrorAttr() {
+    return `onerror="(function(i){var b=i.closest('.map-grid-token');if(i.dataset.fallback&&!i.dataset.tried){i.dataset.tried='1';i.src=i.dataset.fallback;return}i.remove();if(!b)return;b.classList.remove('map-grid-token--has-img');var f=b.querySelector('.map-grid-token__label--fallback');if(f){f.hidden=false;f.removeAttribute('aria-hidden')}})(this)"`;
+  }
+
+  function tokenLabelHtml(label, hiddenFallback) {
+    const text = escapeAttr(String(label || "?").slice(0, 2));
+    if (hiddenFallback) {
+      return `<span class="map-grid-token__label map-grid-token__label--fallback" hidden aria-hidden="true">${text}</span>`;
+    }
+    return `<span class="map-grid-token__label">${text}</span>`;
+  }
+
   function tokenImageHtml(url, label, fallbackUrl) {
     if (!url) return "";
     const safe = escapeAttr(url);
     const fallback =
       fallbackUrl && fallbackUrl !== url ? escapeAttr(fallbackUrl) : "";
-    const onerr = fallback
-      ? `onerror="if(this.dataset.fallback&&!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback}else{this.remove()}"`
-      : `onerror="this.remove()"`;
     const dataFallback = fallback ? ` data-fallback="${fallback}"` : "";
     const alt = escapeAttr(label || "Token");
-    return `<img class="map-grid-token__img" src="${safe}"${dataFallback} alt="${alt}" loading="lazy" draggable="false" ${onerr}>`;
+    return `<img class="map-grid-token__img" src="${safe}"${dataFallback} alt="${alt}" loading="lazy" draggable="false" ${tokenImageErrorAttr()}>`;
   }
 
   function resolvePinSize(pin, ctx) {
@@ -349,7 +359,7 @@ window.MapTokenSize = (function () {
   function gridTokenStyle(pos, span) {
     const w = span.w;
     const h = span.h;
-    return `left:${pos.left};top:${pos.top};width:${w}%;height:${h}%;margin:calc(-${h / 2}%) 0 0 calc(-${w / 2}%)`;
+    return `left:${pos.left};top:${pos.top};width:${w}%;height:${h}%;transform:translate(-50%,-50%)`;
   }
 
   function isCalibratedMap(map) {
@@ -369,6 +379,8 @@ window.MapTokenSize = (function () {
     resolveImageUrl,
     resolvePinImageUrls,
     tokenImageHtml,
+    tokenLabelHtml,
+    tokenImageErrorAttr,
     defaultAssetUrl,
     gridTokenStyle,
     isCalibratedMap,

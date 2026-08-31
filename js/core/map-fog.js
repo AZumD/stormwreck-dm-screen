@@ -158,9 +158,12 @@ window.MapFog = (function () {
     }
   }
 
-  function clientToNorm(clientX, clientY, mapWorld) {
-    const rect = mapWorld.getBoundingClientRect();
-    if (!rect.width || !rect.height) return null;
+  function clientToNorm(clientX, clientY, mapWorld, mapImage, map) {
+    if (window.MapDistance?.clientToNormalized && mapImage) {
+      return MapDistance.clientToNormalized(clientX, clientY, mapImage, map);
+    }
+    const rect = mapWorld?.getBoundingClientRect?.();
+    if (!rect?.width || !rect.height) return null;
     return {
       x: clamp((clientX - rect.left) / rect.width, 0, 1),
       y: clamp((clientY - rect.top) / rect.height, 0, 1)
@@ -317,6 +320,7 @@ window.MapFog = (function () {
     const {
       campaignId,
       mapWorld,
+      mapImage,
       mapViewport,
       getActiveMapId,
       getActiveMap,
@@ -370,7 +374,7 @@ window.MapFog = (function () {
         if (!mapId) return;
         e.preventDefault();
         e.stopPropagation();
-        const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
+        const norm = clientToNorm(e.clientX, e.clientY, mapWorld, mapImage, getActiveMap?.());
         if (!norm) return;
         mapViewport.setPointerCapture(e.pointerId);
         if (isSelectTool()) {
@@ -399,7 +403,7 @@ window.MapFog = (function () {
         if (!mapId) return;
         if (rectDrag) {
           e.preventDefault();
-          const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
+          const norm = clientToNorm(e.clientX, e.clientY, mapWorld, mapImage, getActiveMap?.());
           if (!norm) return;
           currentStroke = previewRectStroke(rectDrag.startNorm, norm);
           refresh(campaignId, mapId, mapWorld, { dm: true, previewStroke: currentStroke });
@@ -407,7 +411,7 @@ window.MapFog = (function () {
         }
         if (!painting || !currentStroke) return;
         e.preventDefault();
-        const norm = clientToNorm(e.clientX, e.clientY, mapWorld);
+        const norm = clientToNorm(e.clientX, e.clientY, mapWorld, mapImage, getActiveMap?.());
         if (!norm) return;
         if (lastNorm && Math.hypot(norm.x - lastNorm.x, norm.y - lastNorm.y) < 0.002) return;
         lastNorm = norm;

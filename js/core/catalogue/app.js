@@ -1232,6 +1232,12 @@ window.CatalogueApp = (function () {
       if (status) status.textContent = msg;
     }
 
+    function refreshMapTokenArt(fieldId) {
+      if (fieldId === "tokenImage" && window.MapPanel?.refreshTokens) {
+        MapPanel.refreshTokens();
+      }
+    }
+
     async function saveCurrent(form, options = {}) {
       if (!form) return false;
       const data = readForm(form, config);
@@ -1466,6 +1472,7 @@ window.CatalogueApp = (function () {
                 if (toStore[f]) imageCache[f] = toStore[f];
               });
             }
+            refreshMapTokenArt(fieldId);
             setStatus("Saved");
             renderEditor(activeId, { mode: "edit" });
           } catch (err) {
@@ -1520,6 +1527,7 @@ window.CatalogueApp = (function () {
               ? await CatalogueImages.persistEntryImages(type, merged, { clearFields: [fieldId] })
               : merged;
             await CatalogueStore.upsert(type, toStore);
+            refreshMapTokenArt(fieldId);
             setStatus("Saved");
             renderEditor(activeId, { mode: "edit" });
           } catch {

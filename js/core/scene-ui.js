@@ -231,7 +231,12 @@ window.SceneUI = (function () {
       </nav>`;
   }
 
-  function sceneExtrasHtml(sectionId) {
+  function sceneExtrasHtml(sectionId, options = {}) {
+    const authoring =
+      options.authoring != null
+        ? !!options.authoring
+        : document.body.classList.contains("workspace-prep") || !!window.SectionEditor?.isEditMode?.();
+    if (!authoring) return "";
     return `${renderTrayHtml(sectionId)}${renderConnectionsHtml(sectionId)}`;
   }
 
