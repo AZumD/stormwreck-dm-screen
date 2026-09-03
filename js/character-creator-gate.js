@@ -22,6 +22,7 @@
     try {
       await appendScript("/js/character-creator-expanded-data.js?v=20260903c4");
       await appendScript("/js/character-creator-compendium-bindings.js?v=20260903c4");
+      await appendScript("/js/character-creator-background-link.js?v=20260903c5");
       await appendScript("/js/character-creator-v3.js?v=20260903c4");
     } finally {
       reveal();
