@@ -4,7 +4,10 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const { projectRoot, dataRoot } = require("./atomic-fs");
-const characterCreatorSeeds = require("../seeds/character-creator-compendium");
+const characterCreatorSeeds = [
+  ...require("../seeds/character-creator-compendium"),
+  ...require("../seeds/character-backgrounds")
+];
 
 async function pathExists(p) {
   try {
