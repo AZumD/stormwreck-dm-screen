@@ -18,6 +18,7 @@ const { URL } = require("url");
 const { ensureDataLayout, projectRoot, dataRoot } = require("./lib/atomic-fs");
 const { syncMissingCatalogueSeeds } = require("./lib/catalogue-seed-sync");
 const { createApiRoutes, handleApi } = require("./routes/api");
+require("./lib/player-background-library");
 const { sendJson } = require("./lib/http-util");
 const { isDeniedStaticPath } = require("./lib/static-guard");
 const { validateStartupConfig } = require("./lib/startup-config");
