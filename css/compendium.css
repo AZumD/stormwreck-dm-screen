@@ -175,6 +175,49 @@
   padding-top: 0.5rem;
 }
 
+/* ── Scrollbars ──────────────────────────────────────── */
+/*
+ * Keep every scroll surface inside the Compendium visually consistent.
+ * Firefox uses scrollbar-width/color; Chromium/WebKit use the pseudo-elements.
+ */
+.compendium-page,
+.compendium-page * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(196, 160, 53, 0.48) rgba(8, 12, 20, 0.22);
+}
+
+.compendium-page *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.compendium-page *::-webkit-scrollbar-track {
+  background: rgba(8, 12, 20, 0.18);
+  border-radius: 999px;
+}
+
+.compendium-page *::-webkit-scrollbar-thumb {
+  min-height: 34px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(196, 160, 53, 0.42);
+  background-clip: padding-box;
+}
+
+.compendium-page *::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 184, 74, 0.66);
+  background-clip: padding-box;
+}
+
+.compendium-page *::-webkit-scrollbar-thumb:active {
+  background: rgba(224, 198, 96, 0.78);
+  background-clip: padding-box;
+}
+
+.compendium-page *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @media (max-width: 900px) {
   .compendium-layout {
     grid-template-columns: 1fr;
