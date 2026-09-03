@@ -7,12 +7,24 @@
     document.documentElement.classList.remove("creator-auth-pending");
   }
 
-  function loadCreator() {
-    reveal();
-    const script = document.createElement("script");
-    script.src = "/js/character-creator.js?v=20260903c2";
-    script.async = false;
-    document.body.appendChild(script);
+  function appendScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = false;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Failed to load ${src}`));
+      document.body.appendChild(script);
+    });
+  }
+
+  async function loadCreator() {
+    try {
+      await appendScript("/js/character-creator-expanded-data.js?v=20260903c3");
+      await appendScript("/js/character-creator-v2.js?v=20260903c3");
+    } finally {
+      reveal();
+    }
   }
 
   if (!api || typeof api.bootstrap !== "function") {
