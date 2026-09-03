@@ -59,14 +59,21 @@ assert.ok(languageCode.includes('const DEFAULT_LANGUAGE = "sv"'), "Swedish is th
 assert.ok(languageCode.includes("location.reload()"), "language switching reloads to keep module state consistent");
 assert.ok(languageCode.includes("site-language-switcher"), "runtime renders the global SV/EN switcher");
 
+const localeCode = read("js/i18n/locale.js");
+assert.ok(localeCode.includes('return window.AppI18n.language === "sv" ? "sv-SE" : "en-GB"'), "date locale follows selected language");
+assert.ok(localeCode.includes("toLocaleDateString"), "date-only formatting is localized");
+assert.ok(localeCode.includes("toLocaleTimeString"), "time formatting is localized");
+assert.ok(localeCode.includes("toLocaleString"), "date-time formatting is localized");
+
 const typesCode = read("js/core/catalogue/types.js");
-for (const file of ["en.js", "sv.js", "language.js", "dom-localization.js"]) {
+for (const file of ["en.js", "sv.js", "language.js", "locale.js", "dom-localization.js"]) {
   assert.ok(typesCode.includes(file), `shared catalogue bootstrap loads ${file}`);
 }
 assert.ok(typesCode.includes("document.write"), "parser-time bootstrap selects language before downstream campaign modules initialize");
+assert.ok(typesCode.includes("player-localization.js"), "Player Companion loads dynamic Swedish chrome localization");
 
 const creatorGate = read("js/character-creator-gate.js");
-for (const file of ["en.js", "sv.js", "sv-creator.js", "language.js", "dom-localization.js"]) {
+for (const file of ["en.js", "sv.js", "sv-creator.js", "language.js", "locale.js", "dom-localization.js"]) {
   assert.ok(creatorGate.includes(file), `Character Creator language bootstrap loads ${file}`);
 }
 
@@ -74,6 +81,13 @@ const domCode = read("js/i18n/dom-localization.js");
 assert.ok(domCode.includes("StormwreckDomLocalization"), "DOM localization marks itself installed");
 assert.ok(domCode.includes("if (el.textContent !== value)"), "DOM localization avoids text mutation feedback loops");
 assert.ok(domCode.includes("if (el.getAttribute(name) !== value)"), "DOM localization avoids attribute mutation churn");
+
+const playerLocalization = read("js/i18n/player-localization.js");
+assert.ok(playerLocalization.includes("No characters yet."), "dynamic Player empty states are localized");
+assert.ok(playerLocalization.includes("Färdigheter"), "dynamic Player library uses Swedish skill terminology");
+assert.ok(playerLocalization.includes("Nästa spelmöte"), "dynamic scheduling chrome uses Swedish session terminology");
+assert.ok(playerLocalization.includes("MutationObserver"), "dynamic Player views are localized after rerender");
+assert.ok(playerLocalization.includes("if (el.textContent !== next)"), "Player localization avoids observer feedback loops");
 
 const catalogueCode = read("js/i18n/catalogue-localization.js");
 assert.ok(catalogueCode.includes("Regelkatalog"), "Compendium has Swedish Rules catalogue copy");
