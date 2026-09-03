@@ -12,6 +12,7 @@ const CATALOGUE_TYPES = Object.freeze([
   "skill",
   "feature",
   "spell",
+  "rule",
   "item",
   "monster",
   "location",
