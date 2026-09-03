@@ -113,18 +113,24 @@ window.CatalogueTypes = (function () {
 
 /*
  * Player Companion uses the catalogue type registry before its own app bundle.
- * Load optional player-side catalogue affordances here without coupling the
- * main player-app closure to every future catalogue type.
+ * Load optional player-side affordances here without coupling the main
+ * player-app closure to every future catalogue or localization feature.
  */
 if (
   typeof document !== "undefined" &&
   typeof location !== "undefined" &&
   /^\/player(?:\/|$)/.test(location.pathname)
 ) {
-  const script = document.createElement("script");
-  script.src = "/js/player-backgrounds.js?v=20260904p1";
-  script.async = false;
-  document.head.appendChild(script);
+  [
+    "/js/player-backgrounds.js?v=20260904p1",
+    "/js/i18n/player-localization.js?v=20260904i1"
+  ].forEach((src) => {
+    if (document.querySelector(`script[src^="${src.split("?")[0]}"]`)) return;
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    document.head.appendChild(script);
+  });
 }
 
 /*
