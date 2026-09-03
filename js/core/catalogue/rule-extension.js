@@ -13,6 +13,10 @@
     attempts: 0
   };
 
+  function tx(key, fallback) {
+    return window.AppI18n?.t?.(key, fallback) || fallback;
+  }
+
   function asArray(value) {
     if (Array.isArray(value)) return value.filter(Boolean).map(String);
     if (value == null || String(value).trim() === "") return [];
@@ -30,18 +34,22 @@
   function relatedBlock(refs) {
     const list = asArray(refs);
     if (!list.length) return "";
-    return `**Related rules:**\n${list.map((ref) => `- ${ref}`).join("\n")}`;
+    const heading = window.AppI18n?.isSwedish?.() ? "Relaterade regler" : "Related rules";
+    return `**${heading}:**\n${list.map((ref) => `- ${ref}`).join("\n")}`;
   }
 
   function ruleToEntity(entry) {
     const id = String(entry?.id || "").trim();
-    const name = String(entry?.name || id || "Rule");
+    const name = String(entry?.name || id || tx("typeLabels.rule", "Rule"));
+    const quickHeading = window.AppI18n?.isSwedish?.() ? "Snabbreferens" : "Quick reference";
+    const editionHeading = window.AppI18n?.isSwedish?.() ? "Versionsskillnader" : "Edition notes";
+    const notesHeading = window.AppI18n?.isSwedish?.() ? "Anteckningar" : "Notes";
     const blocks = [
-      entry.quickReference && `**Quick reference**\n${entry.quickReference}`,
+      entry.quickReference && `**${quickHeading}**\n${entry.quickReference}`,
       entry.details,
-      entry.editionNotes && `**Edition notes**\n${entry.editionNotes}`,
+      entry.editionNotes && `**${editionHeading}**\n${entry.editionNotes}`,
       relatedBlock(entry.relatedRefs),
-      entry.notes && `**Notes**\n${entry.notes}`
+      entry.notes && `**${notesHeading}**\n${entry.notes}`
     ].filter(Boolean);
 
     return {
@@ -50,7 +58,10 @@
       type: "rule",
       name,
       summary: String(entry.summary || entry.quickReference || "").slice(0, 180),
-      stats: pickStats({ Category: entry.category, Rulesets: entry.rulesets }),
+      stats: pickStats({
+        [window.AppI18n?.isSwedish?.() ? "Kategori" : "Category"]: entry.category,
+        [window.AppI18n?.isSwedish?.() ? "Regelversion" : "Rulesets"]: entry.rulesets
+      }),
       details: blocks.join("\n\n"),
       tags: [
         ...asArray(entry.tags),
@@ -209,7 +220,7 @@
     const compendium = window.CompendiumApp;
     if (!compendium) return false;
 
-    compendium.LABELS.rule = "Rules";
+    compendium.LABELS.rule = tx("site.compendium.types.rule", "Rules");
     const rules = compendium.GROUPS.find((group) => group.id === "rules");
     if (rules && !rules.types.includes("rule")) rules.types.unshift("rule");
     if (!compendium.ALL_TYPES.includes("rule")) compendium.ALL_TYPES.push("rule");
@@ -222,7 +233,7 @@
     if (state.i18n) return true;
     if (!window.I18N) return false;
     window.I18N.typeLabels = window.I18N.typeLabels || {};
-    window.I18N.typeLabels.rule = "Rule";
+    window.I18N.typeLabels.rule = tx("typeLabels.rule", "Rule");
     state.i18n = true;
     return true;
   }
