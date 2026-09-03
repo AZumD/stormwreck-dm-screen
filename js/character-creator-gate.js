@@ -23,6 +23,7 @@
     if (!window.I18N_SV) await appendScript("/js/i18n/sv.js?v=20260904i1");
     await appendScript("/js/i18n/sv-creator.js?v=20260904i1");
     if (!window.AppI18n) await appendScript("/js/i18n/language.js?v=20260904i1");
+    if (!window.StormwreckLocale?.installed) await appendScript("/js/i18n/locale.js?v=20260904i1");
     if (!window.StormwreckDomLocalization?.installed) {
       await appendScript("/js/i18n/dom-localization.js?v=20260904i1");
     }
