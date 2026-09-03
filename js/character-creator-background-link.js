@@ -8,7 +8,7 @@
   function linkBackgroundPayload(payload) {
     if (!payload || typeof payload !== "object") return payload;
     const raw = String(payload.background || "").trim();
-    if (!raw || /^@background:[^|\s]+\|/.test(raw)) return payload;
+    if (!raw || raw.startsWith("@background:")) return payload;
     return {
       ...payload,
       background: compendium.ref("background", raw)
