@@ -56,6 +56,11 @@ const { syncMissingCatalogueSeeds } = require("../server/lib/catalogue-seed-sync
     const feat = JSON.parse(await fsp.readFile(path.join(dest, "feature", "feature-feat-alert.json"), "utf8"));
     assert.strictEqual(feat.name, "Alert", "creator seed manifest materializes missing Compendium entries");
 
+    const background = JSON.parse(
+      await fsp.readFile(path.join(dest, "background", "background-acolyte.json"), "utf8")
+    );
+    assert.strictEqual(background.name, "Acolyte", "background seed manifest materializes the Background catalogue");
+
     console.log("catalogue seed sync validation passed");
   } finally {
     await fsp.rm(tmp, { recursive: true, force: true });
