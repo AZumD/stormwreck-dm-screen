@@ -20,8 +20,9 @@
 
   async function loadCreator() {
     try {
-      await appendScript("/js/character-creator-expanded-data.js?v=20260903c3");
-      await appendScript("/js/character-creator-v2.js?v=20260903c3");
+      await appendScript("/js/character-creator-expanded-data.js?v=20260903c4");
+      await appendScript("/js/character-creator-compendium-bindings.js?v=20260903c4");
+      await appendScript("/js/character-creator-v3.js?v=20260903c4");
     } finally {
       reveal();
     }
