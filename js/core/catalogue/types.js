@@ -18,6 +18,7 @@ window.CatalogueTypes = (function () {
     { id: "monster", label: "Monster", linkable: true, folder: "monster-katalog" },
     { id: "location", label: "Location", linkable: true, folder: "location-katalog" },
     { id: "race", label: "Race", linkable: true, folder: "race-katalog" },
+    { id: "background", label: "Background", linkable: true, folder: "background-katalog" },
     { id: "class", label: "Class", linkable: true, folder: "class-katalog" },
     { id: "spell", label: "Spell", linkable: true, folder: "spell-katalog" },
     { id: "skill", label: "Skill", linkable: true, folder: "skill-katalog" },
