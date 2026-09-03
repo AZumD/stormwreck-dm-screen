@@ -23,6 +23,7 @@ window.CatalogueTypes = (function () {
     { id: "spell", label: "Spell", linkable: true, folder: "spell-katalog" },
     { id: "skill", label: "Skill", linkable: true, folder: "skill-katalog" },
     { id: "feature", label: "Feature", linkable: true, folder: "feature-katalog" },
+    { id: "rule", label: "Rule", linkable: true, folder: "rule-katalog" },
     { id: "music", label: "Music", linkable: false, folder: "music-katalog" },
     { id: "source", label: "Source", linkable: true, folder: "source-katalog" }
   ];
@@ -88,4 +89,26 @@ if (
   script.src = "/js/player-backgrounds.js?v=20260904p1";
   script.async = false;
   document.head.appendChild(script);
+}
+
+/*
+ * Campaign pages need rule seeds in the universal entity index so Ctrl+K can
+ * answer table questions such as "constitution", "cover", or "movement".
+ * These scripts are additive and the extension waits for Store/Registry readiness.
+ */
+if (
+  typeof document !== "undefined" &&
+  typeof location !== "undefined" &&
+  /^\/campaigns(?:\/|$)/.test(location.pathname)
+) {
+  [
+    "/js/catalogue-seeds/dm-rules.js?v=20260904r1",
+    "/js/core/catalogue/rule-extension.js?v=20260904r1"
+  ].forEach((src) => {
+    if (document.querySelector(`script[src^="${src.split("?")[0]}"]`)) return;
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    document.head.appendChild(script);
+  });
 }
