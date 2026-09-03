@@ -19,7 +19,10 @@ vm.runInContext(
 
 const creator = sandbox.window.StormwreckCharacterCreatorData;
 const bindings = sandbox.window.StormwreckCharacterCreatorCompendium;
-const manifest = require(path.join(root, "server", "seeds", "character-creator-compendium.js"));
+const manifest = [
+  ...require(path.join(root, "server", "seeds", "character-creator-compendium.js")),
+  ...require(path.join(root, "server", "seeds", "character-backgrounds.js"))
+];
 
 function catalogueEntries(type) {
   const dir = path.join(root, "data", "catalogues", type);
@@ -46,6 +49,7 @@ function indexType(type) {
 
 const classes = indexType("class");
 const races = indexType("race");
+const backgrounds = indexType("background");
 const skills = indexType("skill");
 const features = indexType("feature");
 const spells = indexType("spell");
@@ -68,6 +72,23 @@ for (const species of creator.SPECIES) {
     bindings.catalogueId("race", species.name),
     `creator species uses canonical Compendium id: ${species.name}`
   );
+}
+
+for (const background of creator.BACKGROUNDS) {
+  const entry = backgrounds.byName.get(background.name);
+  assert.ok(entry, `creator background has Compendium entry: ${background.name}`);
+  assert.strictEqual(
+    entry.id,
+    bindings.catalogueId("background", background.name),
+    `creator background uses canonical Compendium id: ${background.name}`
+  );
+  if (background.feat) {
+    assert.deepStrictEqual(
+      Array.from(entry.originFeatRefs || []),
+      [bindings.featRef(background.feat)],
+      `${background.name} links its origin feat through the Feature catalogue`
+    );
+  }
 }
 
 for (const feat of creator.FEATS) {
@@ -103,6 +124,10 @@ for (const [className, config] of Object.entries(bindings.CLASS_SKILLS)) {
 }
 
 assert.strictEqual(new Set(bindings.SKILLS).size, 18, "standard D&D skill set has 18 unique skills");
-assert.ok(manifest.length >= 80, "expanded creator ships a substantial additive Compendium seed manifest");
+assert.ok(manifest.length >= 100, "expanded creator ships a substantial additive Compendium seed manifest");
+assert.ok(
+  manifest.filter((seed) => seed.type === "background").length >= creator.BACKGROUNDS.length,
+  "expanded creator ships Background Compendium seeds"
+);
 
 console.log("character creator Compendium validation passed");
