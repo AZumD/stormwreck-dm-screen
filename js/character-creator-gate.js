@@ -21,8 +21,11 @@
   async function loadLanguage() {
     if (!window.I18N) await appendScript("/js/i18n/en.js?v=20260904i1");
     if (!window.I18N_SV) await appendScript("/js/i18n/sv.js?v=20260904i1");
+    await appendScript("/js/i18n/sv-creator.js?v=20260904i1");
     if (!window.AppI18n) await appendScript("/js/i18n/language.js?v=20260904i1");
-    await appendScript("/js/i18n/dom-localization.js?v=20260904i1");
+    if (!window.StormwreckDomLocalization?.installed) {
+      await appendScript("/js/i18n/dom-localization.js?v=20260904i1");
+    }
   }
 
   async function loadCreator() {
