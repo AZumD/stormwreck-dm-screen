@@ -16,6 +16,7 @@ const fsp = require("fs/promises");
 const path = require("path");
 const { URL } = require("url");
 const { ensureDataLayout, projectRoot, dataRoot } = require("./lib/atomic-fs");
+const { syncMissingCatalogueSeeds } = require("./lib/catalogue-seed-sync");
 const { createApiRoutes, handleApi } = require("./routes/api");
 const { sendJson } = require("./lib/http-util");
 const { isDeniedStaticPath } = require("./lib/static-guard");
@@ -138,6 +139,10 @@ async function main() {
 
   const HOST = startup.host;
   await ensureDataLayout();
+  const seedSync = await syncMissingCatalogueSeeds();
+  if (seedSync.seeded > 0) {
+    console.log(`Added ${seedSync.seeded} new built-in Compendium entries to the persistent data volume.`);
+  }
   const root = projectRoot();
   const resolvedDataRoot = dataRoot();
   const apiRoutes = createApiRoutes();
