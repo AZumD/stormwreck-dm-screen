@@ -123,6 +123,57 @@ for (const [className, config] of Object.entries(bindings.CLASS_SKILLS)) {
   }
 }
 
+const createCalls = [];
+sandbox.window.PlayerApiClient = {
+  createStandaloneCharacter(payload) {
+    createCalls.push({ mode: "standalone", payload });
+    return payload;
+  },
+  createCharacter(campaignId, payload) {
+    createCalls.push({ mode: "campaign", campaignId, payload });
+    return payload;
+  }
+};
+vm.runInContext(
+  fs.readFileSync(path.join(root, "js", "character-creator-background-link.js"), "utf8"),
+  sandbox
+);
+
+const backgroundLink = sandbox.window.StormwreckCharacterCreatorBackgroundLink;
+assert.ok(backgroundLink, "creator exposes the background persistence seam");
+assert.strictEqual(
+  backgroundLink.linkBackgroundPayload({ background: "Acolyte" }).background,
+  bindings.ref("background", "Acolyte"),
+  "plain creator backgrounds normalize to canonical @background refs"
+);
+assert.strictEqual(
+  backgroundLink.linkBackgroundPayload({ background: bindings.ref("background", "Sage") }).background,
+  bindings.ref("background", "Sage"),
+  "already-linked backgrounds remain unchanged"
+);
+
+sandbox.window.PlayerApiClient.createStandaloneCharacter({ name: "Ada", background: "Sage" });
+sandbox.window.PlayerApiClient.createCharacter("campaign-demo", { name: "Borin", background: "Soldier" });
+assert.strictEqual(
+  createCalls[0].payload.background,
+  bindings.ref("background", "Sage"),
+  "standalone character creation persists a Background Compendium ref"
+);
+assert.strictEqual(
+  createCalls[1].payload.background,
+  bindings.ref("background", "Soldier"),
+  "campaign character creation persists a Background Compendium ref"
+);
+
+const gateSource = fs.readFileSync(path.join(root, "js", "character-creator-gate.js"), "utf8");
+const bindingPos = gateSource.indexOf("character-creator-compendium-bindings.js");
+const backgroundPos = gateSource.indexOf("character-creator-background-link.js");
+const creatorPos = gateSource.indexOf("character-creator-v3.js");
+assert.ok(
+  bindingPos >= 0 && backgroundPos > bindingPos && creatorPos > backgroundPos,
+  "background persistence seam loads after Compendium bindings and before creator v3"
+);
+
 assert.strictEqual(new Set(bindings.SKILLS).size, 18, "standard D&D skill set has 18 unique skills");
 assert.ok(manifest.length >= 100, "expanded creator ships a substantial additive Compendium seed manifest");
 assert.ok(
