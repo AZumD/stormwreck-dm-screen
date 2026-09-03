@@ -73,3 +73,19 @@ window.CatalogueTypes = (function () {
     typeMap
   };
 })();
+
+/*
+ * Player Companion uses the catalogue type registry before its own app bundle.
+ * Load optional player-side catalogue affordances here without coupling the
+ * main player-app closure to every future catalogue type.
+ */
+if (
+  typeof document !== "undefined" &&
+  typeof location !== "undefined" &&
+  /^\/player(?:\/|$)/.test(location.pathname)
+) {
+  const script = document.createElement("script");
+  script.src = "/js/player-backgrounds.js?v=20260904p1";
+  script.async = false;
+  document.head.appendChild(script);
+}
