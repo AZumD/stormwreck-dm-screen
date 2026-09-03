@@ -1,18 +1,30 @@
 (function () {
   "use strict";
 
+  if (window.StormwreckDomLocalization?.installed) return;
+
   const i18n = window.AppI18n;
   if (!i18n) return;
 
+  function setText(el, next) {
+    const value = String(next ?? "");
+    if (el.textContent !== value) el.textContent = value;
+  }
+
+  function setAttr(el, name, next) {
+    const value = String(next ?? "");
+    if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+  }
+
   function text(selector, key, root = document) {
     root.querySelectorAll?.(selector).forEach((el) => {
-      el.textContent = i18n.t(key, el.textContent);
+      setText(el, i18n.t(key, el.textContent));
     });
   }
 
   function attr(selector, name, key, root = document) {
     root.querySelectorAll?.(selector).forEach((el) => {
-      el.setAttribute(name, i18n.t(key, el.getAttribute(name) || ""));
+      setAttr(el, name, i18n.t(key, el.getAttribute(name) || ""));
     });
   }
 
@@ -21,7 +33,8 @@
       const first = [...el.childNodes].find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
       if (!first) return;
       const suffix = /\s$/.test(first.textContent) ? " " : "";
-      first.textContent = `${i18n.t(key, first.textContent.trim())}${suffix}`;
+      const next = `${i18n.t(key, first.textContent.trim())}${suffix}`;
+      if (first.textContent !== next) first.textContent = next;
     });
   }
 
@@ -100,13 +113,15 @@
     root.querySelectorAll?.(selectors.join(",")).forEach((el) => {
       const current = String(el.textContent || "").trim();
       const key = EXACT[current];
-      if (key) el.textContent = i18n.t(key, current);
+      if (!key) return;
+      setText(el, i18n.t(key, current));
     });
 
     root.querySelectorAll?.("input[placeholder], textarea[placeholder]").forEach((el) => {
       const current = el.getAttribute("placeholder") || "";
       const key = PLACEHOLDER_EXACT[current];
-      if (key) el.setAttribute("placeholder", i18n.t(key, current));
+      if (!key) return;
+      setAttr(el, "placeholder", i18n.t(key, current));
     });
   }
 
@@ -200,9 +215,9 @@
     leadingText("#sheet-form label:has(input[name='background'])", "site.player.background");
     leadingText("#sheet-form label:has(input[name='alignment'])", "site.player.alignment");
     const headings = document.querySelectorAll("#sheet-form .sheet-form-heading");
-    if (headings[0]) headings[0].textContent = i18n.t("site.player.abilities", headings[0].textContent);
-    if (headings[1]) headings[1].textContent = i18n.t("site.player.combat", headings[1].textContent);
-    if (headings[2]) headings[2].textContent = i18n.t("site.player.currency", headings[2].textContent);
+    if (headings[0]) setText(headings[0], i18n.t("site.player.abilities", headings[0].textContent));
+    if (headings[1]) setText(headings[1], i18n.t("site.player.combat", headings[1].textContent));
+    if (headings[2]) setText(headings[2], i18n.t("site.player.currency", headings[2].textContent));
   }
 
   function translateCampaign() {
@@ -269,6 +284,8 @@
     });
     observer.observe(document.body, { childList: true, subtree: true });
   }
+
+  window.StormwreckDomLocalization = { installed: true, translateAll };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
   else boot();
