@@ -3,6 +3,41 @@
  * Adding a future type should mainly mean: config + converter (+ optional seeds/page),
  * not editing parser/search/registry type lists by hand.
  */
+
+/*
+ * Most app surfaces load CatalogueTypes early. Use that shared seam to install
+ * the language runtime before later UI modules initialize. Parser-inserted
+ * scripts stay synchronous while the document is loading, so campaign modules
+ * see the selected dictionary from their first line of code.
+ */
+(function bootstrapLanguageRuntime() {
+  if (typeof document === "undefined") return;
+
+  const scripts = [];
+  if (!window.I18N) scripts.push("/js/i18n/en.js?v=20260904i1");
+  if (!window.I18N_SV) scripts.push("/js/i18n/sv.js?v=20260904i1");
+  if (!window.AppI18n) scripts.push("/js/i18n/language.js?v=20260904i1");
+  if (!window.StormwreckDomLocalization) scripts.push("/js/i18n/dom-localization.js?v=20260904i1");
+  if (!scripts.length) return;
+
+  if (document.readyState === "loading") {
+    document.write(scripts.map((src) => `<script src="${src}"><\/script>`).join(""));
+    return;
+  }
+
+  let chain = Promise.resolve();
+  scripts.forEach((src) => {
+    chain = chain.then(() => new Promise((resolve) => {
+      if (document.querySelector(`script[src^="${src.split("?")[0]}"]`)) return resolve();
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
+    }));
+  });
+})();
+
 window.CatalogueTypes = (function () {
   "use strict";
 
