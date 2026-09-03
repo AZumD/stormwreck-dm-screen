@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="creator-auth-pending">
 <head>
   <meta charset="utf-8">
   <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
@@ -9,12 +9,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/character-creator.css?v=20260903c1">
+  <style>.creator-auth-pending body{visibility:hidden}</style>
 </head>
 <body class="creator-body">
   <div class="creator-atmosphere" aria-hidden="true"></div>
 
   <header class="creator-topbar">
-    <a class="creator-brand" href="/">Stormwreck</a>
+    <a class="creator-brand" href="/player/">Player Companion</a>
     <div class="creator-topbar__end">
       <span id="creator-save-state" class="creator-save-state">Draft saved locally</span>
       <button type="button" class="icon-btn" id="creator-reset" title="Reset character">↻</button>
@@ -50,6 +51,6 @@
   </dialog>
 
   <script src="/js/core/player-api-client.js?v=20260830s1"></script>
-  <script src="/js/character-creator.js?v=20260903c1"></script>
+  <script src="/js/character-creator-gate.js?v=20260903c2"></script>
 </body>
 </html>
