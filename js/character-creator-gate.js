@@ -18,8 +18,16 @@
     });
   }
 
+  async function loadLanguage() {
+    if (!window.I18N) await appendScript("/js/i18n/en.js?v=20260904i1");
+    if (!window.I18N_SV) await appendScript("/js/i18n/sv.js?v=20260904i1");
+    if (!window.AppI18n) await appendScript("/js/i18n/language.js?v=20260904i1");
+    await appendScript("/js/i18n/dom-localization.js?v=20260904i1");
+  }
+
   async function loadCreator() {
     try {
+      await loadLanguage();
       await appendScript("/js/character-creator-expanded-data.js?v=20260903c4");
       await appendScript("/js/character-creator-compendium-bindings.js?v=20260903c4");
       await appendScript("/js/character-creator-background-link.js?v=20260903c5");
