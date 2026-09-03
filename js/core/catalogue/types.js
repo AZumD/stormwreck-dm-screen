@@ -8,7 +8,7 @@
  * Most app surfaces load CatalogueTypes early. Use that shared seam to install
  * the language runtime before later UI modules initialize. Parser-inserted
  * scripts stay synchronous while the document is loading, so campaign modules
- * see the selected dictionary from their first line of code.
+ * see the selected dictionary and date locale from their first line of code.
  */
 (function bootstrapLanguageRuntime() {
   if (typeof document === "undefined") return;
@@ -17,6 +17,7 @@
   if (!window.I18N) scripts.push("/js/i18n/en.js?v=20260904i1");
   if (!window.I18N_SV) scripts.push("/js/i18n/sv.js?v=20260904i1");
   if (!window.AppI18n) scripts.push("/js/i18n/language.js?v=20260904i1");
+  if (!window.StormwreckLocale) scripts.push("/js/i18n/locale.js?v=20260904i1");
   if (!window.StormwreckDomLocalization) scripts.push("/js/i18n/dom-localization.js?v=20260904i1");
   if (!scripts.length) return;
 
