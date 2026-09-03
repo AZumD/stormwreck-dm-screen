@@ -7,7 +7,8 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "character-creator", "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "css", "character-creator.css"), "utf8");
-const js = fs.readFileSync(path.join(root, "js", "character-creator.js"), "utf8");
+const js = fs.readFileSync(path.join(root, "js", "character-creator-v2.js"), "utf8");
+const data = fs.readFileSync(path.join(root, "js", "character-creator-expanded-data.js"), "utf8");
 const gate = fs.readFileSync(path.join(root, "js", "character-creator-gate.js"), "utf8");
 const landing = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const player = fs.readFileSync(path.join(root, "player", "index.html"), "utf8");
@@ -20,6 +21,8 @@ assert.doesNotMatch(landing, /href="\/character-creator\/"/, "public landing doe
 assert.match(player, /href="\/character-creator\/"[^>]*>New character</, "player home links New character to the full creator");
 assert.match(gate, /api\.bootstrap\(\)/, "creator verifies the signed-in player session");
 assert.match(gate, /location\.replace\("\/player\/"\)/, "unauthenticated creator visits return to player login");
+assert.match(gate, /character-creator-expanded-data\.js/, "gate loads expanded creator data");
+assert.match(gate, /character-creator-v2\.js/, "gate loads the expanded creator runtime");
 
 for (const ruleset of ["2014", "2024", "both"]) {
   assert.ok(js.includes(`"${ruleset}"`), `creator includes ${ruleset} ruleset support`);
@@ -37,6 +40,15 @@ assert.match(js, /createStandaloneCharacter/, "creator can persist standalone ch
 assert.match(js, /createCharacter\(campaignId/, "creator can persist campaign characters");
 assert.match(js, /Export JSON/, "creator supports portable JSON export");
 assert.match(js, /localStorage/, "creator autosaves a local draft");
+assert.match(js, /2024 conversion/, "older backgrounds receive a 2024 conversion path");
+assert.match(js, /data-species-bonus/, "expanded 2014 species can assign flexible ability boosts");
+assert.doesNotMatch(js, /Choose the ancestry that fits the character/, "species cards do not repeat placeholder ancestry copy");
+
+for (const expanded of ["Artificer", "Aarakocra", "Goblin", "Kobold", "Plasmoid", "Tabaxi", "Warforged", "Haunted One", "Wildspacer", "Witchlight Hand"]) {
+  assert.ok(data.includes(`name: "${expanded}"`) || data.includes(`"${expanded}"`), `expanded seed includes ${expanded}`);
+}
+assert.match(data, /description:/, "seeded options include descriptive blurbs");
+assert.match(data, /legacy2024: true/, "expanded legacy options are marked for 2024 compatibility");
 assert.match(css, /\.ability-card\[data-ability="str"\]/, "abilities receive distinct visual treatment");
 
 console.log("character creator validation passed");
