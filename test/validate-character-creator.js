@@ -8,12 +8,18 @@ const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "character-creator", "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "css", "character-creator.css"), "utf8");
 const js = fs.readFileSync(path.join(root, "js", "character-creator.js"), "utf8");
+const gate = fs.readFileSync(path.join(root, "js", "character-creator-gate.js"), "utf8");
 const landing = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const player = fs.readFileSync(path.join(root, "player", "index.html"), "utf8");
 
 assert.match(html, /id="creator-steps"/, "creator has wizard navigation");
 assert.match(html, /id="creator-content"/, "creator has a content workspace");
 assert.match(html, /player-api-client\.js/, "creator can save through the Player Companion API");
-assert.match(landing, /href="\/character-creator\/"/, "landing links to character creator");
+assert.match(html, /character-creator-gate\.js/, "creator loads through the player-session gate");
+assert.doesNotMatch(landing, /href="\/character-creator\/"/, "public landing does not expose character creator");
+assert.match(player, /href="\/character-creator\/"[^>]*>New character</, "player home links New character to the full creator");
+assert.match(gate, /api\.bootstrap\(\)/, "creator verifies the signed-in player session");
+assert.match(gate, /location\.replace\("\/player\/"\)/, "unauthenticated creator visits return to player login");
 
 for (const ruleset of ["2014", "2024", "both"]) {
   assert.ok(js.includes(`"${ruleset}"`), `creator includes ${ruleset} ruleset support`);
