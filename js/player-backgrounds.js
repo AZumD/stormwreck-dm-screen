@@ -5,6 +5,7 @@
   let apiHooked = false;
   let backgroundLibrarySelected = false;
   let decorateQueued = false;
+  let apiRetryTimer = null;
 
   function displayRefLabel(raw) {
     const text = String(raw || "").trim();
@@ -55,6 +56,10 @@
       "createStandaloneCharacter"
     ].forEach((name) => hookApiMethod(api, name));
     apiHooked = true;
+    if (apiRetryTimer) {
+      clearInterval(apiRetryTimer);
+      apiRetryTimer = null;
+    }
     return true;
   }
 
@@ -82,15 +87,16 @@
         prior?.remove();
         return;
       }
+      const desired = `Background · ${background}`;
       if (prior) {
-        prior.textContent = `Background · ${background}`;
+        if (prior.textContent !== desired) prior.textContent = desired;
         return;
       }
       const meta = vitals.querySelector(".vitals-meta");
       if (!meta) return;
       const line = document.createElement("p");
       line.className = "vitals-meta player-background-meta";
-      line.textContent = `Background · ${background}`;
+      line.textContent = desired;
       meta.insertAdjacentElement("afterend", line);
     });
   }
@@ -116,7 +122,7 @@
 
   function renameBackgroundActions() {
     document.querySelectorAll('[data-library-attach="background"]').forEach((button) => {
-      button.textContent = "Set background";
+      if (button.textContent !== "Set background") button.textContent = "Set background";
     });
   }
 
@@ -178,9 +184,18 @@
   );
 
   const observer = new MutationObserver(queueDecorate);
-  observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["open", "hidden"] });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["open", "hidden"]
+  });
 
-  installApiHooks();
+  if (!installApiHooks()) {
+    apiRetryTimer = setInterval(() => {
+      if (installApiHooks()) queueDecorate();
+    }, 50);
+  }
   queueDecorate();
 
   window.PlayerBackgrounds = {
