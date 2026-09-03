@@ -36,6 +36,11 @@ const folders = {
 
 const compendiumHtml = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
 const compendiumJs = fs.readFileSync(path.join(root, "js/core/catalogue/compendium.js"), "utf8");
+const backgroundExtension = fs.readFileSync(
+  path.join(root, "js/core/catalogue/background-extension.js"),
+  "utf8"
+);
+const catalogueTypesJs = fs.readFileSync(path.join(root, "js/core/catalogue/types.js"), "utf8");
 const legacyJs = fs.readFileSync(path.join(root, "js/core/catalogue/legacy-redirect.js"), "utf8");
 const appJs = fs.readFileSync(path.join(root, "js/core/catalogue/app.js"), "utf8");
 const landing = fs.readFileSync(path.join(root, "dm/index.html"), "utf8");
@@ -71,6 +76,29 @@ if (!compendiumHtml.includes("music-ui.js") || !compendiumHtml.includes("source-
   fail("compendium missing music/source adapters");
 } else {
   pass("compendium loads music + source adapters");
+}
+
+if (!compendiumHtml.includes("background-extension.js")) {
+  fail("compendium missing Background catalogue extension");
+} else {
+  pass("compendium loads Background catalogue extension");
+}
+
+if (
+  !backgroundExtension.includes('type: "background"') ||
+  !backgroundExtension.includes("originFeatRefs") ||
+  !backgroundExtension.includes('refType: "feature"') ||
+  !backgroundExtension.includes("LABELS.background")
+) {
+  fail("Background catalogue extension incomplete");
+} else {
+  pass("Background catalogue config + navigation");
+}
+
+if (!catalogueTypesJs.includes('id: "background"')) {
+  fail("catalogue types missing background entity type");
+} else {
+  pass("Background registered as a linkable entity type");
 }
 
 ["open", "dispose", "setType", "getCurrentType", "flushPendingSave", "mountCatalogue"].forEach((sym) => {
