@@ -4,9 +4,15 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const { projectRoot, dataRoot } = require("./atomic-fs");
+const ruleSeeds = require("../../js/catalogue-seeds/dm-rules").map((entry) => ({
+  type: "rule",
+  id: entry.id,
+  entry
+}));
 const characterCreatorSeeds = [
   ...require("../seeds/character-creator-compendium"),
-  ...require("../seeds/character-backgrounds")
+  ...require("../seeds/character-backgrounds"),
+  ...ruleSeeds
 ];
 
 async function pathExists(p) {
