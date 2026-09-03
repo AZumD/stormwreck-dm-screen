@@ -7,6 +7,7 @@ const CATALOGUE_TYPES = Object.freeze([
   "pc",
   "npc",
   "race",
+  "background",
   "class",
   "skill",
   "feature",
