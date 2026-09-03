@@ -26,7 +26,6 @@
     ["All notes", "Alla anteckningar"],
     ["Campaign only", "Endast kampanj"],
     ["Clear tag", "Rensa tagg"],
-    ["Untitled", "Namnlös"],
     ["No matching notes.", "Inga matchande anteckningar."],
     ["Select a note.", "Välj en anteckning."],
     ["No notes yet.", "Inga anteckningar ännu."],
@@ -70,28 +69,9 @@
     ["Clear RSVP", "Rensa svar"],
     ["Cancel session", "Ställ in spelmötet"],
     ["New post", "Nytt inlägg"],
-    ["Session", "Spelmöte"],
     ["Board", "Anslagstavla"],
-    ["Schedule", "Schema"],
-    ["Campaign", "Kampanj"]
+    ["Schedule", "Schema"]
   ]);
-
-  const PREFIX = [
-    ["School:", "Magiskola:"],
-    ["Level:", "Nivå:"],
-    ["Category:", "Kategori:"],
-    ["Rarity:", "Sällsynthet:"],
-    ["Item type:", "Föremålstyp:"],
-    ["Size:", "Storlek:"],
-    ["Type:", "Typ:"],
-    ["Casting time:", "Kasttid:"],
-    ["Range:", "Räckvidd:"],
-    ["Components:", "Komponenter:"],
-    ["Duration:", "Varaktighet:"],
-    ["Value:", "Värde:"],
-    ["Weight:", "Vikt:"],
-    ["Tags:", "Taggar:"]
-  ];
 
   const LEADING_LABELS = new Map([
     ["Status", "Status"],
@@ -151,21 +131,6 @@
     if (el.textContent !== value) el.textContent = value;
   }
 
-  function translateDetail(el) {
-    if (!el || el.children?.length) return;
-    const current = String(el.textContent || "");
-    if (current.trim() === "Requires attunement") {
-      setText(el, "Kräver attunement");
-      return;
-    }
-    for (const [from, to] of PREFIX) {
-      if (current.startsWith(`${from} `)) {
-        setText(el, `${to}${current.slice(from.length)}`);
-        return;
-      }
-    }
-  }
-
   function translateLibraryTypes(root) {
     const labels = {
       spell: "Besvärjelser",
@@ -180,6 +145,25 @@
     root.querySelectorAll?.("[data-library-type]").forEach((el) => {
       const type = el.getAttribute("data-library-type");
       if (labels[type]) setText(el, labels[type]);
+    });
+  }
+
+  function translateNoteFilters(root) {
+    root.querySelectorAll?.("#notes-character option").forEach((option) => {
+      if (option.value === "") setText(option, "Alla anteckningar");
+      if (option.value === "__campaign") setText(option, "Endast kampanj");
+    });
+  }
+
+  function translateAvailabilityOptions(root) {
+    const map = {
+      "": "Rensa svar",
+      available: "Tillgänglig",
+      maybe: "Kanske",
+      unavailable: "Inte tillgänglig"
+    };
+    root.querySelectorAll?.("#availability-form select[name='status'] option").forEach((option) => {
+      if (Object.prototype.hasOwnProperty.call(map, option.value)) setText(option, map[option.value]);
     });
   }
 
@@ -221,29 +205,28 @@
 
   function translate(root = document) {
     const safeLeafSelectors = [
-      "button",
-      "option",
+      "button:not([data-character-id]):not([data-note-select]):not(.library-item):not([data-type][data-id])",
       ".empty",
       ".sheet-section__title",
       ".ds-row > span",
       ".home-surface-label",
       ".sched-section-title",
       ".sched-rsvp-badge",
-      ".home-rsvp",
-      ".notes-nav-title"
+      ".home-rsvp"
     ].join(",");
 
     root.querySelectorAll?.(safeLeafSelectors).forEach(translateExactElement);
-    root.querySelectorAll?.(".meta, .home-character-meta").forEach(translateMeta);
-    root.querySelectorAll?.(".detail-block").forEach(translateDetail);
+    root.querySelectorAll?.(".home-character-meta, .home-character-card-btn > .meta, .notes-nav-item > .meta, .note-reader__head > .meta, #event-detail-body > .meta").forEach(translateMeta);
     root.querySelectorAll?.("#availability-dialog label, #event-dialog label, #post-dialog label, #attach-campaign-dialog label, #create-character-dialog label, #note-dialog label").forEach(translateLeadingLabel);
 
     translateLibraryTypes(root);
+    translateNoteFilters(root);
+    translateAvailabilityOptions(root);
     translateWeekdays(root);
     translateLegend(root);
     translateAria(root);
 
-    root.querySelectorAll?.("strong").forEach((el) => {
+    root.querySelectorAll?.("#event-detail-body strong").forEach((el) => {
       if (el.children.length) return;
       const current = String(el.textContent || "").trim();
       if (current === "Location:") setText(el, "Plats:");
