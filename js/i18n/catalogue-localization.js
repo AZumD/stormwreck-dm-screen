@@ -5,20 +5,20 @@
   if (!i18n?.isSwedish?.()) return;
 
   const TYPE_COPY = {
-    pc: { title: "Rollpersonskatalog", subtitle: "Rollpersoner, rollformulär och kampanjkopplingar.", singular: "rollperson" },
-    npc: { title: "NPC-katalog", subtitle: "Återkommande spelledarpersoner med statistik, utrustning och berättelsenoteringar.", singular: "NPC" },
-    monster: { title: "Monsterkatalog", subtitle: "Varelser, stridsvärden, förmågor och encounter-anteckningar.", singular: "monster" },
-    location: { title: "Platskatalog", subtitle: "Platser, kartor, personer och sådant som finns att upptäcka där.", singular: "plats" },
-    item: { title: "Föremålskatalog", subtitle: "Utrustning, skatter, verktyg, ingredienser och andra föremål.", singular: "föremål" },
-    race: { title: "Släkteskatalog", subtitle: "Spelbara släkten och deras särdrag.", singular: "släkte" },
-    background: { title: "Bakgrundskatalog", subtitle: "Rollpersonsbakgrunder, grundegenskapsval, origin feats och berättelsekrokar.", singular: "bakgrund" },
-    class: { title: "Klasskatalog", subtitle: "Klasser, subklasser, Hit Dice, färdigheter och klassförmågor.", singular: "klass" },
-    spell: { title: "Besvärjelsekatalog", subtitle: "Besvärjelser, nivåer, komponenter och magireferenser.", singular: "besvärjelse" },
-    skill: { title: "Färdighetskatalog", subtitle: "Färdigheter, grundegenskaper och vanliga användningar.", singular: "färdighet" },
-    feature: { title: "Förmågekatalog", subtitle: "Klassförmågor, feats, traits och andra mekaniska förmågor.", singular: "förmåga" },
-    rule: { title: "Regelkatalog", subtitle: "Snabba, sökbara fusklappar för reglerna du faktiskt behöver vid bordet.", singular: "regel" },
-    source: { title: "Källkatalog", subtitle: "Böcker, moduler och andra källor som innehållet kommer från.", singular: "källa" },
-    music: { title: "Musikkatalog", subtitle: "Musik och atmosfär för kampanjer och scener.", singular: "spår" }
+    pc: { title: "Rollpersonskatalog", subtitle: "Rollpersoner, rollformulär och kampanjkopplingar.", singular: "rollperson", search: "Sök rollpersoner…" },
+    npc: { title: "NPC-katalog", subtitle: "Återkommande spelledarpersoner med statistik, utrustning och berättelsenoteringar.", singular: "NPC", search: "Sök NPC:er…" },
+    monster: { title: "Monsterkatalog", subtitle: "Varelser, stridsvärden, förmågor och encounter-anteckningar.", singular: "monster", search: "Sök monster…" },
+    location: { title: "Platskatalog", subtitle: "Platser, kartor, personer och sådant som finns att upptäcka där.", singular: "plats", search: "Sök platser…" },
+    item: { title: "Föremålskatalog", subtitle: "Utrustning, skatter, verktyg, ingredienser och andra föremål.", singular: "föremål", search: "Sök föremål…" },
+    race: { title: "Släkteskatalog", subtitle: "Spelbara släkten och deras särdrag.", singular: "släkte", search: "Sök släkten…" },
+    background: { title: "Bakgrundskatalog", subtitle: "Rollpersonsbakgrunder, grundegenskapsval, origin feats och berättelsekrokar.", singular: "bakgrund", search: "Sök bakgrunder…" },
+    class: { title: "Klasskatalog", subtitle: "Klasser, subklasser, Hit Dice, färdigheter och klassförmågor.", singular: "klass", search: "Sök klasser…" },
+    spell: { title: "Besvärjelsekatalog", subtitle: "Besvärjelser, nivåer, komponenter och magireferenser.", singular: "besvärjelse", search: "Sök besvärjelser…" },
+    skill: { title: "Färdighetskatalog", subtitle: "Färdigheter, grundegenskaper och vanliga användningar.", singular: "färdighet", search: "Sök färdigheter…" },
+    feature: { title: "Förmågekatalog", subtitle: "Klassförmågor, feats, traits och andra mekaniska förmågor.", singular: "förmåga", search: "Sök förmågor…" },
+    rule: { title: "Regelkatalog", subtitle: "Snabba, sökbara fusklappar för reglerna du faktiskt behöver vid bordet.", singular: "regel", search: "Sök regler, termer, situationer…" },
+    source: { title: "Källkatalog", subtitle: "Böcker, moduler och andra källor som innehållet kommer från.", singular: "källa", search: "Sök källor…" },
+    music: { title: "Musikkatalog", subtitle: "Musik och atmosfär för kampanjer och scener.", singular: "spår", search: "Sök musik…" }
   };
 
   const SECTION_TITLES = {
@@ -136,7 +136,7 @@
       config.title = copy.title;
       config.subtitle = copy.subtitle;
       config.newLabel = `Ny ${copy.singular}`;
-      config.searchPlaceholder = `Sök ${type === "npc" ? "NPC:er" : copy.singular + "er"}…`;
+      config.searchPlaceholder = copy.search;
     }
     (config.sections || []).forEach((section) => {
       if (SECTION_TITLES[section.title]) section.title = SECTION_TITLES[section.title];
