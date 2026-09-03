@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="/favicon.png?v=20260825f2" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Character Creator · Stormwreck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/character-creator.css?v=20260903c1">
+</head>
+<body class="creator-body">
+  <div class="creator-atmosphere" aria-hidden="true"></div>
+
+  <header class="creator-topbar">
+    <a class="creator-brand" href="/">Stormwreck</a>
+    <div class="creator-topbar__end">
+      <span id="creator-save-state" class="creator-save-state">Draft saved locally</span>
+      <button type="button" class="icon-btn" id="creator-reset" title="Reset character">↻</button>
+      <a class="icon-btn" href="/player/" title="Player home">⌂</a>
+    </div>
+  </header>
+
+  <main class="creator-shell">
+    <aside class="creator-sidebar" aria-label="Character creation steps">
+      <div class="creator-sidebar__title">Character Creator</div>
+      <nav id="creator-steps" class="creator-steps"></nav>
+    </aside>
+
+    <section class="creator-workspace">
+      <div id="creator-content" class="creator-content" aria-live="polite"></div>
+      <footer class="creator-footer">
+        <button type="button" class="creator-btn creator-btn--ghost" id="creator-prev">← Previous step</button>
+        <div id="creator-progress" class="creator-progress">Step 1 of 11</div>
+        <button type="button" class="creator-btn creator-btn--primary" id="creator-next">Next →</button>
+      </footer>
+    </section>
+  </main>
+
+  <dialog id="creator-confirm-reset" class="creator-dialog">
+    <form method="dialog" class="creator-dialog__inner">
+      <h2>Reset this character?</h2>
+      <p>This clears the local creator draft. Characters already saved to the Player Companion are untouched.</p>
+      <div class="creator-dialog__actions">
+        <button value="cancel" class="creator-btn creator-btn--ghost">Keep draft</button>
+        <button value="reset" class="creator-btn creator-btn--danger">Reset draft</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/core/player-api-client.js?v=20260830s1"></script>
+  <script src="/js/character-creator.js?v=20260903c1"></script>
+</body>
+</html>
