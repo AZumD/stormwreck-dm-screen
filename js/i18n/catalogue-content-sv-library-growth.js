@@ -39,7 +39,7 @@
     "monster-giant-poisonous-snake": ["jättegiftorm", "giftorm", "orm"],
     "monster-warhorse": ["stridshäst", "krigshäst", "häst"],
     "monster-mastiff": ["mastiff", "hund"],
-    "monster-giant-badger": [" jättegrävling", "grävling"],
+    "monster-giant-badger": ["jättegrävling", "grävling"],
     "monster-giant-weasel": ["jättevessla", "vessla"],
     "monster-giant-centipede": ["jättetusenfoting", "tusenfoting"],
     "monster-giant-fire-beetle": ["jätteeldskalbagge", "skalbagge"],
