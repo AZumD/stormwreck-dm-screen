@@ -8,7 +8,28 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  compendium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate Compendium
+        run: |
+          node test/validate-compendium.js
+          node test/validate-compendium-expansion.js
+          node test/validate-compendium-library-growth.js
+          node test/validate-catalogue-seed-sync.js
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
