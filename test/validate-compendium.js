@@ -43,6 +43,9 @@ const backgroundExtension = fs.readFileSync(
 );
 const featureExtension = fs.readFileSync(path.join(root, "js/core/catalogue/feature-extension.js"), "utf8");
 const gardenSeed = fs.readFileSync(path.join(root, "js/catalogue-seeds/compendium-garden.js"), "utf8");
+const speciesExpansion = require("../js/catalogue-seeds/compendium-species-expansion");
+const bestiaryExpansion = require("../js/catalogue-seeds/compendium-bestiary");
+const openContentDoc = fs.readFileSync(path.join(root, "docs/OPEN-CONTENT.md"), "utf8");
 const catalogueTypesJs = fs.readFileSync(path.join(root, "js/core/catalogue/types.js"), "utf8");
 const legacyJs = fs.readFileSync(path.join(root, "js/core/catalogue/legacy-redirect.js"), "utf8");
 const appJs = fs.readFileSync(path.join(root, "js/core/catalogue/app.js"), "utf8");
@@ -146,6 +149,65 @@ for (const id of ["feature-rage", "feature-extra-attack", "feature-breath-weapon
 const gardenIdCount = (gardenSeed.match(/\bid: "feature-/g) || []).length;
 if (gardenIdCount < 20) fail(`expected at least 20 garden Feature seeds, found ${gardenIdCount}`);
 else pass(`Compendium garden has ${gardenIdCount} reusable Feature seeds`);
+
+for (const script of [
+  "compendium-species-expansion.js",
+  "compendium-bestiary.js",
+  "catalogue-content-sv-expansion.js"
+]) {
+  if (!compendiumHtml.includes(script)) fail(`Compendium missing ${script}`);
+  else if (compendiumHtml.indexOf(script) > compendiumHtml.indexOf("CompendiumApp.init")) {
+    fail(`${script} should load before CompendiumApp.init`);
+  } else {
+    pass(`Compendium loads ${script} before first render`);
+  }
+}
+
+if (speciesExpansion.length !== 18) {
+  fail(`expected 18 expanded species/lineage seeds, found ${speciesExpansion.length}`);
+} else {
+  pass("Compendium species expansion has 18 entries");
+}
+if (!speciesExpansion.some((seed) => seed.id === "race-grung")) fail("species expansion missing Grung");
+else pass("species expansion includes Grung");
+if (!speciesExpansion.some((seed) => seed.id === "subspecies-genasi-air")) fail("species expansion missing Air Genasi lineage");
+else pass("species expansion includes elemental Genasi lineages");
+if (!speciesExpansion.some((seed) => seed.id === "subspecies-tiefling-infernal")) fail("species expansion missing Infernal Tiefling lineage");
+else pass("species expansion includes 2024 Tiefling legacies");
+if (!speciesExpansion.every((seed) => seed.type === "race" && seed.entry?.id === seed.id)) {
+  fail("species expansion contains malformed catalogue manifest entries");
+} else {
+  pass("species expansion manifest shape");
+}
+
+if (bestiaryExpansion.length !== 33) {
+  fail(`expected 33 generic bestiary seeds, found ${bestiaryExpansion.length}`);
+} else {
+  pass("generic SRD bestiary has 33 entries");
+}
+if (!bestiaryExpansion.some((seed) => seed.id === "monster-goblin")) fail("bestiary missing Goblin");
+else pass("generic bestiary includes Goblin");
+if (!bestiaryExpansion.some((seed) => seed.id === "monster-owlbear")) fail("bestiary missing Owlbear");
+else pass("generic bestiary includes Owlbear");
+for (const color of ["black", "white", "green", "blue", "red"]) {
+  const id = `monster-young-${color}-dragon`;
+  if (!bestiaryExpansion.some((seed) => seed.id === id)) fail(`bestiary missing ${id}`);
+  else pass(`generic bestiary ${id}`);
+}
+const bestiaryIds = bestiaryExpansion.map((seed) => seed.id);
+if (new Set(bestiaryIds).size !== bestiaryIds.length) fail("generic bestiary contains duplicate ids");
+else pass("generic bestiary ids are unique");
+if (!bestiaryExpansion.every((seed) => seed.type === "monster" && seed.entry?.source === "SRD 5.1 (CC BY 4.0)")) {
+  fail("generic bestiary should preserve SRD 5.1 CC BY provenance on every entry");
+} else {
+  pass("generic bestiary entries preserve SRD 5.1 CC BY provenance");
+}
+
+if (!openContentDoc.includes("System Reference Document 5.1") || !openContentDoc.includes("CC BY 4.0")) {
+  fail("open-content attribution doc missing SRD 5.1 / CC BY 4.0 credit");
+} else {
+  pass("open-content attribution documented");
+}
 
 ["open", "dispose", "setType", "getCurrentType", "flushPendingSave", "mountCatalogue"].forEach((sym) => {
   if (!appJs.includes(sym)) fail(`CatalogueApp missing ${sym}`);
