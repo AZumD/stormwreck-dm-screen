@@ -364,10 +364,12 @@ for (const needle of [
 }
 pass("stormwreck-isle.js taxonomy fields present");
 
-/* Legacy catalogue folders redirect; compendium hosts CatalogueApp */
+/* Legacy catalogue folders redirect; unified compendium loads the CatalogueApp module */
 const compendiumHtml = fs.readFileSync(path.join(root, "dm/compendium/index.html"), "utf8");
-if (!compendiumHtml.includes("CatalogueApp") || !compendiumHtml.includes("CompendiumApp.init")) {
-  fail("compendium missing CatalogueApp host");
+if (!compendiumHtml.includes("js/core/catalogue/app.js") || !compendiumHtml.includes("CompendiumApp.init")) {
+  fail("compendium missing CatalogueApp module host");
+} else {
+  pass("compendium loads CatalogueApp module host");
 }
 const folders = {
   item: "item-katalog",
