@@ -16,9 +16,13 @@ const gardenFeatureSeeds = require("../../js/catalogue-seeds/compendium-garden")
 }));
 const speciesExpansionSeeds = require("../../js/catalogue-seeds/compendium-species-expansion");
 const bestiarySeeds = require("../../js/catalogue-seeds/compendium-bestiary");
-const bestiarySeedsTwo = require("../../js/catalogue-seeds/compendium-bestiary-ii");
+const bestiarySeedsTwo = require("../../js/catalogue-seeds/compendium-bestiary-ii").map((seed) => {
+  const entry = seed?.entry;
+  if (!entry || entry.creatureType || !Array.isArray(entry.tags) || !entry.tags.includes("beast")) return seed;
+  return { ...seed, entry: { ...entry, creatureType: "Beast" } };
+});
 const itemSeeds = require("../../js/catalogue-seeds/compendium-items");
-const characterCreatorSeeds = [
+const catalogueManifestSeeds = [
   ...require("../seeds/character-creator-compendium"),
   ...require("../seeds/character-backgrounds"),
   ...speciesExpansionSeeds,
@@ -68,7 +72,7 @@ async function materializeManifestSeeds(destination) {
   let seeded = 0;
   let skipped = 0;
 
-  for (const seed of characterCreatorSeeds) {
+  for (const seed of catalogueManifestSeeds) {
     const type = assertSeedPart(seed.type, "type");
     const id = assertSeedPart(seed.id, "id");
     const dir = path.join(destination, type);
