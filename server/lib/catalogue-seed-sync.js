@@ -16,11 +16,15 @@ const gardenFeatureSeeds = require("../../js/catalogue-seeds/compendium-garden")
 }));
 const speciesExpansionSeeds = require("../../js/catalogue-seeds/compendium-species-expansion");
 const bestiarySeeds = require("../../js/catalogue-seeds/compendium-bestiary");
+const bestiarySeedsTwo = require("../../js/catalogue-seeds/compendium-bestiary-ii");
+const itemSeeds = require("../../js/catalogue-seeds/compendium-items");
 const characterCreatorSeeds = [
   ...require("../seeds/character-creator-compendium"),
   ...require("../seeds/character-backgrounds"),
   ...speciesExpansionSeeds,
   ...bestiarySeeds,
+  ...bestiarySeedsTwo,
+  ...itemSeeds,
   ...gardenFeatureSeeds,
   ...ruleSeeds
 ];
