@@ -22,8 +22,10 @@ const bestiarySeedsTwo = require("../../js/catalogue-seeds/compendium-bestiary-i
   return { ...seed, entry: { ...entry, creatureType: "Beast" } };
 });
 const faunaSeeds = require("../../js/catalogue-seeds/compendium-bestiary-fauna");
+const npcSeeds = require("../../js/catalogue-seeds/compendium-bestiary-npcs");
 const itemSeeds = require("../../js/catalogue-seeds/compendium-items");
 const itemSeedsTwo = require("../../js/catalogue-seeds/compendium-items-ii");
+const lootSeeds = require("../../js/catalogue-seeds/compendium-items-loot");
 const catalogueManifestSeeds = [
   ...require("../seeds/character-creator-compendium"),
   ...require("../seeds/character-backgrounds"),
@@ -31,8 +33,10 @@ const catalogueManifestSeeds = [
   ...bestiarySeeds,
   ...bestiarySeedsTwo,
   ...faunaSeeds,
+  ...npcSeeds,
   ...itemSeeds,
   ...itemSeedsTwo,
+  ...lootSeeds,
   ...gardenFeatureSeeds,
   ...ruleSeeds
 ];
