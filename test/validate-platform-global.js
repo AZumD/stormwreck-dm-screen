@@ -64,12 +64,15 @@ if (!playerHtml.includes("home-board-list") || !playerHtml.includes(">Board<")) 
 } else pass("player home Board section");
 
 {
-  const scheduleIdx = playerHtml.indexOf(">Schedule<");
+  const nextIdx = playerHtml.indexOf("home-next-session");
+  const charIdx = playerHtml.indexOf("home-character");
   const boardIdx = playerHtml.indexOf('id="home-board-list"');
-  const campaignsIdx = playerHtml.indexOf(">My campaigns<");
-  if (!(scheduleIdx < boardIdx && boardIdx < campaignsIdx)) {
-    fail("home order must be Schedule → Board → My campaigns");
-  } else pass("home IA Schedule → Board → campaigns");
+  const campaignsIdx = playerHtml.indexOf('id="campaign-list"');
+  if (nextIdx < 0 || charIdx < 0 || boardIdx < 0 || campaignsIdx < 0) {
+    fail("player home missing Next session / Character / Board / Campaigns sections");
+  } else if (!(nextIdx < charIdx && charIdx < boardIdx && boardIdx < campaignsIdx)) {
+    fail("home order must be Next session → Character → Board → My campaigns");
+  } else pass("home IA Next session → Character → Board → campaigns");
 }
 
 if (playerHtml.includes("campaign-section-nav") && playerHtml.includes("campaign-section-btn")) {
