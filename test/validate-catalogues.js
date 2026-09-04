@@ -90,8 +90,8 @@ if (!landing.includes("compendium/") || !landing.includes("Compendium")) {
   pass("landing page links to Compendium");
 }
 
-if (!landing.includes("landing-sidebar")) fail("landing missing catalogue sidebar");
-else pass("landing catalogue sidebar");
+if (landing.includes("landing-sidebar")) fail("landing should not restore the retired catalogue sidebar");
+else pass("legacy catalogue sidebar remains removed");
 
 if (!fs.existsSync(path.join(root, "css/catalogue.css"))) fail("catalogue.css missing");
 else pass("catalogue.css exists");
