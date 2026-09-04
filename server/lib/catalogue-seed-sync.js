@@ -9,9 +9,15 @@ const ruleSeeds = require("../../js/catalogue-seeds/dm-rules").map((entry) => ({
   id: entry.id,
   entry
 }));
+const gardenFeatureSeeds = require("../../js/catalogue-seeds/compendium-garden").map((entry) => ({
+  type: "feature",
+  id: entry.id,
+  entry
+}));
 const characterCreatorSeeds = [
   ...require("../seeds/character-creator-compendium"),
   ...require("../seeds/character-backgrounds"),
+  ...gardenFeatureSeeds,
   ...ruleSeeds
 ];
 
