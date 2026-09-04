@@ -41,6 +41,7 @@ const backgroundExtension = fs.readFileSync(
   path.join(root, "js/core/catalogue/background-extension.js"),
   "utf8"
 );
+const featureExtension = fs.readFileSync(path.join(root, "js/core/catalogue/feature-extension.js"), "utf8");
 const gardenSeed = fs.readFileSync(path.join(root, "js/catalogue-seeds/compendium-garden.js"), "utf8");
 const catalogueTypesJs = fs.readFileSync(path.join(root, "js/core/catalogue/types.js"), "utf8");
 const legacyJs = fs.readFileSync(path.join(root, "js/core/catalogue/legacy-redirect.js"), "utf8");
@@ -113,6 +114,22 @@ if (!catalogueTypesJs.includes('id: "background"')) {
   fail("catalogue types missing background entity type");
 } else {
   pass("Background registered as a linkable entity type");
+}
+
+if (!compendiumHtml.includes("feature-extension.js")) {
+  fail("Compendium missing Feature taxonomy extension");
+} else {
+  pass("Compendium loads Feature taxonomy extension");
+}
+
+if (
+  !featureExtension.includes('"Origin Feat"') ||
+  !featureExtension.includes("groupOrder") ||
+  !featureExtension.includes('field.id === "featureType"')
+) {
+  fail("Feature taxonomy extension incomplete");
+} else {
+  pass("Feature taxonomy includes Origin Feat and intentional group order");
 }
 
 if (!compendiumHtml.includes("compendium-garden.js")) {
