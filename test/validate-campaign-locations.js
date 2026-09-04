@@ -78,14 +78,21 @@ if (!isle.includes("campaign-locations.js") || !isle.includes("campaign-location
   fail("Campaign HTML must load campaign locations modules");
 } else pass("Campaign HTML scripts");
 
-const backLinks = [
+for (const [i, file] of [
   "campaigns/stormwreck-isle/index.html",
-  "location-katalog/index.html"
-].map((f) => read(f));
-backLinks.forEach((html, i) => {
-  if (!html.includes('href="/dm/">← DM Library')) fail(`back link ${i} not pointing to /dm/`);
+  "dm/compendium/index.html"
+].entries()) {
+  const html = read(file);
+  if (!html.includes('href="/dm/">← DM Library')) fail(`DM Library back link ${i} not pointing to /dm/`);
   else pass(`DM Library back link ${i}`);
-});
+}
+
+const legacyLocation = read("location-katalog/index.html");
+if (!legacyLocation.includes("legacy-redirect.js") || !legacyLocation.includes('data-type="location"')) {
+  fail("legacy location catalogue must redirect to unified Compendium");
+} else {
+  pass("legacy location catalogue redirects to Compendium");
+}
 
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
