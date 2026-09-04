@@ -18,6 +18,7 @@ const loot = require("../js/catalogue-seeds/compendium-items-loot");
 const html = read("dm/compendium/index.html");
 const seedSync = read("server/lib/catalogue-seed-sync.js");
 const svGrowthTwo = read("js/i18n/catalogue-content-sv-library-growth-ii.js");
+const monsterExtension = read("js/core/catalogue/monster-extension.js");
 const attribution = read("docs/OPEN-CONTENT.md");
 
 assert.strictEqual(npcs.length, 17, "NPC wave has 17 reusable SRD templates");
@@ -88,6 +89,10 @@ assert.ok(seedSync.includes('require("../../js/catalogue-seeds/compendium-items-
 assert.ok(attribution.includes("compendium-bestiary-npcs.js"), "open-content attribution covers NPC wave");
 assert.ok(attribution.includes("compendium-items-loot.js"), "open-content attribution covers loot wave");
 assert.doesNotThrow(() => new vm.Script(svGrowthTwo, { filename: "catalogue-content-sv-library-growth-ii.js" }), "NPC/loot Swedish alias pack parses");
+assert.doesNotThrow(() => new vm.Script(monsterExtension, { filename: "monster-extension.js" }), "monster family extension parses");
+assert.ok(monsterExtension.includes('config.groupBy = "creatureFamily"'), "large bestiary groups by creature family");
+assert.ok(monsterExtension.includes('typeFacet.label = "Family"'), "monster type facet becomes a family facet");
+assert.ok(monsterExtension.includes("bootstrapWithMonsterFamily"), "persisted bestiary entries gain family grouping after bootstrap");
 
 const registered = {};
 const sandbox = {
