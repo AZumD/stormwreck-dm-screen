@@ -21,14 +21,18 @@ const bestiarySeedsTwo = require("../../js/catalogue-seeds/compendium-bestiary-i
   if (!entry || entry.creatureType || !Array.isArray(entry.tags) || !entry.tags.includes("beast")) return seed;
   return { ...seed, entry: { ...entry, creatureType: "Beast" } };
 });
+const faunaSeeds = require("../../js/catalogue-seeds/compendium-bestiary-fauna");
 const itemSeeds = require("../../js/catalogue-seeds/compendium-items");
+const itemSeedsTwo = require("../../js/catalogue-seeds/compendium-items-ii");
 const catalogueManifestSeeds = [
   ...require("../seeds/character-creator-compendium"),
   ...require("../seeds/character-backgrounds"),
   ...speciesExpansionSeeds,
   ...bestiarySeeds,
   ...bestiarySeedsTwo,
+  ...faunaSeeds,
   ...itemSeeds,
+  ...itemSeedsTwo,
   ...gardenFeatureSeeds,
   ...ruleSeeds
 ];
