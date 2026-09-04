@@ -18,7 +18,7 @@ function pass(msg) {
   console.log("OK:", msg);
 }
 
-const types = ["pc", "npc", "item", "monster", "location", "race", "class", "spell", "skill", "feature", "music", "source"];
+const types = ["pc", "npc", "item", "monster", "location", "race", "background", "class", "spell", "skill", "feature", "music", "source"];
 const folders = {
   pc: "pc-katalog",
   npc: "npc-katalog",
@@ -26,6 +26,7 @@ const folders = {
   monster: "monster-katalog",
   location: "location-katalog",
   race: "race-katalog",
+  background: "background-katalog",
   class: "class-katalog",
   spell: "spell-katalog",
   skill: "skill-katalog",
@@ -40,6 +41,7 @@ const backgroundExtension = fs.readFileSync(
   path.join(root, "js/core/catalogue/background-extension.js"),
   "utf8"
 );
+const gardenSeed = fs.readFileSync(path.join(root, "js/catalogue-seeds/compendium-garden.js"), "utf8");
 const catalogueTypesJs = fs.readFileSync(path.join(root, "js/core/catalogue/types.js"), "utf8");
 const legacyJs = fs.readFileSync(path.join(root, "js/core/catalogue/legacy-redirect.js"), "utf8");
 const appJs = fs.readFileSync(path.join(root, "js/core/catalogue/app.js"), "utf8");
@@ -95,11 +97,38 @@ if (
   pass("Background catalogue config + navigation");
 }
 
+if (
+  !backgroundExtension.includes('id: "rulesets"') ||
+  !backgroundExtension.includes('id: "abilityScoreOptions"') ||
+  (backgroundExtension.match(/type: "list"/g) || []).length < 3 ||
+  !backgroundExtension.includes("rulesets: []") ||
+  !backgroundExtension.includes("abilityScoreOptions: []")
+) {
+  fail("Background array fields should use list editors/defaults");
+} else {
+  pass("Background array fields use list editors");
+}
+
 if (!catalogueTypesJs.includes('id: "background"')) {
   fail("catalogue types missing background entity type");
 } else {
   pass("Background registered as a linkable entity type");
 }
+
+if (!compendiumHtml.includes("compendium-garden.js")) {
+  fail("Compendium missing reusable Feature garden seed");
+} else {
+  pass("Compendium loads reusable Feature garden seed");
+}
+
+for (const id of ["feature-rage", "feature-extra-attack", "feature-breath-weapon", "feature-relentless-endurance"]) {
+  if (!gardenSeed.includes(`id: "${id}"`)) fail(`Compendium garden missing ${id}`);
+  else pass(`Compendium garden ${id}`);
+}
+
+const gardenIdCount = (gardenSeed.match(/\bid: "feature-/g) || []).length;
+if (gardenIdCount < 20) fail(`expected at least 20 garden Feature seeds, found ${gardenIdCount}`);
+else pass(`Compendium garden has ${gardenIdCount} reusable Feature seeds`);
 
 ["open", "dispose", "setType", "getCurrentType", "flushPendingSave", "mountCatalogue"].forEach((sym) => {
   if (!appJs.includes(sym)) fail(`CatalogueApp missing ${sym}`);
@@ -138,10 +167,12 @@ if (landing.includes("NPC Catalogue") || landing.includes("Monster Catalogue")) 
   pass("DM Library catalogue grid removed");
 }
 
-types.forEach((t) => {
+types.filter((t) => t !== "background").forEach((t) => {
   if (!compendiumJs.includes(`"${t}"`)) fail(`compendium nav missing type ${t}`);
   else pass(`compendium type ${t}`);
 });
+if (!backgroundExtension.includes('"background"')) fail("Background extension should inject background into Compendium navigation");
+else pass("Background extension injects Compendium navigation type");
 
 if (!compendiumJs.includes("history.pushState") || !compendiumJs.includes("popstate")) {
   fail("compendium missing URL history sync");
