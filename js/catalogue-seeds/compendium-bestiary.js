@@ -300,7 +300,7 @@
       savingThrows: "DEX +5, CON +6, WIS +3, CHA +5", skills: "Perception +6, Stealth +5", damageImmunities: "Acid",
       senses: "Blindsight 30 ft., darkvision 120 ft., passive Perception 16", languages: "Common, Draconic",
       traits: "Amphibious — breathes air and water.",
-      actions: "Multiattack — one bite and two claws.\nBite. +7 to hit; 15 (2d10+4 plus 1d8 acid).\nClaw. +7 to hit; 11 (2d6+4) slashing.\nAcid Breath (Recharge 5–6). 30-ft. line, 5 ft. wide; DC 14 DEX, 49 (11d8) acid, half on success.",
+      actions: "Multiattack — one bite and two claws.\nBite. +7 to hit; 2d10+4 piercing plus 1d8 acid.\nClaw. +7 to hit; 11 (2d6+4) slashing.\nAcid Breath (Recharge 5–6). 30-ft. line, 5 ft. wide; DC 14 DEX, 49 (11d8) acid, half on success.",
       tags: ["dragon", "chromatic", "acid", "young"]
     }),
     monster("monster-young-white-dragon", "Young White Dragon", {
@@ -309,7 +309,7 @@
       savingThrows: "DEX +3, CON +7, WIS +3, CHA +4", skills: "Perception +6, Stealth +3", damageImmunities: "Cold",
       senses: "Blindsight 30 ft., darkvision 120 ft., passive Perception 16", languages: "Common, Draconic",
       traits: "Ice Walk — moves across and climbs icy surfaces without checks or extra movement; ice-based difficult terrain costs no extra movement.",
-      actions: "Multiattack — one bite and two claws.\nBite. +7 to hit; 13 (2d10+4 plus 1d8 cold).\nClaw. +7 to hit; 11 (2d6+4) slashing.\nCold Breath (Recharge 5–6). 30-ft. cone; DC 15 CON, 45 (10d8) cold, half on success.",
+      actions: "Multiattack — one bite and two claws.\nBite. +7 to hit; 2d10+4 piercing plus 1d8 cold.\nClaw. +7 to hit; 11 (2d6+4) slashing.\nCold Breath (Recharge 5–6). 30-ft. cone; DC 15 CON, 45 (10d8) cold, half on success.",
       tags: ["dragon", "chromatic", "cold", "young"]
     }),
     monster("monster-young-green-dragon", "Young Green Dragon", {
@@ -318,7 +318,7 @@
       savingThrows: "DEX +4, CON +6, WIS +4, CHA +5", skills: "Deception +5, Perception +7, Stealth +4", damageImmunities: "Poison", conditionImmunities: "Poisoned",
       senses: "Blindsight 30 ft., darkvision 120 ft., passive Perception 17", languages: "Common, Draconic",
       traits: "Amphibious — breathes air and water.",
-      actions: "Multiattack — one bite and two claws.\nBite. +7 to hit; 14 (2d10+4 plus 1d6 poison).\nClaw. +7 to hit; 11 (2d6+4) slashing.\nPoison Breath (Recharge 5–6). 30-ft. cone; DC 14 CON, 42 (12d6) poison, half on success.",
+      actions: "Multiattack — one bite and two claws.\nBite. +7 to hit; 2d10+4 piercing plus 1d6 poison.\nClaw. +7 to hit; 11 (2d6+4) slashing.\nPoison Breath (Recharge 5–6). 30-ft. cone; DC 14 CON, 42 (12d6) poison, half on success.",
       tags: ["dragon", "chromatic", "poison", "young"]
     }),
     monster("monster-young-blue-dragon", "Young Blue Dragon", {
@@ -326,7 +326,7 @@
       str: 21, dex: 10, con: 19, int: 14, wis: 13, cha: 17, ac: 18, hp: "152 (16d10+64)", speed: "40 ft., burrow 20 ft., fly 80 ft.",
       savingThrows: "DEX +4, CON +8, WIS +5, CHA +7", skills: "Perception +9, Stealth +4", damageImmunities: "Lightning",
       senses: "Blindsight 30 ft., darkvision 120 ft., passive Perception 19", languages: "Common, Draconic",
-      actions: "Multiattack — one bite and two claws.\nBite. +9 to hit; 16 (2d10+5 plus 1d10 lightning).\nClaw. +9 to hit; 12 (2d6+5) slashing.\nLightning Breath (Recharge 5–6). 60-ft. line, 5 ft. wide; DC 16 DEX, 66 (12d10) lightning, half on success.",
+      actions: "Multiattack — one bite and two claws.\nBite. +9 to hit; 2d10+5 piercing plus 1d10 lightning.\nClaw. +9 to hit; 12 (2d6+5) slashing.\nLightning Breath (Recharge 5–6). 60-ft. line, 5 ft. wide; DC 16 DEX, 66 (12d10) lightning, half on success.",
       tags: ["dragon", "chromatic", "lightning", "young"]
     }),
     monster("monster-young-red-dragon", "Young Red Dragon", {
@@ -334,7 +334,7 @@
       str: 23, dex: 10, con: 21, int: 14, wis: 11, cha: 19, ac: 18, hp: "178 (17d10+85)", speed: "40 ft., climb 40 ft., fly 80 ft.",
       savingThrows: "DEX +4, CON +9, WIS +4, CHA +8", skills: "Perception +8, Stealth +4", damageImmunities: "Fire",
       senses: "Blindsight 30 ft., darkvision 120 ft., passive Perception 18", languages: "Common, Draconic",
-      actions: "Multiattack — one bite and two claws.\nBite. +10 to hit; 20 (2d10+6 plus 1d6 fire).\nClaw. +10 to hit; 13 (2d6+6) slashing.\nFire Breath (Recharge 5–6). 30-ft. cone; DC 17 DEX, 56 (16d6) fire, half on success.",
+      actions: "Multiattack — one bite and two claws.\nBite. +10 to hit; 2d10+6 piercing plus 1d6 fire.\nClaw. +10 to hit; 13 (2d6+6) slashing.\nFire Breath (Recharge 5–6). 30-ft. cone; DC 17 DEX, 56 (16d6) fire, half on success.",
       tags: ["dragon", "chromatic", "fire", "young"]
     })
   ];
