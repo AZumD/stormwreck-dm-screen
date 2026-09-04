@@ -84,7 +84,7 @@ const playerApp = fs.readFileSync(path.join(root, "js/player-app.js"), "utf8");
 if (!playerHtml.includes("player-to-dm") || !playerApp.includes("playerToDm")) {
   fail("player missing DM Library switcher");
 } else pass("Player → DM switcher");
-if (!playerCss.includes("view-home") || !playerCss.includes("minmax(0, 1.1fr)")) {
+if (!playerCss.includes(".player-home-primary") || !playerCss.includes("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)")) {
   fail("player.css missing desktop home grid");
 } else pass("player desktop home grid");
 
