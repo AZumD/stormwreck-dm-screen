@@ -118,7 +118,7 @@ if (!musicHtml.includes('data-type="music"') || !musicHtml.includes("legacy-redi
   fail("music-katalog legacy redirect");
 } else pass("music-katalog legacy redirect");
 
-if (!compendiumHtml.includes("music-ui.js") || !compendiumHtml.includes("CatalogueApp")) {
+if (!compendiumHtml.includes("music-ui.js") || !compendiumHtml.includes("js/core/catalogue/app.js") || !compendiumHtml.includes("CompendiumApp.init")) {
   fail("compendium missing music catalogue wiring");
 } else pass("compendium music wiring");
 
