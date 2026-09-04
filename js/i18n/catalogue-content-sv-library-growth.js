@@ -4,19 +4,6 @@
   const api = window.CatalogueContentI18n;
   if (!api) return;
 
-  const MONSTER_IDS = new Set([
-    "monster-ape", "monster-black-bear", "monster-brown-bear", "monster-polar-bear", "monster-boar",
-    "monster-panther", "monster-lion", "monster-tiger", "monster-giant-hyena", "monster-giant-bat",
-    "monster-giant-owl", "monster-giant-goat", "monster-giant-crab", "monster-crocodile", "monster-giant-crocodile",
-    "monster-constrictor-snake", "monster-giant-constrictor-snake", "monster-poisonous-snake", "monster-giant-poisonous-snake",
-    "monster-warhorse", "monster-mastiff", "monster-giant-badger", "monster-giant-weasel", "monster-giant-centipede",
-    "monster-giant-fire-beetle", "monster-stirge", "monster-cockatrice", "monster-basilisk", "monster-griffon",
-    "monster-hippogriff", "monster-rust-monster", "monster-gargoyle", "monster-ankheg", "monster-ettercap",
-    "monster-phase-spider", "monster-shadow", "monster-mummy", "monster-ghost", "monster-fire-elemental",
-    "monster-air-elemental", "monster-earth-elemental", "monster-water-elemental", "monster-minotaur", "monster-dryad",
-    "monster-satyr", "monster-sprite", "monster-imp", "monster-hell-hound"
-  ]);
-
   const MONSTER_ALIASES = {
     "monster-ape": ["apa"],
     "monster-black-bear": ["svartbjörn", "björn"],
@@ -65,8 +52,51 @@
     "monster-satyr": ["satyr", "skogsväsen"],
     "monster-sprite": ["sprite", "älva", "fé"],
     "monster-imp": ["imp", "smådjävul", "djävul"],
-    "monster-hell-hound": ["helveteshund", "eldhund", "fiend"]
+    "monster-hell-hound": ["helveteshund", "eldhund", "fiend"],
+
+    "monster-baboon": ["babian", "apa"],
+    "monster-badger": ["grävling"],
+    "monster-bat": ["fladdermus"],
+    "monster-cat": ["katt"],
+    "monster-crab": ["krabba"],
+    "monster-deer": ["hjort", "rådjur"],
+    "monster-eagle": ["örn"],
+    "monster-frog": ["groda"],
+    "monster-goat": ["get"],
+    "monster-hawk": ["hök", "rovfågel"],
+    "monster-hyena": ["hyena"],
+    "monster-jackal": ["schakal"],
+    "monster-lizard": ["ödla"],
+    "monster-mule": ["mula", "lastdjur"],
+    "monster-octopus": ["bläckfisk", "åttaarmad"],
+    "monster-owl": ["uggla"],
+    "monster-pony": ["ponny", "häst"],
+    "monster-quipper": ["pirayafisk", "fisk"],
+    "monster-rat": ["råtta"],
+    "monster-raven": ["korp", "kråkfågel"],
+    "monster-riding-horse": ["ridhäst", "häst"],
+    "monster-scorpion": ["skorpion", "gift"],
+    "monster-sea-horse": ["sjöhäst"],
+    "monster-spider": ["spindel"],
+    "monster-vulture": ["gam", "asätare"],
+    "monster-weasel": ["vessla"],
+    "monster-camel": ["kamel", "riddjur"],
+    "monster-draft-horse": ["arbetshäst", "dragshäst", "häst"],
+    "monster-elk": ["älg", "hjortdjur"],
+    "monster-giant-frog": ["jättegroda", "groda"],
+    "monster-giant-lizard": ["jätteödla", "ödla"],
+    "monster-giant-wolf-spider": ["jättevargspindel", "spindel"],
+    "monster-giant-boar": ["jättevildsvin", "vildsvin"],
+    "monster-giant-elk": ["jätteälg", "älg"],
+    "monster-giant-octopus": ["jättebläckfisk", "bläckfisk"],
+    "monster-giant-vulture": ["jättegam", "gam"],
+    "monster-reef-shark": ["revhaj", "haj"],
+    "monster-giant-shark": ["jättehaj", "haj"],
+    "monster-killer-whale": ["späckhuggare", "val"],
+    "monster-giant-sea-horse": ["jättesjöhäst", "sjöhäst"]
   };
+
+  const MONSTER_IDS = new Set(Object.keys(MONSTER_ALIASES));
 
   const WORDS = {
     armor: ["rustning"], shield: ["sköld"], sword: ["svärd"], dagger: ["dolk"], axe: ["yxa"],
@@ -81,7 +111,27 @@
     cloak: ["mantel"], wand: ["stav", "trollstav"], stone: ["sten"], pearl: ["pärla"], bag: ["väska"],
     rod: ["stav"], lantern: ["lykta"], necklace: ["halsband"], amulet: ["amulett"], bracers: ["armskenor"],
     broom: ["kvast"], deck: ["kortlek"], dust: ["stoft"], oil: ["olja"], chime: ["klockspel"],
-    hole: ["hål"], quiver: ["koger"], sending: ["sändning", "meddelande"], alchemy: ["alkemi"]
+    hole: ["hål"], quiver: ["koger"], sending: ["sändning", "meddelande"], alchemy: ["alkemi"],
+    arrow: ["pil", "pilar"], bolt: ["lod", "armborstlod"], bullet: ["kula", "slungkula"], needle: ["nål"],
+    backpack: ["ryggsäck"], bedroll: ["sängrulle", "liggunderlag"], blanket: ["filt"], bell: ["klocka"],
+    candle: ["ljus", "stearinljus"], chain: ["kedja"], chalk: ["krita"], chest: ["kista"], clothes: ["kläder"],
+    crowbar: ["kofot"], fishing: ["fiske"], flask: ["flaska"], glass: ["glas"], bucket: ["hink"],
+    holy: ["helig"], hourglass: ["timglas"], hunting: ["jakt"], ink: ["bläck"], pen: ["penna"],
+    ladder: ["stege"], lock: ["lås"], magnifying: ["förstoringsglas"], mirror: ["spegel"], paper: ["papper"],
+    parchment: ["pergament"], perfume: ["parfym"], pick: ["hacka"], piton: ["pitong", "klätterkil"], pole: ["stång"],
+    pot: ["gryta"], pouch: ["påse", "börs"], ration: ["ransoner", "proviant"], robes: ["rock", "dräkt"],
+    sack: ["säck"], scale: ["våg"], wax: ["sigillvax"], shovel: ["spade"], whistle: ["visselpipa"],
+    soap: ["tvål"], spellbook: ["trollformelsbok", "magibok"], spike: ["spik"], tent: ["tält"],
+    tinderbox: ["eldstål", "tänddon"], torch: ["fackla"], vial: ["flaska", "ampull"], waterskin: ["vattenskinn"],
+    whetstone: ["brynsten"], brewer: ["bryggare"], calligrapher: ["kalligraf"], carpenter: ["snickare"],
+    cobbler: ["skomakare"], cook: ["kock"], glassblower: ["glasblåsare"], jeweler: ["juvelerare"],
+    leatherworker: ["läderarbete"], mason: ["murare"], painter: ["målare"], potter: ["krukmakare"],
+    smith: ["smed"], tinker: ["reparatör"], weaver: ["vävare"], woodcarver: ["träsnidare"],
+    disguise: ["förklädnad"], forgery: ["förfalskning"], gaming: ["spel"], dice: ["tärningar"], cards: ["kort"],
+    bagpipes: ["säckpipa"], drum: ["trumma"], flute: ["flöjt"], lute: ["luta"], lyre: ["lyra"], horn: ["horn"],
+    shawm: ["skalmeja"], viol: ["gamba"], crystal: ["kristall"], orb: ["klot"], staff: ["stav"],
+    mistletoe: ["mistel"], totem: ["totem"], reliquary: ["relikskrin"], saddle: ["sadel"], feed: ["foder"],
+    carriage: ["vagn"], cart: ["kärra"], chariot: ["stridsvagn"], sled: ["släde"], wagon: ["vagn"], pack: ["utrustningspaket"]
   };
 
   function generatedAliases(name) {
@@ -112,6 +162,9 @@
     if (entry.category === "Consumable") aliases.push("förbrukningsvara");
     if (entry.category === "Wondrous Item") aliases.push("magiskt föremål");
     if (entry.category === "Tool & Kit") aliases.push("verktyg");
+    if (entry.category === "Ammunition") aliases.push("ammunition");
+    if (entry.category === "Container & Storage") aliases.push("förvaring", "behållare");
+    if (entry.category === "Collection & Hoard") aliases.push("utrustningspaket", "paket");
     itemRecords[entry.id] = { aliases: [...new Set(aliases)], sv: {} };
   });
   api.register("item", itemRecords);
