@@ -33,7 +33,14 @@
           fields: [
             { id: "name", label: "Name", type: "text", required: true, grid: "full" },
             { id: "source", label: "Source", type: "text", grid: "half" },
-            { id: "rulesets", label: "Rulesets", type: "text", grid: "half", placeholder: "2014, 2024" }
+            {
+              id: "rulesets",
+              label: "Rulesets",
+              type: "list",
+              grid: "half",
+              placeholder: "Add ruleset…",
+              hint: "Keep each supported ruleset as a separate value, for example 2014 and 2024."
+            }
           ]
         },
         {
@@ -42,9 +49,10 @@
             {
               id: "abilityScoreOptions",
               label: "Ability score options",
-              type: "textarea",
-              rows: 2,
-              grid: "full"
+              type: "list",
+              grid: "full",
+              placeholder: "Add ability…",
+              hint: "2024 backgrounds normally offer three ability scores to distribute increases among."
             },
             {
               id: "originFeatRefs",
@@ -70,8 +78,8 @@
       defaults: {
         name: "Unnamed background",
         source: "",
-        rulesets: "",
-        abilityScoreOptions: "",
+        rulesets: [],
+        abilityScoreOptions: [],
         originFeatRefs: [],
         summary: "",
         description: "",
