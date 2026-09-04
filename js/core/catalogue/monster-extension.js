@@ -7,21 +7,46 @@
   function creatureFamily(value) {
     const text = String(value || "").trim();
     if (!text) return "";
-    const swarm = text.match(/^Swarm of Tiny\s+(.+)$/i);
-    if (swarm) return "Beast";
+    if (/^Swarm of Tiny\s+/i.test(text)) return "Beast";
     return text.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  }
+
+  function decorateMonster(entry) {
+    if (!entry) return entry;
+    if (!entry.creatureType && Array.isArray(entry.tags) && entry.tags.includes("beast")) {
+      entry.creatureType = "Beast";
+    }
+    entry.creatureFamily = creatureFamily(entry.creatureType);
+    return entry;
   }
 
   // Promote compact beast tags into the primary taxonomy and derive a stable
   // family for grouping. This keeps Humanoid (goblinoid), Humanoid (any), etc.
   // together instead of exploding the sidebar into dozens of tiny groups.
-  (window.CatalogueSeeds?.monster || []).forEach((entry) => {
-    if (!entry) return;
-    if (!entry.creatureType && Array.isArray(entry.tags) && entry.tags.includes("beast")) {
-      entry.creatureType = "Beast";
-    }
-    entry.creatureFamily = creatureFamily(entry.creatureType);
-  });
+  (window.CatalogueSeeds?.monster || []).forEach(decorateMonster);
+
+  // API-backed catalogue rows may predate creatureFamily. Decorate the in-memory
+  // cache immediately after bootstrap so old persisted entries group correctly
+  // without rewriting user-authored data merely to support a view concern.
+  if (window.CatalogueStore && !CatalogueStore.__monsterFamilyBootstrapWrapped) {
+    const originalBootstrap = CatalogueStore.bootstrap.bind(CatalogueStore);
+    CatalogueStore.bootstrap = async function bootstrapWithMonsterFamily(typeList) {
+      const result = await originalBootstrap(typeList);
+      const requested = !typeList || typeList.includes("monster");
+      if (requested) {
+        try {
+          (CatalogueStore.loadAll("monster") || []).forEach(decorateMonster);
+        } catch {
+          /* Monster cache may not be available yet on a partial bootstrap. */
+        }
+      }
+      return result;
+    };
+    Object.defineProperty(CatalogueStore, "__monsterFamilyBootstrapWrapped", {
+      value: true,
+      enumerable: false
+    });
+  }
 
   config.groupBy = "creatureFamily";
   config.groupOrder = [
