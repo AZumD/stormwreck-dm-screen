@@ -98,6 +98,7 @@ const contentEnginePath = "js/i18n/catalogue-content-i18n.js";
 const contentPackPaths = [
   "js/i18n/catalogue-content-sv-rules.js",
   "js/i18n/catalogue-content-sv-character.js",
+  "js/i18n/catalogue-content-sv-garden.js",
   "js/i18n/catalogue-content-sv-spells.js",
   "js/i18n/catalogue-content-sv-stormwreck.js"
 ];
@@ -136,7 +137,7 @@ assert.strictEqual(Object.keys(registered.skill || {}).length, 18, "all 18 D&D s
 assert.ok(Object.keys(registered.background || {}).length >= 38, "expanded Character Creator backgrounds have Swedish content");
 assert.ok(Object.keys(registered.race || {}).length >= 55, "core and expanded species have Swedish content");
 assert.ok(Object.keys(registered.class || {}).length >= 13, "core classes plus Artificer have Swedish content");
-assert.ok(Object.keys(registered.feature || {}).length >= 24, "core features and origin feats have Swedish content");
+assert.ok(Object.keys(registered.feature || {}).length >= 45, "core, origin-feat, and garden Features have Swedish content");
 assert.ok(Object.keys(registered.spell || {}).length >= 85, "core and Character Creator spell entries have Swedish content");
 assert.ok(Object.keys(registered.npc || {}).length >= 10, "Stormwreck NPC entries have Swedish content");
 assert.ok(Object.keys(registered.monster || {}).length >= 8, "Stormwreck monster entries have Swedish content");
@@ -151,6 +152,8 @@ assert.ok(registered.background["background-outlander"].sv.description.includes(
 assert.ok(registered.race["race-elf"].sv.summary.includes("alv") || registered.race["race-elf"].sv.name === "Alv", "Elf has Swedish species copy");
 assert.ok(registered.class["class-wizard"].sv.spellcasting.includes("INT"), "Wizard mechanics have Swedish reference prose");
 assert.ok(registered.feature["feature-wild-shape"].sv.description.includes("beast"), "Wild Shape has Swedish mechanical prose");
+assert.ok(registered.feature["feature-rage"].sv.description.includes("barbar"), "garden Rage feature has Swedish mechanical prose");
+assert.ok(registered.feature["feature-breath-weapon"].aliases.includes("andningsvapen"), "garden Features expose Swedish search aliases");
 assert.ok(registered.spell["spell-fireball"].sv.description.includes("eld"), "Fireball has Swedish reference prose");
 assert.ok(registered.npc["sw-runara"].sv.summary.includes("bronsdrake"), "Runara entry is localized without translating her proper name");
 assert.ok(registered.monster["sw-sparkrender"].sv.traits.includes("ritual"), "Sparkrender DM notes are localized");
@@ -173,7 +176,14 @@ for (const entrypoint of [
 
 const compendiumHtml = read("dm/compendium/index.html");
 assert.ok(compendiumHtml.includes("catalogue-localization.js"), "Compendium loads catalogue-specific chrome localization before init");
-for (const file of ["catalogue-content-i18n.js", "catalogue-content-sv-rules.js", "catalogue-content-sv-character.js", "catalogue-content-sv-spells.js", "catalogue-content-sv-stormwreck.js"]) {
+for (const file of [
+  "catalogue-content-i18n.js",
+  "catalogue-content-sv-rules.js",
+  "catalogue-content-sv-character.js",
+  "catalogue-content-sv-garden.js",
+  "catalogue-content-sv-spells.js",
+  "catalogue-content-sv-stormwreck.js"
+]) {
   assert.ok(compendiumHtml.includes(file), `Compendium loads ${file}`);
   assert.ok(compendiumHtml.indexOf(file) < compendiumHtml.indexOf("CompendiumApp.init"), `${file} loads before first Compendium render`);
 }
@@ -181,6 +191,7 @@ assert.ok(
   compendiumHtml.indexOf("catalogue-content-i18n.js") < compendiumHtml.indexOf("catalogue-content-sv-rules.js"),
   "content localization engine loads before its data packs"
 );
+assert.ok(compendiumHtml.includes("compendium-garden.js"), "Compendium loads garden Feature seeds before rendering");
 
 const languageCss = read("css/language.css");
 assert.ok(languageCss.includes(".site-language-switcher"), "language switcher has global styling");
@@ -190,5 +201,8 @@ for (const term of ["rollperson", "färdighet", "grundegenskap", "rustningsklass
   assert.ok(terminologyDoc.includes(term), `terminology contract documents ${term}`);
 }
 assert.ok(terminologyDoc.includes("freeleaguepublishing.com"), "terminology contract records Swedish RPG source material");
+assert.ok(terminologyDoc.includes("Built-in Compendium content overlays"), "i18n docs explain Compendium content overlays");
+assert.ok(terminologyDoc.includes("non-enumerable"), "i18n docs explain non-persistent localization metadata");
+assert.ok(terminologyDoc.includes("user's edited value wins"), "i18n docs document edit-preservation behavior");
 
 console.log("sitewide Swedish/English i18n validation passed");
