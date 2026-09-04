@@ -29,6 +29,7 @@ jobs:
           node test/validate-compendium-expansion.js
           node test/validate-compendium-library-growth.js
           node test/validate-compendium-library-growth-ii.js
+          node test/validate-compendium-library-growth-iii.js
           node test/validate-catalogue-seed-sync.js
 
   test:
