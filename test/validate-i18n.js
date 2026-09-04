@@ -149,7 +149,11 @@ assert.strictEqual(registered.rule["rule-constitution"].sv.name, "Fysik (Constit
 assert.strictEqual(registered.skill["skill-stealth"].sv.name, "Smyga", "Stealth localizes to Smyga");
 assert.strictEqual(registered.skill["skill-medicine"].sv.name, "Läkekonst", "Medicine localizes to Läkekonst");
 assert.strictEqual(registered.skill["skill-sleight-of-hand"].sv.name, "Fingerfärdighet", "Sleight of Hand localizes to Fingerfärdighet");
-assert.ok(registered.background["background-outlander"].sv.description.includes("vildmark"), "Outlander has Swedish reference prose");
+assert.ok(
+  registered.background["background-outlander"].sv.description.includes("landskap") &&
+    registered.background["background-outlander"].aliases.includes("vildmark"),
+  "Outlander has idiomatic Swedish prose and vildmark search vocabulary"
+);
 assert.ok(registered.race["race-elf"].sv.summary.includes("alv") || registered.race["race-elf"].sv.name === "Alv", "Elf has Swedish species copy");
 assert.ok(registered.race["race-grung"].sv.summary.includes("grodfolk"), "Grung expansion has Swedish species copy");
 assert.ok(registered.race["subspecies-genasi-air"].aliases.includes("luftgenasi"), "expanded lineages expose Swedish search aliases");
