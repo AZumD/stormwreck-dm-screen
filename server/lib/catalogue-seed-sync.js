@@ -14,9 +14,13 @@ const gardenFeatureSeeds = require("../../js/catalogue-seeds/compendium-garden")
   id: entry.id,
   entry
 }));
+const speciesExpansionSeeds = require("../../js/catalogue-seeds/compendium-species-expansion");
+const bestiarySeeds = require("../../js/catalogue-seeds/compendium-bestiary");
 const characterCreatorSeeds = [
   ...require("../seeds/character-creator-compendium"),
   ...require("../seeds/character-backgrounds"),
+  ...speciesExpansionSeeds,
+  ...bestiarySeeds,
   ...gardenFeatureSeeds,
   ...ruleSeeds
 ];
