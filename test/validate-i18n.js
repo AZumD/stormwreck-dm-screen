@@ -99,6 +99,7 @@ const contentPackPaths = [
   "js/i18n/catalogue-content-sv-rules.js",
   "js/i18n/catalogue-content-sv-character.js",
   "js/i18n/catalogue-content-sv-garden.js",
+  "js/i18n/catalogue-content-sv-expansion.js",
   "js/i18n/catalogue-content-sv-spells.js",
   "js/i18n/catalogue-content-sv-stormwreck.js"
 ];
@@ -135,12 +136,12 @@ for (const file of contentPackPaths) {
 assert.ok(Object.keys(registered.rule || {}).length >= 45, "all DM-screen rule cheat sheets have Swedish content");
 assert.strictEqual(Object.keys(registered.skill || {}).length, 18, "all 18 D&D skills have Swedish content");
 assert.ok(Object.keys(registered.background || {}).length >= 38, "expanded Character Creator backgrounds have Swedish content");
-assert.ok(Object.keys(registered.race || {}).length >= 55, "core and expanded species have Swedish content");
+assert.ok(Object.keys(registered.race || {}).length >= 70, "core, creator, and Compendium-expansion species have Swedish content");
 assert.ok(Object.keys(registered.class || {}).length >= 13, "core classes plus Artificer have Swedish content");
 assert.ok(Object.keys(registered.feature || {}).length >= 45, "core, origin-feat, and garden Features have Swedish content");
 assert.ok(Object.keys(registered.spell || {}).length >= 85, "core and Character Creator spell entries have Swedish content");
 assert.ok(Object.keys(registered.npc || {}).length >= 10, "Stormwreck NPC entries have Swedish content");
-assert.ok(Object.keys(registered.monster || {}).length >= 8, "Stormwreck monster entries have Swedish content");
+assert.ok(Object.keys(registered.monster || {}).length >= 40, "Stormwreck plus generic SRD monsters have Swedish content");
 assert.ok(Object.keys(registered.item || {}).length >= 8, "Stormwreck quest/item seed entries have Swedish content");
 assert.ok(Object.keys(registered.location || {}).length >= 6, "Stormwreck location entries have Swedish content");
 
@@ -150,6 +151,8 @@ assert.strictEqual(registered.skill["skill-medicine"].sv.name, "Läkekonst", "Me
 assert.strictEqual(registered.skill["skill-sleight-of-hand"].sv.name, "Fingerfärdighet", "Sleight of Hand localizes to Fingerfärdighet");
 assert.ok(registered.background["background-outlander"].sv.description.includes("vildmark"), "Outlander has Swedish reference prose");
 assert.ok(registered.race["race-elf"].sv.summary.includes("alv") || registered.race["race-elf"].sv.name === "Alv", "Elf has Swedish species copy");
+assert.ok(registered.race["race-grung"].sv.summary.includes("grodfolk"), "Grung expansion has Swedish species copy");
+assert.ok(registered.race["subspecies-genasi-air"].aliases.includes("luftgenasi"), "expanded lineages expose Swedish search aliases");
 assert.ok(registered.class["class-wizard"].sv.spellcasting.includes("INT"), "Wizard mechanics have Swedish reference prose");
 assert.ok(registered.feature["feature-wild-shape"].sv.description.includes("beast"), "Wild Shape has Swedish mechanical prose");
 assert.ok(registered.feature["feature-rage"].sv.description.includes("barbar"), "garden Rage feature has Swedish mechanical prose");
@@ -157,6 +160,8 @@ assert.ok(registered.feature["feature-breath-weapon"].aliases.includes("andnings
 assert.ok(registered.spell["spell-fireball"].sv.description.includes("eld"), "Fireball has Swedish reference prose");
 assert.ok(registered.npc["sw-runara"].sv.summary.includes("bronsdrake"), "Runara entry is localized without translating her proper name");
 assert.ok(registered.monster["sw-sparkrender"].sv.traits.includes("ritual"), "Sparkrender DM notes are localized");
+assert.ok(registered.monster["monster-skeleton"].aliases.includes("skelett"), "generic bestiary exposes Swedish monster aliases");
+assert.ok(registered.monster["monster-young-red-dragon"].sv.actions.includes("16d6"), "young dragons have Swedish combat quick-reference text");
 assert.ok(registered.location["sw-seagrow-caves"].sv.description.includes("Havsgrottor"), "Seagrow Caves description is localized");
 
 const rootHtml = read("index.html");
@@ -181,6 +186,7 @@ for (const file of [
   "catalogue-content-sv-rules.js",
   "catalogue-content-sv-character.js",
   "catalogue-content-sv-garden.js",
+  "catalogue-content-sv-expansion.js",
   "catalogue-content-sv-spells.js",
   "catalogue-content-sv-stormwreck.js"
 ]) {
@@ -192,6 +198,8 @@ assert.ok(
   "content localization engine loads before its data packs"
 );
 assert.ok(compendiumHtml.includes("compendium-garden.js"), "Compendium loads garden Feature seeds before rendering");
+assert.ok(compendiumHtml.includes("compendium-species-expansion.js"), "Compendium loads expanded species seeds before rendering");
+assert.ok(compendiumHtml.includes("compendium-bestiary.js"), "Compendium loads generic bestiary seeds before rendering");
 
 const languageCss = read("css/language.css");
 assert.ok(languageCss.includes(".site-language-switcher"), "language switcher has global styling");
