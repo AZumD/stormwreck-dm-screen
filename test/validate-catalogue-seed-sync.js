@@ -61,6 +61,15 @@ const { syncMissingCatalogueSeeds } = require("../server/lib/catalogue-seed-sync
     );
     assert.strictEqual(background.name, "Acolyte", "background seed manifest materializes the Background catalogue");
 
+    const gardenFeature = JSON.parse(
+      await fsp.readFile(path.join(dest, "feature", "feature-rage.json"), "utf8")
+    );
+    assert.strictEqual(gardenFeature.name, "Rage", "Compendium garden materializes reusable Feature entries");
+    assert.ok(
+      gardenFeature.summary && gardenFeature.description,
+      "garden Feature entries include useful reference content"
+    );
+
     console.log("catalogue seed sync validation passed");
   } finally {
     await fsp.rm(tmp, { recursive: true, force: true });
