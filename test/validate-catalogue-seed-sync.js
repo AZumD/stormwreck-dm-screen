@@ -70,6 +70,38 @@ const { syncMissingCatalogueSeeds } = require("../server/lib/catalogue-seed-sync
       "garden Feature entries include useful reference content"
     );
 
+    const expandedSpecies = JSON.parse(
+      await fsp.readFile(path.join(dest, "race", "race-grung.json"), "utf8")
+    );
+    assert.strictEqual(expandedSpecies.name, "Grung", "species expansion materializes missing playable species");
+
+    const elementalLineage = JSON.parse(
+      await fsp.readFile(path.join(dest, "race", "subspecies-genasi-air.json"), "utf8")
+    );
+    assert.strictEqual(
+      elementalLineage.parentSpeciesRef,
+      "@race:race-genasi|Genasi",
+      "expanded lineages keep canonical parent species references"
+    );
+
+    const goblin = JSON.parse(
+      await fsp.readFile(path.join(dest, "monster", "monster-goblin.json"), "utf8")
+    );
+    assert.strictEqual(goblin.cr, "1/4", "generic SRD bestiary materializes usable monster stats");
+    assert.strictEqual(
+      goblin.source,
+      "SRD 5.1 (CC BY 4.0)",
+      "generic bestiary keeps open-content provenance in the catalogue entry"
+    );
+
+    const redDragon = JSON.parse(
+      await fsp.readFile(path.join(dest, "monster", "monster-young-red-dragon.json"), "utf8")
+    );
+    assert.ok(
+      redDragon.actions.includes("2d10+6 piercing plus 1d6 fire"),
+      "dragon quick references preserve separate physical and elemental damage dice"
+    );
+
     console.log("catalogue seed sync validation passed");
   } finally {
     await fsp.rm(tmp, { recursive: true, force: true });
